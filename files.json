@@ -1,0 +1,28 @@
+{
+  "Guardian": [
+    { "name": "Residence", "file": "a1.enc" },
+    { "name": "Anmeldebescheinigung", "file": "a2.enc" },
+    { "name": "Meldebescheinigung", "file": "a3.enc" },
+    { "name": "Meldebestätigung", "file": "a4.enc" }
+  ],
+  "Visa": [
+    { "name": "Clarification on Guardian Role", "file": "b1.enc" },
+    { "name": "Digital Skills Report", "file": "b2.enc" },
+    { "name": "Relationship of Guardian", "file": "b3.enc" },
+    { "name": "Cover Letter", "file": "b4.enc" },
+    { "name": "C.V.", "file": "b5.enc" }
+  ],
+  "Finance": [
+    { "name": "Declaration of Liability", "file": "c1.enc" }
+  ],
+  "School": [
+    { "name": "Letter of Invitation and Acceptance", "file": "d1.enc" },
+    { "name": "Proof of Accommodation", "file": "d2.enc" }
+  ],
+  "Personal": [
+    { "name": "Pan Card", "file": "e1.enc" }
+  ],
+  "Residence": [
+    { "name": "Austria ID Appointment", "file": "f1.enc" }
+  ]
+}
