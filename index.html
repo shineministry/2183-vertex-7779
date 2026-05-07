@@ -1713,6 +1713,261 @@ category){
     document.getElementById(
     'file-grid');
 
+   if(category === "HOME"){
+
+    grid.innerHTML = `
+
+    <div style="
+    grid-column:1/-1;
+    background:white;
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:35px;
+    animation:fadeInUp .6s ease;
+    line-height:1.9;">
+
+        <div style="
+        display:flex;
+        align-items:center;
+        gap:25px;
+        flex-wrap:wrap;
+        margin-bottom:30px;">
+
+            <img src="profile.jpg"
+            style="
+            width:150px;
+            height:150px;
+            border-radius:24px;
+            object-fit:cover;
+            border:4px solid #eff6ff;">
+
+            <div>
+
+                <h1 style="
+                margin-bottom:10px;
+                color:var(--accent);">
+
+                    SHINEIL KEITH MATHIAS
+
+                </h1>
+
+                <div style="
+                color:var(--muted);
+                font-size:1rem;">
+
+                    Founder of SHINE MINISTRY • Student • Public Speaker • Digital Creator
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div style="
+        display:grid;
+        grid-template-columns:
+        repeat(auto-fit,minmax(260px,1fr));
+        gap:20px;">
+
+            <!-- PERSONAL -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Personal Details
+                </h3>
+
+                <b>Full Name:</b>
+                Shineil Keith Mathias<br>
+
+                <b>Date of Birth:</b>
+                7 March 2010<br>
+
+                <b>Gender:</b>
+                Male<br>
+
+                <b>Nationality:</b>
+                Indian<br>
+
+                <b>Location:</b>
+                Khandala, Pune, Maharashtra, India
+
+            </div>
+
+            <!-- CONTACT -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Contact Information
+                </h3>
+
+                <b>Phone:</b>
+                +91 8605586173<br>
+
+                <b>Email:</b>
+                shinumaths989@gmail.com<br>
+
+                <b>Website:</b>
+                www.shine-ministry.com<br>
+
+                <b>Instagram:</b>
+                @shinu_vordenker_7
+
+            </div>
+
+            <!-- EDUCATION -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Education
+                </h3>
+
+                <b>School:</b>
+                Don Bosco High School & Junior College, Lonavla<br>
+
+                <b>Academic Level:</b>
+                Class 5 to 10 Secondary Education<br>
+
+                <b>Period:</b>
+                2020 – 2026<br>
+
+                <b>EQF Level:</b>
+                Level 3
+
+            </div>
+
+            <!-- SKILLS -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Skills
+                </h3>
+
+                • Communication Skills<br>
+                • Public Speaking<br>
+                • Leadership<br>
+                • Microsoft Word & PowerPoint<br>
+                • Organizational Skills<br>
+                • Google Drive<br>
+                • Mathematics
+
+            </div>
+
+            <!-- LANGUAGES -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Languages
+                </h3>
+
+                <b>English:</b>
+                Fluent<br>
+
+                <b>Hindi:</b>
+                Fluent<br>
+
+                <b>German:</b>
+                Basic (A1)
+
+            </div>
+
+            <!-- ACHIEVEMENTS -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Achievements
+                </h3>
+
+                • Promising Student Of The Year<br>
+                • Green House Captain Leadership Award<br>
+                • Debate & Elocution Certificates<br>
+                • Science Exhibition Participation<br>
+                • Spell Bee & Quiz Awards
+
+            </div>
+
+        </div>
+
+        <!-- ABOUT -->
+
+        <div style="
+        margin-top:30px;
+        background:#eff6ff;
+        padding:24px;
+        border-radius:18px;
+        border:1px solid #dbeafe;">
+
+            <h3 style="
+            margin-bottom:12px;
+            color:var(--accent);">
+
+                About Me
+            </h3>
+
+            <p style="
+            color:#334155;
+            line-height:1.9;">
+
+                Motivated and responsible secondary school student with strong communication skills and a keen interest in learning, leadership, and personal development. Founder of SHINE MINISTRY and actively involved in public speaking, debates, leadership activities, and digital creativity. Passionate about technology, education, organizational growth, and making a positive impact through communication and service.
+
+            </p>
+
+        </div>
+
+        <!-- HOBBIES -->
+
+        <div style="
+        margin-top:25px;
+        background:#f8fafc;
+        padding:24px;
+        border-radius:18px;">
+
+            <h3 style="
+            margin-bottom:12px;">
+
+                Hobbies & Interests
+            </h3>
+
+            <p style="
+            color:#475569;
+            line-height:1.9;">
+
+                Public speaking, debating, reading, learning new topics, exploring technology and digital tools, participating in school leadership activities, current affairs, presentations, communication development, and creative ministry initiatives.
+
+            </p>
+
+        </div>
+
+    </div>
+
+    `;
+
+    return;
+}
+   
     grid.innerHTML = "";
 
     files.forEach(file=>{
