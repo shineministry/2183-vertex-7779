@@ -19,6 +19,333 @@ rel="stylesheet">
 
 <style>
 
+    /* =========================
+   PREMIUM ANIMATIONS
+========================= */
+
+body{
+
+    animation:
+    bodyFade 1.2s ease;
+
+}
+
+@keyframes bodyFade{
+
+    from{
+        opacity:0;
+    }
+
+    to{
+        opacity:1;
+    }
+
+}
+
+.card{
+
+    position:relative;
+    overflow:hidden;
+
+}
+
+.card::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:-120%;
+    left:-40%;
+
+    width:180%;
+    height:220%;
+
+    background:
+    linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,.08),
+    transparent
+    );
+
+    transform:
+    rotate(25deg);
+
+    animation:
+    shineMove 6s linear infinite;
+
+}
+
+@keyframes shineMove{
+
+    0%{
+        transform:
+        translateX(-100%)
+        rotate(25deg);
+    }
+
+    100%{
+        transform:
+        translateX(100%)
+        rotate(25deg);
+    }
+
+}
+
+.card:hover{
+
+    transform:
+    translateY(-10px)
+    scale(1.02);
+
+    box-shadow:
+    0 25px 60px rgba(0,0,0,.45);
+
+}
+
+/* BUTTON EFFECTS */
+
+.btn{
+
+    position:relative;
+    overflow:hidden;
+
+}
+
+.btn::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+    left:-120%;
+
+    width:100%;
+    height:100%;
+
+    background:
+    linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.22),
+    transparent
+    );
+
+    transition:.6s;
+
+}
+
+.btn:hover::before{
+
+    left:120%;
+
+}
+
+.btn:active{
+
+    transform:
+    scale(.96);
+
+}
+
+/* FLOATING BACKGROUND GLOW */
+
+body::before,
+body::after{
+
+    content:"";
+
+    position:fixed;
+
+    width:420px;
+    height:420px;
+
+    border-radius:50%;
+
+    filter:blur(100px);
+
+    opacity:.18;
+
+    z-index:-1;
+
+    animation:
+    floatGlow 10s ease-in-out infinite;
+
+}
+
+body::before{
+
+    top:-120px;
+    left:-120px;
+
+    background:#2563eb;
+
+}
+
+body::after{
+
+    bottom:-120px;
+    right:-120px;
+
+    background:#06b6d4;
+
+    animation-delay:5s;
+
+}
+
+@keyframes floatGlow{
+
+    0%{
+
+        transform:
+        translateY(0px)
+        scale(1);
+
+    }
+
+    50%{
+
+        transform:
+        translateY(-35px)
+        scale(1.08);
+
+    }
+
+    100%{
+
+        transform:
+        translateY(0px)
+        scale(1);
+
+    }
+
+}
+
+/* LOGO PULSE */
+
+.logo{
+
+    animation:
+    logoPulse 3s ease-in-out infinite;
+
+}
+
+@keyframes logoPulse{
+
+    0%{
+
+        transform:scale(1);
+
+        box-shadow:
+        0 0 0 rgba(37,99,235,.5);
+
+    }
+
+    50%{
+
+        transform:scale(1.05);
+
+        box-shadow:
+        0 0 35px rgba(37,99,235,.45);
+
+    }
+
+    100%{
+
+        transform:scale(1);
+
+        box-shadow:
+        0 0 0 rgba(37,99,235,.5);
+
+    }
+
+}
+
+/* REQUEST COUNT ANIMATION */
+
+.stats-number{
+
+    animation:
+    glowText 2s ease-in-out infinite;
+
+}
+
+@keyframes glowText{
+
+    0%{
+
+        text-shadow:
+        0 0 0 rgba(255,255,255,.1);
+
+    }
+
+    50%{
+
+        text-shadow:
+        0 0 20px rgba(255,255,255,.45);
+
+    }
+
+    100%{
+
+        text-shadow:
+        0 0 0 rgba(255,255,255,.1);
+
+    }
+
+}
+
+/* INPUT FOCUS */
+
+.input:focus{
+
+    border-color:
+    rgba(59,130,246,.8);
+
+    box-shadow:
+    0 0 25px rgba(59,130,246,.25);
+
+    transform:
+    scale(1.01);
+
+}
+
+/* LOGIN BOX FLOAT */
+
+.login-box{
+
+    animation:
+    loginFloat 5s ease-in-out infinite;
+
+}
+
+@keyframes loginFloat{
+
+    0%{
+
+        transform:
+        translateY(0px);
+
+    }
+
+    50%{
+
+        transform:
+        translateY(-10px);
+
+    }
+
+    100%{
+
+        transform:
+        translateY(0px);
+
+    }
+
+}
+    
 *{
     margin:0;
     padding:0;
@@ -520,6 +847,11 @@ body{
 
 </div>
 
+    <audio
+id="approveSound"
+src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=correct-2-46134.mp3">
+</audio>
+    
 <script>
 
 const ADMIN_PASSWORD =
@@ -635,8 +967,27 @@ onSnapshot(
             'div'
             );
 
-            card.className =
-            'card';
+card.className =
+'card';
+
+card.style.opacity =
+'0';
+
+card.style.transform =
+'translateY(30px)';
+
+setTimeout(()=>{
+
+    card.style.transition =
+    '.5s';
+
+    card.style.opacity =
+    '1';
+
+    card.style.transform =
+    'translateY(0)';
+
+},100);
 
             card.innerHTML = `
 
@@ -740,6 +1091,10 @@ onSnapshot(
             ).onclick =
             async()=>{
 
+                document.getElementById(
+'approveSound'
+).play();
+                
                 await updateDoc(
 
                     doc(
