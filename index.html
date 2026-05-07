@@ -208,6 +208,154 @@
     transform: scale(1.05);
     background: #dc2626;
 }
+
+        #viewer {
+    width: 100%;
+    height: 100%;
+    border: none;
+    user-select: none;
+}
+        /* =========================
+   MOBILE RESPONSIVE DESIGN
+========================= */
+
+@media screen and (max-width: 768px) {
+
+    body, html {
+        overflow: auto;
+    }
+
+    .overlay {
+        padding: 15px;
+        align-items: flex-start;
+        overflow-y: auto;
+    }
+
+    .step-card {
+        width: 100%;
+        max-width: 100%;
+        padding: 22px;
+        border-radius: 18px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    input,
+    textarea,
+    .btn-primary {
+        font-size: 16px;
+    }
+
+    .navbar {
+        height: auto;
+        padding: 12px 15px;
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .nav-left,
+    .nav-title {
+        font-size: 0.95rem;
+        word-break: break-word;
+    }
+
+    .nav-right {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    #live-clock {
+        font-size: 0.75rem;
+        padding: 6px 10px;
+    }
+
+    .main-container {
+        flex-direction: column;
+        overflow: auto;
+    }
+
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 15px;
+        overflow-x: auto;
+    }
+
+    #cat-list {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding: 0;
+        margin: 0;
+        list-style: none;
+    }
+
+    #cat-list li {
+        white-space: nowrap;
+        margin-bottom: 0;
+        flex-shrink: 0;
+        padding: 10px 14px;
+        font-size: 0.85rem;
+    }
+
+    .content-view {
+        padding: 15px;
+    }
+
+    .timer-box {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+        padding: 12px;
+    }
+
+    .timer-text {
+        font-size: 0.8rem;
+        line-height: 1.5;
+    }
+
+    #session-timer {
+        font-size: 1.2rem;
+    }
+
+    .file-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .file-card {
+        padding: 16px 10px;
+        border-radius: 14px;
+    }
+
+    .file-card div {
+        word-break: break-word;
+    }
+
+    .modal-content {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .modal-header {
+        padding: 12px 15px;
+    }
+
+    .logout-btn {
+        font-size: 0.8rem;
+        padding: 8px 12px;
+    }
+
+    iframe#viewer {
+        height: 100%;
+    }
+}
     </style>
 </head>
 <body>
@@ -279,7 +427,12 @@
                 <strong id="modal-title">Document</strong>
                 <button onclick="closeModal()" style="background:var(--danger); color:white; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-weight:bold;">CLOSE</button>
             </div>
-<iframe id="viewer" allow="fullscreen"></iframe>
+<iframe 
+    id="viewer"
+    allow="fullscreen"
+    sandbox="allow-scripts allow-same-origin"
+    style="pointer-events:auto;">
+</iframe>
         </div>
     </div>
 
@@ -482,7 +635,7 @@ activeBlobUrl = url;
 // Open safely inside iframe
 const viewer = document.getElementById('viewer');
 viewer.removeAttribute("sandbox");
-viewer.src = url;
+viewer.src = url + "#toolbar=0&navpanes=0&scrollbar=0";;
 
 document.getElementById('modal-title').textContent = displayName;
 document.getElementById('modal').style.display = "block";
@@ -517,6 +670,16 @@ function logout() {
     masterPassword = null;
     location.reload(); 
 }
+        document.addEventListener("contextmenu", e => e.preventDefault());
+
+        document.onkeydown = function(e) {
+    if (
+        e.ctrlKey &&
+        (e.key === 's' || e.key === 'p' || e.key === 'u')
+    ) {
+        e.preventDefault();
+    }
+};
     </script>
 </body>
 </html>
