@@ -711,8 +711,7 @@ button{
     transition:.3s;
 
     animation:
-        fadeInUp .6s ease,
-        floating 6s ease-in-out infinite;
+        fadeInUp .6s ease;
 
     position:relative;
 
@@ -745,8 +744,12 @@ button{
 
 .file-card:hover{
 
-    transform:
-        translateY(-6px);
+   box-shadow:
+    0 20px 35px rgba(37,99,235,.18);
+
+transform:
+    translateY(-4px)
+    scale(1.02);
 
     border-color:var(--accent);
 
