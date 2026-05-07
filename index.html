@@ -24,6 +24,10 @@
 
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.js"></script>
+    <script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js';
+</script>
 
     <style>
         :root {
@@ -131,6 +135,9 @@
             opacity: 0;
             pointer-events: none;
         }
+        .overlay[style*="display: none"] {
+    pointer-events: none !important;
+}
 
         input,
         textarea {
@@ -565,8 +572,11 @@ function showStep2() {
 
     masterPassword = pass;
 
-    document.getElementById('step1').classList.add('slide-up-exit');
+const step1 = document.getElementById('step1');
 
+step1.classList.add('slide-up-exit');
+step1.style.pointerEvents = "none";
+    
     setTimeout(() => {
         document.getElementById('step1').style.display = 'none';
         document.getElementById('step2').style.display = 'flex';
