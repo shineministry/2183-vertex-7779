@@ -2627,10 +2627,48 @@ async function requestPasskeyAccess(){
 
                 if(!data) return;
 
-                if(
-                data.status ===
-                "approved"
-                ){
+if(
+data.status ===
+"approved"
+){
+
+    /* GET PASSWORD */
+
+    const pass =
+    document.getElementById(
+    'vault-pass'
+    ).value.trim();
+
+    if(!pass){
+
+        alert(
+        "Enter your Access Key first."
+        );
+
+        location.reload();
+
+        return;
+    }
+
+    /* SET MASTER PASSWORD */
+
+    masterPassword =
+    pass;
+
+    sessionStartTime =
+    new Date();
+
+    document.getElementById(
+    'passkey-wait'
+    ).style.display =
+    'none';
+
+    document.getElementById(
+    'step2'
+    ).style.display =
+    'flex';
+
+}
 
                     document.getElementById(
                     'passkey-wait'
