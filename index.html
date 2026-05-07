@@ -17,22 +17,21 @@ href="favicon.png">
 
 <meta http-equiv="Content-Security-Policy"
 content="
-default-src 'self' blob: data:;
-script-src 'self' 'unsafe-inline'
-https://www.google.com/
-https://www.gstatic.com/
-https://firebase.googleapis.com/
-https://firebaseinstallations.googleapis.com/
-https://www.googletagmanager.com/;
-style-src 'self' 'unsafe-inline';
-frame-src 'self' blob: data: https://www.google.com/;
-img-src 'self' data: blob:;
+default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval';
 connect-src 'self'
-https://www.google.com/
-https://www.gstatic.com/
-https://www.googletagmanager.com/;
+https://www.google.com
+https://www.gstatic.com
+https://www.googletagmanager.com
+https://firebase.googleapis.com
+https://firestore.googleapis.com
+https://firebaseinstallations.googleapis.com
+https://www.google-analytics.com;
+img-src * data: blob:;
+style-src 'self' 'unsafe-inline' https:;
+script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;
+font-src 'self' https: data:;
 ">
-
+   
 <style>
 
 /* =========================
@@ -1423,15 +1422,15 @@ function showStep2(){
 
    async function requestPasskeyAccess(){
 
-    const name =
-    document.getElementById(
-    'user-name').value.trim();
+const visitorName =
+document.getElementById(
+'user-name').value.trim();
 
     const purpose =
     document.getElementById(
     'user-purpose').value.trim();
 
-    if(!name){
+    if(!visitorName){
 
         alert(
         "Enter your full name."
@@ -1466,7 +1465,7 @@ function showStep2(){
             ),
 
             {
-                visitorName:name,
+                visitorName:visitorName,
                 purpose:purpose,
                 device:
                 /Mobi|Android/i.test(
@@ -1545,7 +1544,7 @@ function showStep2(){
 
     }
 
-    const name =
+    const visitorName =
     document.getElementById(
     'user-name').value.trim();
 
@@ -1587,6 +1586,8 @@ function showStep2(){
     },700);
 
 }
+   window.requestPasskeyAccess =
+requestPasskeyAccess;
 
 /* =========================
    STEP 2
