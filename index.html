@@ -1,0 +1,2173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>
+SHINEIL KEITH MATHIAS | ONLINE VAULT
+</title>
+
+<link rel="icon"
+type="image/png"
+href="favicon.png">
+
+<meta http-equiv="Content-Security-Policy"
+content="
+default-src 'self' blob: data:;
+script-src 'self' 'unsafe-inline'
+https://www.google.com/
+https://www.gstatic.com/;
+style-src 'self' 'unsafe-inline';
+frame-src 'self' blob: data: https://www.google.com/;
+img-src 'self' data: blob:;
+connect-src 'self'
+https://www.google.com/
+https://www.gstatic.com/;
+">
+
+<style>
+
+/* =========================
+   ROOT
+========================= */
+
+:root{
+
+    --bg:#f1f5f9;
+    --card:#ffffff;
+    --accent:#2563eb;
+    --accent2:#1d4ed8;
+    --text:#0f172a;
+    --muted:#64748b;
+    --border:#e2e8f0;
+    --danger:#ef4444;
+    --shadow:
+        0 10px 25px rgba(0,0,0,.08);
+
+}
+
+/* =========================
+   RESET
+========================= */
+
+*{
+
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+
+}
+
+html,
+body{
+
+    width:100%;
+    height:100%;
+    overflow:hidden;
+
+    background:var(--bg);
+
+    font-family:
+        "Segoe UI",
+        system-ui,
+        sans-serif;
+
+    color:var(--text);
+
+}
+
+/* =========================
+   ANIMATIONS
+========================= */
+
+@keyframes fadeInUp{
+
+    from{
+
+        opacity:0;
+        transform:
+            translateY(30px);
+
+    }
+
+    to{
+
+        opacity:1;
+        transform:
+            translateY(0);
+
+    }
+}
+
+@keyframes modalScale{
+
+    from{
+
+        opacity:0;
+        transform:
+            scale(.92);
+
+    }
+
+    to{
+
+        opacity:1;
+        transform:
+            scale(1);
+
+    }
+}
+
+@keyframes floating{
+
+    0%{
+
+        transform:
+            translateY(0px);
+
+    }
+
+    50%{
+
+        transform:
+            translateY(-6px);
+
+    }
+
+    100%{
+
+        transform:
+            translateY(0px);
+
+    }
+}
+
+@keyframes glowPulse{
+
+    0%{
+
+        box-shadow:
+            0 0 0 rgba(37,99,235,0);
+
+    }
+
+    50%{
+
+        box-shadow:
+            0 0 35px rgba(37,99,235,.18);
+
+    }
+
+    100%{
+
+        box-shadow:
+            0 0 0 rgba(37,99,235,0);
+
+    }
+}
+
+@keyframes shimmer{
+
+    0%{
+
+        background-position:
+            -200% 0;
+
+    }
+
+    100%{
+
+        background-position:
+            200% 0;
+
+    }
+}
+
+/* =========================
+   OVERLAY
+========================= */
+
+.overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    padding:20px;
+
+    overflow-y:auto;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eff6ff,
+            #f8fafc,
+            #ffffff
+        );
+
+    z-index:9999;
+
+    transition:
+        all .8s cubic-bezier(
+            .77,
+            0,
+            .175,
+            1
+        );
+
+}
+
+   #step2{
+
+    overflow-y:auto;
+
+}
+   
+.overlay[style*="display: none"]{
+
+    pointer-events:none !important;
+
+}
+
+.slide-up-exit{
+
+    transform:
+        translateY(-100%);
+
+    opacity:0;
+
+    pointer-events:none;
+
+}
+
+/* =========================
+   CARD
+========================= */
+
+.step-card{
+
+    width:100%;
+
+    max-width:760px;
+
+    max-height:90vh;
+
+    overflow-y:auto;
+
+    background:rgba(255,255,255,.96);
+
+    backdrop-filter:blur(18px);
+
+    border:
+        1px solid rgba(255,255,255,.4);
+
+    border-radius:28px;
+
+    padding:40px;
+
+    box-shadow:var(--shadow);
+
+    text-align:center;
+
+    animation:
+        fadeInUp .8s ease,
+        glowPulse 5s infinite;
+
+}
+
+.step-card::-webkit-scrollbar{
+
+    width:8px;
+
+}
+
+.step-card::-webkit-scrollbar-thumb{
+
+    background:#cbd5e1;
+
+    border-radius:10px;
+
+}
+
+/* =========================
+   TITLES
+========================= */
+
+.main-logo{
+
+    font-size:55px;
+
+    margin-bottom:15px;
+
+    animation:
+        floating 5s ease-in-out infinite;
+
+}
+
+h1{
+
+    font-size:2rem;
+
+    margin-bottom:8px;
+
+    color:var(--accent);
+
+}
+
+h2{
+
+    margin-bottom:10px;
+
+    color:var(--text);
+
+}
+
+.subtitle{
+
+    color:var(--muted);
+
+    margin-bottom:28px;
+
+    line-height:1.6;
+
+}
+
+/* =========================
+   INPUTS
+========================= */
+
+input,
+textarea{
+
+    width:100%;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:16px;
+
+    padding:15px;
+
+    margin-bottom:16px;
+
+    background:white;
+
+    font-size:15px;
+
+    transition:.3s;
+
+}
+
+input:focus,
+textarea:focus{
+
+    outline:none;
+
+    border-color:var(--accent);
+
+    box-shadow:
+        0 0 0 5px rgba(37,99,235,.12);
+
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+button{
+
+    touch-action:manipulation;
+
+}
+
+.btn-primary{
+
+    width:100%;
+
+    border:none;
+
+    border-radius:16px;
+
+    padding:15px;
+
+    font-weight:800;
+
+    letter-spacing:.4px;
+
+    color:white;
+
+    cursor:pointer;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--accent),
+            var(--accent2)
+        );
+
+    transition:.25s;
+
+    box-shadow:
+        0 10px 25px rgba(37,99,235,.2);
+
+}
+
+.btn-primary:hover{
+
+    transform:
+        translateY(-2px);
+
+}
+
+.btn-primary:active{
+
+    transform:
+        scale(.98);
+
+}
+
+/* =========================
+   LEGAL BOX
+========================= */
+
+.legal-box{
+
+    background:#f8fafc;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:18px;
+
+    padding:22px;
+
+    text-align:left;
+
+    line-height:1.8;
+
+    font-size:.9rem;
+
+    color:#334155;
+
+    margin-bottom:20px;
+
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+
+#vault-dashboard{
+
+    display:none;
+
+    flex-direction:column;
+
+    height:100vh;
+
+}
+
+/* =========================
+   NAVBAR
+========================= */
+
+.navbar{
+
+    height:72px;
+
+    background:
+        rgba(255,255,255,.88);
+
+    backdrop-filter:blur(12px);
+
+    border-bottom:
+        1px solid var(--border);
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:0 35px;
+
+}
+
+.nav-left{
+
+    font-weight:900;
+
+    color:var(--accent);
+
+    letter-spacing:.4px;
+
+}
+
+.nav-right{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
+}
+
+#live-clock{
+
+    font-family:monospace;
+
+    background:#eff6ff;
+
+    color:var(--accent);
+
+    padding:7px 14px;
+
+    border-radius:10px;
+
+    font-weight:bold;
+
+}
+
+.logout-btn{
+
+    border:none;
+
+    background:var(--danger);
+
+    color:white;
+
+    padding:10px 16px;
+
+    border-radius:10px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+}
+
+/* =========================
+   MAIN
+========================= */
+
+.main-container{
+
+    flex:1;
+
+    display:flex;
+
+    overflow:hidden;
+
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar{
+
+    width:270px;
+
+    background:white;
+
+    border-right:
+        1px solid var(--border);
+
+    padding:25px 18px;
+
+    overflow-y:auto;
+
+}
+
+#cat-list{
+
+    list-style:none;
+
+}
+
+#cat-list li{
+
+    padding:14px 16px;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    margin-bottom:10px;
+
+    color:var(--muted);
+
+    font-weight:700;
+
+    transition:.25s;
+
+}
+
+#cat-list li:hover,
+#cat-list li.active{
+
+    background:#eff6ff;
+
+    color:var(--accent);
+
+    transform:
+        translateX(4px);
+
+}
+
+/* =========================
+   CONTENT
+========================= */
+
+.content-view{
+
+    flex:1;
+
+    overflow-y:auto;
+
+    padding:35px;
+
+}
+
+/* =========================
+   TIMER
+========================= */
+
+.timer-box{
+
+    background:#fffbeb;
+
+    border:
+        1px solid #fde68a;
+
+    border-radius:16px;
+
+    padding:16px 20px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:28px;
+
+}
+
+.timer-text{
+
+    color:#92400e;
+
+    font-weight:600;
+
+}
+
+#session-timer{
+
+    font-weight:900;
+
+    color:#b45309;
+
+}
+
+/* =========================
+   FILE GRID
+========================= */
+
+.file-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(190px,1fr)
+        );
+
+    gap:22px;
+
+}
+
+.file-card{
+
+    background:white;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:20px;
+
+    padding:24px;
+
+    text-align:center;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+    animation:
+        fadeInUp .6s ease;
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+.file-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    background:
+        linear-gradient(
+            120deg,
+            transparent,
+            rgba(255,255,255,.6),
+            transparent
+        );
+
+    background-size:200% 100%;
+
+    animation:
+        shimmer 3s linear infinite;
+
+}
+
+.file-card:hover{
+
+   box-shadow:
+    0 20px 35px rgba(37,99,235,.18);
+
+transform:
+    translateY(-4px)
+    scale(1.02);
+
+    border-color:var(--accent);
+
+    box-shadow:
+        0 15px 30px rgba(37,99,235,.12);
+
+}
+
+/* =========================
+   MODAL
+========================= */
+
+.modal{
+
+    display:none;
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+        rgba(15,23,42,.75);
+
+    backdrop-filter:blur(8px);
+
+    z-index:10001;
+
+}
+
+.modal-content{
+
+    width:92%;
+
+    height:92%;
+
+    margin:1.5% auto;
+
+    background:white;
+
+    border-radius:24px;
+
+    overflow:hidden;
+
+    display:flex;
+
+    flex-direction:column;
+
+    animation:
+        modalScale .35s ease;
+
+}
+
+.modal-header{
+
+    padding:15px 22px;
+
+    background:#f8fafc;
+
+    border-bottom:
+        1px solid var(--border);
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+#viewer{
+
+    width:100%;
+
+    height:100%;
+
+    border:none;
+
+    background:#111827;
+
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media screen and (max-width:768px){
+
+    html,
+    body{
+
+        overflow:auto;
+
+    }
+
+    .overlay{
+
+        align-items:flex-start;
+
+    }
+
+    .step-card{
+
+        padding:24px;
+
+        border-radius:22px;
+
+        margin-top:20px;
+
+        margin-bottom:20px;
+
+    }
+
+    .navbar{
+
+        height:auto;
+
+        padding:12px;
+
+        flex-direction:column;
+
+        gap:10px;
+
+        text-align:center;
+
+    }
+
+    .main-container{
+
+        flex-direction:column;
+
+    }
+
+    .sidebar{
+
+        width:100%;
+
+        overflow-x:auto;
+
+        border-right:none;
+
+        border-bottom:
+            1px solid var(--border);
+
+    }
+
+    #cat-list{
+
+        display:flex;
+
+        gap:10px;
+
+    }
+
+    #cat-list li{
+
+        white-space:nowrap;
+
+        margin-bottom:0;
+
+    }
+
+    .content-view{
+
+        padding:16px;
+
+    }
+
+    .file-grid{
+
+        grid-template-columns:
+            repeat(2,1fr);
+
+        gap:14px;
+
+    }
+
+    .modal-content{
+
+        width:100%;
+
+        height:100%;
+
+        margin:0;
+
+        border-radius:0;
+
+    }
+
+}
+
+   @keyframes dashboardEnter {
+
+    0% {
+
+        opacity: 0;
+
+        transform:
+            scale(1.04)
+            translateY(20px);
+
+        filter: blur(10px);
+
+    }
+
+    100% {
+
+        opacity: 1;
+
+        transform:
+            scale(1)
+            translateY(0);
+
+        filter: blur(0);
+
+    }
+}
+
+.dashboard-enter {
+
+    animation:
+        dashboardEnter 1s
+        cubic-bezier(.22,1,.36,1);
+
+}
+
+   body{
+
+    user-select:none;
+    -webkit-user-select:none;
+
+}
+
+.watermark{
+
+    position:fixed;
+
+    inset:0;
+
+    display:none;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:42px;
+
+    font-weight:900;
+
+    letter-spacing:3px;
+
+    color:#000;
+
+    opacity:.05;
+
+    transform:rotate(-32deg);
+
+    pointer-events:none;
+
+    z-index:10002;
+
+    text-align:center;
+
+    user-select:none;
+
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- =========================
+     STEP 1
+========================= -->
+
+<div id="step1" class="overlay">
+
+    <div class="step-card">
+
+        <div class="main-logo">
+            🔐
+        </div>
+
+        <h1>
+            Secure Online Vault
+        </h1>
+
+        <div class="subtitle">
+
+            Protected Digital Archive<br>
+            Identity Verification Required
+
+        </div>
+
+        <input
+        type="text"
+        id="user-name"
+        placeholder="Enter Full Name">
+
+        <textarea
+        id="user-purpose"
+        rows="3"
+        placeholder="Purpose of Access"></textarea>
+
+        <input
+        type="password"
+        id="vault-pass"
+        placeholder="Enter Access Key">
+
+        <button
+        class="btn-primary"
+        onclick="showStep2()">
+
+            CONTINUE SECURELY
+
+        </button>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     STEP 2
+========================= -->
+
+<div id="step2"
+class="overlay"
+style="display:none;">
+
+    <div class="step-card">
+
+        <h2>
+            Legal Declaration
+        </h2>
+
+        <div class="legal-box">
+
+            This secure vault contains highly confidential personal, academic, administrative, legal, identification, and sensitive digital records belonging exclusively to <b>Shineil Keith Mathias</b>. These protected materials are maintained within a controlled encrypted environment and are intended solely for authorized and legitimate viewing purposes. Unauthorized attempts to obtain, manipulate, misuse, or reproduce any information from this system are strictly prohibited.
+
+            <br><br>
+
+            By proceeding further into this protected environment, you acknowledge and agree that all documents, certificates, records, scans, archives, and related contents remain the personal and intellectual property of the owner. Any unauthorized screenshotting, downloading, copying, forwarding, extraction, recording, public distribution, cloud uploading, social media sharing, or third-party disclosure may constitute a breach of privacy, confidentiality obligations, and applicable legal protections.
+
+            <br><br>
+
+            You further confirm that your request for access is genuine, lawful, and made in good faith. You understand that this vault system may maintain temporary access logs, security monitoring, and session verification mechanisms for protective purposes. Any suspicious activity, unauthorized access attempt, misuse of credentials, or breach of trust may result in immediate termination of access privileges and may lead to further legal, administrative, or disciplinary action wherever applicable.
+
+            <br><br>
+
+            <label style="
+            display:flex;
+            align-items:center;
+            gap:10px;
+            font-weight:700;
+            cursor:pointer;">
+
+                <input
+                type="checkbox"
+                id="terms-tick">
+
+                I fully understand and agree to the above declaration.
+
+            </label>
+
+        </div>
+
+        <button
+        class="btn-primary"
+        onclick="showStep3()">
+
+            SUBMIT DECLARATION
+
+        </button>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     STEP 3
+========================= -->
+
+<div id="step3"
+class="overlay"
+style="display:none;">
+
+    <div class="step-card">
+
+        <h2>
+            Security Verification
+        </h2>
+
+        <div class="subtitle">
+
+            Complete reCAPTCHA verification
+            to continue secure access.
+
+        </div>
+
+        <div
+        class="g-recaptcha"
+        data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+        data-callback="onCaptchaSuccess">
+        </div>
+
+        <div
+        id="loading-msg"
+        style="
+        display:none;
+        margin-top:20px;
+        font-weight:700;
+        color:var(--accent);">
+
+            Authenticating Secure Session...
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     DASHBOARD
+========================= -->
+
+<div id="vault-dashboard">
+
+    <nav class="navbar">
+
+        <div class="nav-left">
+
+            SHINEIL KEITH MATHIAS
+
+        </div>
+
+        <div class="nav-right">
+<button
+onclick="openLogs()"
+style="
+border:none;
+background:var(--accent);
+color:white;
+padding:10px 16px;
+border-radius:10px;
+font-weight:bold;
+cursor:pointer;">
+
+    ACCESS LOGS
+
+</button>
+            <div id="live-clock">
+
+                00:00:00
+
+            </div>
+
+            <button
+            class="logout-btn"
+            onclick="logout()">
+
+                LOGOUT
+
+            </button>
+
+        </div>
+
+    </nav>
+
+    <div class="main-container">
+
+        <!-- SIDEBAR -->
+
+        <aside class="sidebar">
+
+            <ul id="cat-list"></ul>
+
+        </aside>
+
+        <!-- CONTENT -->
+
+        <main class="content-view">
+
+            <div class="timer-box">
+
+                <div class="timer-text">
+
+                    ⚠️ <strong>Security Session:</strong> For your protection, you will be logged out after 1 hour of session time or 2 minutes of inactivity.
+
+                </div>
+
+                <div id="session-timer">
+
+                    60:00
+
+                </div>
+
+            </div>
+
+            <h2 id="cat-title">
+
+                Vault Ready
+
+            </h2>
+
+            <br>
+
+            <div
+            id="file-grid"
+            class="file-grid"></div>
+
+        </main>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     MODAL
+========================= -->
+
+<div id="modal"
+class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <strong id="modal-title">
+
+                Document
+
+            </strong>
+
+            <button
+            onclick="closeModal()"
+            style="
+            border:none;
+            background:var(--danger);
+            color:white;
+            padding:10px 16px;
+            border-radius:10px;
+            font-weight:bold;
+            cursor:pointer;">
+
+                CLOSE
+
+            </button>
+
+        </div>
+
+<iframe
+id="viewer"
+allowfullscreen>
+</iframe>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     SCRIPT
+========================= -->
+
+<script>
+
+let masterPassword = "";
+
+let sessionSeconds = 3600;
+
+let inactivityTimer;
+
+const CORRECT_SALT =
+"UltraSecureSalt987!";
+
+let currentBlobUrl = null;
+
+let sessionStartTime = null;
+
+/* =========================
+   CLOCK
+========================= */
+
+document.addEventListener(
+'DOMContentLoaded',
+()=>{
+
+    updateClock();
+
+    setInterval(
+        updateClock,
+        1000
+    );
+
+});
+
+function updateClock(){
+
+    const now =
+    new Date();
+
+    document.getElementById(
+    'live-clock').textContent =
+
+    now.toLocaleString();
+
+}
+
+/* =========================
+   STEP 1
+========================= */
+
+function showStep2(){
+
+    const name =
+    document.getElementById(
+    'user-name').value.trim();
+
+    const pass =
+    document.getElementById(
+    'vault-pass').value.trim();
+
+    if(!name || !pass){
+
+        alert(
+        "Identification fields and Access Key are required."
+        );
+
+        return;
+    }
+
+    masterPassword = pass;
+   sessionStartTime = new Date();
+
+    const step1 =
+    document.getElementById(
+    'step1');
+
+    step1.style.pointerEvents =
+    "none";
+
+    step1.classList.add(
+    'slide-up-exit');
+
+    setTimeout(()=>{
+
+        step1.style.display =
+        'none';
+
+        document.getElementById(
+        'step2').style.display =
+        'flex';
+
+    },700);
+
+}
+
+/* =========================
+   STEP 2
+========================= */
+
+function showStep3(){
+
+    if(!document.getElementById(
+    'terms-tick').checked){
+
+        alert(
+        "You must agree to the declaration."
+        );
+
+        return;
+    }
+
+    const step2 =
+    document.getElementById(
+    'step2');
+
+    step2.style.pointerEvents =
+    "none";
+
+    step2.classList.add(
+    'slide-up-exit');
+
+    setTimeout(()=>{
+
+        step2.style.display =
+        'none';
+
+        document.getElementById(
+        'step3').style.display =
+        'flex';
+
+    },700);
+
+}
+
+/* =========================
+   CAPTCHA
+========================= */
+
+function onCaptchaSuccess(){
+
+    document.getElementById(
+    'loading-msg').style.display =
+    'block';
+
+    setTimeout(()=>{
+
+        document.getElementById(
+        'step3').classList.add(
+        'slide-up-exit');
+
+        setTimeout(()=>{
+
+            document.getElementById(
+            'step3').style.display =
+            'none';
+
+const dash =
+document.getElementById(
+'vault-dashboard');
+
+dash.style.display = 'flex';
+
+dash.classList.add(
+'dashboard-enter');
+
+            saveAccessLog();
+
+           saveVisitorLog({
+
+    visitorName:
+    document.getElementById(
+    'user-name').value,
+
+    purpose:
+    document.getElementById(
+    'user-purpose').value,
+
+    loginTime:
+    new Date().toLocaleString(),
+
+    device:
+    /Mobi|Android/i.test(
+    navigator.userAgent)
+    ? "Mobile"
+    : "Desktop",
+
+    browser:
+    navigator.userAgent,
+
+    platform:
+    navigator.platform,
+
+    screen:
+    `${screen.width}x${screen.height}`,
+
+    timezone:
+    Intl.DateTimeFormat()
+    .resolvedOptions()
+    .timeZone
+
+});
+           
+            initVault();
+
+            startSessionTimer();
+
+            startInactivityMonitor();
+
+        },700);
+
+    },1200);
+
+}
+
+/* =========================
+   TIMER
+========================= */
+
+function startSessionTimer(){
+
+    const timer =
+    document.getElementById(
+    'session-timer');
+
+    setInterval(()=>{
+
+        sessionSeconds--;
+
+        const mins =
+        Math.floor(
+        sessionSeconds / 60);
+
+        const secs =
+        sessionSeconds % 60;
+
+        timer.textContent =
+        `${mins}:${secs<10?'0':''}${secs}`;
+
+        if(sessionSeconds<=0){
+
+            logout(
+            "Session Expired."
+            );
+
+        }
+
+    },1000);
+
+}
+
+/* =========================
+   INACTIVITY
+========================= */
+
+function startInactivityMonitor(){
+
+    const reset = ()=>{
+
+        clearTimeout(
+        inactivityTimer);
+
+        inactivityTimer =
+        setTimeout(()=>{
+
+            logout(
+            "Logged out due to inactivity."
+            );
+
+        },120000);
+
+    };
+
+    window.onclick = reset;
+
+    window.onmousemove = reset;
+
+    window.onkeydown = reset;
+
+    reset();
+
+}
+
+/* =========================
+   LOGOUT
+========================= */
+
+function logout(message=""){
+
+    if(message){
+
+        alert(message);
+
+    }
+
+    location.reload();
+
+}
+
+/* =========================
+   INIT VAULT
+========================= */
+
+async function initVault(){
+
+    try{
+
+        const res =
+        await fetch(
+        "files.json");
+
+        const data =
+        await res.json();
+
+        const list =
+        document.getElementById(
+        'cat-list');
+
+        list.innerHTML = "";
+
+        Object.keys(data)
+        .forEach(cat=>{
+
+            const li =
+            document.createElement(
+            'li');
+
+            li.textContent =
+            cat;
+
+            li.onclick = ()=>{
+
+                document.querySelectorAll(
+                '#cat-list li')
+                .forEach(el=>
+                el.classList.remove(
+                'active'));
+
+                li.classList.add(
+                'active');
+
+                renderFiles(
+                    data[cat],
+                    cat
+                );
+
+            };
+
+            list.appendChild(
+            li);
+
+        });
+
+    }catch(e){
+
+        console.error(e);
+
+    }
+
+}
+
+/* =========================
+   FILES
+========================= */
+
+function renderFiles(
+files,
+category){
+
+    document.getElementById(
+    'cat-title').textContent =
+    category;
+
+    const grid =
+    document.getElementById(
+    'file-grid');
+
+    grid.innerHTML = "";
+
+    files.forEach(file=>{
+
+        const card =
+        document.createElement(
+        'div');
+
+        card.className =
+        'file-card';
+
+        card.innerHTML = `
+        <div style="
+        font-size:48px;
+        margin-bottom:12px;">
+            📄
+        </div>
+
+        <div style="
+        font-weight:800;
+        line-height:1.5;">
+            ${file.name}
+        </div>
+        `;
+
+        card.onclick = ()=>{
+
+            openSecureFile(
+                "docs/" + file.file,
+                file.name
+            );
+
+        };
+
+        grid.appendChild(
+        card);
+
+    });
+
+}
+
+/* =========================
+   OPEN FILE
+========================= */
+
+async function openSecureFile(
+path,
+displayName){
+
+    try{
+
+        const res =
+        await fetch(path);
+
+        const buffer =
+        await res.arrayBuffer();
+
+        const iv =
+        buffer.slice(0,12);
+
+        const encryptedData =
+        buffer.slice(12);
+
+        const enc =
+        new TextEncoder();
+
+        const keyMaterial =
+        await crypto.subtle.importKey(
+            "raw",
+            enc.encode(masterPassword),
+            {name:"PBKDF2"},
+            false,
+            ["deriveKey"]
+        );
+
+        const key =
+        await crypto.subtle.deriveKey(
+            {
+                name:"PBKDF2",
+                salt:enc.encode(
+                CORRECT_SALT),
+                iterations:250000,
+                hash:"SHA-256"
+            },
+            keyMaterial,
+            {
+                name:"AES-GCM",
+                length:256
+            },
+            false,
+            ["decrypt"]
+        );
+
+        const decrypted =
+        await crypto.subtle.decrypt(
+            {
+                name:"AES-GCM",
+                iv:iv
+            },
+            key,
+            encryptedData
+        );
+
+        const blob =
+        new Blob(
+            [decrypted],
+            {
+                type:"application/pdf"
+            }
+        );
+
+currentBlobUrl =
+URL.createObjectURL(
+blob);
+
+        document.getElementById(
+        'modal-title').textContent =
+        displayName;
+
+       saveVisitorLog({
+
+    visitorName:
+    document.getElementById(
+    'user-name').value,
+
+    accessedFile:
+    displayName,
+
+    accessTime:
+    new Date().toLocaleString()
+
+});
+       
+        document.getElementById(
+        'modal').style.display =
+        'block';
+
+         document.getElementById(
+         'watermark').style.display =
+         'flex';
+
+document.getElementById(
+'viewer').src =
+
+currentBlobUrl +
+"#toolbar=0&navpanes=0&scrollbar=0";
+
+    }catch(e){
+
+        console.error(e);
+
+        alert(
+        "Access Denied: Could not decrypt file."
+        );
+
+    }
+
+}
+
+/* =========================
+   CLOSE MODAL
+========================= */
+
+function closeModal(){
+
+    document.getElementById(
+    'viewer').src = "";
+
+    if(currentBlobUrl){
+
+        URL.revokeObjectURL(
+        currentBlobUrl);
+
+        currentBlobUrl = null;
+    }
+
+    document.getElementById(
+    'modal').style.display =
+    'none';
+
+   document.getElementById(
+'watermark').style.display =
+'none';
+}
+
+/* =========================
+   SECURITY
+========================= */
+
+document.addEventListener(
+"contextmenu",
+e=>e.preventDefault()
+);
+
+document.onkeydown =
+function(e){
+
+    if(
+        e.ctrlKey &&
+        (
+            e.key==='s' ||
+            e.key==='p' ||
+            e.key==='u'
+        )
+    ){
+
+        e.preventDefault();
+
+    }
+
+};
+
+</script>
+
+<!-- =========================
+     RECAPTCHA
+========================= -->
+
+<script
+src="https://www.google.com/recaptcha/api.js"
+defer>
+
+   document.addEventListener(
+"visibilitychange",
+()=>{
+
+    const dash =
+    document.getElementById(
+    'vault-dashboard');
+
+    if(document.hidden){
+
+        dash.style.filter =
+        "blur(18px)";
+
+    }else{
+
+        dash.style.filter =
+        "blur(0px)";
+    }
+
+});
+
+   function saveAccessLog(){
+
+    const logs =
+    JSON.parse(
+    localStorage.getItem(
+    'vaultLogs'
+    ) || '[]');
+
+    const visitorName =
+    document.getElementById(
+    'user-name').value;
+
+    const purpose =
+    document.getElementById(
+    'user-purpose').value;
+
+    const loginTime =
+    new Date().toLocaleString();
+
+    const device =
+    /Mobi|Android/i.test(
+    navigator.userAgent)
+    ? "Mobile"
+    : "Desktop";
+
+    const browser =
+    navigator.userAgent;
+
+    const platform =
+    navigator.platform;
+
+    const screenSize =
+    `${screen.width}x${screen.height}`;
+
+    const timezone =
+    Intl.DateTimeFormat()
+    .resolvedOptions()
+    .timeZone;
+
+    logs.push({
+
+        visitorName,
+        purpose,
+        loginTime,
+        device,
+        browser,
+        platform,
+        screenSize,
+        timezone
+
+    });
+
+    localStorage.setItem(
+    'vaultLogs',
+    JSON.stringify(logs)
+    );
+
+}
+
+      function openLogs(){
+
+    document.getElementById(
+    'logModal').style.display =
+    'block';
+
+    const logs =
+    JSON.parse(
+    localStorage.getItem(
+    'vaultLogs'
+    ) || '[]');
+
+    const body =
+    document.getElementById(
+    'logBody');
+
+    body.innerHTML = "";
+
+    logs.reverse().forEach(log=>{
+
+        body.innerHTML += `
+        <tr>
+
+            <td style="padding:10px;border:1px solid #ddd;">
+                ${log.visitorName}
+            </td>
+
+            <td style="padding:10px;border:1px solid #ddd;">
+                ${log.purpose}
+            </td>
+
+            <td style="padding:10px;border:1px solid #ddd;">
+                ${log.loginTime}
+            </td>
+
+            <td style="padding:10px;border:1px solid #ddd;">
+                ${log.device}
+            </td>
+
+            <td style="padding:10px;border:1px solid #ddd;">
+                ${log.browser}
+            </td>
+
+            <td style="padding:10px;border:1px solid #ddd;">
+                ${log.platform}
+            </td>
+
+        </tr>
+        `;
+    });
+
+}
+
+function closeLogs(){
+
+    document.getElementById(
+    'logModal').style.display =
+    'none';
+
+}
+</script>
+
+   <div
+id="watermark"
+class="watermark">
+
+    AUTHORIZED ACCESS • SHINEIL KEITH MATHIAS
+
+</div>
+
+   <div id="logModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <strong>
+                ACCESS LOGS
+            </strong>
+
+            <button onclick="closeLogs()"
+            style="
+            border:none;
+            background:var(--danger);
+            color:white;
+            padding:10px 16px;
+            border-radius:10px;
+            font-weight:bold;
+            cursor:pointer;">
+
+                CLOSE
+
+            </button>
+
+        </div>
+
+        <div style="
+        padding:25px;
+        overflow:auto;
+        height:100%;
+        background:#f8fafc;">
+
+            <table id="logTable"
+            style="
+            width:100%;
+            border-collapse:collapse;
+            background:white;">
+
+                <thead>
+
+                    <tr style="
+                    background:#eff6ff;">
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Name
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Purpose
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Login Time
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Device
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Browser
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Platform
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="logBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+   <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyBbOd2ZKqiPHTBEMmjBMnxAU_mdwLz7uM0",
+    authDomain: "online-vault-shine-26.firebaseapp.com",
+    projectId: "online-vault-shine-26",
+    storageBucket: "online-vault-shine-26.firebasestorage.app",
+    messagingSenderId: "79788612818",
+    appId: "1:79788612818:web:41cfb16a4b36b1d5bfe10b",
+    measurementId: "G-BJKTZDF25J"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+</body>
+</html>
