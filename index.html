@@ -2663,11 +2663,14 @@ async function requestPasskeyAccess(){
 
     }catch(e){
 
-        console.error(e);
+console.error(
+"PASSKEY ERROR:",
+e
+);
 
-        alert(
-        "Failed to send request."
-        );
+alert(
+e.message
+);
 
         location.reload();
 
