@@ -527,133 +527,6 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
         <div id="viewer"></div>
     </div>
 </div>
-
-<script>
-
-let masterPassword = "";
-let sessionSeconds = 3600;
-let inactivityTimer;
-
-const CORRECT_SALT = "UltraSecureSalt987!";
-
-
-document.addEventListener('DOMContentLoaded', () => {
-    updateLiveClock();
-    setInterval(updateLiveClock, 1000);
-});
-
-function updateLiveClock() {
-
-    const now = new Date();
-
-    const timeStr = now.toLocaleTimeString('en-GB', {
-        hour12: false
-    });
-
-    const dateStr = now.toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-    });
-
-    document.getElementById('live-clock').textContent =
-        `${dateStr} | ${timeStr}`;
-}
-
-function showStep2() {
-
-    const pass = document.getElementById('vault-pass').value;
-    const name = document.getElementById('user-name').value;
-
-    if (!name || !pass) {
-        alert("Identification fields and Access Key are required.");
-        return;
-    }
-
-    masterPassword = pass;
-
-const step1 = document.getElementById('step1');
-
-step1.classList.add('slide-up-exit');
-step1.style.pointerEvents = "none";
-    
-    setTimeout(() => {
-        document.getElementById('step1').style.display = 'none';
-        document.getElementById('step2').style.display = 'flex';
-    }, 600);
-}
-
-function showStep3() {
-
-    const ticked = document.getElementById('terms-tick').checked;
-
-    if (!ticked) {
-        alert("You must agree to the declaration.");
-        return;
-    }
-
-    document.getElementById('step2').classList.add('slide-up-exit');
-
-    setTimeout(() => {
-        document.getElementById('step2').style.display = 'none';
-        document.getElementById('step3').style.display = 'flex';
-    }, 600);
-}
-
-function onCaptchaSuccess() {
-
-    document.getElementById('loading-msg').style.display = 'block';
-
-    setTimeout(() => {
-
-        document.getElementById('step3').classList.add('slide-up-exit');
-
-        setTimeout(() => {
-
-            document.getElementById('step3').style.display = 'none';
-            document.getElementById('vault-dashboard').style.display = 'flex';
-
-            initVault();
-            startSessionCountdown();
-            startInactivityMonitor();
-
-        }, 600);
-
-    }, 1000);
-}
-
-function startSessionCountdown() {
-
-    const timerDisplay = document.getElementById('session-timer');
-
-    setInterval(() => {
-
-        sessionSeconds--;
-
-        let mins = Math.floor(sessionSeconds / 60);
-        let secs = sessionSeconds % 60;
-
-        timerDisplay.textContent =
-            `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-
-        if (sessionSeconds <= 0) {
-            logout("Session Expired.");
-        }
-
-    }, 1000);
-}
-
-function startInactivityMonitor() {
-
-    const reset = () => {
-
-        clearTimeout(inactivityTimer);
-
-        inactivityTimer = setTimeout(() => {
-            logout("Automatic Logout: Inactivity detected.");
-        }, 120000);
-    };
-
     window.onmousemove = reset;
     window.onkeydown = reset;
     window.onclick = reset;
@@ -762,6 +635,272 @@ async function openSecureFile(path, displayName) {
                 salt: enc.encode(CORRECT_SALT),
                 iterations: 250000,
                 hash: "SHA-256"
+<script>
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js';
+
+let masterPassword = "";
+let sessionSeconds = 3600;
+let inactivityTimer;
+
+const CORRECT_SALT = "UltraSecureSalt987!";
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateLiveClock();
+    setInterval(updateLiveClock, 1000);
+});
+
+function updateLiveClock() {
+
+    const now = new Date();
+
+    const timeStr = now.toLocaleTimeString('en-GB', {
+        hour12: false
+    });
+
+    const dateStr = now.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+    });
+
+    document.getElementById('live-clock').textContent =
+        `${dateStr} | ${timeStr}`;
+}
+
+function showStep2() {
+
+    const pass = document.getElementById('vault-pass').value;
+    const name = document.getElementById('user-name').value;
+
+    if (!name || !pass) {
+        alert("Identification fields and Access Key are required.");
+        return;
+    }
+
+    masterPassword = pass;
+
+    const step1 = document.getElementById('step1');
+
+    step1.classList.add('slide-up-exit');
+    step1.style.pointerEvents = "none";
+
+    setTimeout(() => {
+
+        step1.style.display = 'none';
+
+        document.getElementById('step2').style.display = 'flex';
+
+    }, 600);
+}
+
+function showStep3() {
+
+    const ticked = document.getElementById('terms-tick').checked;
+
+    if (!ticked) {
+        alert("You must agree to the declaration.");
+        return;
+    }
+
+    const step2 = document.getElementById('step2');
+
+    step2.classList.add('slide-up-exit');
+    step2.style.pointerEvents = "none";
+
+    setTimeout(() => {
+
+        step2.style.display = 'none';
+
+        document.getElementById('step3').style.display = 'flex';
+
+    }, 600);
+}
+
+function onCaptchaSuccess() {
+
+    document.getElementById('loading-msg').style.display = 'block';
+
+    setTimeout(() => {
+
+        const step3 = document.getElementById('step3');
+
+        step3.classList.add('slide-up-exit');
+        step3.style.pointerEvents = "none";
+
+        setTimeout(() => {
+
+            step3.style.display = 'none';
+
+            document.getElementById('vault-dashboard').style.display = 'flex';
+
+            initVault();
+
+            startSessionCountdown();
+
+            startInactivityMonitor();
+
+        }, 600);
+
+    }, 1000);
+}
+
+function startSessionCountdown() {
+
+    const timerDisplay = document.getElementById('session-timer');
+
+    setInterval(() => {
+
+        sessionSeconds--;
+
+        let mins = Math.floor(sessionSeconds / 60);
+
+        let secs = sessionSeconds % 60;
+
+        timerDisplay.textContent =
+            `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+        if (sessionSeconds <= 0) {
+            logout("Session Expired.");
+        }
+
+    }, 1000);
+}
+
+function startInactivityMonitor() {
+
+    const reset = () => {
+
+        clearTimeout(inactivityTimer);
+
+        inactivityTimer = setTimeout(() => {
+            logout("Automatic Logout: Inactivity detected.");
+        }, 120000);
+    };
+
+    window.onmousemove = reset;
+    window.onkeydown = reset;
+    window.onclick = reset;
+    window.ontouchstart = reset;
+
+    reset();
+}
+
+function logout(message = "") {
+
+    if (message) {
+        alert(message);
+    }
+
+    masterPassword = "";
+
+    location.reload();
+}
+
+async function initVault() {
+
+    try {
+
+        const res = await fetch("files.json");
+
+        const data = await res.json();
+
+        const list = document.getElementById('cat-list');
+
+        list.innerHTML = "";
+
+        Object.keys(data).forEach(cat => {
+
+            const li = document.createElement('li');
+
+            li.textContent = cat;
+
+            li.onclick = () => {
+
+                document.querySelectorAll('#cat-list li')
+                    .forEach(el => el.classList.remove('active'));
+
+                li.classList.add('active');
+
+                renderFileGrid(data[cat], cat);
+            };
+
+            list.appendChild(li);
+        });
+
+    } catch (e) {
+
+        console.error(e);
+
+        alert("Could not load vault data.");
+    }
+}
+
+function renderFileGrid(files, categoryName) {
+
+    document.getElementById('cat-title').textContent = categoryName;
+
+    const grid = document.getElementById('file-grid');
+
+    grid.innerHTML = "";
+
+    files.forEach((file, index) => {
+
+        const card = document.createElement('div');
+
+        card.className = 'file-card';
+
+        card.style.animationDelay = `${index * 0.05}s`;
+
+        card.innerHTML = `
+            <div style="font-size:40px; margin-bottom:12px;">📄</div>
+            <div style="font-weight:600; font-size:0.9rem;">
+                ${file.name}
+            </div>
+        `;
+
+        card.onclick = () =>
+            openSecureFile("docs/" + file.file, file.name);
+
+        grid.appendChild(card);
+    });
+}
+
+async function openSecureFile(path, displayName) {
+
+    try {
+
+        const res = await fetch(path);
+
+        if (!res.ok) {
+            throw new Error("File not found.");
+        }
+
+        const buffer = await res.arrayBuffer();
+
+        console.log("ENC SIZE:", buffer.byteLength);
+
+        const iv = buffer.slice(0, 12);
+
+        const encryptedData = buffer.slice(12);
+
+        const enc = new TextEncoder();
+
+        const keyMaterial = await crypto.subtle.importKey(
+            "raw",
+            enc.encode(masterPassword),
+            { name: "PBKDF2" },
+            false,
+            ["deriveKey"]
+        );
+
+        const key = await crypto.subtle.deriveKey(
+            {
+                name: "PBKDF2",
+                salt: enc.encode(CORRECT_SALT),
+                iterations: 250000,
+                hash: "SHA-256"
             },
             keyMaterial,
             {
@@ -781,15 +920,19 @@ async function openSecureFile(path, displayName) {
             encryptedData
         );
 
-        document.getElementById('modal-title').textContent = displayName;
-        document.getElementById('modal').style.display = 'block';
+        const pdfData = new Uint8Array(decrypted);
 
-        const viewer = document.getElementById('viewer');
+        document.getElementById('modal-title').textContent =
+            displayName;
+
+        document.getElementById('modal').style.display = "block";
+
+        const viewer = document.getElementById("viewer");
 
         viewer.innerHTML = "";
 
         const pdf = await pdfjsLib.getDocument({
-            data: decrypted
+            data: pdfData
         }).promise;
 
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
@@ -800,10 +943,12 @@ async function openSecureFile(path, displayName) {
                 scale: window.innerWidth < 768 ? 1.2 : 1.5
             });
 
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+            const canvas = document.createElement("canvas");
+
+            const ctx = canvas.getContext("2d");
 
             canvas.width = viewport.width;
+
             canvas.height = viewport.height;
 
             await page.render({
@@ -816,7 +961,7 @@ async function openSecureFile(path, displayName) {
 
     } catch (e) {
 
-        console.error(e);
+        console.error("Vault Error:", e);
 
         alert("Access Denied: Could not decrypt file.");
     }
@@ -824,16 +969,17 @@ async function openSecureFile(path, displayName) {
 
 function closeModal() {
 
-    document.getElementById('modal').style.display = 'none';
+    document.getElementById('modal').style.display = "none";
 
     document.getElementById('viewer').innerHTML = "";
 }
 
+document.addEventListener(
+    "contextmenu",
+    e => e.preventDefault()
+);
 
-document.addEventListener("contextmenu", e => e.preventDefault());
-
-
-document.onkeydown = function (e) {
+document.onkeydown = function(e) {
 
     if (
         e.ctrlKey &&
@@ -847,8 +993,365 @@ document.onkeydown = function (e) {
     }
 };
 
-</script>
+            </script><script>
 
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js';
+
+let masterPassword = "";
+let sessionSeconds = 3600;
+let inactivityTimer;
+
+const CORRECT_SALT = "UltraSecureSalt987!";
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateLiveClock();
+    setInterval(updateLiveClock, 1000);
+});
+
+function updateLiveClock() {
+
+    const now = new Date();
+
+    const timeStr = now.toLocaleTimeString('en-GB', {
+        hour12: false
+    });
+
+    const dateStr = now.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+    });
+
+    document.getElementById('live-clock').textContent =
+        `${dateStr} | ${timeStr}`;
+}
+
+function showStep2() {
+
+    const pass = document.getElementById('vault-pass').value;
+    const name = document.getElementById('user-name').value;
+
+    if (!name || !pass) {
+        alert("Identification fields and Access Key are required.");
+        return;
+    }
+
+    masterPassword = pass;
+
+    const step1 = document.getElementById('step1');
+
+    step1.classList.add('slide-up-exit');
+    step1.style.pointerEvents = "none";
+
+    setTimeout(() => {
+
+        step1.style.display = 'none';
+
+        document.getElementById('step2').style.display = 'flex';
+
+    }, 600);
+}
+
+function showStep3() {
+
+    const ticked = document.getElementById('terms-tick').checked;
+
+    if (!ticked) {
+        alert("You must agree to the declaration.");
+        return;
+    }
+
+    const step2 = document.getElementById('step2');
+
+    step2.classList.add('slide-up-exit');
+    step2.style.pointerEvents = "none";
+
+    setTimeout(() => {
+
+        step2.style.display = 'none';
+
+        document.getElementById('step3').style.display = 'flex';
+
+    }, 600);
+}
+
+function onCaptchaSuccess() {
+
+    document.getElementById('loading-msg').style.display = 'block';
+
+    setTimeout(() => {
+
+        const step3 = document.getElementById('step3');
+
+        step3.classList.add('slide-up-exit');
+        step3.style.pointerEvents = "none";
+
+        setTimeout(() => {
+
+            step3.style.display = 'none';
+
+            document.getElementById('vault-dashboard').style.display = 'flex';
+
+            initVault();
+
+            startSessionCountdown();
+
+            startInactivityMonitor();
+
+        }, 600);
+
+    }, 1000);
+}
+
+function startSessionCountdown() {
+
+    const timerDisplay = document.getElementById('session-timer');
+
+    setInterval(() => {
+
+        sessionSeconds--;
+
+        let mins = Math.floor(sessionSeconds / 60);
+
+        let secs = sessionSeconds % 60;
+
+        timerDisplay.textContent =
+            `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+        if (sessionSeconds <= 0) {
+            logout("Session Expired.");
+        }
+
+    }, 1000);
+}
+
+function startInactivityMonitor() {
+
+    const reset = () => {
+
+        clearTimeout(inactivityTimer);
+
+        inactivityTimer = setTimeout(() => {
+            logout("Automatic Logout: Inactivity detected.");
+        }, 120000);
+    };
+
+    window.onmousemove = reset;
+    window.onkeydown = reset;
+    window.onclick = reset;
+    window.ontouchstart = reset;
+
+    reset();
+}
+
+function logout(message = "") {
+
+    if (message) {
+        alert(message);
+    }
+
+    masterPassword = "";
+
+    location.reload();
+}
+
+async function initVault() {
+
+    try {
+
+        const res = await fetch("files.json");
+
+        const data = await res.json();
+
+        const list = document.getElementById('cat-list');
+
+        list.innerHTML = "";
+
+        Object.keys(data).forEach(cat => {
+
+            const li = document.createElement('li');
+
+            li.textContent = cat;
+
+            li.onclick = () => {
+
+                document.querySelectorAll('#cat-list li')
+                    .forEach(el => el.classList.remove('active'));
+
+                li.classList.add('active');
+
+                renderFileGrid(data[cat], cat);
+            };
+
+            list.appendChild(li);
+        });
+
+    } catch (e) {
+
+        console.error(e);
+
+        alert("Could not load vault data.");
+    }
+}
+
+function renderFileGrid(files, categoryName) {
+
+    document.getElementById('cat-title').textContent = categoryName;
+
+    const grid = document.getElementById('file-grid');
+
+    grid.innerHTML = "";
+
+    files.forEach((file, index) => {
+
+        const card = document.createElement('div');
+
+        card.className = 'file-card';
+
+        card.style.animationDelay = `${index * 0.05}s`;
+
+        card.innerHTML = `
+            <div style="font-size:40px; margin-bottom:12px;">📄</div>
+            <div style="font-weight:600; font-size:0.9rem;">
+                ${file.name}
+            </div>
+        `;
+
+        card.onclick = () =>
+            openSecureFile("docs/" + file.file, file.name);
+
+        grid.appendChild(card);
+    });
+}
+
+async function openSecureFile(path, displayName) {
+
+    try {
+
+        const res = await fetch(path);
+
+        if (!res.ok) {
+            throw new Error("File not found.");
+        }
+
+        const buffer = await res.arrayBuffer();
+
+        console.log("ENC SIZE:", buffer.byteLength);
+
+        const iv = buffer.slice(0, 12);
+
+        const encryptedData = buffer.slice(12);
+
+        const enc = new TextEncoder();
+
+        const keyMaterial = await crypto.subtle.importKey(
+            "raw",
+            enc.encode(masterPassword),
+            { name: "PBKDF2" },
+            false,
+            ["deriveKey"]
+        );
+
+        const key = await crypto.subtle.deriveKey(
+            {
+                name: "PBKDF2",
+                salt: enc.encode(CORRECT_SALT),
+                iterations: 250000,
+                hash: "SHA-256"
+            },
+            keyMaterial,
+            {
+                name: "AES-GCM",
+                length: 256
+            },
+            false,
+            ["decrypt"]
+        );
+
+        const decrypted = await crypto.subtle.decrypt(
+            {
+                name: "AES-GCM",
+                iv: iv
+            },
+            key,
+            encryptedData
+        );
+
+        const pdfData = new Uint8Array(decrypted);
+
+        document.getElementById('modal-title').textContent =
+            displayName;
+
+        document.getElementById('modal').style.display = "block";
+
+        const viewer = document.getElementById("viewer");
+
+        viewer.innerHTML = "";
+
+        const pdf = await pdfjsLib.getDocument({
+            data: pdfData
+        }).promise;
+
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+
+            const page = await pdf.getPage(pageNum);
+
+            const viewport = page.getViewport({
+                scale: window.innerWidth < 768 ? 1.2 : 1.5
+            });
+
+            const canvas = document.createElement("canvas");
+
+            const ctx = canvas.getContext("2d");
+
+            canvas.width = viewport.width;
+
+            canvas.height = viewport.height;
+
+            await page.render({
+                canvasContext: ctx,
+                viewport: viewport
+            }).promise;
+
+            viewer.appendChild(canvas);
+        }
+
+    } catch (e) {
+
+        console.error("Vault Error:", e);
+
+        alert("Access Denied: Could not decrypt file.");
+    }
+}
+
+function closeModal() {
+
+    document.getElementById('modal').style.display = "none";
+
+    document.getElementById('viewer').innerHTML = "";
+}
+
+document.addEventListener(
+    "contextmenu",
+    e => e.preventDefault()
+);
+
+document.onkeydown = function(e) {
+
+    if (
+        e.ctrlKey &&
+        (
+            e.key === 's' ||
+            e.key === 'p' ||
+            e.key === 'u'
+        )
+    ) {
+        e.preventDefault();
+    }
+};
+
+    </script>
 </body>
 </html>
 ```
