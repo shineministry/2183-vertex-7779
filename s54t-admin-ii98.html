@@ -1144,5 +1144,73 @@ setTimeout(()=>{
 
 </script>
 
+    <script>
+
+/* DISABLE RIGHT CLICK */
+
+document.addEventListener(
+
+    'contextmenu',
+
+    event => event.preventDefault()
+
+);
+
+/* DISABLE INSPECT SHORTCUTS */
+
+document.addEventListener(
+
+    'keydown',
+
+    function(e){
+
+        /* F12 */
+
+        if(e.key === 'F12'){
+
+            e.preventDefault();
+
+        }
+
+        /* CTRL+SHIFT+I */
+
+        if(
+        e.ctrlKey &&
+        e.shiftKey &&
+        e.key === 'I'
+        ){
+
+            e.preventDefault();
+
+        }
+
+        /* CTRL+SHIFT+J */
+
+        if(
+        e.ctrlKey &&
+        e.shiftKey &&
+        e.key === 'J'
+        ){
+
+            e.preventDefault();
+
+        }
+
+        /* CTRL+U */
+
+        if(
+        e.ctrlKey &&
+        e.key === 'u'
+        ){
+
+            e.preventDefault();
+
+        }
+
+    }
+
+);
+
+</script>
 </body>
 </html>
