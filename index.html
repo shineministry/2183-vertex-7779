@@ -1420,11 +1420,11 @@ function updateClock(){
 
 function showStep2(){
 
-   async function requestPasskeyAccess(){
+async function requestPasskeyAccess(){
 
-const visitorName =
-document.getElementById(
-'user-name').value.trim();
+    const visitorName =
+    document.getElementById(
+    'user-name').value.trim();
 
     const purpose =
     document.getElementById(
@@ -1438,6 +1438,17 @@ document.getElementById(
 
         return;
     }
+
+}
+
+       console.log(
+    "PASSKEY REQUEST SENT"
+    );
+
+}
+
+window.requestPasskeyAccess =
+requestPasskeyAccess;
 
     document.getElementById(
     'step1').style.display =
@@ -1586,8 +1597,6 @@ document.getElementById(
     },700);
 
 }
-   window.requestPasskeyAccess =
-requestPasskeyAccess;
 
 /* =========================
    STEP 2
