@@ -1069,9 +1069,35 @@ transform:
         id="vault-pass"
         placeholder="Enter Access Key">
 
-        <button
-        class="btn-primary"
-        onclick="showStep2()">
+<div style="
+display:flex;
+flex-direction:column;
+gap:12px;">
+
+    <button
+    class="btn-primary"
+    onclick="showStep2()">
+
+        CONTINUE SECURELY
+
+    </button>
+
+    <button
+    onclick="requestPasskeyAccess()"
+    style="
+    border:none;
+    background:#0f172a;
+    color:white;
+    padding:15px;
+    border-radius:16px;
+    font-weight:800;
+    cursor:pointer;">
+
+        REQUEST PASSKEY ACCESS
+
+    </button>
+
+</div>
 
             CONTINUE SECURELY
 
@@ -1181,6 +1207,28 @@ style="display:none;">
 
 </div>
 
+   <div id="passkey-wait"
+class="overlay"
+style="display:none;">
+
+    <div class="step-card">
+
+        <h2>
+            Waiting For Approval
+        </h2>
+
+        <div class="subtitle">
+
+            Your access request has been sent securely.<br><br>
+
+            Waiting for administrator approval...
+
+        </div>
+
+    </div>
+
+</div>
+   
 <!-- =========================
      DASHBOARD
 ========================= -->
@@ -1372,6 +1420,130 @@ function updateClock(){
 ========================= */
 
 function showStep2(){
+
+   async function requestPasskeyAccess(){
+
+    const name =
+    document.getElementById(
+    'user-name').value.trim();
+
+    const purpose =
+    document.getElementById(
+    'user-purpose').value.trim();
+
+    if(!name){
+
+        alert(
+        "Enter your full name."
+        );
+
+        return;
+    }
+
+    document.getElementById(
+    'step1').style.display =
+    'none';
+
+    document.getElementById(
+    'passkey-wait').style.display =
+    'flex';
+
+    const {
+        collection,
+        addDoc,
+        doc,
+        onSnapshot
+    } = window.firestoreFunctions;
+
+    try{
+
+        const requestRef =
+        await addDoc(
+
+            collection(
+                window.db,
+                "accessRequests"
+            ),
+
+            {
+                visitorName:name,
+                purpose:purpose,
+                device:
+                /Mobi|Android/i.test(
+                navigator.userAgent)
+                ? "Mobile"
+                : "Desktop",
+
+                browser:
+                navigator.userAgent,
+
+                status:"pending",
+
+                createdAt:
+                new Date()
+                .toISOString()
+            }
+
+        );
+
+        onSnapshot(
+
+            doc(
+                window.db,
+                "accessRequests",
+                requestRef.id
+            ),
+
+            snapshot=>{
+
+                const data =
+                snapshot.data();
+
+                if(!data) return;
+
+                if(
+                data.status ===
+                "approved"
+                ){
+
+                    document.getElementById(
+                    'passkey-wait').style.display =
+                    'none';
+
+                    document.getElementById(
+                    'step2').style.display =
+                    'flex';
+
+                }
+
+                if(
+                data.status ===
+                "denied"
+                ){
+
+                    alert(
+                    "Access request denied."
+                    );
+
+                    location.reload();
+
+                }
+
+            }
+
+        );
+
+    }catch(e){
+
+        console.error(e);
+
+        alert(
+        "Failed to send request."
+        );
+
+        location.reload();
+
+    }
 
     const name =
     document.getElementById(
@@ -2422,9 +2594,21 @@ class="watermark">
 </div>
 
    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    doc,
+    onSnapshot,
+    updateDoc
+}
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+import { getAnalytics }
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
   // TODO: Add SDKs for Firebase products that you want to use
   // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -2443,6 +2627,16 @@ class="watermark">
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+
+      window.db = db;
+window.firestoreFunctions = {
+    collection,
+    addDoc,
+    doc,
+    onSnapshot,
+    updateDoc
+};
 </script>
 </body>
 </html>
