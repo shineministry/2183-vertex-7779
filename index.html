@@ -1420,150 +1420,17 @@ function updateClock(){
 
 function showStep2(){
 
-async function requestPasskeyAccess(){
-
     const visitorName =
     document.getElementById(
-    'user-name').value.trim();
-
-    const purpose =
-    document.getElementById(
-    'user-purpose').value.trim();
-
-    if(!visitorName){
-
-        alert(
-        "Enter your full name."
-        );
-
-        return;
-    }
-
-}
-
-       console.log(
-    "PASSKEY REQUEST SENT"
-    );
-
-}
-
-window.requestPasskeyAccess =
-requestPasskeyAccess;
-
-    document.getElementById(
-    'step1').style.display =
-    'none';
-
-    document.getElementById(
-    'passkey-wait').style.display =
-    'flex';
-
-    const {
-        collection,
-        addDoc,
-        doc,
-        onSnapshot
-    } = window.firestoreFunctions;
-
-    try{
-
-        const requestRef =
-        await addDoc(
-
-            collection(
-                window.db,
-                "accessRequests"
-            ),
-
-            {
-                visitorName:visitorName,
-                purpose:purpose,
-                device:
-                /Mobi|Android/i.test(
-                navigator.userAgent)
-                ? "Mobile"
-                : "Desktop",
-
-                browser:
-                navigator.userAgent,
-
-                status:"pending",
-
-                createdAt:
-                new Date()
-                .toISOString()
-            }
-
-        );
-
-        onSnapshot(
-
-            doc(
-                window.db,
-                "accessRequests",
-                requestRef.id
-            ),
-
-            snapshot=>{
-
-                const data =
-                snapshot.data();
-
-                if(!data) return;
-
-                if(
-                data.status ===
-                "approved"
-                ){
-
-                    document.getElementById(
-                    'passkey-wait').style.display =
-                    'none';
-
-                    document.getElementById(
-                    'step2').style.display =
-                    'flex';
-
-                }
-
-                if(
-                data.status ===
-                "denied"
-                ){
-
-                    alert(
-                    "Access request denied."
-                    );
-
-                    location.reload();
-
-                }
-
-            }
-
-        );
-
-    }catch(e){
-
-        console.error(e);
-
-        alert(
-        "Failed to send request."
-        );
-
-        location.reload();
-
-    }
-
-    const visitorName =
-    document.getElementById(
-    'user-name').value.trim();
+    'user-name'
+    ).value.trim();
 
     const pass =
     document.getElementById(
-    'vault-pass').value.trim();
+    'vault-pass'
+    ).value.trim();
 
-    if(!name || !pass){
+    if(!visitorName || !pass){
 
         alert(
         "Identification fields and Access Key are required."
@@ -1573,17 +1440,21 @@ requestPasskeyAccess;
     }
 
     masterPassword = pass;
-   sessionStartTime = new Date();
+
+    sessionStartTime =
+    new Date();
 
     const step1 =
     document.getElementById(
-    'step1');
+    'step1'
+    );
 
     step1.style.pointerEvents =
     "none";
 
     step1.classList.add(
-    'slide-up-exit');
+    'slide-up-exit'
+    );
 
     setTimeout(()=>{
 
@@ -1591,7 +1462,8 @@ requestPasskeyAccess;
         'none';
 
         document.getElementById(
-        'step2').style.display =
+        'step2'
+        ).style.display =
         'flex';
 
     },700);
@@ -2604,6 +2476,208 @@ class="watermark">
 </div>
 
    <script type="module">
+
+      function showStep2(){
+
+    const visitorName =
+    document.getElementById(
+    'user-name'
+    ).value.trim();
+
+    const pass =
+    document.getElementById(
+    'vault-pass'
+    ).value.trim();
+
+    if(!visitorName || !pass){
+
+        alert(
+        "Identification fields and Access Key are required."
+        );
+
+        return;
+    }
+
+    masterPassword = pass;
+
+    sessionStartTime =
+    new Date();
+
+    const step1 =
+    document.getElementById(
+    'step1'
+    );
+
+    step1.style.pointerEvents =
+    "none";
+
+    step1.classList.add(
+    'slide-up-exit'
+    );
+
+    setTimeout(()=>{
+
+        step1.style.display =
+        'none';
+
+        document.getElementById(
+        'step2'
+        ).style.display =
+        'flex';
+
+    },700);
+
+}
+
+
+
+/* =========================
+   PASSKEY ACCESS
+========================= */
+
+async function requestPasskeyAccess(){
+
+    const visitorName =
+    document.getElementById(
+    'user-name'
+    ).value.trim();
+
+    const purpose =
+    document.getElementById(
+    'user-purpose'
+    ).value.trim();
+
+    if(!visitorName){
+
+        alert(
+        "Enter your full name."
+        );
+
+        return;
+    }
+
+    document.getElementById(
+    'step1'
+    ).style.display =
+    'none';
+
+    document.getElementById(
+    'passkey-wait'
+    ).style.display =
+    'flex';
+
+    const {
+        collection,
+        addDoc,
+        doc,
+        onSnapshot
+    } = window.firestoreFunctions;
+
+    try{
+
+        const requestRef =
+        await addDoc(
+
+            collection(
+                window.db,
+                "accessRequests"
+            ),
+
+            {
+
+                visitorName:
+                visitorName,
+
+                purpose:
+                purpose,
+
+                device:
+                /Mobi|Android/i.test(
+                navigator.userAgent
+                )
+                ? "Mobile"
+                : "Desktop",
+
+                browser:
+                navigator.userAgent,
+
+                status:
+                "pending",
+
+                createdAt:
+                new Date()
+                .toISOString()
+
+            }
+
+        );
+
+        onSnapshot(
+
+            doc(
+                window.db,
+                "accessRequests",
+                requestRef.id
+            ),
+
+            (snapshot)=>{
+
+                const data =
+                snapshot.data();
+
+                if(!data) return;
+
+                if(
+                data.status ===
+                "approved"
+                ){
+
+                    document.getElementById(
+                    'passkey-wait'
+                    ).style.display =
+                    'none';
+
+                    document.getElementById(
+                    'step2'
+                    ).style.display =
+                    'flex';
+
+                }
+
+                if(
+                data.status ===
+                "denied"
+                ){
+
+                    alert(
+                    "Access request denied."
+                    );
+
+                    location.reload();
+
+                }
+
+            }
+
+        );
+
+    }catch(e){
+
+        console.error(e);
+
+        alert(
+        "Failed to send request."
+        );
+
+        location.reload();
+
+    }
+
+}
+
+window.requestPasskeyAccess =
+requestPasskeyAccess;
+      
 import { initializeApp }
 from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 
