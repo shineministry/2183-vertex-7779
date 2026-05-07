@@ -980,6 +980,47 @@ transform:
         cubic-bezier(.22,1,.36,1);
 
 }
+
+   body{
+
+    user-select:none;
+    -webkit-user-select:none;
+
+}
+
+.watermark{
+
+    position:fixed;
+
+    inset:0;
+
+    display:none;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:42px;
+
+    font-weight:900;
+
+    letter-spacing:3px;
+
+    color:#000;
+
+    opacity:.05;
+
+    transform:rotate(-32deg);
+
+    pointer-events:none;
+
+    z-index:10002;
+
+    text-align:center;
+
+    user-select:none;
+
+}
 </style>
 
 </head>
@@ -1151,7 +1192,20 @@ style="display:none;">
         </div>
 
         <div class="nav-right">
+<button
+onclick="openLogs()"
+style="
+border:none;
+background:var(--accent);
+color:white;
+padding:10px 16px;
+border-radius:10px;
+font-weight:bold;
+cursor:pointer;">
 
+    ACCESS LOGS
+
+</button>
             <div id="live-clock">
 
                 00:00:00
@@ -1276,6 +1330,10 @@ let inactivityTimer;
 const CORRECT_SALT =
 "UltraSecureSalt987!";
 
+let currentBlobUrl = null;
+
+let sessionStartTime = null;
+
 /* =========================
    CLOCK
 ========================= */
@@ -1329,6 +1387,7 @@ function showStep2(){
     }
 
     masterPassword = pass;
+   sessionStartTime = new Date();
 
     const step1 =
     document.getElementById(
@@ -1423,6 +1482,43 @@ dash.style.display = 'flex';
 dash.classList.add(
 'dashboard-enter');
 
+            saveAccessLog();
+
+           saveVisitorLog({
+
+    visitorName:
+    document.getElementById(
+    'user-name').value,
+
+    purpose:
+    document.getElementById(
+    'user-purpose').value,
+
+    loginTime:
+    new Date().toLocaleString(),
+
+    device:
+    /Mobi|Android/i.test(
+    navigator.userAgent)
+    ? "Mobile"
+    : "Desktop",
+
+    browser:
+    navigator.userAgent,
+
+    platform:
+    navigator.platform,
+
+    screen:
+    `${screen.width}x${screen.height}`,
+
+    timezone:
+    Intl.DateTimeFormat()
+    .resolvedOptions()
+    .timeZone
+
+});
+           
             initVault();
 
             startSessionTimer();
@@ -1708,23 +1804,41 @@ displayName){
             }
         );
 
-        const url =
-        URL.createObjectURL(
-        blob);
+currentBlobUrl =
+URL.createObjectURL(
+blob);
 
         document.getElementById(
         'modal-title').textContent =
         displayName;
 
+       saveVisitorLog({
+
+    visitorName:
+    document.getElementById(
+    'user-name').value,
+
+    accessedFile:
+    displayName,
+
+    accessTime:
+    new Date().toLocaleString()
+
+});
+       
         document.getElementById(
         'modal').style.display =
         'block';
 
-        document.getElementById(
-        'viewer').src =
+         document.getElementById(
+         'watermark').style.display =
+         'flex';
 
-        url +
-        "#toolbar=0&navpanes=0&scrollbar=0";
+document.getElementById(
+'viewer').src =
+
+currentBlobUrl +
+"#toolbar=0&navpanes=0&scrollbar=0";
 
     }catch(e){
 
@@ -1747,10 +1861,21 @@ function closeModal(){
     document.getElementById(
     'viewer').src = "";
 
+    if(currentBlobUrl){
+
+        URL.revokeObjectURL(
+        currentBlobUrl);
+
+        currentBlobUrl = null;
+    }
+
     document.getElementById(
     'modal').style.display =
     'none';
 
+   document.getElementById(
+'watermark').style.display =
+'none';
 }
 
 /* =========================
@@ -1789,7 +1914,260 @@ function(e){
 <script
 src="https://www.google.com/recaptcha/api.js"
 defer>
+
+   document.addEventListener(
+"visibilitychange",
+()=>{
+
+    const dash =
+    document.getElementById(
+    'vault-dashboard');
+
+    if(document.hidden){
+
+        dash.style.filter =
+        "blur(18px)";
+
+    }else{
+
+        dash.style.filter =
+        "blur(0px)";
+    }
+
+});
+
+   function saveAccessLog(){
+
+    const logs =
+    JSON.parse(
+    localStorage.getItem(
+    'vaultLogs'
+    ) || '[]');
+
+    const visitorName =
+    document.getElementById(
+    'user-name').value;
+
+    const purpose =
+    document.getElementById(
+    'user-purpose').value;
+
+    const loginTime =
+    new Date().toLocaleString();
+
+    const device =
+    /Mobi|Android/i.test(
+    navigator.userAgent)
+    ? "Mobile"
+    : "Desktop";
+
+    const browser =
+    navigator.userAgent;
+
+    const platform =
+    navigator.platform;
+
+    const screenSize =
+    `${screen.width}x${screen.height}`;
+
+    const timezone =
+    Intl.DateTimeFormat()
+    .resolvedOptions()
+    .timeZone;
+
+    logs.push({
+
+        visitorName,
+        purpose,
+        loginTime,
+        device,
+        browser,
+        platform,
+        screenSize,
+        timezone
+
+    });
+
+    localStorage.setItem(
+    'vaultLogs',
+    JSON.stringify(logs)
+    );
+
+}
+
+      function openLogs(){
+
+    document.getElementById(
+    'logModal').style.display =
+    'block';
+
+    const logs =
+    JSON.parse(
+    localStorage.getItem(
+    'vaultLogs'
+    ) || '[]');
+
+    const body =
+    document.getElementById(
+    'logBody');
+
+    body.innerHTML = "";
+
+    logs.reverse().forEach(log=>{
+
+        body.innerHTML += `
+        <tr>
+
+            <td style="padding:10px;border:1px solid #ddd;">
+                ${log.visitorName}
+            </td>
+
+            <td style="padding:10px;border:1px solid #ddd;">
+                ${log.purpose}
+            </td>
+
+            <td style="padding:10px;border:1px solid #ddd;">
+                ${log.loginTime}
+            </td>
+
+            <td style="padding:10px;border:1px solid #ddd;">
+                ${log.device}
+            </td>
+
+            <td style="padding:10px;border:1px solid #ddd;">
+                ${log.browser}
+            </td>
+
+            <td style="padding:10px;border:1px solid #ddd;">
+                ${log.platform}
+            </td>
+
+        </tr>
+        `;
+    });
+
+}
+
+function closeLogs(){
+
+    document.getElementById(
+    'logModal').style.display =
+    'none';
+
+}
 </script>
 
+   <div
+id="watermark"
+class="watermark">
+
+    AUTHORIZED ACCESS • SHINEIL KEITH MATHIAS
+
+</div>
+
+   <div id="logModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <strong>
+                ACCESS LOGS
+            </strong>
+
+            <button onclick="closeLogs()"
+            style="
+            border:none;
+            background:var(--danger);
+            color:white;
+            padding:10px 16px;
+            border-radius:10px;
+            font-weight:bold;
+            cursor:pointer;">
+
+                CLOSE
+
+            </button>
+
+        </div>
+
+        <div style="
+        padding:25px;
+        overflow:auto;
+        height:100%;
+        background:#f8fafc;">
+
+            <table id="logTable"
+            style="
+            width:100%;
+            border-collapse:collapse;
+            background:white;">
+
+                <thead>
+
+                    <tr style="
+                    background:#eff6ff;">
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Name
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Purpose
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Login Time
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Device
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Browser
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Platform
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="logBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+   <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyBbOd2ZKqiPHTBEMmjBMnxAU_mdwLz7uM0",
+    authDomain: "online-vault-shine-26.firebaseapp.com",
+    projectId: "online-vault-shine-26",
+    storageBucket: "online-vault-shine-26.firebasestorage.app",
+    messagingSenderId: "79788612818",
+    appId: "1:79788612818:web:41cfb16a4b36b1d5bfe10b",
+    measurementId: "G-BJKTZDF25J"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
 </body>
 </html>
