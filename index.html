@@ -356,6 +356,21 @@
         height: 100%;
     }
 }
+        #viewer {
+    overflow-y: auto;
+    height: 100%;
+    background: #525659;
+    padding: 20px;
+}
+
+#viewer canvas {
+    width: 100%;
+    max-width: 900px;
+    display: block;
+    margin: 0 auto 20px auto;
+    background: white;
+    border-radius: 10px;
+}
     </style>
 </head>
 <body>
@@ -427,12 +442,8 @@
                 <strong id="modal-title">Document</strong>
                 <button onclick="closeModal()" style="background:var(--danger); color:white; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-weight:bold;">CLOSE</button>
             </div>
-<iframe 
-    id="viewer"
-    allow="fullscreen"
-    sandbox="allow-scripts allow-same-origin"
-    style="pointer-events:auto;">
-</iframe>
+<div id="viewer"></div>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.js"></script>
         </div>
     </div>
 
@@ -681,6 +692,31 @@ document.onkeydown = function(e) {
         e.preventDefault();
     }
 };
+
+        const pdf = await pdfjsLib.getDocument({ data: decrypted }).promise;
+
+const viewer = document.getElementById("viewer");
+viewer.innerHTML = "";
+
+for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+
+    const page = await pdf.getPage(pageNum);
+
+    const viewport = page.getViewport({ scale: 1.5 });
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await page.render({
+        canvasContext: ctx,
+        viewport: viewport
+    }).promise;
+
+    viewer.appendChild(canvas);
+}
     </script>
 </body>
 </html>
