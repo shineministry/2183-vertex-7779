@@ -1,681 +1,644 @@
-# Updated `index.html` (Corrected & Enhanced)
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shineil Mathias | Secure Vault</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="icon" type="image/png" href="favicon.png">
+<title>Shineil Keith Mathias | Secure Vault</title>
 
-    <meta http-equiv="Content-Security-Policy"
-          content="default-src 'self' blob: data:;
-          script-src 'self' 'unsafe-inline'
-          https://www.google.com/recaptcha/
-          https://www.gstatic.com/
-          https://cdnjs.cloudflare.com/;
-          style-src 'self' 'unsafe-inline';
-          img-src 'self' blob: data:;
-          connect-src 'self'
-          https://www.google.com/recaptcha/
-          https://cdnjs.cloudflare.com/;">
+<link rel="icon" type="image/png" href="favicon.png">
 
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.js"></script>
-    <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js';
-</script>
+<meta http-equiv="Content-Security-Policy"
+content="
+default-src 'self' blob: data:;
+script-src 'self' 'unsafe-inline'
+https://www.google.com/
+https://www.gstatic.com/
+https://cdnjs.cloudflare.com/;
+style-src 'self' 'unsafe-inline';
+frame-src https://www.google.com/;
+img-src 'self' blob: data:;
+connect-src 'self'
+https://www.google.com/
+https://www.gstatic.com/
+https://cdnjs.cloudflare.com/;
+">
 
-    <style>
-        :root {
-            --bg-body: #f8fafc;
-            --bg-card: #ffffff;
-            --accent: #2563eb;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --danger: #ef4444;
-            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-                        0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.js"></script>
 
-        * {
-            box-sizing: border-box;
-        }
+<style>
 
-        body,
-        html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            overflow: hidden;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes modalScale {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        @keyframes slideRight {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #f1f5f9;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: all 0.8s cubic-bezier(0.77, 0, 0.175, 1);
-        }
-
-        .step-card {
-            background: var(--bg-card);
-            padding: 40px;
-            border-radius: 24px;
-            box-shadow: var(--shadow);
-            width: 90%;
-            max-width: 480px;
-            max-height: 90vh;
-            overflow-y: auto;
-            text-align: center;
-            border: 1px solid var(--border);
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        .step-card::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .step-card::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-
-        .slide-up-exit {
-            transform: translateY(-100%);
-            opacity: 0;
-            pointer-events: none;
-        }
-        .overlay[style*="display: none"] {
-    pointer-events: none !important;
+:root{
+    --bg-body:#f8fafc;
+    --bg-card:#ffffff;
+    --accent:#2563eb;
+    --text-main:#1e293b;
+    --text-muted:#64748b;
+    --border:#e2e8f0;
+    --danger:#ef4444;
+    --shadow:0 10px 15px -3px rgba(0,0,0,.1),
+             0 4px 6px -2px rgba(0,0,0,.05);
 }
 
-        input,
-        textarea {
-            width: 100%;
-            padding: 14px;
-            margin-bottom: 15px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            font-size: 14px;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
+*{
+    box-sizing:border-box;
+}
 
-        input:focus,
-        textarea:focus {
-            border-color: var(--accent);
-            outline: none;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-        }
+html,body{
+    margin:0;
+    padding:0;
+    height:100%;
+    overflow:hidden;
+    background:var(--bg-body);
+    color:var(--text-main);
+    font-family:'Segoe UI',sans-serif;
+}
 
-        .btn-primary {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 12px;
-            width: 100%;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
+button{
+    touch-action:manipulation;
+}
 
-        .btn-primary:active {
-            transform: scale(0.98);
-        }
+@keyframes fadeInUp{
+    from{
+        opacity:0;
+        transform:translateY(20px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
 
-        #vault-dashboard {
-            display: none;
-            flex-direction: column;
-            height: 100vh;
-        }
+@keyframes modalScale{
+    from{
+        opacity:0;
+        transform:scale(.95);
+    }
+    to{
+        opacity:1;
+        transform:scale(1);
+    }
+}
 
-        .navbar {
-            background: white;
-            height: 70px;
-            padding: 0 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-        }
+.overlay{
+    position:fixed;
+    inset:0;
+    background:#f1f5f9;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    overflow-y:auto;
+    transition:.7s;
+}
 
-        .nav-left {
-            font-weight: 800;
-            color: var(--accent);
-            font-size: 1.1rem;
-        }
+.overlay[style*="display: none"]{
+    pointer-events:none !important;
+}
 
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
+.step-card{
+    background:var(--bg-card);
+    width:90%;
+    max-width:480px;
+    max-height:90vh;
+    overflow-y:auto;
+    padding:40px;
+    border-radius:24px;
+    box-shadow:var(--shadow);
+    border:1px solid var(--border);
+    text-align:center;
+    animation:fadeInUp .5s ease;
+}
 
-        #live-clock {
-            font-family: 'Courier New', monospace;
-            background: #f1f5f9;
-            padding: 5px 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            color: var(--accent);
-        }
+.step-card::-webkit-scrollbar{
+    width:8px;
+}
 
-        .logout-btn {
-            background: var(--danger);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-        }
+.step-card::-webkit-scrollbar-thumb{
+    background:#cbd5e1;
+    border-radius:10px;
+}
 
-        .main-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
+.slide-up-exit{
+    transform:translateY(-100%);
+    opacity:0;
+    pointer-events:none;
+}
 
-        .sidebar {
-            width: 260px;
-            background: white;
-            border-right: 1px solid var(--border);
-            padding: 30px 20px;
-        }
+input,
+textarea{
+    width:100%;
+    padding:14px;
+    margin-bottom:15px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    font-size:14px;
+}
 
-        #cat-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
+input:focus,
+textarea:focus{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 4px rgba(37,99,235,.1);
+}
 
-        #cat-list li {
-            padding: 12px 16px;
-            margin-bottom: 8px;
-            border-radius: 10px;
-            cursor: pointer;
-            color: var(--text-muted);
-            transition: all 0.3s;
-            font-weight: 500;
-        }
+.btn-primary{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background:var(--accent);
+    color:white;
+    font-weight:700;
+    cursor:pointer;
+}
 
-        #cat-list li:hover,
-        #cat-list li.active {
-            background: #eff6ff;
-            color: var(--accent);
-        }
+.btn-primary:active{
+    transform:scale(.98);
+}
 
-        .content-view {
-            flex: 1;
-            padding: 40px;
-            overflow-y: auto;
-        }
+.g-recaptcha{
+    display:inline-block;
+    margin-top:15px;
+}
 
-        .timer-box {
-            background: #fffbeb;
-            border: 1px solid #fde68a;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+#vault-dashboard{
+    display:none;
+    flex-direction:column;
+    height:100vh;
+}
 
-        .timer-text {
-            font-size: 0.9rem;
-            color: #92400e;
-        }
+.navbar{
+    height:70px;
+    background:white;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 35px;
+}
 
-        #session-timer {
-            font-weight: 800;
-            color: #b45309;
-        }
+.nav-left{
+    font-size:1.1rem;
+    font-weight:800;
+    color:var(--accent);
+}
 
-        .file-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 24px;
-        }
+.nav-right{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
 
-        .file-card {
-            background: white;
-            padding: 24px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            text-align: center;
-            cursor: pointer;
-            transition: 0.3s;
-            animation: fadeInUp 0.5s backwards;
-        }
+#live-clock{
+    font-family:monospace;
+    background:#f1f5f9;
+    padding:6px 12px;
+    border-radius:8px;
+    font-weight:bold;
+    color:var(--accent);
+}
 
-        .file-card:hover {
-            transform: translateY(-6px);
-            border-color: var(--accent);
-        }
+.logout-btn{
+    border:none;
+    background:var(--danger);
+    color:white;
+    padding:8px 15px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+}
 
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.7);
-            z-index: 10001;
-            backdrop-filter: blur(8px);
-        }
+.main-container{
+    flex:1;
+    display:flex;
+    overflow:hidden;
+}
 
-        .modal-content {
-            width: 90%;
-            height: 90%;
-            margin: 2% auto;
-            background: white;
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            animation: modalScale 0.4s ease;
-        }
+.sidebar{
+    width:260px;
+    background:white;
+    border-right:1px solid var(--border);
+    padding:25px 18px;
+    overflow-y:auto;
+}
 
-        .modal-header {
-            padding: 15px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f8fafc;
-            border-bottom: 1px solid var(--border);
-        }
+#cat-list{
+    list-style:none;
+    padding:0;
+    margin:0;
+}
 
-        #viewer {
-            overflow-y: auto;
-            height: 100%;
-            background: #525659;
-            padding: 20px;
-        }
+#cat-list li{
+    padding:12px 16px;
+    border-radius:10px;
+    cursor:pointer;
+    margin-bottom:8px;
+    transition:.3s;
+    color:var(--text-muted);
+    font-weight:600;
+}
 
-        #viewer canvas {
-            width: 100%;
-            max-width: 900px;
-            display: block;
-            margin: 0 auto 20px auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
+#cat-list li:hover,
+#cat-list li.active{
+    background:#eff6ff;
+    color:var(--accent);
+}
 
-        @media screen and (max-width: 768px) {
+.content-view{
+    flex:1;
+    overflow-y:auto;
+    padding:35px;
+}
 
-            body,
-            html {
-                overflow: auto;
-            }
+.timer-box{
+    background:#fffbeb;
+    border:1px solid #fde68a;
+    border-radius:12px;
+    padding:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+}
 
-            .overlay {
-                padding: 15px;
-                align-items: flex-start;
-                overflow-y: auto;
-            }
+.timer-text{
+    color:#92400e;
+    font-size:.9rem;
+}
 
-            .step-card {
-                width: 100%;
-                max-width: 100%;
-                padding: 22px;
-                border-radius: 18px;
-                margin-top: 20px;
-                margin-bottom: 20px;
-            }
+#session-timer{
+    font-weight:800;
+    color:#b45309;
+}
 
-            .navbar {
-                height: auto;
-                padding: 12px 15px;
-                flex-direction: column;
-                gap: 10px;
-            }
+.file-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+    gap:24px;
+}
 
-            .main-container {
-                flex-direction: column;
-            }
+.file-card{
+    background:white;
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:22px;
+    text-align:center;
+    cursor:pointer;
+    transition:.3s;
+}
 
-            .sidebar {
-                width: 100%;
-                overflow-x: auto;
-                padding: 12px;
-            }
+.file-card:hover{
+    transform:translateY(-5px);
+    border-color:var(--accent);
+}
 
-            #cat-list {
-                display: flex;
-                gap: 10px;
-            }
+.modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,.7);
+    z-index:10001;
+    backdrop-filter:blur(8px);
+}
 
-            #cat-list li {
-                white-space: nowrap;
-                margin-bottom: 0;
-            }
+.modal-content{
+    width:90%;
+    height:90%;
+    margin:2% auto;
+    background:white;
+    border-radius:20px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    animation:modalScale .3s ease;
+}
 
-            .content-view {
-                padding: 15px;
-            }
+.modal-header{
+    padding:14px 22px;
+    background:#f8fafc;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
 
-            .file-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-            }
+#viewer{
+    height:100%;
+    overflow-y:auto;
+    background:#525659;
+    padding:20px;
+}
 
-            .modal-content {
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                border-radius: 0;
-            }
+#viewer canvas{
+    width:100%;
+    max-width:900px;
+    display:block;
+    margin:0 auto 20px auto;
+    background:white;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,.2);
+}
 
-            #viewer {
-                padding: 10px;
-            }
-        }
-    </style>
+@media screen and (max-width:768px){
+
+    html,body{
+        overflow:auto;
+    }
+
+    .overlay{
+        align-items:flex-start;
+        padding:15px;
+    }
+
+    .step-card{
+        width:100%;
+        max-width:100%;
+        padding:22px;
+        margin-top:20px;
+        margin-bottom:20px;
+    }
+
+    .navbar{
+        height:auto;
+        padding:12px;
+        flex-direction:column;
+        gap:10px;
+    }
+
+    .main-container{
+        flex-direction:column;
+    }
+
+    .sidebar{
+        width:100%;
+        overflow-x:auto;
+        border-right:none;
+        border-bottom:1px solid var(--border);
+    }
+
+    #cat-list{
+        display:flex;
+        gap:10px;
+    }
+
+    #cat-list li{
+        white-space:nowrap;
+        margin-bottom:0;
+    }
+
+    .content-view{
+        padding:15px;
+    }
+
+    .file-grid{
+        grid-template-columns:repeat(2,1fr);
+        gap:12px;
+    }
+
+    .modal-content{
+        width:100%;
+        height:100%;
+        margin:0;
+        border-radius:0;
+    }
+
+    #viewer{
+        padding:10px;
+    }
+}
+
+</style>
 </head>
+
 <body>
 
 <div id="step1" class="overlay">
+
     <div class="step-card">
-        <div style="font-size:40px; margin-bottom:10px;">🔐</div>
+
+        <div style="font-size:42px;margin-bottom:10px;">🔐</div>
+
         <h2>Identity Verification</h2>
+
         <p>Vault Access Request</p>
 
         <input type="text" id="user-name" placeholder="Full Name">
-        <textarea id="user-purpose" placeholder="Purpose of Access" rows="2"></textarea>
+
+        <textarea id="user-purpose" rows="2" placeholder="Purpose of Access"></textarea>
+
         <input type="password" id="vault-pass" placeholder="Enter Access Key">
 
-        <button class="btn-primary" onclick="showStep2()">CONTINUE</button>
+        <button class="btn-primary" onclick="showStep2()">
+            CONTINUE
+        </button>
+
     </div>
+
 </div>
 
 <div id="step2" class="overlay" style="display:none;">
+
     <div class="step-card">
+
         <h2>Legal Declaration</h2>
 
-        <div style="background:#f8fafc; border:1px solid var(--border); padding:20px; border-radius:16px; text-align:left; font-size:0.85rem; line-height:1.6; margin-bottom:20px;">
+        <div style="
+        background:#f8fafc;
+        border:1px solid var(--border);
+        padding:20px;
+        border-radius:16px;
+        text-align:left;
+        line-height:1.6;
+        font-size:.88rem;
+        margin-bottom:20px;">
+
             This vault contains sensitive personal and professional data.
-            <br><br>
-            <b>Notice:</b>
-            These sensitive data are strictly confidential and must not be shared, disclosed, reproduced, or transmitted in any form without explicit prior permission from <b>Shineil Keith Mathias</b>.
-            Unauthorized access, copying, or distribution is prohibited.
+
             <br><br>
 
-            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:bold;">
+            <b>Notice:</b>
+
+            These sensitive data should not be shared unless explicit permission is granted by <b>Shineil Keith Mathias</b>. Unauthorized distribution, copying, screenshotting, forwarding, extraction, recording, or misuse of any content is strictly prohibited and may result in legal action.
+
+            <br><br>
+
+            <label style="display:flex;align-items:center;gap:10px;font-weight:bold;cursor:pointer;">
+
                 <input type="checkbox" id="terms-tick">
-                I agree to the terms.
+
+                I agree to the declaration.
+
             </label>
+
         </div>
 
-        <button class="btn-primary" onclick="showStep3()">SUBMIT DECLARATION</button>
+        <button class="btn-primary" onclick="showStep3()">
+            SUBMIT DECLARATION
+        </button>
+
     </div>
+
 </div>
 
 <div id="step3" class="overlay" style="display:none;">
+
     <div class="step-card">
-        <h2>Security Check</h2>
+
+        <h2>Security Verification</h2>
 
         <div class="g-recaptcha"
              data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
-             data-callback="onCaptchaSuccess"></div>
+             data-callback="onCaptchaSuccess">
+        </div>
 
         <div id="loading-msg"
-             style="display:none; margin-top:20px; color:var(--accent); font-weight:bold;">
+             style="display:none;margin-top:20px;color:var(--accent);font-weight:bold;">
+
             Authenticating...
+
         </div>
+
     </div>
+
 </div>
 
 <div id="vault-dashboard">
 
     <nav class="navbar">
-        <div class="nav-left">SHINEIL KEITH MATHIAS</div>
+
+        <div class="nav-left">
+            SHINEIL KEITH MATHIAS
+        </div>
 
         <div class="nav-right">
-            <div id="live-clock">00:00:00</div>
-            <button class="logout-btn" onclick="logout()">LOGOUT</button>
+
+            <div id="live-clock">
+                00:00:00
+            </div>
+
+            <button class="logout-btn" onclick="logout()">
+                LOGOUT
+            </button>
+
         </div>
+
     </nav>
 
     <div class="main-container">
 
         <aside class="sidebar">
+
             <ul id="cat-list"></ul>
+
         </aside>
 
         <main class="content-view">
 
             <div class="timer-box">
+
                 <div class="timer-text">
-                    ⚠️ Security Session: Auto logout after inactivity.
+                    ⚠️ Secure Session Active
                 </div>
 
-                <div id="session-timer">60:00</div>
+                <div id="session-timer">
+                    60:00
+                </div>
+
             </div>
 
             <h2 id="cat-title">Vault Ready</h2>
 
             <div id="file-grid" class="file-grid"></div>
+
         </main>
+
     </div>
+
 </div>
 
 <div id="modal" class="modal">
+
     <div class="modal-content">
 
         <div class="modal-header">
-            <strong id="modal-title">Document</strong>
+
+            <strong id="modal-title">
+                Document
+            </strong>
 
             <button onclick="closeModal()"
-                    style="background:var(--danger); color:white; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-weight:bold;">
+            style="
+            border:none;
+            background:var(--danger);
+            color:white;
+            padding:8px 15px;
+            border-radius:8px;
+            cursor:pointer;
+            font-weight:bold;">
+
                 CLOSE
+
             </button>
+
         </div>
 
         <div id="viewer"></div>
+
     </div>
+
 </div>
-    window.onmousemove = reset;
-    window.onkeydown = reset;
-    window.onclick = reset;
 
-    reset();
-}
-
-function logout(message = "") {
-
-    if (message) {
-        alert(message);
-    }
-
-    masterPassword = "";
-    location.reload();
-}
-
-async function initVault() {
-
-    try {
-
-        const res = await fetch("files.json");
-        const data = await res.json();
-
-        const list = document.getElementById('cat-list');
-
-        list.innerHTML = "";
-
-        Object.keys(data).forEach(cat => {
-
-            const li = document.createElement('li');
-
-            li.textContent = cat;
-
-            li.onclick = () => {
-
-                document.querySelectorAll('#cat-list li')
-                    .forEach(el => el.classList.remove('active'));
-
-                li.classList.add('active');
-
-                renderFileGrid(data[cat], cat);
-            };
-
-            list.appendChild(li);
-        });
-
-    } catch (e) {
-
-        console.error(e);
-    }
-}
-
-function renderFileGrid(files, categoryName) {
-
-    document.getElementById('cat-title').textContent = categoryName;
-
-    const grid = document.getElementById('file-grid');
-
-    grid.innerHTML = "";
-
-    files.forEach((file, index) => {
-
-        const card = document.createElement('div');
-
-        card.className = 'file-card';
-        card.style.animationDelay = `${index * 0.05}s`;
-
-        card.innerHTML = `
-            <div style="font-size:40px; margin-bottom:12px;">📄</div>
-            <div style="font-weight:600; font-size:0.9rem;">
-                ${file.name}
-            </div>
-        `;
-
-        card.onclick = () => openSecureFile("docs/" + file.file, file.name);
-
-        grid.appendChild(card);
-    });
-}
-
-async function openSecureFile(path, displayName) {
-
-    try {
-
-        const res = await fetch(path);
-
-        const buffer = await res.arrayBuffer();
-
-        const iv = buffer.slice(0, 12);
-        const encryptedData = buffer.slice(12);
-
-        const enc = new TextEncoder();
-
-        const keyMaterial = await crypto.subtle.importKey(
-            "raw",
-            enc.encode(masterPassword),
-            { name: "PBKDF2" },
-            false,
-            ["deriveKey"]
-        );
-
-        const key = await crypto.subtle.deriveKey(
-            {
-                name: "PBKDF2",
-                salt: enc.encode(CORRECT_SALT),
-                iterations: 250000,
-                hash: "SHA-256"
 <script>
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js';
+window.addEventListener("load", () => {
+
+    if(window['pdfjsLib']){
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js';
+
+    }
+
+});
 
 let masterPassword = "";
+
 let sessionSeconds = 3600;
+
 let inactivityTimer;
 
 const CORRECT_SALT = "UltraSecureSalt987!";
 
 document.addEventListener('DOMContentLoaded', () => {
-    updateLiveClock();
-    setInterval(updateLiveClock, 1000);
+
+    updateClock();
+
+    setInterval(updateClock,1000);
+
 });
 
-function updateLiveClock() {
+function updateClock(){
 
     const now = new Date();
 
-    const timeStr = now.toLocaleTimeString('en-GB', {
-        hour12: false
-    });
-
-    const dateStr = now.toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-    });
-
     document.getElementById('live-clock').textContent =
-        `${dateStr} | ${timeStr}`;
+    now.toLocaleString();
+
 }
 
-function showStep2() {
+function showStep2(){
 
-    const pass = document.getElementById('vault-pass').value;
-    const name = document.getElementById('user-name').value;
+    const pass =
+    document.getElementById('vault-pass').value.trim();
 
-    if (!name || !pass) {
+    const name =
+    document.getElementById('user-name').value.trim();
+
+    if(!name || !pass){
+
         alert("Identification fields and Access Key are required.");
+
         return;
     }
 
@@ -683,675 +646,359 @@ function showStep2() {
 
     const step1 = document.getElementById('step1');
 
-    step1.classList.add('slide-up-exit');
     step1.style.pointerEvents = "none";
 
-    setTimeout(() => {
+    step1.classList.add('slide-up-exit');
 
-        step1.style.display = 'none';
+    setTimeout(()=>{
 
-        document.getElementById('step2').style.display = 'flex';
+        step1.style.display='none';
 
-    }, 600);
+        document.getElementById('step2').style.display='flex';
+
+    },600);
 }
 
-function showStep3() {
+function showStep3(){
 
-    const ticked = document.getElementById('terms-tick').checked;
+    if(!document.getElementById('terms-tick').checked){
 
-    if (!ticked) {
         alert("You must agree to the declaration.");
+
         return;
     }
 
     const step2 = document.getElementById('step2');
 
+    step2.style.pointerEvents="none";
+
     step2.classList.add('slide-up-exit');
-    step2.style.pointerEvents = "none";
 
-    setTimeout(() => {
+    setTimeout(()=>{
 
-        step2.style.display = 'none';
+        step2.style.display='none';
 
-        document.getElementById('step3').style.display = 'flex';
+        document.getElementById('step3').style.display='flex';
 
-    }, 600);
+    },600);
 }
 
-function onCaptchaSuccess() {
+function onCaptchaSuccess(){
 
-    document.getElementById('loading-msg').style.display = 'block';
+    document.getElementById('loading-msg').style.display='block';
 
-    setTimeout(() => {
+    setTimeout(()=>{
 
-        const step3 = document.getElementById('step3');
+        document.getElementById('step3').classList.add('slide-up-exit');
 
-        step3.classList.add('slide-up-exit');
-        step3.style.pointerEvents = "none";
+        setTimeout(()=>{
 
-        setTimeout(() => {
+            document.getElementById('step3').style.display='none';
 
-            step3.style.display = 'none';
-
-            document.getElementById('vault-dashboard').style.display = 'flex';
+            document.getElementById('vault-dashboard').style.display='flex';
 
             initVault();
 
-            startSessionCountdown();
+            startSessionTimer();
 
             startInactivityMonitor();
 
-        }, 600);
+        },600);
 
-    }, 1000);
+    },1000);
 }
 
-function startSessionCountdown() {
+function startSessionTimer(){
 
-    const timerDisplay = document.getElementById('session-timer');
+    const timer =
+    document.getElementById('session-timer');
 
-    setInterval(() => {
+    setInterval(()=>{
 
         sessionSeconds--;
 
-        let mins = Math.floor(sessionSeconds / 60);
+        const mins =
+        Math.floor(sessionSeconds/60);
 
-        let secs = sessionSeconds % 60;
+        const secs =
+        sessionSeconds%60;
 
-        timerDisplay.textContent =
-            `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        timer.textContent =
+        `${mins}:${secs<10?'0':''}${secs}`;
 
-        if (sessionSeconds <= 0) {
+        if(sessionSeconds<=0){
+
             logout("Session Expired.");
+
         }
 
-    }, 1000);
+    },1000);
 }
 
-function startInactivityMonitor() {
+function startInactivityMonitor(){
 
-    const reset = () => {
+    const reset = ()=>{
 
         clearTimeout(inactivityTimer);
 
-        inactivityTimer = setTimeout(() => {
-            logout("Automatic Logout: Inactivity detected.");
-        }, 120000);
+        inactivityTimer = setTimeout(()=>{
+
+            logout("Logged out due to inactivity.");
+
+        },120000);
+
     };
 
+    window.onclick = reset;
     window.onmousemove = reset;
     window.onkeydown = reset;
-    window.onclick = reset;
-    window.ontouchstart = reset;
 
     reset();
 }
 
-function logout(message = "") {
+function logout(message=""){
 
-    if (message) {
+    if(message){
+
         alert(message);
-    }
 
-    masterPassword = "";
+    }
 
     location.reload();
 }
 
-async function initVault() {
+async function initVault(){
 
-    try {
+    try{
 
-        const res = await fetch("files.json");
+        const res =
+        await fetch("files.json");
 
-        const data = await res.json();
+        const data =
+        await res.json();
 
-        const list = document.getElementById('cat-list');
+        const list =
+        document.getElementById('cat-list');
 
-        list.innerHTML = "";
+        list.innerHTML="";
 
-        Object.keys(data).forEach(cat => {
+        Object.keys(data).forEach(cat=>{
 
-            const li = document.createElement('li');
+            const li =
+            document.createElement('li');
 
             li.textContent = cat;
 
-            li.onclick = () => {
+            li.onclick = ()=>{
 
                 document.querySelectorAll('#cat-list li')
-                    .forEach(el => el.classList.remove('active'));
+                .forEach(el=>el.classList.remove('active'));
 
                 li.classList.add('active');
 
-                renderFileGrid(data[cat], cat);
+                renderFiles(data[cat],cat);
+
             };
 
             list.appendChild(li);
+
         });
 
-    } catch (e) {
+    }catch(e){
 
         console.error(e);
 
-        alert("Could not load vault data.");
     }
 }
 
-function renderFileGrid(files, categoryName) {
+function renderFiles(files,category){
 
-    document.getElementById('cat-title').textContent = categoryName;
+    document.getElementById('cat-title').textContent =
+    category;
 
-    const grid = document.getElementById('file-grid');
+    const grid =
+    document.getElementById('file-grid');
 
-    grid.innerHTML = "";
+    grid.innerHTML="";
 
-    files.forEach((file, index) => {
+    files.forEach(file=>{
 
-        const card = document.createElement('div');
+        const card =
+        document.createElement('div');
 
-        card.className = 'file-card';
+        card.className='file-card';
 
-        card.style.animationDelay = `${index * 0.05}s`;
-
-        card.innerHTML = `
-            <div style="font-size:40px; margin-bottom:12px;">📄</div>
-            <div style="font-weight:600; font-size:0.9rem;">
-                ${file.name}
-            </div>
+        card.innerHTML=`
+        <div style="font-size:42px;margin-bottom:12px;">📄</div>
+        <div style="font-weight:700;">
+            ${file.name}
+        </div>
         `;
 
-        card.onclick = () =>
-            openSecureFile("docs/" + file.file, file.name);
+        card.onclick = ()=>{
+
+            openSecureFile(
+                "docs/" + file.file,
+                file.name
+            );
+
+        };
 
         grid.appendChild(card);
+
     });
 }
 
-async function openSecureFile(path, displayName) {
+async function openSecureFile(path,displayName){
 
-    try {
+    try{
 
-        const res = await fetch(path);
+        const res =
+        await fetch(path);
 
-        if (!res.ok) {
-            throw new Error("File not found.");
-        }
+        const buffer =
+        await res.arrayBuffer();
 
-        const buffer = await res.arrayBuffer();
+        console.log(path);
+        console.log(buffer.byteLength);
 
-        console.log("ENC SIZE:", buffer.byteLength);
+        const iv =
+        buffer.slice(0,12);
 
-        const iv = buffer.slice(0, 12);
+        const encryptedData =
+        buffer.slice(12);
 
-        const encryptedData = buffer.slice(12);
+        const enc =
+        new TextEncoder();
 
-        const enc = new TextEncoder();
-
-        const keyMaterial = await crypto.subtle.importKey(
+        const keyMaterial =
+        await crypto.subtle.importKey(
             "raw",
             enc.encode(masterPassword),
-            { name: "PBKDF2" },
+            {name:"PBKDF2"},
             false,
             ["deriveKey"]
         );
 
-        const key = await crypto.subtle.deriveKey(
+        const key =
+        await crypto.subtle.deriveKey(
             {
-                name: "PBKDF2",
-                salt: enc.encode(CORRECT_SALT),
-                iterations: 250000,
-                hash: "SHA-256"
+                name:"PBKDF2",
+                salt:enc.encode(CORRECT_SALT),
+                iterations:250000,
+                hash:"SHA-256"
             },
             keyMaterial,
             {
-                name: "AES-GCM",
-                length: 256
+                name:"AES-GCM",
+                length:256
             },
             false,
             ["decrypt"]
         );
 
-        const decrypted = await crypto.subtle.decrypt(
+        const decryptedBuffer =
+        await crypto.subtle.decrypt(
             {
-                name: "AES-GCM",
-                iv: iv
+                name:"AES-GCM",
+                iv:iv
             },
             key,
             encryptedData
         );
 
-        const pdfData = new Uint8Array(decrypted);
+        const decrypted =
+        new Uint8Array(decryptedBuffer);
 
         document.getElementById('modal-title').textContent =
-            displayName;
+        displayName;
 
-        document.getElementById('modal').style.display = "block";
+        document.getElementById('modal').style.display =
+        'block';
 
-        const viewer = document.getElementById("viewer");
+        const viewer =
+        document.getElementById('viewer');
 
         viewer.innerHTML = "";
 
-        const pdf = await pdfjsLib.getDocument({
-            data: pdfData
+        const pdf =
+        await pdfjsLib.getDocument({
+            data:decrypted
         }).promise;
 
-        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        for(let pageNum=1;
+            pageNum<=pdf.numPages;
+            pageNum++){
 
-            const page = await pdf.getPage(pageNum);
+            const page =
+            await pdf.getPage(pageNum);
 
-            const viewport = page.getViewport({
-                scale: window.innerWidth < 768 ? 1.2 : 1.5
+            const viewport =
+            page.getViewport({
+                scale:window.innerWidth<768 ? 1.2 : 1.5
             });
 
-            const canvas = document.createElement("canvas");
+            const canvas =
+            document.createElement('canvas');
 
-            const ctx = canvas.getContext("2d");
+            const ctx =
+            canvas.getContext('2d');
 
-            canvas.width = viewport.width;
+            canvas.width =
+            viewport.width;
 
-            canvas.height = viewport.height;
+            canvas.height =
+            viewport.height;
 
             await page.render({
-                canvasContext: ctx,
-                viewport: viewport
+                canvasContext:ctx,
+                viewport:viewport
             }).promise;
 
             viewer.appendChild(canvas);
         }
 
-    } catch (e) {
-
-        console.error("Vault Error:", e);
-
-        alert("Access Denied: Could not decrypt file.");
-    }
-}
-
-function closeModal() {
-
-    document.getElementById('modal').style.display = "none";
-
-    document.getElementById('viewer').innerHTML = "";
-}
-
-document.addEventListener(
-    "contextmenu",
-    e => e.preventDefault()
-);
-
-document.onkeydown = function(e) {
-
-    if (
-        e.ctrlKey &&
-        (
-            e.key === 's' ||
-            e.key === 'p' ||
-            e.key === 'u'
-        )
-    ) {
-        e.preventDefault();
-    }
-};
-
-            </script><script>
-
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js';
-
-let masterPassword = "";
-let sessionSeconds = 3600;
-let inactivityTimer;
-
-const CORRECT_SALT = "UltraSecureSalt987!";
-
-document.addEventListener('DOMContentLoaded', () => {
-    updateLiveClock();
-    setInterval(updateLiveClock, 1000);
-});
-
-function updateLiveClock() {
-
-    const now = new Date();
-
-    const timeStr = now.toLocaleTimeString('en-GB', {
-        hour12: false
-    });
-
-    const dateStr = now.toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-    });
-
-    document.getElementById('live-clock').textContent =
-        `${dateStr} | ${timeStr}`;
-}
-
-function showStep2() {
-
-    const pass = document.getElementById('vault-pass').value;
-    const name = document.getElementById('user-name').value;
-
-    if (!name || !pass) {
-        alert("Identification fields and Access Key are required.");
-        return;
-    }
-
-    masterPassword = pass;
-
-    const step1 = document.getElementById('step1');
-
-    step1.classList.add('slide-up-exit');
-    step1.style.pointerEvents = "none";
-
-    setTimeout(() => {
-
-        step1.style.display = 'none';
-
-        document.getElementById('step2').style.display = 'flex';
-
-    }, 600);
-}
-
-function showStep3() {
-
-    const ticked = document.getElementById('terms-tick').checked;
-
-    if (!ticked) {
-        alert("You must agree to the declaration.");
-        return;
-    }
-
-    const step2 = document.getElementById('step2');
-
-    step2.classList.add('slide-up-exit');
-    step2.style.pointerEvents = "none";
-
-    setTimeout(() => {
-
-        step2.style.display = 'none';
-
-        document.getElementById('step3').style.display = 'flex';
-
-    }, 600);
-}
-
-function onCaptchaSuccess() {
-
-    document.getElementById('loading-msg').style.display = 'block';
-
-    setTimeout(() => {
-
-        const step3 = document.getElementById('step3');
-
-        step3.classList.add('slide-up-exit');
-        step3.style.pointerEvents = "none";
-
-        setTimeout(() => {
-
-            step3.style.display = 'none';
-
-            document.getElementById('vault-dashboard').style.display = 'flex';
-
-            initVault();
-
-            startSessionCountdown();
-
-            startInactivityMonitor();
-
-        }, 600);
-
-    }, 1000);
-}
-
-function startSessionCountdown() {
-
-    const timerDisplay = document.getElementById('session-timer');
-
-    setInterval(() => {
-
-        sessionSeconds--;
-
-        let mins = Math.floor(sessionSeconds / 60);
-
-        let secs = sessionSeconds % 60;
-
-        timerDisplay.textContent =
-            `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-
-        if (sessionSeconds <= 0) {
-            logout("Session Expired.");
-        }
-
-    }, 1000);
-}
-
-function startInactivityMonitor() {
-
-    const reset = () => {
-
-        clearTimeout(inactivityTimer);
-
-        inactivityTimer = setTimeout(() => {
-            logout("Automatic Logout: Inactivity detected.");
-        }, 120000);
-    };
-
-    window.onmousemove = reset;
-    window.onkeydown = reset;
-    window.onclick = reset;
-    window.ontouchstart = reset;
-
-    reset();
-}
-
-function logout(message = "") {
-
-    if (message) {
-        alert(message);
-    }
-
-    masterPassword = "";
-
-    location.reload();
-}
-
-async function initVault() {
-
-    try {
-
-        const res = await fetch("files.json");
-
-        const data = await res.json();
-
-        const list = document.getElementById('cat-list');
-
-        list.innerHTML = "";
-
-        Object.keys(data).forEach(cat => {
-
-            const li = document.createElement('li');
-
-            li.textContent = cat;
-
-            li.onclick = () => {
-
-                document.querySelectorAll('#cat-list li')
-                    .forEach(el => el.classList.remove('active'));
-
-                li.classList.add('active');
-
-                renderFileGrid(data[cat], cat);
-            };
-
-            list.appendChild(li);
-        });
-
-    } catch (e) {
+    }catch(e){
 
         console.error(e);
 
-        alert("Could not load vault data.");
-    }
-}
-
-function renderFileGrid(files, categoryName) {
-
-    document.getElementById('cat-title').textContent = categoryName;
-
-    const grid = document.getElementById('file-grid');
-
-    grid.innerHTML = "";
-
-    files.forEach((file, index) => {
-
-        const card = document.createElement('div');
-
-        card.className = 'file-card';
-
-        card.style.animationDelay = `${index * 0.05}s`;
-
-        card.innerHTML = `
-            <div style="font-size:40px; margin-bottom:12px;">📄</div>
-            <div style="font-weight:600; font-size:0.9rem;">
-                ${file.name}
-            </div>
-        `;
-
-        card.onclick = () =>
-            openSecureFile("docs/" + file.file, file.name);
-
-        grid.appendChild(card);
-    });
-}
-
-async function openSecureFile(path, displayName) {
-
-    try {
-
-        const res = await fetch(path);
-
-        if (!res.ok) {
-            throw new Error("File not found.");
-        }
-
-        const buffer = await res.arrayBuffer();
-
-        console.log("ENC SIZE:", buffer.byteLength);
-
-        const iv = buffer.slice(0, 12);
-
-        const encryptedData = buffer.slice(12);
-
-        const enc = new TextEncoder();
-
-        const keyMaterial = await crypto.subtle.importKey(
-            "raw",
-            enc.encode(masterPassword),
-            { name: "PBKDF2" },
-            false,
-            ["deriveKey"]
-        );
-
-        const key = await crypto.subtle.deriveKey(
-            {
-                name: "PBKDF2",
-                salt: enc.encode(CORRECT_SALT),
-                iterations: 250000,
-                hash: "SHA-256"
-            },
-            keyMaterial,
-            {
-                name: "AES-GCM",
-                length: 256
-            },
-            false,
-            ["decrypt"]
-        );
-
-        const decrypted = await crypto.subtle.decrypt(
-            {
-                name: "AES-GCM",
-                iv: iv
-            },
-            key,
-            encryptedData
-        );
-
-        const pdfData = new Uint8Array(decrypted);
-
-        document.getElementById('modal-title').textContent =
-            displayName;
-
-        document.getElementById('modal').style.display = "block";
-
-        const viewer = document.getElementById("viewer");
-
-        viewer.innerHTML = "";
-
-        const pdf = await pdfjsLib.getDocument({
-            data: pdfData
-        }).promise;
-
-        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-
-            const page = await pdf.getPage(pageNum);
-
-            const viewport = page.getViewport({
-                scale: window.innerWidth < 768 ? 1.2 : 1.5
-            });
-
-            const canvas = document.createElement("canvas");
-
-            const ctx = canvas.getContext("2d");
-
-            canvas.width = viewport.width;
-
-            canvas.height = viewport.height;
-
-            await page.render({
-                canvasContext: ctx,
-                viewport: viewport
-            }).promise;
-
-            viewer.appendChild(canvas);
-        }
-
-    } catch (e) {
-
-        console.error("Vault Error:", e);
-
         alert("Access Denied: Could not decrypt file.");
+
     }
 }
 
-function closeModal() {
+function closeModal(){
 
-    document.getElementById('modal').style.display = "none";
+    document.getElementById('modal').style.display='none';
 
-    document.getElementById('viewer').innerHTML = "";
+    document.getElementById('viewer').innerHTML="";
 }
 
 document.addEventListener(
     "contextmenu",
-    e => e.preventDefault()
+    e=>e.preventDefault()
 );
 
-document.onkeydown = function(e) {
+document.onkeydown = function(e){
 
-    if (
+    if(
         e.ctrlKey &&
         (
-            e.key === 's' ||
-            e.key === 'p' ||
-            e.key === 'u'
+            e.key==='s' ||
+            e.key==='p' ||
+            e.key==='u'
         )
-    ) {
+    ){
+
         e.preventDefault();
     }
 };
 
-    </script>
+</script>
+
+<script src="https://www.google.com/recaptcha/api.js" defer></script>
+
 </body>
+</html>
 </html>
 ```
