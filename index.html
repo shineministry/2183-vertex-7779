@@ -635,8 +635,8 @@ activeBlobUrl = url;
 // Open safely inside iframe
 const viewer = document.getElementById('viewer');
 viewer.removeAttribute("sandbox");
-viewer.src = url + "#toolbar=0&navpanes=0&scrollbar=0";;
-
+viewer.src = url + "#toolbar=1&navpanes=0";
+        
 document.getElementById('modal-title').textContent = displayName;
 document.getElementById('modal').style.display = "block";
 
@@ -670,9 +670,10 @@ function logout() {
     masterPassword = null;
     location.reload(); 
 }
-        document.addEventListener("contextmenu", e => e.preventDefault());
+        
+document.addEventListener("contextmenu", e => e.preventDefault());
 
-        document.onkeydown = function(e) {
+document.onkeydown = function(e) {
     if (
         e.ctrlKey &&
         (e.key === 's' || e.key === 'p' || e.key === 'u')
