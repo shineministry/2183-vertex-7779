@@ -1,4 +1,6 @@
 {
+  "HOME": [],
+  
   "Guardian": [
     { "name": "Residence", "file": "a1.enc" },
     { "name": "Anmeldebescheinigung", "file": "a2.enc" },
