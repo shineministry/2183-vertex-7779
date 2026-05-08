@@ -2627,10 +2627,7 @@ async function requestPasskeyAccess(){
 
                 if(!data) return;
 
-if(
-data.status ===
-"approved"
-){
+if (data.status === "approved") {
 
     /* GET PASSWORD */
 
@@ -2639,7 +2636,7 @@ data.status ===
     'vault-pass'
     ).value.trim();
 
-    if(!pass){
+    if (!pass) {
 
         alert(
         "Enter your Access Key first."
@@ -2652,40 +2649,27 @@ data.status ===
 
     /* SET MASTER PASSWORD */
 
-    masterPassword =
-    pass;
+    masterPassword = pass;
 
-    sessionStartTime =
-    new Date();
+    sessionStartTime = new Date();
 
     document.getElementById(
     'passkey-wait'
-    ).style.display =
-    'none';
+    ).style.display = 'none';
 
     document.getElementById(
     'step2'
-    ).style.display =
-    'flex';
-
+    ).style.display = 'flex';
 }
 
-                    document.getElementById(
-                    'passkey-wait'
-                    ).style.display =
-                    'none';
+if (data.status === "denied") {
 
-                    document.getElementById(
-                    'step2'
-                    ).style.display =
-                    'flex';
+    alert(
+    "Access request denied."
+    );
 
-                }
-
-                if(
-                data.status ===
-                "denied"
-                ){
+    location.reload();
+}
 
                     alert(
                     "Access request denied."
