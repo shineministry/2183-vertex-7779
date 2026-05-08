@@ -1761,11 +1761,52 @@ function startInactivityMonitor(){
    LOGOUT
 ========================= */
 
-function logout(message=""){
+async function logout(message=""){
 
     if(message){
 
         alert(message);
+
+    }
+
+    try{
+
+        const {
+            collection,
+            addDoc
+        } = window.firestoreFunctions;
+
+        await addDoc(
+
+            collection(
+                window.db,
+                "visitorLogs"
+            ),
+
+            {
+
+                visitorName:
+                document.getElementById(
+                'user-name'
+                ).value,
+
+                logoutTime:
+                new Date()
+                .toLocaleString(),
+
+                status:
+                "Logged Out"
+
+            }
+
+        );
+
+    }catch(e){
+
+        console.error(
+        "Logout log error:",
+        e
+        );
 
     }
 
