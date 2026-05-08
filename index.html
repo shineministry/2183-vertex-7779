@@ -2629,8 +2629,6 @@ async function requestPasskeyAccess(){
 
 if (data.status === "approved") {
 
-    /* GET PASSWORD */
-
     const pass =
     document.getElementById(
     'vault-pass'
@@ -2646,8 +2644,6 @@ if (data.status === "approved") {
 
         return;
     }
-
-    /* SET MASTER PASSWORD */
 
     masterPassword = pass;
 
@@ -2670,12 +2666,6 @@ if (data.status === "denied") {
 
     location.reload();
 }
-
-                    alert(
-                    "Access request denied."
-                    );
-
-                    location.reload();
 
                 }
 
