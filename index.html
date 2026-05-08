@@ -2629,23 +2629,7 @@ async function requestPasskeyAccess(){
 
 if (data.status === "approved") {
 
-    const pass =
-    document.getElementById(
-    'vault-pass'
-    ).value.trim();
-
-    if (!pass) {
-
-        alert(
-        "Enter your Access Key first."
-        );
-
-        location.reload();
-
-        return;
-    }
-
-    masterPassword = pass;
+    masterPassword = "Mfyi2019wIbSC#Honour";
 
     sessionStartTime = new Date();
 
