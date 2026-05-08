@@ -2247,11 +2247,30 @@ blob);
          'watermark').style.display =
          'flex';
 
+const viewer =
 document.getElementById(
-'viewer').src =
+'viewer'
+);
 
-currentBlobUrl +
-"#toolbar=0&navpanes=0&scrollbar=0";
+if(/Android|iPhone|iPad/i.test(
+navigator.userAgent
+)){
+
+    viewer.removeAttribute(
+    'src'
+    );
+
+    window.open(
+    currentBlobUrl,
+    '_blank'
+    );
+
+}else{
+
+    viewer.src =
+    currentBlobUrl;
+
+}
 
     }catch(e){
 
@@ -2281,6 +2300,18 @@ function closeModal(){
 
         currentBlobUrl = null;
     }
+
+   if(/Android|iPhone|iPad/i.test(
+navigator.userAgent
+)){
+
+    closeModal();
+
+    window.open(
+    currentBlobUrl,
+    '_blank'
+    );
+}
 
     document.getElementById(
     'modal').style.display =
