@@ -21,6 +21,7 @@ default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval';
 connect-src 'self'
 https://www.google.com
 https://www.gstatic.com
+https://ipapi.co
 https://www.googletagmanager.com
 https://firebase.googleapis.com
 https://firestore.googleapis.com
@@ -1589,19 +1590,102 @@ dash.classList.add(
 
 }
 
-   function saveVisitorLog(data){
+   async function saveVisitorLog(data){
 
-    const logs =
-    JSON.parse(
-        localStorage.getItem('visitorLogs') || '[]'
-    );
+    let ip = "Unknown";
 
-    logs.push(data);
+    let location = "Unknown";
 
-    localStorage.setItem(
-        'visitorLogs',
-        JSON.stringify(logs)
-    );
+    try{
+
+        const res =
+        await fetch(
+        "https://ipapi.co/json/"
+        );
+
+        const info =
+        await res.json();
+
+        ip =
+        info.ip || "Unknown";
+
+        location =
+        `${info.city}, ${info.region}, ${info.country_name}`;
+
+    }catch(e){
+
+        console.log(
+        "IP fetch failed",
+        e
+        );
+
+    }
+
+    const {
+        collection,
+        addDoc
+    } = window.firestoreFunctions;
+
+    try{
+
+        await addDoc(
+
+            collection(
+                window.db,
+                "visitorLogs"
+            ),
+
+            {
+
+                visitorName:
+                data.visitorName,
+
+                purpose:
+                data.purpose,
+
+                loginTime:
+                new Date()
+                .toLocaleString(),
+
+                device:
+                /Mobi|Android/i.test(
+                navigator.userAgent
+                )
+                ? "Mobile"
+                : "Desktop",
+
+                browser:
+                navigator.userAgent,
+
+                platform:
+                navigator.platform,
+
+                screen:
+                `${screen.width}x${screen.height}`,
+
+                timezone:
+                Intl.DateTimeFormat()
+                .resolvedOptions()
+                .timeZone,
+
+                ipAddress:
+                ip,
+
+                location:
+                location
+
+            }
+
+        );
+
+    }catch(err){
+
+        console.error(
+        "Firestore log error:",
+        err
+        );
+
+    }
 
 }
    
@@ -2324,56 +2408,97 @@ function(e){
 
 }
 
-      function openLogs(){
+async function openLogs(){
 
     document.getElementById(
-    'logModal').style.display =
+    'logModal'
+    ).style.display =
     'block';
 
-    const logs =
-    JSON.parse(
-    localStorage.getItem(
-    'vaultLogs'
-    ) || '[]');
+    const {
+        collection,
+        getDocs
+    } = window.firestoreFunctions;
 
     const body =
     document.getElementById(
-    'logBody');
+    'logBody'
+    );
 
     body.innerHTML = "";
 
-    logs.reverse().forEach(log=>{
+    try{
 
-        body.innerHTML += `
-        <tr>
+        const snapshot =
+        await getDocs(
 
-            <td style="padding:10px;border:1px solid #ddd;">
-                ${log.visitorName}
-            </td>
+            collection(
+                window.db,
+                "visitorLogs"
+            )
 
-            <td style="padding:10px;border:1px solid #ddd;">
-                ${log.purpose}
-            </td>
+        );
 
-            <td style="padding:10px;border:1px solid #ddd;">
-                ${log.loginTime}
-            </td>
+        snapshot.forEach(doc=>{
 
-            <td style="padding:10px;border:1px solid #ddd;">
-                ${log.device}
-            </td>
+            const log =
+            doc.data();
 
-            <td style="padding:10px;border:1px solid #ddd;">
-                ${log.browser}
-            </td>
+            body.innerHTML += `
 
-            <td style="padding:10px;border:1px solid #ddd;">
-                ${log.platform}
-            </td>
+            <tr>
 
-        </tr>
-        `;
-    });
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.visitorName || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.purpose || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.loginTime || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.device || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.browser || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.platform || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.screen || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.timezone || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.ipAddress || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.location || '-'}
+                </td>
+
+            </tr>
+
+            `;
+
+        });
+
+    }catch(e){
+
+        console.error(e);
+
+    }
 
 }
 
@@ -2461,6 +2586,21 @@ class="watermark">
                             Platform
                         </th>
 
+                       <th style="padding:12px;border:1px solid #ddd;">
+    Screen
+</th>
+
+<th style="padding:12px;border:1px solid #ddd;">
+    Timezone
+</th>
+
+<th style="padding:12px;border:1px solid #ddd;">
+    IP Address
+</th>
+
+<th style="padding:12px;border:1px solid #ddd;">
+    Location
+</th>
                     </tr>
 
                 </thead>
@@ -2682,6 +2822,7 @@ import {
     getFirestore,
     collection,
     addDoc,
+    getDocs,
     doc,
     onSnapshot,
     updateDoc
@@ -2714,6 +2855,7 @@ from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
 window.firestoreFunctions = {
     collection,
     addDoc,
+    getDocs,
     doc,
     onSnapshot,
     updateDoc
