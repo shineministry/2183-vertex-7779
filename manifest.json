@@ -1,0 +1,23 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Shineil : Online Vault",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "Shine Vault",
+  "start_url": "/",
+  "theme_color": "#6257a5",
+  "icons": [
+    {
+      "src": "https://72oe-v2sx.shine-ministry.com/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://72oe-v2sx.shine-ministry.com/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
