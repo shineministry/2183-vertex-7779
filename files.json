@@ -47,14 +47,10 @@
     { "name": "Job of Kevin Mathias - Part 3", "file": "g13.enc" },
     { "name": "RWR and AMS", "file": "g14.enc" },
     { "name": "Job of Kevin Mathias - Part 4", "file": "g15.enc" },
-    { "name": "Accommodation", "file": "g16.enc" },
     { "name": "Job of Kevin Mathias - Part 5", "file": "g17.enc" },
-    { "name": "Documents from Fr. Wolfgang - Part 2", "file": "g18.enc" },
-    { "name": "Documents from Fr. Wolfgang - Part 3", "file": "g19.enc" },
-    { "name": "Admission - Part 2", "file": "g20.enc" },
-    { "name": "Declaration of Liability - Corrected", "file": "g21.enc" },
-    { "name": "Job of Kevin Mathias", "file": "g22.enc" },
-    { "name": "Salary Slips from Fr Wolfgang", "file": "g23.enc" },
-    { "name": "Inquiry regarding School", "file": "g12.enc" }
+    { "name": "School", "file": "g18.enc" },
+    { "name": "Clarification", "file": "g19.enc" },
+    { "name": "Visa - Part 1", "file": "g20.enc" },
+    { "name": "Visa - Part 2", "file": "g21.enc" }
   ]
 }
