@@ -1445,9 +1445,14 @@ async function showStep2(){
         return;
     }
 
-    const snap =
+const {
+    getDoc,
+    doc
+} = window.firestoreFunctions;
+
+const snap =
 await getDoc(
-    doc(db,"vaultConfig","main")
+    doc(window.db,"vaultConfig","main")
 );
 
 const realHash =
@@ -2365,16 +2370,17 @@ function closeModal(){
         currentBlobUrl = null;
     }
 
-   if(/Android|iPhone|iPad/i.test(
+if(/Android|iPhone|iPad/i.test(
 navigator.userAgent
 )){
 
-    closeModal();
+    if(currentBlobUrl){
 
-    window.open(
-    currentBlobUrl,
-    '_blank'
-    );
+        window.open(
+        currentBlobUrl,
+        '_blank'
+        );
+    }
 }
 
     document.getElementById(
@@ -2712,60 +2718,6 @@ class="watermark">
 
    <script type="module">
 
-      function showStep2(){
-
-    const visitorName =
-    document.getElementById(
-    'user-name'
-    ).value.trim();
-
-    const pass =
-    document.getElementById(
-    'vault-pass'
-    ).value.trim();
-
-    if(!visitorName || !pass){
-
-        alert(
-        "Identification fields and Access Key are required."
-        );
-
-        return;
-    }
-
-    masterPassword = pass;
-
-    sessionStartTime =
-    new Date();
-
-    const step1 =
-    document.getElementById(
-    'step1'
-    );
-
-    step1.style.pointerEvents =
-    "none";
-
-    step1.classList.add(
-    'slide-up-exit'
-    );
-
-    setTimeout(()=>{
-
-        step1.style.display =
-        'none';
-
-        document.getElementById(
-        'step2'
-        ).style.display =
-        'flex';
-
-    },700);
-
-}
-
-
-
 /* =========================
    PASSKEY ACCESS
 ========================= */
@@ -2919,11 +2871,13 @@ import {
     getFirestore,
     collection,
     addDoc,
+    getDocs,
+    getDoc,
     doc,
     onSnapshot,
-    updateDoc,
-    getDoc
+    updateDoc
 }
+   
 from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 import { getAnalytics }
@@ -2953,6 +2907,7 @@ window.firestoreFunctions = {
     collection,
     addDoc,
     getDocs,
+    getDoc,
     doc,
     onSnapshot,
     updateDoc
