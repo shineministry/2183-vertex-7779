@@ -1421,7 +1421,7 @@ function updateClock(){
    STEP 1
 ========================= */
 
-function showStep2(){
+async function showStep2(){
 
     const visitorName =
     document.getElementById(
@@ -1442,7 +1442,25 @@ function showStep2(){
         return;
     }
 
-    masterPassword = pass;
+    const snap =
+await getDoc(
+    doc(db,"vaultConfig","main")
+);
+
+const realHash =
+snap.data().passwordHash;
+
+const enteredHash =
+await sha256(pass);
+
+if(enteredHash !== realHash){
+
+    alert("Wrong Access Key");
+
+    return;
+}
+
+masterPassword = pass;
 
     sessionStartTime =
     new Date();
@@ -2898,10 +2916,10 @@ import {
     getFirestore,
     collection,
     addDoc,
-    getDocs,
     doc,
     onSnapshot,
-    updateDoc
+    updateDoc,
+    getDoc
 }
 from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
@@ -2936,6 +2954,29 @@ window.firestoreFunctions = {
     onSnapshot,
     updateDoc
 };
+
+      async function sha256(text){
+
+    const msgBuffer =
+    new TextEncoder().encode(text);
+
+    const hashBuffer =
+    await crypto.subtle.digest(
+        'SHA-256',
+        msgBuffer
+    );
+
+    const hashArray =
+    Array.from(
+        new Uint8Array(hashBuffer)
+    );
+
+    return hashArray
+    .map(b =>
+        b.toString(16).padStart(2,'0')
+    )
+    .join('');
+}
 </script>
 </body>
 </html>
