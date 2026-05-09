@@ -2913,8 +2913,8 @@ window.firestoreFunctions = {
     updateDoc
 };
 
-      async function sha256(text){
-
+window.sha256 = async function(text){
+   
     const msgBuffer =
     new TextEncoder().encode(text);
 
