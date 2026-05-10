@@ -5,31 +5,47 @@
     { "name": "Residence", "file": "a1.enc" },
     { "name": "Anmeldebescheinigung", "file": "a2.enc" },
     { "name": "Meldebescheinigung", "file": "a3.enc" },
-    { "name": "Meldebestätigung", "file": "a4.enc" }
+    { "name": "Meldebestätigung", "file": "a4.enc" },
+    { "name": "Guardian Consent Letter", "file": "a5.enc" },
+    { "name": "Personal ID Card - German", "file": "a6.enc" }
   ],
   "Visa": [
     { "name": "Clarification on Guardian Role", "file": "b1.enc" },
     { "name": "Digital Skills Report", "file": "b2.enc" },
     { "name": "Relationship of Guardian", "file": "b3.enc" },
     { "name": "Cover Letter", "file": "b4.enc" },
-    { "name": "C.V.", "file": "b5.enc" }
+    { "name": "C.V.", "file": "b5.enc" },
+    { "name": "Appointment : Gmail", "file": "b6.enc" }
   ],
   "Finance": [
-    { "name": "Declaration of Liability", "file": "c1.enc" }
+    { "name": "Declaration of Liability", "file": "c1.enc" },
+    { "name": "Bank Statement - October 2025", "file": "c2.enc" },
+    { "name": "Bank Statement - November 2025", "file": "c3.enc" },
+    { "name": "Bank Statement - December 2025", "file": "c6.enc" },
+    { "name": "Bank Statement - January 2026", "file": "c4.enc" },
+    { "name": "Bank Statement - February 2026", "file": "c7.enc" },
+    { "name": "Bank Statement - March 2026", "file": "c5.enc" },
+    { "name": "Salary Slips : October - April", "file": "c8.enc" }
   ],
   "School": [
     { "name": "Letter of Invitation and Acceptance", "file": "d1.enc" },
     { "name": "Proof of Accommodation", "file": "d2.enc" },
     { "name": "Elementary Certificate", "file": "d3.enc" },
     { "name": "Intermediate Certificate", "file": "d4.enc" },
-    { "name": "Elementary Certificate", "file": "d3.enc" },
-    { "name": "Intermediate Certificate", "file": "d4.enc" }
+    { "name": "Rules of the School", "file": "d5.enc" },
+    { "name": "Rules of the Boarding", "file": "d6.enc" },
+    { "name": "Bonafide Certificate", "file": "d7.enc" }
   ],
   "Personal": [
-    { "name": "Pan Card", "file": "e1.enc" }
+    { "name": "Pan Card", "file": "e1.enc" },
+    { "name": "Aadhar Card", "file": "e2.enc" },
+    { "name": "Passport", "file": "e3.enc" },
+    { "name": "Birth Certificate (Transalated)", "file": "e4.enc" },
+    { "name": "Birth Certificate (Original)", "file": "e5.enc" }
   ],
   "Residence": [
-    { "name": "Austria ID Appointment", "file": "f1.enc" }
+    { "name": "Austria ID Appointment", "file": "f1.enc" },
+    { "name": "Meldezettle", "file": "f2.enc" }
   ],
   "Gmail": [
     { "name": "Admission - Part 1", "file": "g1.enc" },
