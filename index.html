@@ -1454,10 +1454,101 @@ function updateClock(){
 
 async function showStep2() {
     // Add this check at the very top
-    if (!window.db || !window.firestoreFunctions) {
-        alert("Security system is still initializing. Please wait a moment.");
-        return;
+if (!window.db || !window.firestoreFunctions) {
+
+    const popup =
+    document.createElement("div");
+
+    popup.innerHTML = `
+
+    <div style="
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,0.65);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:999999;
+        backdrop-filter:blur(8px);
+    ">
+
+        <div style="
+            width:340px;
+            background:#111827;
+            border:1px solid rgba(255,255,255,0.1);
+            border-radius:22px;
+            padding:28px;
+            text-align:center;
+            color:white;
+            font-family:sans-serif;
+            box-shadow:0 0 40px rgba(0,0,0,0.45);
+            animation:fadeIn .25s ease;
+        ">
+
+            <div style="
+                font-size:20px;
+                margin-bottom:14px;
+            ">
+                🔐 Secure Vault
+            </div>
+
+            <div style="
+                font-size:15px;
+                opacity:0.85;
+                line-height:1.6;
+            ">
+                Security system is still initializing.<br>
+                Please wait a moment...
+            </div>
+
+            <div style="
+                margin-top:22px;
+            ">
+                <div style="
+                    width:42px;
+                    height:42px;
+                    border:4px solid rgba(255,255,255,0.15);
+                    border-top-color:white;
+                    border-radius:50%;
+                    margin:auto;
+                    animation:spin 1s linear infinite;
+                "></div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <style>
+
+    @keyframes spin{
+        to{
+            transform:rotate(360deg);
+        }
     }
+
+    @keyframes fadeIn{
+        from{
+            opacity:0;
+            transform:scale(0.95);
+        }
+        to{
+            opacity:1;
+            transform:scale(1);
+        }
+    }
+
+    </style>
+    `;
+
+    document.body.appendChild(popup);
+
+    setTimeout(()=>{
+        popup.remove();
+    },3000);
+
+    return;
+}
     
     const now = Date.now();
 
