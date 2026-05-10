@@ -1,0 +1,3468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+   <meta http-equiv="Cache-Control"
+content="no-store, no-cache, must-revalidate">
+   
+<title>
+SHINEIL KEITH MATHIAS | ONLINE VAULT
+</title>
+
+<link rel="icon"
+type="image/png"
+href="favicon.png">
+
+<meta http-equiv="Content-Security-Policy"
+content="
+default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval';
+connect-src 'self'
+https://www.google.com
+https://www.gstatic.com
+https://ipapi.co
+https://www.googletagmanager.com
+https://firebase.googleapis.com
+https://firestore.googleapis.com
+https://firebaseinstallations.googleapis.com
+https://backend.shinumaths989.workers.dev
+https://www.google-analytics.com;
+img-src * data: blob:;
+style-src 'self' 'unsafe-inline' https:;
+script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;
+font-src 'self' https: data:;
+">
+   
+<style>
+
+/* =========================
+   ROOT
+========================= */
+
+:root{
+
+    --bg:#f1f5f9;
+    --card:#ffffff;
+    --accent:#2563eb;
+    --accent2:#1d4ed8;
+    --text:#0f172a;
+    --muted:#64748b;
+    --border:#e2e8f0;
+    --danger:#ef4444;
+    --shadow:
+        0 10px 25px rgba(0,0,0,.08);
+
+}
+
+/* =========================
+   RESET
+========================= */
+
+*{
+
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+
+}
+
+html,
+body{
+
+    width:100%;
+    height:100%;
+    overflow:hidden;
+
+    background:var(--bg);
+
+    font-family:
+        "Segoe UI",
+        system-ui,
+        sans-serif;
+
+    color:var(--text);
+
+}
+
+/* =========================
+   ANIMATIONS
+========================= */
+
+@keyframes fadeInUp{
+
+    from{
+
+        opacity:0;
+        transform:
+            translateY(30px);
+
+    }
+
+    to{
+
+        opacity:1;
+        transform:
+            translateY(0);
+
+    }
+}
+
+@keyframes modalScale{
+
+    from{
+
+        opacity:0;
+        transform:
+            scale(.92);
+
+    }
+
+    to{
+
+        opacity:1;
+        transform:
+            scale(1);
+
+    }
+}
+
+@keyframes floating{
+
+    0%{
+
+        transform:
+            translateY(0px);
+
+    }
+
+    50%{
+
+        transform:
+            translateY(-6px);
+
+    }
+
+    100%{
+
+        transform:
+            translateY(0px);
+
+    }
+}
+
+@keyframes glowPulse{
+
+    0%{
+
+        box-shadow:
+            0 0 0 rgba(37,99,235,0);
+
+    }
+
+    50%{
+
+        box-shadow:
+            0 0 35px rgba(37,99,235,.18);
+
+    }
+
+    100%{
+
+        box-shadow:
+            0 0 0 rgba(37,99,235,0);
+
+    }
+}
+
+@keyframes shimmer{
+
+    0%{
+
+        background-position:
+            -200% 0;
+
+    }
+
+    100%{
+
+        background-position:
+            200% 0;
+
+    }
+}
+
+/* =========================
+   OVERLAY
+========================= */
+
+.overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    padding:20px;
+
+    overflow-y:auto;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eff6ff,
+            #f8fafc,
+            #ffffff
+        );
+
+    z-index:9999;
+
+    transition:
+        all .8s cubic-bezier(
+            .77,
+            0,
+            .175,
+            1
+        );
+
+}
+
+   #step2{
+
+    overflow-y:auto;
+
+}
+   
+.overlay[style*="display: none"]{
+
+    pointer-events:none !important;
+
+}
+
+.slide-up-exit{
+
+    transform:
+        translateY(-100%);
+
+    opacity:0;
+
+    pointer-events:none;
+
+}
+
+/* =========================
+   CARD
+========================= */
+
+.step-card{
+
+    width:100%;
+
+    max-width:760px;
+
+    max-height:90vh;
+
+    overflow-y:auto;
+
+    background:rgba(255,255,255,.96);
+
+    backdrop-filter:blur(18px);
+
+    border:
+        1px solid rgba(255,255,255,.4);
+
+    border-radius:28px;
+
+    padding:40px;
+
+    box-shadow:var(--shadow);
+
+    text-align:center;
+
+    animation:
+        fadeInUp .8s ease,
+        glowPulse 5s infinite;
+
+}
+
+.step-card::-webkit-scrollbar{
+
+    width:8px;
+
+}
+
+.step-card::-webkit-scrollbar-thumb{
+
+    background:#cbd5e1;
+
+    border-radius:10px;
+
+}
+
+/* =========================
+   TITLES
+========================= */
+
+.main-logo{
+
+    font-size:55px;
+
+    margin-bottom:15px;
+
+    animation:
+        floating 5s ease-in-out infinite;
+
+}
+
+h1{
+
+    font-size:2rem;
+
+    margin-bottom:8px;
+
+    color:var(--accent);
+
+}
+
+h2{
+
+    margin-bottom:10px;
+
+    color:var(--text);
+
+}
+
+.subtitle{
+
+    color:var(--muted);
+
+    margin-bottom:28px;
+
+    line-height:1.6;
+
+}
+
+/* =========================
+   INPUTS
+========================= */
+
+input,
+textarea{
+
+    width:100%;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:16px;
+
+    padding:15px;
+
+    margin-bottom:16px;
+
+    background:white;
+
+    font-size:15px;
+
+    transition:.3s;
+
+}
+
+input:focus,
+textarea:focus{
+
+    outline:none;
+
+    border-color:var(--accent);
+
+    box-shadow:
+        0 0 0 5px rgba(37,99,235,.12);
+
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+button{
+
+    touch-action:manipulation;
+
+}
+
+.btn-primary{
+
+    width:100%;
+
+    border:none;
+
+    border-radius:16px;
+
+    padding:15px;
+
+    font-weight:800;
+
+    letter-spacing:.4px;
+
+    color:white;
+
+    cursor:pointer;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--accent),
+            var(--accent2)
+        );
+
+    transition:.25s;
+
+    box-shadow:
+        0 10px 25px rgba(37,99,235,.2);
+
+}
+
+.btn-primary:hover{
+
+    transform:
+        translateY(-2px);
+
+}
+
+.btn-primary:active{
+
+    transform:
+        scale(.98);
+
+}
+
+/* =========================
+   LEGAL BOX
+========================= */
+
+.legal-box{
+
+    background:#f8fafc;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:18px;
+
+    padding:22px;
+
+    text-align:left;
+
+    line-height:1.8;
+
+    font-size:.9rem;
+
+    color:#334155;
+
+    margin-bottom:20px;
+
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+
+#vault-dashboard{
+
+    display:none;
+
+    flex-direction:column;
+
+    height:100vh;
+
+}
+
+/* =========================
+   NAVBAR
+========================= */
+
+.navbar{
+
+    height:72px;
+
+    background:
+        rgba(255,255,255,.88);
+
+    backdrop-filter:blur(12px);
+
+    border-bottom:
+        1px solid var(--border);
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:0 35px;
+
+}
+
+.nav-left{
+
+    font-weight:900;
+
+    color:var(--accent);
+
+    letter-spacing:.4px;
+
+}
+
+.nav-right{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
+}
+
+#live-clock{
+
+    font-family:monospace;
+
+    background:#eff6ff;
+
+    color:var(--accent);
+
+    padding:7px 14px;
+
+    border-radius:10px;
+
+    font-weight:bold;
+
+}
+
+.logout-btn{
+
+    border:none;
+
+    background:var(--danger);
+
+    color:white;
+
+    padding:10px 16px;
+
+    border-radius:10px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+}
+
+/* =========================
+   MAIN
+========================= */
+
+.main-container{
+
+    flex:1;
+
+    display:flex;
+
+    overflow:hidden;
+
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar{
+
+    width:270px;
+
+    background:white;
+
+    border-right:
+        1px solid var(--border);
+
+    padding:25px 18px;
+
+    overflow-y:auto;
+
+}
+
+#cat-list{
+
+    list-style:none;
+
+}
+
+#cat-list li{
+
+    padding:14px 16px;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    margin-bottom:10px;
+
+    color:var(--muted);
+
+    font-weight:700;
+
+    transition:.25s;
+
+}
+
+#cat-list li:hover,
+#cat-list li.active{
+
+    background:#eff6ff;
+
+    color:var(--accent);
+
+    transform:
+        translateX(4px);
+
+}
+
+/* =========================
+   CONTENT
+========================= */
+
+.content-view{
+
+    flex:1;
+
+    overflow-y:auto;
+
+    padding:35px;
+
+}
+
+/* =========================
+   TIMER
+========================= */
+
+.timer-box{
+
+    background:#fffbeb;
+
+    border:
+        1px solid #fde68a;
+
+    border-radius:16px;
+
+    padding:16px 20px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:28px;
+
+}
+
+.timer-text{
+
+    color:#92400e;
+
+    font-weight:600;
+
+}
+
+#session-timer{
+
+    font-weight:900;
+
+    color:#b45309;
+
+}
+
+/* =========================
+   FILE GRID
+========================= */
+
+.file-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(190px,1fr)
+        );
+
+    gap:22px;
+
+}
+
+.file-card{
+
+    background:white;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:20px;
+
+    padding:24px;
+
+    text-align:center;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+    animation:
+        fadeInUp .6s ease;
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+.file-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    background:
+        linear-gradient(
+            120deg,
+            transparent,
+            rgba(255,255,255,.6),
+            transparent
+        );
+
+    background-size:200% 100%;
+
+    animation:
+        shimmer 3s linear infinite;
+
+}
+
+.file-card:hover{
+
+   box-shadow:
+    0 20px 35px rgba(37,99,235,.18);
+
+transform:
+    translateY(-4px)
+    scale(1.02);
+
+    border-color:var(--accent);
+
+    box-shadow:
+        0 15px 30px rgba(37,99,235,.12);
+
+}
+
+/* =========================
+   MODAL
+========================= */
+
+.modal{
+
+    display:none;
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+        rgba(15,23,42,.75);
+
+    backdrop-filter:blur(8px);
+
+    z-index:10001;
+
+}
+
+.modal-content{
+
+    width:92%;
+
+    height:92%;
+
+    margin:1.5% auto;
+
+    background:white;
+
+    border-radius:24px;
+
+    overflow:hidden;
+
+    display:flex;
+
+    flex-direction:column;
+
+    animation:
+        modalScale .35s ease;
+
+}
+
+.modal-header{
+
+    padding:15px 22px;
+
+    background:#f8fafc;
+
+    border-bottom:
+        1px solid var(--border);
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+#viewer{
+
+    width:100%;
+
+    height:100%;
+
+    border:none;
+
+    background:#111827;
+
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media screen and (max-width:768px){
+
+    html,
+    body{
+
+        overflow:auto;
+
+    }
+
+    .overlay{
+
+        align-items:flex-start;
+
+    }
+
+    .step-card{
+
+        padding:24px;
+
+        border-radius:22px;
+
+        margin-top:20px;
+
+        margin-bottom:20px;
+
+    }
+
+    .navbar{
+
+        height:auto;
+
+        padding:12px;
+
+        flex-direction:column;
+
+        gap:10px;
+
+        text-align:center;
+
+    }
+
+    .main-container{
+
+        flex-direction:column;
+
+    }
+
+    .sidebar{
+
+        width:100%;
+
+        overflow-x:auto;
+
+        border-right:none;
+
+        border-bottom:
+            1px solid var(--border);
+
+    }
+
+    #cat-list{
+
+        display:flex;
+
+        gap:10px;
+
+    }
+
+    #cat-list li{
+
+        white-space:nowrap;
+
+        margin-bottom:0;
+
+    }
+
+    .content-view{
+
+        padding:16px;
+
+    }
+
+    .file-grid{
+
+        grid-template-columns:
+            repeat(2,1fr);
+
+        gap:14px;
+
+    }
+
+    .modal-content{
+
+        width:100%;
+
+        height:100%;
+
+        margin:0;
+
+        border-radius:0;
+
+    }
+
+}
+
+   @keyframes dashboardEnter {
+
+    0% {
+
+        opacity: 0;
+
+        transform:
+            scale(1.04)
+            translateY(20px);
+
+        filter: blur(10px);
+
+    }
+
+    100% {
+
+        opacity: 1;
+
+        transform:
+            scale(1)
+            translateY(0);
+
+        filter: blur(0);
+
+    }
+}
+
+.dashboard-enter {
+
+    animation:
+        dashboardEnter 1s
+        cubic-bezier(.22,1,.36,1);
+
+}
+
+   body{
+
+    user-select:none;
+    -webkit-user-select:none;
+
+}
+
+.watermark{
+
+    position:fixed;
+
+    inset:0;
+
+    display:none;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:42px;
+
+    font-weight:900;
+
+    letter-spacing:3px;
+
+    color:#000;
+
+    opacity:.05;
+
+    transform:rotate(-32deg);
+
+    pointer-events:none;
+
+    z-index:10002;
+
+    text-align:center;
+
+    user-select:none;
+
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- =========================
+     STEP 1
+========================= -->
+
+<div id="step1" class="overlay">
+
+    <div class="step-card">
+
+        <div class="main-logo">
+            🔐
+        </div>
+
+        <h1>
+            Secure Online Vault
+        </h1>
+
+        <div class="subtitle">
+
+            Protected Digital Archive<br>
+            Identity Verification Required
+
+        </div>
+
+        <input
+        type="text"
+        id="user-name"
+        placeholder="Enter Full Name">
+
+        <textarea
+        id="user-purpose"
+        rows="3"
+        placeholder="Purpose of Access"></textarea>
+
+        <input
+        type="password"
+        id="vault-pass"
+        placeholder="Enter Access Key">
+
+<div style="
+display:flex;
+flex-direction:column;
+gap:12px;">
+
+    <button
+    class="btn-primary"
+    onclick="showStep2()">
+
+        CONTINUE SECURELY
+
+    </button>
+
+    <button
+    onclick="requestPasskeyAccess()"
+    style="
+    border:none;
+    background:#0f172a;
+    color:white;
+    padding:15px;
+    border-radius:16px;
+    font-weight:800;
+    cursor:pointer;">
+
+        REQUEST PASSKEY ACCESS
+
+    </button>
+
+</div>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     STEP 2
+========================= -->
+
+<div id="step2"
+class="overlay"
+style="display:none;">
+
+    <div class="step-card">
+
+        <h2>
+            Legal Declaration
+        </h2>
+
+        <div class="legal-box">
+
+            This secure vault contains highly confidential personal, academic, administrative, legal, identification, and sensitive digital records belonging exclusively to <b>Shineil Keith Mathias</b>. These protected materials are maintained within a controlled encrypted environment and are intended solely for authorized and legitimate viewing purposes. Unauthorized attempts to obtain, manipulate, misuse, or reproduce any information from this system are strictly prohibited.
+
+            <br><br>
+
+            By proceeding further into this protected environment, you acknowledge and agree that all documents, certificates, records, scans, archives, and related contents remain the personal and intellectual property of the owner. Any unauthorized screenshotting, downloading, copying, forwarding, extraction, recording, public distribution, cloud uploading, social media sharing, or third-party disclosure may constitute a breach of privacy, confidentiality obligations, and applicable legal protections.
+
+            <br><br>
+
+            You further confirm that your request for access is genuine, lawful, and made in good faith. You understand that this vault system may maintain temporary access logs, security monitoring, and session verification mechanisms for protective purposes. Any suspicious activity, unauthorized access attempt, misuse of credentials, or breach of trust may result in immediate termination of access privileges and may lead to further legal, administrative, or disciplinary action wherever applicable.
+
+            <br><br>
+
+            <label style="
+            display:flex;
+            align-items:center;
+            gap:10px;
+            font-weight:700;
+            cursor:pointer;">
+
+                <input
+                type="checkbox"
+                id="terms-tick">
+
+                I fully understand and agree to the above declaration.
+
+            </label>
+
+        </div>
+
+        <button
+        class="btn-primary"
+        onclick="showStep3()">
+
+            SUBMIT DECLARATION
+
+        </button>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     STEP 3
+========================= -->
+
+<div id="step3"
+class="overlay"
+style="display:none;">
+
+    <div class="step-card">
+
+        <h2>
+            Security Verification
+        </h2>
+
+        <div class="subtitle">
+
+            Complete reCAPTCHA verification
+            to continue secure access.
+
+        </div>
+
+        <div
+        class="g-recaptcha"
+        data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+        data-callback="onCaptchaSuccess">
+        </div>
+
+        <div
+        id="loading-msg"
+        style="
+        display:none;
+        margin-top:20px;
+        font-weight:700;
+        color:var(--accent);">
+
+            Authenticating Secure Session...
+
+        </div>
+
+    </div>
+
+</div>
+
+   <div id="passkey-wait"
+class="overlay"
+style="display:none;">
+
+    <div class="step-card">
+
+        <h2>
+            Waiting For Approval
+        </h2>
+
+        <div class="subtitle">
+
+            Your access request has been sent securely.<br><br>
+
+            Waiting for administrator approval...
+
+        </div>
+
+    </div>
+
+</div>
+   
+<!-- =========================
+     DASHBOARD
+========================= -->
+
+<div id="vault-dashboard">
+
+    <nav class="navbar">
+
+        <div class="nav-left">
+
+            SHINEIL KEITH MATHIAS
+
+        </div>
+
+        <div class="nav-right">
+<button
+onclick="openLogs()"
+style="
+border:none;
+background:var(--accent);
+color:white;
+padding:10px 16px;
+border-radius:10px;
+font-weight:bold;
+cursor:pointer;">
+
+    ACCESS LOGS
+
+</button>
+            <div id="live-clock">
+
+                00:00:00
+
+            </div>
+
+            <button
+            class="logout-btn"
+            onclick="logout()">
+
+                LOGOUT
+
+            </button>
+
+        </div>
+
+    </nav>
+
+    <div class="main-container">
+
+        <!-- SIDEBAR -->
+
+        <aside class="sidebar">
+
+            <ul id="cat-list"></ul>
+
+        </aside>
+
+        <!-- CONTENT -->
+
+        <main class="content-view">
+
+            <div class="timer-box">
+
+                <div class="timer-text">
+
+                    ⚠️ <strong>Security Session:</strong> For your protection, you will be logged out after 1 hour of session time or 2 minutes of inactivity.
+
+                </div>
+
+                <div id="session-timer">
+
+                    60:00
+
+                </div>
+
+            </div>
+
+<h2 id="cat-title">
+    Vault Ready
+</h2>
+
+<br>
+
+<input
+type="text"
+id="file-search"
+placeholder="Search files..."
+style="
+width:100%;
+padding:14px;
+border-radius:14px;
+border:1px solid var(--border);
+margin-bottom:22px;
+font-size:15px;
+"
+oninput="searchFiles()">
+
+<div
+id="file-grid"
+class="file-grid"></div>
+           
+        </main>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     MODAL
+========================= -->
+
+<div id="modal"
+class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <strong id="modal-title">
+
+                Document
+
+            </strong>
+
+            <button
+            onclick="closeModal()"
+            style="
+            border:none;
+            background:var(--danger);
+            color:white;
+            padding:10px 16px;
+            border-radius:10px;
+            font-weight:bold;
+            cursor:pointer;">
+
+                CLOSE
+
+            </button>
+
+        </div>
+
+<iframe
+id="viewer"
+allowfullscreen>
+</iframe>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     SCRIPT
+========================= -->
+
+<script src="23hy-ui7e.js"></script>
+   
+<script>
+
+let masterPassword = "";
+
+let sessionSeconds = 3600;
+
+   let failedAttempts = 0;
+let lockUntil = 0;
+
+   let inactivityTimer;
+let currentBlobUrl = null;
+   
+let sessionStartTime = null;
+
+   let sessionId = crypto.randomUUID();
+let allFilesData = {};
+let currentCategory = "";
+
+   async function sha256Bytes(text){
+
+    const enc =
+    new TextEncoder();
+
+    const hashBuffer =
+    await crypto.subtle.digest(
+        "SHA-256",
+        enc.encode(text)
+    );
+
+    return new Uint8Array(
+        hashBuffer
+    );
+}
+
+/* =========================
+   CLOCK
+========================= */
+
+document.addEventListener(
+'DOMContentLoaded',
+()=>{
+
+    updateClock();
+
+    setInterval(
+        updateClock,
+        1000
+    );
+
+});
+
+function updateClock(){
+
+    const now =
+    new Date();
+
+    document.getElementById(
+    'live-clock').textContent =
+
+    now.toLocaleString();
+
+}
+
+/* =========================
+   STEP 1
+========================= */
+
+async function showStep2() {
+    // Add this check at the very top
+    if (!window.db || !window.firestoreFunctions) {
+        alert("Security system is still initializing. Please wait a moment.");
+        return;
+    }
+    
+    const now = Date.now();
+
+if(now < lockUntil){
+
+    const remaining =
+    Math.ceil(
+        (lockUntil - now)/1000
+    );
+
+    alert(
+    `Too many wrong attempts.\nTry again in ${remaining} seconds.`
+    );
+
+    return;
+}
+   
+   const visitorName =
+    document.getElementById(
+    'user-name'
+    ).value.trim();
+
+    const pass =
+    document.getElementById(
+    'vault-pass'
+    ).value.trim();
+
+   const purpose =
+document.getElementById(
+'user-purpose'
+).value.trim();
+
+      if(!visitorName || !purpose || !pass){
+        alert(
+        "Full Name, Purpose, and Password are required."
+        );
+
+        return;
+    }
+
+const {
+    getDoc,
+    doc
+} = window.firestoreFunctions;
+
+const snap =
+await getDoc(
+    doc(window.db,"vaultConfig","main")
+);
+
+const realHash =
+snap.data().passwordHash;
+
+const enteredHash =
+await window.sha256(pass);
+
+if(enteredHash !== realHash){
+
+    failedAttempts++;
+
+    if(failedAttempts >= 5){
+
+        sendSecurityAlert(
+        "Multiple failed password attempts"
+        );
+
+        lockUntil =
+        Date.now() + 300000;
+
+        failedAttempts = 0;
+
+        alert(
+        "Too many failed attempts.\nVault locked for 5 minutes."
+        );
+
+    }else{
+
+        alert(
+        `Wrong Access Key.\nAttempts left: ${5 - failedAttempts}`
+        );
+
+    }
+
+    return;
+}
+
+try{
+
+    const res =
+    await fetch(
+    "https://backend.shinumaths989.workers.dev/get-secret",
+    {
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+
+            hash: enteredHash
+
+        })
+
+    });
+
+    const result =
+    await res.json();
+
+    if(!result.success){
+
+        alert(
+        "Backend authentication failed."
+        );
+
+        return;
+    }
+
+    masterPassword =
+    result.secret;
+
+}catch(e){
+
+    console.error(e);
+
+    alert(
+    "Could not connect to secure backend."
+    );
+
+    return;
+}
+
+   failedAttempts = 0;
+
+    sessionStartTime =
+    new Date();
+
+    const step1 =
+    document.getElementById(
+    'step1'
+    );
+
+    step1.style.pointerEvents =
+    "none";
+
+    step1.classList.add(
+    'slide-up-exit'
+    );
+
+    setTimeout(()=>{
+
+        step1.style.display =
+        'none';
+
+        document.getElementById(
+        'step2'
+        ).style.display =
+        'flex';
+
+    },700);
+
+}
+
+/* =========================
+   STEP 2
+========================= */
+
+function showStep3(){
+
+    if(!document.getElementById(
+    'terms-tick').checked){
+
+        alert(
+        "You must agree to the declaration."
+        );
+
+        return;
+    }
+
+    const step2 =
+    document.getElementById(
+    'step2');
+
+    step2.style.pointerEvents =
+    "none";
+
+    step2.classList.add(
+    'slide-up-exit');
+
+    setTimeout(()=>{
+
+        step2.style.display =
+        'none';
+
+        document.getElementById(
+        'step3').style.display =
+        'flex';
+
+    },700);
+
+}
+
+/* =========================
+   CAPTCHA
+========================= */
+
+function onCaptchaSuccess(){
+
+    document.getElementById(
+    'loading-msg').style.display =
+    'block';
+
+    setTimeout(()=>{
+
+        document.getElementById(
+        'step3').classList.add(
+        'slide-up-exit');
+
+        setTimeout(()=>{
+
+            document.getElementById(
+            'step3').style.display =
+            'none';
+
+const dash =
+document.getElementById(
+'vault-dashboard');
+
+dash.style.display = 'flex';
+
+dash.classList.add(
+'dashboard-enter');
+
+            saveAccessLog();
+
+   registerActiveSession();
+
+           saveVisitorLog({
+
+    visitorName:
+    document.getElementById(
+    'user-name').value,
+
+    purpose:
+    document.getElementById(
+    'user-purpose').value,
+
+    loginTime:
+    new Date().toLocaleString(),
+
+    device:
+    /Mobi|Android/i.test(
+    navigator.userAgent)
+    ? "Mobile"
+    : "Desktop",
+
+    browser:
+    navigator.userAgent,
+
+    platform:
+    navigator.platform,
+
+    screen:
+    `${screen.width}x${screen.height}`,
+
+    timezone:
+    Intl.DateTimeFormat()
+    .resolvedOptions()
+    .timeZone
+
+});
+           
+            initVault();
+
+            startSessionTimer();
+
+            startInactivityMonitor();
+
+   listenForForceLogout();
+
+        },700);
+
+    },1200);
+
+}
+
+   async function saveVisitorLog(data){
+
+    let ip = "Unknown";
+
+    let location = "Unknown";
+
+    try{
+
+        const res =
+        await fetch(
+        "https://ipapi.co/json/"
+        );
+
+        const info =
+        await res.json();
+
+        ip =
+        info.ip || "Unknown";
+
+        location =
+        `${info.city}, ${info.region}, ${info.country_name}`;
+
+    }catch(e){
+
+        console.log(
+        "IP fetch failed",
+        e
+        );
+
+    }
+
+    const {
+        collection,
+        addDoc
+    } = window.firestoreFunctions;
+
+    try{
+
+        await addDoc(
+
+            collection(
+                window.db,
+                "visitorLogs"
+            ),
+
+            {
+
+                visitorName:
+                data.visitorName,
+
+                purpose:
+                data.purpose,
+
+                loginTime:
+                new Date()
+                .toLocaleString(),
+
+                device:
+                /Mobi|Android/i.test(
+                navigator.userAgent
+                )
+                ? "Mobile"
+                : "Desktop",
+
+                browser:
+                navigator.userAgent,
+
+                platform:
+                navigator.platform,
+
+                screen:
+                `${screen.width}x${screen.height}`,
+
+                timezone:
+                Intl.DateTimeFormat()
+                .resolvedOptions()
+                .timeZone,
+
+                ipAddress:
+                ip,
+
+                location:
+                location
+
+            }
+
+        );
+
+    }catch(err){
+
+        console.error(
+        "Firestore log error:",
+        err
+        );
+
+    }
+
+}
+
+   async function sendSecurityAlert(reason){
+
+    try{
+
+        const visitorName =
+        document.getElementById(
+        'user-name'
+        ).value || "Unknown";
+
+        const purpose =
+        document.getElementById(
+        'user-purpose'
+        ).value || "Unknown";
+
+        let ip = "Unknown";
+        let location = "Unknown";
+
+        try{
+
+            const res =
+            await fetch(
+            "https://ipapi.co/json/"
+            );
+
+            const info =
+            await res.json();
+
+            ip =
+            info.ip || "Unknown";
+
+            location =
+            `${info.city}, ${info.country_name}`;
+
+        }catch(e){}
+
+        await fetch(
+        "https://backend.shinumaths989.workers.dev/security-alert",
+        {
+
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/json"
+            },
+
+            body:JSON.stringify({
+
+                embeds:[{
+
+                    title:
+                    "🚨 SUSPICIOUS VAULT ACTIVITY",
+
+                    color:16711680,
+
+                    fields:[
+
+                        {
+                            name:"Visitor",
+                            value:visitorName,
+                            inline:true
+                        },
+
+                        {
+                            name:"Purpose",
+                            value:purpose,
+                            inline:true
+                        },
+
+                        {
+                            name:"Reason",
+                            value:reason,
+                            inline:false
+                        },
+
+                        {
+                            name:"IP Address",
+                            value:ip,
+                            inline:true
+                        },
+
+                        {
+                            name:"Location",
+                            value:location,
+                            inline:true
+                        },
+
+                        {
+                            name:"Device",
+                            value:
+                            navigator.userAgent
+                            .slice(0,100),
+                            inline:false
+                        }
+
+                    ],
+
+                    timestamp:
+                    new Date().toISOString()
+
+                }]
+
+            })
+
+        });
+
+    }catch(err){
+
+        console.error(
+        "Discord alert failed",
+        err
+        );
+
+    }
+
+}
+
+   async function registerActiveSession(){
+
+    const {
+        doc,
+        updateDoc,
+        setDoc
+    } = window.firestoreFunctions;
+
+    try{
+
+        await setDoc(
+
+            doc(
+                window.db,
+                "activeSessions",
+                sessionId
+            ),
+
+            {
+
+                visitor:
+                document.getElementById(
+                'user-name'
+                ).value,
+
+                active:true,
+
+                createdAt:
+                new Date().toISOString()
+
+            }
+
+        );
+
+    }catch(e){
+
+        console.log(e);
+
+    }
+
+}
+
+      async function listenForForceLogout(){
+
+    const {
+        doc,
+        onSnapshot
+    } = window.firestoreFunctions;
+
+    onSnapshot(
+
+        doc(
+            window.db,
+            "activeSessions",
+            sessionId
+        ),
+
+        (snap)=>{
+
+            if(!snap.exists()) return;
+
+            const data =
+            snap.data();
+
+            if(data.forceLogout){
+
+                alert(
+                "Administrator terminated your session."
+                );
+
+                location.reload();
+
+            }
+
+        }
+
+    );
+
+}
+   
+/* =========================
+   TIMER
+========================= */
+
+function startSessionTimer(){
+
+    const timer =
+    document.getElementById(
+    'session-timer');
+
+    setInterval(()=>{
+
+        sessionSeconds--;
+
+        const mins =
+        Math.floor(
+        sessionSeconds / 60);
+
+        const secs =
+        sessionSeconds % 60;
+
+        timer.textContent =
+        `${mins}:${secs<10?'0':''}${secs}`;
+
+        if(sessionSeconds<=0){
+
+            logout(
+            "Session Expired."
+            );
+
+        }
+
+    },1000);
+
+}
+
+/* =========================
+   INACTIVITY
+========================= */
+
+function startInactivityMonitor(){
+
+    const reset = ()=>{
+
+        clearTimeout(
+        inactivityTimer);
+
+        inactivityTimer =
+        setTimeout(()=>{
+
+            logout(
+            "Logged out due to inactivity."
+            );
+
+        },120000);
+
+    };
+
+    window.onclick = reset;
+
+    window.onmousemove = reset;
+
+    window.onkeydown = reset;
+
+    reset();
+
+}
+
+/* =========================
+   LOGOUT
+========================= */
+
+async function logout(message=""){
+
+    if(message){
+
+        alert(message);
+
+    }
+
+    try{
+
+        const {
+            collection,
+            addDoc
+        } = window.firestoreFunctions;
+
+        await addDoc(
+
+            collection(
+                window.db,
+                "visitorLogs"
+            ),
+
+            {
+
+                visitorName:
+                document.getElementById(
+                'user-name'
+                ).value,
+
+                logoutTime:
+                new Date()
+                .toLocaleString(),
+
+                status:
+                "Logged Out"
+
+            }
+
+        );
+
+    }catch(e){
+
+        console.error(
+        "Logout log error:",
+        e
+        );
+
+    }
+
+    location.reload();
+
+}
+
+/* =========================
+   INIT VAULT
+========================= */
+
+async function initVault(){
+
+    try{
+
+        const res =
+        await fetch(
+        "files.json");
+
+        const data =
+        await res.json();
+       allFilesData = data;
+
+        const list =
+        document.getElementById(
+        'cat-list');
+
+        list.innerHTML = "";
+
+        Object.keys(data)
+        .forEach(cat=>{
+
+            const li =
+            document.createElement(
+            'li');
+
+            li.textContent =
+            cat;
+
+            li.onclick = ()=>{
+
+                document.querySelectorAll(
+                '#cat-list li')
+                .forEach(el=>
+                el.classList.remove(
+                'active'));
+
+                li.classList.add(
+                'active');
+
+                renderFiles(
+                    data[cat],
+                    cat
+                );
+
+            };
+
+            list.appendChild(
+            li);
+
+        });
+
+    }catch(e){
+
+        console.error(e);
+
+    }
+
+}
+
+/* =========================
+   FILES
+========================= */
+
+function renderFiles(
+files,
+category){
+
+   currentCategory = category;
+
+    document.getElementById(
+    'cat-title').textContent =
+    category;
+
+    const grid =
+    document.getElementById(
+    'file-grid');
+
+   if(category === "HOME"){
+
+    grid.innerHTML = `
+
+    <div style="
+    grid-column:1/-1;
+    background:white;
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:35px;
+    animation:fadeInUp .6s ease;
+    line-height:1.9;">
+
+        <div style="
+        display:flex;
+        align-items:center;
+        gap:25px;
+        flex-wrap:wrap;
+        margin-bottom:30px;">
+
+            <img src="profile.png"
+            style="
+            width:150px;
+            height:150px;
+            border-radius:24px;
+            object-fit:cover;
+            border:4px solid #eff6ff;">
+
+            <div>
+
+                <h1 style="
+                margin-bottom:10px;
+                color:var(--accent);">
+
+                    SHINEIL KEITH MATHIAS
+
+                </h1>
+
+                <div style="
+                color:var(--muted);
+                font-size:1rem;">
+
+                    Founder of SHINE MINISTRY • Student • Public Speaker • Digital Creator
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div style="
+        display:grid;
+        grid-template-columns:
+        repeat(auto-fit,minmax(260px,1fr));
+        gap:20px;">
+
+            <!-- PERSONAL -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Personal Details
+                </h3>
+
+                <b>Full Name:</b>
+                Shineil Keith Mathias<br>
+
+                <b>Date of Birth:</b>
+                7 March 2010<br>
+
+                <b>Gender:</b>
+                Male<br>
+
+                <b>Nationality:</b>
+                Indian<br>
+
+                <b>Location:</b>
+                Khandala, Pune, Maharashtra, India
+
+            </div>
+
+            <!-- CONTACT -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Contact Information
+                </h3>
+
+                <b>Phone:</b>
+                +91 8605586173<br>
+
+                <b>Email:</b>
+                shinumaths989@gmail.com<br>
+
+                <b>Website:</b>
+                www.shine-ministry.com<br>
+
+                <b>Instagram:</b>
+                @shinu_vordenker_7
+
+            </div>
+
+            <!-- EDUCATION -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Education
+                </h3>
+
+                <b>School:</b>
+                Don Bosco High School & Junior College, Lonavla<br>
+
+                <b>Academic Level:</b>
+                Class 5 to 10 Secondary Education<br>
+
+                <b>Period:</b>
+                2020 – 2026<br>
+
+                <b>EQF Level:</b>
+                Level 3
+
+            </div>
+
+            <!-- SKILLS -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Skills
+                </h3>
+
+                • Communication Skills<br>
+                • Public Speaking<br>
+                • Leadership<br>
+                • Microsoft Word & PowerPoint<br>
+                • Organizational Skills<br>
+                • Google Drive<br>
+                • Mathematics
+
+            </div>
+
+            <!-- LANGUAGES -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Languages
+                </h3>
+
+                <b>English:</b>
+                Fluent<br>
+
+                <b>Hindi:</b>
+                Fluent<br>
+
+                <b>German:</b>
+                Basic (A1)
+
+            </div>
+
+            <!-- ACHIEVEMENTS -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Achievements
+                </h3>
+
+                • Promising Student Of The Year<br>
+                • Green House Captain Leadership Award<br>
+                • Debate & Elocution Certificates<br>
+                • Science Exhibition Participation<br>
+                • Spell Bee & Quiz Awards
+
+            </div>
+
+        </div>
+
+        <!-- ABOUT -->
+
+        <div style="
+        margin-top:30px;
+        background:#eff6ff;
+        padding:24px;
+        border-radius:18px;
+        border:1px solid #dbeafe;">
+
+            <h3 style="
+            margin-bottom:12px;
+            color:var(--accent);">
+
+                About Me
+            </h3>
+
+            <p style="
+            color:#334155;
+            line-height:1.9;">
+
+                Motivated and responsible secondary school student with strong communication skills and a keen interest in learning, leadership, and personal development. Founder of SHINE MINISTRY and actively involved in public speaking, debates, leadership activities, and digital creativity. Passionate about technology, education, organizational growth, and making a positive impact through communication and service.
+
+            </p>
+
+        </div>
+
+        <!-- HOBBIES -->
+
+        <div style="
+        margin-top:25px;
+        background:#f8fafc;
+        padding:24px;
+        border-radius:18px;">
+
+            <h3 style="
+            margin-bottom:12px;">
+
+                Hobbies & Interests
+            </h3>
+
+            <p style="
+            color:#475569;
+            line-height:1.9;">
+
+                Public speaking, debating, reading, learning new topics, exploring technology and digital tools, participating in school leadership activities, current affairs, presentations, communication development, and creative ministry initiatives.
+
+            </p>
+
+        </div>
+
+    </div>
+
+    `;
+
+    return;
+}
+   
+    grid.innerHTML = "";
+
+    files.forEach(file=>{
+
+        const card =
+        document.createElement(
+        'div');
+
+        card.className =
+        'file-card';
+
+        card.innerHTML = `
+        <div style="
+        font-size:48px;
+        margin-bottom:12px;">
+            📄
+        </div>
+
+        <div style="
+        font-weight:800;
+        line-height:1.5;">
+            ${file.name}
+        </div>
+        `;
+
+        card.onclick = ()=>{
+
+            openSecureFile(
+                "docs/" + file.file,
+                file.name
+            );
+
+        };
+
+        grid.appendChild(
+        card);
+
+    });
+
+}
+
+function searchFiles(){
+
+    const query =
+    document.getElementById(
+    'file-search'
+    ).value
+    .toLowerCase()
+    .trim();
+
+    if(!query){
+
+        if(currentCategory &&
+        allFilesData[currentCategory]){
+
+            renderFiles(
+                allFilesData[currentCategory],
+                currentCategory
+            );
+        }
+
+        return;
+    }
+
+    let results = [];
+
+    Object.keys(allFilesData)
+    .forEach(category=>{
+
+        const files =
+        allFilesData[category];
+
+        if(!Array.isArray(files)) return;
+
+        files.forEach(file=>{
+
+            if(
+                file.name
+                .toLowerCase()
+                .includes(query)
+            ){
+
+                results.push({
+
+                    ...file,
+                    category
+
+                });
+
+            }
+
+        });
+
+    });
+
+    document.getElementById(
+    'cat-title'
+    ).textContent =
+    `Search Results (${results.length})`;
+
+    const grid =
+    document.getElementById(
+    'file-grid'
+    );
+
+    grid.innerHTML = "";
+
+    if(results.length === 0){
+
+        grid.innerHTML = `
+        <div style="
+        grid-column:1/-1;
+        text-align:center;
+        padding:40px;
+        background:white;
+        border-radius:20px;">
+            No files found.
+        </div>
+        `;
+
+        return;
+    }
+
+    results.forEach(file=>{
+
+        const card =
+        document.createElement(
+        'div'
+        );
+
+        card.className =
+        'file-card';
+
+        card.innerHTML = `
+
+        <div style="
+        font-size:48px;
+        margin-bottom:12px;">
+            📄
+        </div>
+
+        <div style="
+        font-weight:800;
+        line-height:1.5;">
+            ${file.name}
+        </div>
+
+        <div style="
+        margin-top:10px;
+        color:var(--muted);
+        font-size:.85rem;">
+            ${file.category}
+        </div>
+
+        `;
+
+        card.onclick = ()=>{
+
+            openSecureFile(
+                "docs/" + file.file,
+                file.name
+            );
+
+        };
+
+        grid.appendChild(card);
+
+    });
+
+}
+
+/* =========================
+   OPEN FILE
+========================= */
+
+async function openSecureFile(
+path,
+displayName){
+
+    try{
+
+        const res =
+        await fetch(path);
+
+        const buffer =
+        await res.arrayBuffer();
+
+        // SETTINGS LENGTH
+
+        const settingsLength =
+        new Uint32Array(
+            buffer.slice(0,4)
+        )[0];
+
+        // SETTINGS JSON
+
+        const settingsBytes =
+        buffer.slice(
+            4,
+            4 + settingsLength
+        );
+
+        const settingsText =
+        new TextDecoder()
+        .decode(settingsBytes);
+
+        const settings =
+        JSON.parse(settingsText);
+
+        // SALT
+
+        const saltStart =
+        4 + settingsLength;
+
+        const saltEnd =
+        saltStart + 16;
+
+        const salt =
+        buffer.slice(
+            saltStart,
+            saltEnd
+        );
+
+        // IV
+
+        const ivStart =
+        saltEnd;
+
+        const ivEnd =
+        ivStart + 12;
+
+        const iv =
+        buffer.slice(
+            ivStart,
+            ivEnd
+        );
+
+        // ENCRYPTED DATA
+
+        const encryptedData =
+        buffer.slice(ivEnd);
+
+        // HASH PASSWORD
+
+        const passwordHash =
+        await sha256Bytes(
+            masterPassword
+        );
+
+        // IMPORT HASH
+
+        const keyMaterial =
+        await crypto.subtle.importKey(
+            "raw",
+            passwordHash,
+            "PBKDF2",
+            false,
+            ["deriveKey"]
+        );
+
+        // DERIVE AES KEY
+
+        const key =
+        await crypto.subtle.deriveKey(
+            {
+                name:"PBKDF2",
+
+                salt:new Uint8Array(
+                    salt
+                ),
+
+                iterations:
+                settings.iterations,
+
+                hash:
+                settings.hash
+
+            },
+
+            keyMaterial,
+
+            {
+                name:"AES-GCM",
+                length:256
+            },
+
+            false,
+
+            ["decrypt"]
+        );
+
+        // DECRYPT
+
+        const decrypted =
+        await crypto.subtle.decrypt(
+            {
+                name:"AES-GCM",
+
+                iv:new Uint8Array(
+                    iv
+                )
+            },
+
+            key,
+
+            encryptedData
+        );
+
+        const blob =
+        new Blob(
+            [decrypted],
+            {
+                type:"application/pdf"
+            }
+        );
+
+        currentBlobUrl =
+        URL.createObjectURL(blob);
+
+        document.getElementById(
+        'modal-title'
+        ).textContent =
+        displayName;
+
+        document.getElementById(
+        'modal'
+        ).style.display =
+        'block';
+
+        document.getElementById(
+        'watermark'
+        ).style.display =
+        'flex';
+
+        const viewer =
+        document.getElementById(
+        'viewer'
+        );
+
+        if(
+        /Android|iPhone|iPad/i
+        .test(navigator.userAgent)
+        ){
+
+            viewer.removeAttribute(
+            'src'
+            );
+
+            window.open(
+                currentBlobUrl,
+                '_blank'
+            );
+
+        }else{
+
+            viewer.src =
+            currentBlobUrl;
+        }
+
+    }catch(e){
+
+        console.error(e);
+
+        alert(
+        "Access Denied: Could not decrypt file."
+        );
+
+    }
+
+}
+/* =========================
+   CLOSE MODAL
+========================= */
+
+function closeModal(){
+
+    document.getElementById(
+    'viewer').src = "";
+
+    document.getElementById(
+    'modal').style.display =
+    'none';
+
+    document.getElementById(
+    'watermark').style.display =
+    'none';
+
+    if(currentBlobUrl){
+
+        URL.revokeObjectURL(
+        currentBlobUrl);
+
+        currentBlobUrl = null;
+    }
+}
+
+/* =========================
+   SECURITY
+========================= */
+
+document.addEventListener(
+"contextmenu",
+e=>{
+
+    sendSecurityAlert(
+    "Right click attempt detected"
+    );
+
+    e.preventDefault();
+
+});
+document.onkeydown =
+function(e){
+
+    if(
+        e.ctrlKey &&
+        (
+            e.key==='s' ||
+            e.key==='p' ||
+            e.key==='u'
+        )
+    ){
+
+   sendSecurityAlert(
+"Blocked keyboard shortcut attempt: " + e.key
+);
+
+e.preventDefault();
+    }
+};
+</script>
+
+<script src="https://www.google.com/recaptcha/api.js" defer></script>
+
+<script>
+
+document.addEventListener("visibilitychange", () => {
+
+    const dash =
+    document.getElementById(
+    'vault-dashboard');
+
+    if(document.hidden){
+
+        dash.style.filter =
+        "blur(18px)";
+
+    }else{
+
+        dash.style.filter =
+        "blur(0px)";
+    }
+
+});
+
+   function saveAccessLog(){
+
+    const logs =
+    JSON.parse(
+    localStorage.getItem(
+    'vaultLogs'
+    ) || '[]');
+
+    const visitorName =
+    document.getElementById(
+    'user-name').value;
+
+    const purpose =
+    document.getElementById(
+    'user-purpose').value;
+
+    const loginTime =
+    new Date().toLocaleString();
+
+    const device =
+    /Mobi|Android/i.test(
+    navigator.userAgent)
+    ? "Mobile"
+    : "Desktop";
+
+    const browser =
+    navigator.userAgent;
+
+    const platform =
+    navigator.platform;
+
+    const screenSize =
+    `${screen.width}x${screen.height}`;
+
+    const timezone =
+    Intl.DateTimeFormat()
+    .resolvedOptions()
+    .timeZone;
+
+    logs.push({
+
+        visitorName,
+        purpose,
+        loginTime,
+        device,
+        browser,
+        platform,
+        screenSize,
+        timezone
+
+    });
+
+    localStorage.setItem(
+    'vaultLogs',
+    JSON.stringify(logs)
+    );
+
+}
+
+async function openLogs(){
+
+    document.getElementById(
+    'logModal'
+    ).style.display =
+    'block';
+
+    const {
+        collection,
+        getDocs
+    } = window.firestoreFunctions;
+
+    const body =
+    document.getElementById(
+    'logBody'
+    );
+
+    body.innerHTML = "";
+
+    try{
+
+        const snapshot =
+        await getDocs(
+
+            collection(
+                window.db,
+                "visitorLogs"
+            )
+
+        );
+
+        snapshot.forEach(doc=>{
+
+            const log =
+            doc.data();
+
+            body.innerHTML += `
+
+            <tr>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.visitorName || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.purpose || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.loginTime || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.device || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.browser || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.platform || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.screen || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.timezone || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.ipAddress || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.location || '-'}
+                </td>
+
+            </tr>
+
+            `;
+
+        });
+
+    }catch(e){
+
+        console.error(e);
+
+    }
+
+}
+
+function closeLogs(){
+
+    document.getElementById(
+    'logModal').style.display =
+    'none';
+
+}
+</script>
+
+   <div
+id="watermark"
+class="watermark">
+
+    AUTHORIZED ACCESS • SHINEIL KEITH MATHIAS
+
+</div>
+
+   <div id="logModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <strong>
+                ACCESS LOGS
+            </strong>
+
+            <button onclick="closeLogs()"
+            style="
+            border:none;
+            background:var(--danger);
+            color:white;
+            padding:10px 16px;
+            border-radius:10px;
+            font-weight:bold;
+            cursor:pointer;">
+
+                CLOSE
+
+            </button>
+
+        </div>
+
+        <div style="
+        padding:25px;
+        overflow:auto;
+        height:100%;
+        background:#f8fafc;">
+
+            <table id="logTable"
+            style="
+            width:100%;
+            border-collapse:collapse;
+            background:white;">
+
+                <thead>
+
+                    <tr style="
+                    background:#eff6ff;">
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Name
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Purpose
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Login Time
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Device
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Browser
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Platform
+                        </th>
+
+                       <th style="padding:12px;border:1px solid #ddd;">
+    Screen
+</th>
+
+<th style="padding:12px;border:1px solid #ddd;">
+    Timezone
+</th>
+
+<th style="padding:12px;border:1px solid #ddd;">
+    IP Address
+</th>
+
+<th style="padding:12px;border:1px solid #ddd;">
+    Location
+</th>
+                    </tr>
+
+                </thead>
+
+                <tbody id="logBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+   <script type="module">
+
+/* =========================
+   PASSKEY ACCESS
+========================= */
+
+async function requestPasskeyAccess(){
+
+    const visitorName =
+    document.getElementById(
+    'user-name'
+    ).value.trim();
+
+    const purpose =
+    document.getElementById(
+    'user-purpose'
+    ).value.trim();
+
+      if(!visitorName || !purpose){
+        alert(
+        "Enter full name and purpose."
+        );
+
+        return;
+    }
+
+    document.getElementById(
+    'step1'
+    ).style.display =
+    'none';
+
+    document.getElementById(
+    'passkey-wait'
+    ).style.display =
+    'flex';
+
+    const {
+        collection,
+        addDoc,
+        doc,
+        onSnapshot
+    } = window.firestoreFunctions;
+
+    try{
+
+        const requestRef =
+        await addDoc(
+
+            collection(
+                window.db,
+                "accessRequests"
+            ),
+
+            {
+
+                visitorName:
+                visitorName,
+
+                purpose:
+                purpose,
+
+                device:
+                /Mobi|Android/i.test(
+                navigator.userAgent
+                )
+                ? "Mobile"
+                : "Desktop",
+
+                browser:
+                navigator.userAgent,
+
+                status:
+                "pending",
+
+                createdAt:
+                new Date()
+                .toISOString()
+
+            }
+
+        );
+
+        onSnapshot(
+
+            doc(
+                window.db,
+                "accessRequests",
+                requestRef.id
+            ),
+
+            async (snapshot)=>{
+
+                const data =
+                snapshot.data();
+
+                if(!data) return;
+
+if (data.status === "approved") {
+
+   const res =
+await fetch(
+"https://backend.shinumaths989.workers.dev/get-secret",
+{
+    method:"POST",
+
+    headers:{
+        "Content-Type":
+        "application/json"
+    },
+
+    body:JSON.stringify({
+
+        approved:true
+
+    })
+});
+
+const result =
+await res.json();
+
+masterPassword =
+result.secret;
+
+    sessionStartTime = new Date();
+
+    document.getElementById(
+    'passkey-wait'
+    ).style.display = 'none';
+
+    document.getElementById(
+    'step2'
+    ).style.display = 'flex';
+}
+
+if (data.status === "denied") {
+
+    alert(
+    "Access request denied."
+    );
+
+    location.reload();
+               }
+               
+            }
+
+        );
+
+    }catch(e){
+
+console.error(
+"PASSKEY ERROR:",
+e
+);
+
+alert(
+e.message
+);
+
+        location.reload();
+
+    }
+
+}
+
+window.requestPasskeyAccess =
+requestPasskeyAccess;
+      
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    getDoc,
+    doc,
+    onSnapshot,
+    updateDoc,
+    setDoc
+}
+   
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+import { getAnalytics }
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyBbOd2ZKqiPHTBEMmjBMnxAU_mdwLz7uM0",
+    authDomain: "online-vault-shine-26.firebaseapp.com",
+    projectId: "online-vault-shine-26",
+    storageBucket: "online-vault-shine-26.firebasestorage.app",
+    messagingSenderId: "79788612818",
+    appId: "1:79788612818:web:41cfb16a4b36b1d5bfe10b",
+    measurementId: "G-BJKTZDF25J"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+
+      // ADD THIS LINE to make it globally accessible
+window.db = db;
+
+window.firestoreFunctions = {
+    collection,
+    addDoc,
+    getDocs,
+    getDoc,
+    doc,
+    onSnapshot,
+    updateDoc,
+    setDoc
+};
+
+window.sha256 = async function(text){
+   
+    const msgBuffer =
+    new TextEncoder().encode(text);
+
+    const hashBuffer =
+    await crypto.subtle.digest(
+        'SHA-256',
+        msgBuffer
+    );
+
+    const hashArray =
+    Array.from(
+        new Uint8Array(hashBuffer)
+    );
+
+    return hashArray
+    .map(b =>
+        b.toString(16).padStart(2,'0')
+    )
+    .join('');
+}
+</script>
+</body>
+</html>
