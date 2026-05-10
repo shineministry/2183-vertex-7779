@@ -1458,6 +1458,13 @@ function updateClock(){
 
 async function showStep2(){
 
+   async function showStep2() {
+    // Add this check at the very top
+    if (!window.db || !window.firestoreFunctions) {
+        alert("Security system is still initializing. Please wait a moment.");
+        return;
+    }
+    
     const now = Date.now();
 
 if(now < lockUntil){
@@ -3389,6 +3396,9 @@ from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
   const db = getFirestore(app);
+
+      // ADD THIS LINE to make it globally accessible
+window.db = db;
 
 window.firestoreFunctions = {
     collection,
