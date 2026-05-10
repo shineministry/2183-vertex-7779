@@ -29,6 +29,7 @@ https://www.googletagmanager.com
 https://firebase.googleapis.com
 https://firestore.googleapis.com
 https://firebaseinstallations.googleapis.com
+https://backend.shinumaths989.workers.dev
 https://www.google-analytics.com;
 img-src * data: blob:;
 style-src 'self' 'unsafe-inline' https:;
@@ -1389,8 +1390,6 @@ allowfullscreen>
 let masterPassword = "";
 
 let sessionSeconds = 3600;
-
-let inactivityTimer;
 
    let failedAttempts = 0;
 let lockUntil = 0;
@@ -3286,7 +3285,7 @@ if (data.status === "approved") {
 
    const res =
 await fetch(
-"http://localhost:3000/get-secret",
+"https://backend.shinumaths989.workers.dev/get-secret",
 {
     method:"POST",
 
