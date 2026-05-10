@@ -3313,24 +3313,6 @@ class="watermark">
 </div>
 
    <script type="module">
-
-      import {
-  initializeAppCheck,
-  ReCaptchaV3Provider
-} from
-"https://www.gstatic.com/firebasejs/12.13.0/firebase-app-check.js";
-
-const appCheck =
-initializeAppCheck(app, {
-
-  provider:
-  new ReCaptchaV3Provider(
-    "6LezSeMsAAAAAOi8LeGw3aEtBUtRDg2sAzMHKOPN"
-  ),
-
-  isTokenAutoRefreshEnabled:true
-
-});
       
 /* =========================
    PASSKEY ACCESS
@@ -3572,6 +3554,24 @@ window.sha256 = async function(text){
     )
     .join('');
 }
+
+            import {
+  initializeAppCheck,
+  ReCaptchaV3Provider
+} from
+"https://www.gstatic.com/firebasejs/12.13.0/firebase-app-check.js";
+
+const appCheck =
+initializeAppCheck(app, {
+
+  provider:
+  new ReCaptchaV3Provider(
+    "6LezSeMsAAAAAOi8LeGw3aEtBUtRDg2sAzMHKOPN"
+  ),
+
+  isTokenAutoRefreshEnabled:true
+
+});
 </script>
 </body>
 </html>
