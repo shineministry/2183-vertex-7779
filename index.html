@@ -1401,6 +1401,9 @@ const CORRECT_SALT =
 
 let currentBlobUrl = null;
 
+   let failedAttempts = 0;
+let lockUntil = 0;
+
 let sessionStartTime = null;
 
    let allFilesData = {};
@@ -1441,7 +1444,23 @@ function updateClock(){
 
 async function showStep2(){
 
-    const visitorName =
+    const now = Date.now();
+
+if(now < lockUntil){
+
+    const remaining =
+    Math.ceil(
+        (lockUntil - now)/1000
+    );
+
+    alert(
+    `Too many wrong attempts.\nTry again in ${remaining} seconds.`
+    );
+
+    return;
+}
+   
+   const visitorName =
     document.getElementById(
     'user-name'
     ).value.trim();
@@ -1451,10 +1470,14 @@ async function showStep2(){
     'vault-pass'
     ).value.trim();
 
-    if(!visitorName || !pass){
+   const purpose =
+document.getElementById(
+'user-purpose'
+).value.trim();
 
+      if(!visitorName || !purpose || !pass){
         alert(
-        "Identification fields and Access Key are required."
+        "Full Name, Purpose, and Password are required."
         );
 
         return;
@@ -1478,12 +1501,33 @@ await sha256(pass);
 
 if(enteredHash !== realHash){
 
-    alert("Wrong Access Key");
+    failedAttempts++;
+
+    if(failedAttempts >= 5){
+
+        lockUntil =
+        Date.now() + 300000;
+
+        failedAttempts = 0;
+
+        alert(
+        "Too many failed attempts.\nVault locked for 5 minutes."
+        );
+
+    }else{
+
+        alert(
+        `Wrong Password.\nAttempts left: ${5 - failedAttempts}`
+        );
+
+    }
 
     return;
 }
 
 masterPassword = pass;
+
+   failedAttempts = 0;
 
     sessionStartTime =
     new Date();
@@ -2234,27 +2278,134 @@ category){
 
 }
 
-   function searchFiles(){
+function searchFiles(){
 
     const query =
     document.getElementById(
     'file-search'
-    ).value.toLowerCase();
+    ).value
+    .toLowerCase()
+    .trim();
 
-    if(!currentCategory || !allFilesData[currentCategory]) return;
+    if(!query){
 
-    const filtered =
-    allFilesData[currentCategory]
-    .filter(file =>
-        file.name
-        .toLowerCase()
-        .includes(query)
+        if(currentCategory &&
+        allFilesData[currentCategory]){
+
+            renderFiles(
+                allFilesData[currentCategory],
+                currentCategory
+            );
+        }
+
+        return;
+    }
+
+    let results = [];
+
+    Object.keys(allFilesData)
+    .forEach(category=>{
+
+        const files =
+        allFilesData[category];
+
+        if(!Array.isArray(files)) return;
+
+        files.forEach(file=>{
+
+            if(
+                file.name
+                .toLowerCase()
+                .includes(query)
+            ){
+
+                results.push({
+
+                    ...file,
+                    category
+
+                });
+
+            }
+
+        });
+
+    });
+
+    document.getElementById(
+    'cat-title'
+    ).textContent =
+    `Search Results (${results.length})`;
+
+    const grid =
+    document.getElementById(
+    'file-grid'
     );
 
-    renderFiles(
-        filtered,
-        currentCategory
-    );
+    grid.innerHTML = "";
+
+    if(results.length === 0){
+
+        grid.innerHTML = `
+        <div style="
+        grid-column:1/-1;
+        text-align:center;
+        padding:40px;
+        background:white;
+        border-radius:20px;">
+            No files found.
+        </div>
+        `;
+
+        return;
+    }
+
+    results.forEach(file=>{
+
+        const card =
+        document.createElement(
+        'div'
+        );
+
+        card.className =
+        'file-card';
+
+        card.innerHTML = `
+
+        <div style="
+        font-size:48px;
+        margin-bottom:12px;">
+            📄
+        </div>
+
+        <div style="
+        font-weight:800;
+        line-height:1.5;">
+            ${file.name}
+        </div>
+
+        <div style="
+        margin-top:10px;
+        color:var(--muted);
+        font-size:.85rem;">
+            ${file.category}
+        </div>
+
+        `;
+
+        card.onclick = ()=>{
+
+            openSecureFile(
+                "docs/" + file.file,
+                file.name
+            );
+
+        };
+
+        grid.appendChild(card);
+
+    });
+
 }
 
 /* =========================
@@ -2775,10 +2926,9 @@ async function requestPasskeyAccess(){
     'user-purpose'
     ).value.trim();
 
-    if(!visitorName){
-
+      if(!visitorName || !purpose){
         alert(
-        "Enter your full name."
+        "Enter full name and purpose."
         );
 
         return;
