@@ -7,7 +7,8 @@
     { "name": "Meldebescheinigung", "file": "a3.enc" },
     { "name": "Meldebestätigung", "file": "a4.enc" },
     { "name": "Guardian Consent Letter", "file": "a5.enc" },
-    { "name": "Personal ID Card - German", "file": "a6.enc" }
+    { "name": "Personal ID Card - German", "file": "a6.enc" },
+    { "name": "Passport", "file": "a7.enc" }
   ],
   "Visa": [
     { "name": "Clarification on Guardian Role", "file": "b1.enc" },
