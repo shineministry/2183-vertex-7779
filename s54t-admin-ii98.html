@@ -855,6 +855,10 @@ body{
 id="approveSound"
 src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=correct-2-46134.mp3">
 </audio>
+
+    <button onclick="forceLogout('SESSION_ID')">
+Force Logout
+</button>
     
 <script>
 
@@ -887,6 +891,30 @@ function unlockAdmin(){
 
 }
 
+    async function forceLogout(id){
+
+    const {
+        doc,
+        updateDoc
+    } = window.firestoreFunctions;
+
+    await updateDoc(
+
+        doc(
+            window.db,
+            "activeSessions",
+            id
+        ),
+
+        {
+
+            forceLogout:true
+
+        }
+
+    );
+
+}
 </script>
 
 <script type="module">
