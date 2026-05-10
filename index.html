@@ -1102,10 +1102,6 @@ gap:12px;">
 
 </div>
 
-            
-
-        </button>
-
     </div>
 
 </div>
@@ -1399,6 +1395,9 @@ let inactivityTimer;
    let failedAttempts = 0;
 let lockUntil = 0;
 
+   let inactivityTimer;
+let currentBlobUrl = null;
+   
 let sessionStartTime = null;
 
    let sessionId = crypto.randomUUID();
@@ -1925,7 +1924,7 @@ dash.classList.add(
 
     try{
 
-        await updateDoc(
+        await setDoc(
 
             doc(
                 window.db,
@@ -2835,6 +2834,14 @@ function closeModal(){
     document.getElementById(
     'viewer').src = "";
 
+    document.getElementById(
+    'modal').style.display =
+    'none';
+
+    document.getElementById(
+    'watermark').style.display =
+    'none';
+
     if(currentBlobUrl){
 
         URL.revokeObjectURL(
@@ -2842,27 +2849,6 @@ function closeModal(){
 
         currentBlobUrl = null;
     }
-
-if(/Android|iPhone|iPad/i.test(
-navigator.userAgent
-)){
-
-    if(currentBlobUrl){
-
-        window.open(
-        currentBlobUrl,
-        '_blank'
-        );
-    }
-}
-
-    document.getElementById(
-    'modal').style.display =
-    'none';
-
-   document.getElementById(
-'watermark').style.display =
-'none';
 }
 
 /* =========================
@@ -3289,7 +3275,7 @@ async function requestPasskeyAccess(){
                 requestRef.id
             ),
 
-            (snapshot)=>{
+            async (snapshot)=>{
 
                 const data =
                 snapshot.data();
@@ -3377,7 +3363,8 @@ import {
     getDoc,
     doc,
     onSnapshot,
-    updateDoc
+    updateDoc,
+    setDoc
 }
    
 from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
@@ -3404,7 +3391,6 @@ from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
   const analytics = getAnalytics(app);
   const db = getFirestore(app);
 
-      window.db = db;
 window.firestoreFunctions = {
     collection,
     addDoc,
@@ -3412,7 +3398,8 @@ window.firestoreFunctions = {
     getDoc,
     doc,
     onSnapshot,
-    updateDoc
+    updateDoc,
+    setDoc
 };
 
 window.sha256 = async function(text){
