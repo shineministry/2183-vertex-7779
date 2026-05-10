@@ -1309,18 +1309,30 @@ cursor:pointer;">
 
             </div>
 
-            <h2 id="cat-title">
+<h2 id="cat-title">
+    Vault Ready
+</h2>
 
-                Vault Ready
+<br>
 
-            </h2>
+<input
+type="text"
+id="file-search"
+placeholder="Search files..."
+style="
+width:100%;
+padding:14px;
+border-radius:14px;
+border:1px solid var(--border);
+margin-bottom:22px;
+font-size:15px;
+"
+oninput="searchFiles()">
 
-            <br>
-
-            <div
-            id="file-grid"
-            class="file-grid"></div>
-
+<div
+id="file-grid"
+class="file-grid"></div>
+           
         </main>
 
     </div>
@@ -1390,6 +1402,9 @@ const CORRECT_SALT =
 let currentBlobUrl = null;
 
 let sessionStartTime = null;
+
+   let allFilesData = {};
+let currentCategory = "";
 
 /* =========================
    CLOCK
@@ -1856,6 +1871,7 @@ async function initVault(){
 
         const data =
         await res.json();
+       allFilesData = data;
 
         const list =
         document.getElementById(
@@ -1911,6 +1927,8 @@ async function initVault(){
 function renderFiles(
 files,
 category){
+
+   currentCategory = category;
 
     document.getElementById(
     'cat-title').textContent =
@@ -2214,6 +2232,29 @@ category){
 
     });
 
+}
+
+   function searchFiles(){
+
+    const query =
+    document.getElementById(
+    'file-search'
+    ).value.toLowerCase();
+
+    if(!currentCategory || !allFilesData[currentCategory]) return;
+
+    const filtered =
+    allFilesData[currentCategory]
+    .filter(file =>
+        file.name
+        .toLowerCase()
+        .includes(query)
+    );
+
+    renderFiles(
+        filtered,
+        currentCategory
+    );
 }
 
 /* =========================
