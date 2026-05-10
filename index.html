@@ -2888,25 +2888,14 @@ function(e){
 "Blocked keyboard shortcut attempt: " + e.key
 );
 
-        e.preventDefault();
-
+e.preventDefault();
     }
-
 };
-
 </script>
-
-<!-- =========================
-     RECAPTCHA
-========================= -->
 
 <script src="https://www.google.com/recaptcha/api.js" defer></script>
 
 <script>
-
-   document.addEventListener(
-"visibilitychange",
-()=>{
 
     const dash =
     document.getElementById(
