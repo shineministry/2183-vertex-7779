@@ -1399,12 +1399,15 @@ let inactivityTimer;
 const CORRECT_SALT =
 "UltraSecureSalt987!";
 
-let currentBlobUrl = null;
-
    let failedAttempts = 0;
 let lockUntil = 0;
 
 let sessionStartTime = null;
+
+   let sessionId = crypto.randomUUID();
+
+   const DISCORD_WEBHOOK =
+"https://discord.com/api/webhooks/1503002217202847857/fQJS3nGS1gsmZGZMUCzq3lBWYpTw64auFzxaZdvICJutaNyECt24TSTnNPV8j9LxkETl";
 
    let allFilesData = {};
 let currentCategory = "";
@@ -1505,6 +1508,10 @@ if(enteredHash !== realHash){
 
     if(failedAttempts >= 5){
 
+        sendSecurityAlert(
+        "Multiple failed password attempts"
+        );
+
         lockUntil =
         Date.now() + 300000;
 
@@ -1517,7 +1524,7 @@ if(enteredHash !== realHash){
     }else{
 
         alert(
-        `Wrong Password.\nAttempts left: ${5 - failedAttempts}`
+        `Wrong Access Key.\nAttempts left: ${5 - failedAttempts}`
         );
 
     }
@@ -1630,6 +1637,8 @@ dash.classList.add(
 
             saveAccessLog();
 
+   registerActiveSession();
+
            saveVisitorLog({
 
     visitorName:
@@ -1670,6 +1679,8 @@ dash.classList.add(
             startSessionTimer();
 
             startInactivityMonitor();
+
+   listenForForceLogout();
 
         },700);
 
@@ -1773,6 +1784,207 @@ dash.classList.add(
         );
 
     }
+
+}
+
+   async function sendSecurityAlert(reason){
+
+    try{
+
+        const visitorName =
+        document.getElementById(
+        'user-name'
+        ).value || "Unknown";
+
+        const purpose =
+        document.getElementById(
+        'user-purpose'
+        ).value || "Unknown";
+
+        let ip = "Unknown";
+        let location = "Unknown";
+
+        try{
+
+            const res =
+            await fetch(
+            "https://ipapi.co/json/"
+            );
+
+            const info =
+            await res.json();
+
+            ip =
+            info.ip || "Unknown";
+
+            location =
+            `${info.city}, ${info.country_name}`;
+
+        }catch(e){}
+
+        await fetch(
+        DISCORD_WEBHOOK,
+        {
+
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/json"
+            },
+
+            body:JSON.stringify({
+
+                embeds:[{
+
+                    title:
+                    "🚨 SUSPICIOUS VAULT ACTIVITY",
+
+                    color:16711680,
+
+                    fields:[
+
+                        {
+                            name:"Visitor",
+                            value:visitorName,
+                            inline:true
+                        },
+
+                        {
+                            name:"Purpose",
+                            value:purpose,
+                            inline:true
+                        },
+
+                        {
+                            name:"Reason",
+                            value:reason,
+                            inline:false
+                        },
+
+                        {
+                            name:"IP Address",
+                            value:ip,
+                            inline:true
+                        },
+
+                        {
+                            name:"Location",
+                            value:location,
+                            inline:true
+                        },
+
+                        {
+                            name:"Device",
+                            value:
+                            navigator.userAgent
+                            .slice(0,100),
+                            inline:false
+                        }
+
+                    ],
+
+                    timestamp:
+                    new Date().toISOString()
+
+                }]
+
+            })
+
+        });
+
+    }catch(err){
+
+        console.error(
+        "Discord alert failed",
+        err
+        );
+
+    }
+
+}
+
+   async function registerActiveSession(){
+
+    const {
+        doc,
+        updateDoc
+    } = window.firestoreFunctions;
+
+    try{
+
+        await updateDoc(
+
+            doc(
+                window.db,
+                "activeSessions",
+                sessionId
+            ),
+
+            {
+
+                visitor:
+                document.getElementById(
+                'user-name'
+                ).value,
+
+                active:true,
+
+                createdAt:
+                new Date().toISOString()
+
+            }
+
+        );
+
+    }catch(e){
+
+        console.log(e);
+
+    }
+
+}
+
+      async function listenForForceLogout(){
+
+    const {
+        doc,
+        onSnapshot
+    } = window.firestoreFunctions;
+
+    onSnapshot(
+
+        doc(
+            window.db,
+            "activeSessions",
+            sessionId
+        ),
+
+        (snap)=>{
+
+            if(!snap.exists()) return;
+
+            const data =
+            snap.data();
+
+            if(data.forceLogout){
+
+                alert(
+                "Administrator terminated your session."
+                );
+
+                location.reload();
+
+            }
+
+        }
+
+    );
+
+}
+
+        },700);
+
+    },1200);
 
 }
    
@@ -2590,9 +2802,15 @@ navigator.userAgent
 
 document.addEventListener(
 "contextmenu",
-e=>e.preventDefault()
-);
+e=>{
 
+    sendSecurityAlert(
+    "Right click attempt detected"
+    );
+
+    e.preventDefault();
+
+});
 document.onkeydown =
 function(e){
 
@@ -2604,6 +2822,10 @@ function(e){
             e.key==='u'
         )
     ){
+
+   sendSecurityAlert(
+"Blocked keyboard shortcut attempt: " + e.key
+);
 
         e.preventDefault();
 
