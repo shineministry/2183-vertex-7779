@@ -1396,9 +1396,6 @@ let sessionSeconds = 3600;
 
 let inactivityTimer;
 
-const CORRECT_SALT =
-"UltraSecureSalt987!";
-
    let failedAttempts = 0;
 let lockUntil = 0;
 
@@ -1411,6 +1408,22 @@ let sessionStartTime = null;
 
    let allFilesData = {};
 let currentCategory = "";
+
+   async function sha256Bytes(text){
+
+    const enc =
+    new TextEncoder();
+
+    const hashBuffer =
+    await crypto.subtle.digest(
+        "SHA-256",
+        enc.encode(text)
+    );
+
+    return new Uint8Array(
+        hashBuffer
+    );
+}
 
 /* =========================
    CLOCK
@@ -2630,49 +2643,124 @@ displayName){
         const buffer =
         await res.arrayBuffer();
 
+        // SETTINGS LENGTH
+
+        const settingsLength =
+        new Uint32Array(
+            buffer.slice(0,4)
+        )[0];
+
+        // SETTINGS JSON
+
+        const settingsBytes =
+        buffer.slice(
+            4,
+            4 + settingsLength
+        );
+
+        const settingsText =
+        new TextDecoder()
+        .decode(settingsBytes);
+
+        const settings =
+        JSON.parse(settingsText);
+
+        // SALT
+
+        const saltStart =
+        4 + settingsLength;
+
+        const saltEnd =
+        saltStart + 16;
+
+        const salt =
+        buffer.slice(
+            saltStart,
+            saltEnd
+        );
+
+        // IV
+
+        const ivStart =
+        saltEnd;
+
+        const ivEnd =
+        ivStart + 12;
+
         const iv =
-        buffer.slice(0,12);
+        buffer.slice(
+            ivStart,
+            ivEnd
+        );
+
+        // ENCRYPTED DATA
 
         const encryptedData =
-        buffer.slice(12);
+        buffer.slice(ivEnd);
 
-        const enc =
-        new TextEncoder();
+        // HASH PASSWORD
+
+        const passwordHash =
+        await sha256Bytes(
+            masterPassword
+        );
+
+        // IMPORT HASH
 
         const keyMaterial =
         await crypto.subtle.importKey(
             "raw",
-            enc.encode(masterPassword),
-            {name:"PBKDF2"},
+            passwordHash,
+            "PBKDF2",
             false,
             ["deriveKey"]
         );
+
+        // DERIVE AES KEY
 
         const key =
         await crypto.subtle.deriveKey(
             {
                 name:"PBKDF2",
-                salt:enc.encode(
-                CORRECT_SALT),
-                iterations:250000,
-                hash:"SHA-256"
+
+                salt:new Uint8Array(
+                    salt
+                ),
+
+                iterations:
+                settings.iterations,
+
+                hash:
+                settings.hash
+
             },
+
             keyMaterial,
+
             {
                 name:"AES-GCM",
                 length:256
             },
+
             false,
+
             ["decrypt"]
         );
+
+        // DECRYPT
 
         const decrypted =
         await crypto.subtle.decrypt(
             {
                 name:"AES-GCM",
-                iv:iv
+
+                iv:new Uint8Array(
+                    iv
+                )
             },
+
             key,
+
             encryptedData
         );
 
@@ -2684,60 +2772,48 @@ displayName){
             }
         );
 
-currentBlobUrl =
-URL.createObjectURL(
-blob);
+        currentBlobUrl =
+        URL.createObjectURL(blob);
 
         document.getElementById(
-        'modal-title').textContent =
+        'modal-title'
+        ).textContent =
         displayName;
 
-       saveVisitorLog({
-
-    visitorName:
-    document.getElementById(
-    'user-name').value,
-
-    accessedFile:
-    displayName,
-
-    accessTime:
-    new Date().toLocaleString()
-
-});
-       
         document.getElementById(
-        'modal').style.display =
+        'modal'
+        ).style.display =
         'block';
 
-         document.getElementById(
-         'watermark').style.display =
-         'flex';
+        document.getElementById(
+        'watermark'
+        ).style.display =
+        'flex';
 
-const viewer =
-document.getElementById(
-'viewer'
-);
+        const viewer =
+        document.getElementById(
+        'viewer'
+        );
 
-if(/Android|iPhone|iPad/i.test(
-navigator.userAgent
-)){
+        if(
+        /Android|iPhone|iPad/i
+        .test(navigator.userAgent)
+        ){
 
-    viewer.removeAttribute(
-    'src'
-    );
+            viewer.removeAttribute(
+            'src'
+            );
 
-    window.open(
-    currentBlobUrl,
-    '_blank'
-    );
+            window.open(
+                currentBlobUrl,
+                '_blank'
+            );
 
-}else{
+        }else{
 
-    viewer.src =
-    currentBlobUrl;
-
-}
+            viewer.src =
+            currentBlobUrl;
+        }
 
     }catch(e){
 
@@ -2750,7 +2826,6 @@ navigator.userAgent
     }
 
 }
-
 /* =========================
    CLOSE MODAL
 ========================= */
@@ -3223,9 +3298,29 @@ async function requestPasskeyAccess(){
 
 if (data.status === "approved") {
 
+   const res =
+await fetch(
+"http://localhost:3000/get-secret",
+{
+    method:"POST",
+
+    headers:{
+        "Content-Type":
+        "application/json"
+    },
+
+    body:JSON.stringify({
+
+        approved:true
+
+    })
+});
+
+const result =
+await res.json();
+
 masterPassword =
-window.AEXTY_SHEKT
-.QWNIYR_UUIPORK;
+result.secret;
 
     sessionStartTime = new Date();
 
