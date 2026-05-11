@@ -18,10 +18,13 @@ SHINEIL KEITH MATHIAS | ONLINE VAULT
 type="image/png"
 href="favicon.png">
 
-<meta http-equiv="Content-Security-Policy"
+<<meta
+http-equiv="Content-Security-Policy"
 content="
-default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval';
-connect-src 'self'
+default-src 'self';
+
+connect-src
+'self'
 https://www.google.com
 https://www.gstatic.com
 https://ipapi.co
@@ -31,12 +34,42 @@ https://www.googletagmanager.com
 https://firebase.googleapis.com
 https://firestore.googleapis.com
 https://firebaseinstallations.googleapis.com
+https://identitytoolkit.googleapis.com
+https://securetoken.googleapis.com
 https://backend.shinumaths989.workers.dev
 https://www.google-analytics.com;
-img-src * data: blob:;
-style-src 'self' 'unsafe-inline' https:;
-script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;
-font-src 'self' https: data:;
+
+img-src
+'self'
+data:
+blob:
+https:;
+
+style-src
+'self'
+'unsafe-inline'
+https:;
+
+script-src
+'self'
+'unsafe-inline'
+'unsafe-eval'
+https://www.gstatic.com
+https://www.google.com
+https://www.googletagmanager.com;
+
+font-src
+'self'
+https:
+data:;
+
+frame-ancestors 'self';
+
+object-src 'none';
+
+base-uri 'self';
+
+form-action 'self';
 ">
    
 <style>
