@@ -883,132 +883,227 @@ transform:
    PASSPORT STYLE NAVBAR
 ========================= */
 
+/* =========================
+   PASSPORT NAVBAR
+========================= */
+
 .passport-navbar{
 
-    height:auto;
-    padding:0;
+    width:100%;
+
     display:flex;
     flex-direction:column;
-    background:#ffffff;
-    border-bottom:1px solid #d6d6d6;
+
+    background:#fff;
+
+    border-bottom:
+    1px solid #d9d9d9;
+
+    box-shadow:
+    0 2px 10px rgba(0,0,0,.05);
 
 }
+
+/* =========================
+   TOP BAR
+========================= */
 
 .passport-topbar{
 
-    height:38px;
-    background:#efe2bc;
+    height:64px;
+
+    background:
+    linear-gradient(
+        90deg,
+        #f7e9c3,
+        #f3dfae
+    );
 
     display:flex;
+
     align-items:center;
     justify-content:space-between;
 
-    padding:0 22px;
+    padding:0 36px;
 
-    font-size:14px;
-    color:#111827;
-    border-bottom:1px solid #d8cda8;
+    border-bottom:
+    1px solid #e5d3a1;
 
 }
 
+/* DATE TIME */
+
 #passport-datetime{
 
+    font-size:17px;
+
     font-weight:500;
+
+    color:#1f2937;
+
     letter-spacing:.2px;
 
 }
 
+/* BUTTON AREA */
+
 .passport-actions{
 
     display:flex;
+
     align-items:center;
-    gap:12px;
+
+    gap:20px;
 
 }
+
+/* BUTTONS */
 
 .passport-btn{
 
     border:none;
-    background:#1d4ed8;
+
+    padding:14px 28px;
+
+    border-radius:12px;
+
+    font-size:15px;
+
+    font-weight:800;
+
     color:white;
 
-    padding:8px 16px;
-
-    border-radius:8px;
-
-    font-weight:700;
     cursor:pointer;
 
-    transition:.25s;
+    transition:.25s ease;
+
+    box-shadow:
+    0 6px 16px rgba(0,0,0,.12);
 
 }
 
-.passport-btn:hover{
+/* BLUE BUTTON */
 
-    transform:translateY(-1px);
+.access-btn{
+
+    background:
+    linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    );
 
 }
+
+/* RED BUTTON */
 
 .emergency-btn{
 
-    background:#dc2626;
+    background:
+    linear-gradient(
+        135deg,
+        #ef4444,
+        #dc2626
+    );
 
 }
+
+/* HOVER */
+
+.passport-btn:hover{
+
+    transform:
+    translateY(-2px);
+
+    filter:brightness(1.05);
+
+}
+
+/* =========================
+   NAME BAR
+========================= */
 
 .passport-mainbar{
 
-    height:72px;
-
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-
-    padding:0 30px;
+    height:86px;
 
     background:white;
 
+    display:flex;
+
+    align-items:center;
+
+    padding:0 38px;
+
 }
+
+/* NAME */
 
 .passport-mainbar .nav-left{
 
-    font-size:24px;
+    font-size:44px;
+
     font-weight:900;
-    color:#1e3a8a;
-    letter-spacing:.5px;
+
+    color:#1d4ed8;
+
+    letter-spacing:.8px;
+
+    text-transform:uppercase;
 
 }
+
+/* =========================
+   MOBILE
+========================= */
 
 @media screen and (max-width:768px){
 
     .passport-topbar{
 
         flex-direction:column;
+
+        justify-content:center;
+
+        gap:14px;
+
         height:auto;
-        gap:10px;
-        padding:12px;
+
+        padding:18px;
 
         text-align:center;
+
+    }
+
+    .passport-actions{
+
+        width:100%;
+
+        flex-direction:column;
+
+    }
+
+    .passport-btn{
+
+        width:100%;
 
     }
 
     .passport-mainbar{
 
         justify-content:center;
+
         text-align:center;
-        padding:18px 12px;
+
+        padding:20px;
 
     }
 
     .passport-mainbar .nav-left{
 
-        font-size:18px;
+        font-size:24px;
 
-    }
-
-    .passport-actions{
-
-        flex-wrap:wrap;
-        justify-content:center;
+        line-height:1.4;
 
     }
 
@@ -1363,14 +1458,16 @@ style="display:none;">
 
     <div class="passport-topbar">
 
+        <!-- LEFT -->
         <div id="passport-datetime">
-            Thursday, May 14, 2026 | 21:00:23
+            Thursday, May 14, 2026 | 21:39:47
         </div>
 
+        <!-- RIGHT -->
         <div class="passport-actions">
 
             <button
-            class="passport-btn"
+            class="passport-btn access-btn"
             onclick="openLogs()">
 
                 ACCESS LOG
@@ -1389,6 +1486,7 @@ style="display:none;">
 
     </div>
 
+    <!-- NAME BAR -->
     <div class="passport-mainbar">
 
         <div class="nav-left">
