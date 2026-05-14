@@ -478,48 +478,6 @@ button{
    NAVBAR
 ========================= */
 
-.navbar{
-
-    height:72px;
-
-    background:
-        rgba(255,255,255,.88);
-
-    backdrop-filter:blur(12px);
-
-    border-bottom:
-        1px solid var(--border);
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    padding:0 35px;
-
-}
-
-.nav-left{
-
-    font-weight:900;
-
-    color:var(--accent);
-
-    letter-spacing:.4px;
-
-}
-
-.nav-right{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:18px;
-
-}
-
 #live-clock{
 
     font-family:monospace;
@@ -878,10 +836,6 @@ transform:
         text-align:center;
 
     }
-
-   /* =========================
-   PASSPORT STYLE NAVBAR
-========================= */
 
 /* =========================
    PASSPORT NAVBAR
@@ -1454,16 +1408,24 @@ style="display:none;">
 
 <div id="vault-dashboard">
 
-<nav class="navbar passport-navbar">
+<nav class="passport-navbar">
+
+    <!-- TOP BAR -->
 
     <div class="passport-topbar">
 
-        <!-- LEFT -->
-        <div id="passport-datetime">
-            Thursday, May 14, 2026 | 21:39:47
-        </div>
+        <!-- LIVE DATE + TIME -->
 
-        <!-- RIGHT -->
+        <button
+        class="passport-btn access-btn"
+        id="passport-datetime">
+
+            Loading Time...
+
+        </button>
+
+        <!-- RIGHT BUTTONS -->
+
         <div class="passport-actions">
 
             <button
@@ -1487,16 +1449,16 @@ style="display:none;">
     </div>
 
     <!-- NAME BAR -->
+
     <div class="passport-mainbar">
 
-        <div class="nav-left">
+        <div class="passport-name">
             SHINEIL KEITH MATHIAS
         </div>
 
     </div>
 
 </nav>
-
     <div class="main-container">
 
         <!-- SIDEBAR -->
@@ -3868,37 +3830,34 @@ initializeAppCheck(app, {
    DATE + TIME
 ========================= */
 
-function updatePassportDateTime(){
+function updatePassportTime(){
 
     const now = new Date();
 
     const formatted =
     now.toLocaleString(
-        'en-US',
+        "en-US",
         {
-            weekday:'long',
-            year:'numeric',
-            month:'long',
-            day:'numeric',
-            hour:'2-digit',
-            minute:'2-digit',
-            second:'2-digit',
+            weekday:"short",
+            month:"short",
+            day:"numeric",
+            year:"numeric",
+            hour:"2-digit",
+            minute:"2-digit",
+            second:"2-digit",
             hour12:false
         }
     );
 
     document.getElementById(
-    'passport-datetime'
-    ).textContent = formatted;
+        "passport-datetime"
+    ).innerHTML = formatted;
 
 }
 
-setInterval(
-    updatePassportDateTime,
-    1000
-);
+setInterval(updatePassportTime,1000);
 
-updatePassportDateTime();
+updatePassportTime();
 
 /* =========================
    EMERGENCY MODAL
