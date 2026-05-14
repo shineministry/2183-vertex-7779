@@ -879,6 +879,141 @@ transform:
 
     }
 
+   /* =========================
+   PASSPORT STYLE NAVBAR
+========================= */
+
+.passport-navbar{
+
+    height:auto;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    background:#ffffff;
+    border-bottom:1px solid #d6d6d6;
+
+}
+
+.passport-topbar{
+
+    height:38px;
+    background:#efe2bc;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:0 22px;
+
+    font-size:14px;
+    color:#111827;
+    border-bottom:1px solid #d8cda8;
+
+}
+
+#passport-datetime{
+
+    font-weight:500;
+    letter-spacing:.2px;
+
+}
+
+.passport-actions{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+
+}
+
+.passport-btn{
+
+    border:none;
+    background:#1d4ed8;
+    color:white;
+
+    padding:8px 16px;
+
+    border-radius:8px;
+
+    font-weight:700;
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+.passport-btn:hover{
+
+    transform:translateY(-1px);
+
+}
+
+.emergency-btn{
+
+    background:#dc2626;
+
+}
+
+.passport-mainbar{
+
+    height:72px;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:0 30px;
+
+    background:white;
+
+}
+
+.passport-mainbar .nav-left{
+
+    font-size:24px;
+    font-weight:900;
+    color:#1e3a8a;
+    letter-spacing:.5px;
+
+}
+
+@media screen and (max-width:768px){
+
+    .passport-topbar{
+
+        flex-direction:column;
+        height:auto;
+        gap:10px;
+        padding:12px;
+
+        text-align:center;
+
+    }
+
+    .passport-mainbar{
+
+        justify-content:center;
+        text-align:center;
+        padding:18px 12px;
+
+    }
+
+    .passport-mainbar .nav-left{
+
+        font-size:18px;
+
+    }
+
+    .passport-actions{
+
+        flex-wrap:wrap;
+        justify-content:center;
+
+    }
+
+}
+
     .main-container{
 
         flex-direction:column;
@@ -1224,46 +1359,45 @@ style="display:none;">
 
 <div id="vault-dashboard">
 
-    <nav class="navbar">
+<nav class="navbar passport-navbar">
 
-        <div class="nav-left">
+    <div class="passport-topbar">
 
-            SHINEIL KEITH MATHIAS
-
+        <div id="passport-datetime">
+            Thursday, May 14, 2026 | 21:00:23
         </div>
 
-        <div class="nav-right">
-<button
-onclick="openLogs()"
-style="
-border:none;
-background:var(--accent);
-color:white;
-padding:10px 16px;
-border-radius:10px;
-font-weight:bold;
-cursor:pointer;">
-
-    ACCESS LOGS
-
-</button>
-            <div id="live-clock">
-
-                00:00:00
-
-            </div>
+        <div class="passport-actions">
 
             <button
-            class="logout-btn"
-            onclick="logout()">
+            class="passport-btn"
+            onclick="openLogs()">
 
-                LOGOUT
+                ACCESS LOG
+
+            </button>
+
+            <button
+            class="passport-btn emergency-btn"
+            onclick="openEmergencyContact()">
+
+                EMERGENCY CONTACT
 
             </button>
 
         </div>
 
-    </nav>
+    </div>
+
+    <div class="passport-mainbar">
+
+        <div class="nav-left">
+            SHINEIL KEITH MATHIAS
+        </div>
+
+    </div>
+
+</nav>
 
     <div class="main-container">
 
@@ -1296,7 +1430,7 @@ cursor:pointer;">
             </div>
 
 <h2 id="cat-title">
-    Vault Ready
+    Vault Ready To Use
 </h2>
 
 <br>
@@ -3561,6 +3695,133 @@ initializeAppCheck(app, {
   isTokenAutoRefreshEnabled:true
 
 });
+</script>
+   <!-- =========================
+     EMERGENCY CONTACT MODAL
+========================= -->
+
+<div id="emergencyModal" class="modal">
+
+    <div class="modal-content"
+    style="
+    max-width:500px;
+    height:auto;
+    margin:80px auto;
+    border-radius:24px;">
+
+        <div class="modal-header">
+
+            <strong>
+                EMERGENCY CONTACT
+            </strong>
+
+            <button
+            onclick="closeEmergencyContact()"
+            style="
+            border:none;
+            background:var(--danger);
+            color:white;
+            padding:10px 16px;
+            border-radius:10px;
+            font-weight:bold;
+            cursor:pointer;">
+
+                CLOSE
+
+            </button>
+
+        </div>
+
+        <div style="
+        padding:30px;
+        line-height:2;
+        background:white;
+        font-size:16px;">
+
+            <div>
+                <strong>Name:</strong>
+                Shineil Keith Mathias
+            </div>
+
+            <div>
+                <strong>Phone:</strong>
+                +91 8605586173
+            </div>
+
+            <div>
+                <strong>Email:</strong>
+                shinumaths989@gmail.com
+            </div>
+
+            <div>
+                <strong>Location:</strong>
+                Maharashtra, India
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+   <script>
+
+/* =========================
+   DATE + TIME
+========================= */
+
+function updatePassportDateTime(){
+
+    const now = new Date();
+
+    const formatted =
+    now.toLocaleString(
+        'en-US',
+        {
+            weekday:'long',
+            year:'numeric',
+            month:'long',
+            day:'numeric',
+            hour:'2-digit',
+            minute:'2-digit',
+            second:'2-digit',
+            hour12:false
+        }
+    );
+
+    document.getElementById(
+    'passport-datetime'
+    ).textContent = formatted;
+
+}
+
+setInterval(
+    updatePassportDateTime,
+    1000
+);
+
+updatePassportDateTime();
+
+/* =========================
+   EMERGENCY MODAL
+========================= */
+
+function openEmergencyContact(){
+
+    document.getElementById(
+    'emergencyModal'
+    ).style.display = 'block';
+
+}
+
+function closeEmergencyContact(){
+
+    document.getElementById(
+    'emergencyModal'
+    ).style.display = 'none';
+
+}
+
 </script>
 </body>
 </html>
