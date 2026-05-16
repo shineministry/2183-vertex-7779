@@ -1,121 +1,546 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Shared Vault File</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Secure Shared Document</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="/pdfjs/pdf.min.js"></script>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Inter',sans-serif;
+    background:
+    radial-gradient(circle at top,#1d2538,#090c12 70%);
+    color:white;
+    min-height:100vh;
+    overflow:hidden;
+}
+
+#bgGlow{
+    position:fixed;
+    width:600px;
+    height:600px;
+    background:rgba(0,170,255,0.12);
+    border-radius:50%;
+    filter:blur(120px);
+    top:-250px;
+    left:-150px;
+    pointer-events:none;
+    animation:floatGlow 12s infinite alternate ease-in-out;
+}
+
+@keyframes floatGlow{
+    from{
+        transform:translateY(0px);
+    }
+    to{
+        transform:translateY(80px);
+    }
+}
+
+#passwordScreen{
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.password-card{
+    width:100%;
+    max-width:420px;
+    background:rgba(255,255,255,0.06);
+    backdrop-filter:blur(24px);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:28px;
+    padding:34px;
+    box-shadow:
+    0 20px 60px rgba(0,0,0,0.45);
+    animation:fadeUp .7s ease;
+}
+
+@keyframes fadeUp{
+    from{
+        opacity:0;
+        transform:translateY(20px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0px);
+    }
+}
+
+.logo{
+    width:72px;
+    height:72px;
+    border-radius:22px;
+    background:linear-gradient(135deg,#00c6ff,#0072ff);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+    margin:auto auto 20px;
+    box-shadow:
+    0 10px 30px rgba(0,114,255,0.35);
+}
+
+h1{
+    font-size:28px;
+    text-align:center;
+    margin-bottom:10px;
+}
+
+.subtitle{
+    text-align:center;
+    color:#b9c4d7;
+    margin-bottom:30px;
+    line-height:1.5;
+}
+
+input{
+    width:100%;
+    padding:15px 18px;
+    border-radius:16px;
+    border:none;
+    outline:none;
+    background:rgba(255,255,255,0.08);
+    color:white;
+    font-size:15px;
+    margin-bottom:18px;
+}
+
+input::placeholder{
+    color:#94a3b8;
+}
+
+button{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:16px;
+    background:linear-gradient(135deg,#00c6ff,#0072ff);
+    color:white;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.25s;
+}
+
+button:hover{
+    transform:translateY(-2px) scale(1.01);
+}
+
+#error{
+    margin-top:16px;
+    text-align:center;
+    color:#ff9b9b;
+}
+
+#viewer{
+    display:none;
+    height:100vh;
+    width:100%;
+    flex-direction:column;
+}
+
+#toolbar{
+    height:70px;
+    background:rgba(0,0,0,0.45);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+}
+
+.toolbar-left{
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+
+.toolbar-title{
+    font-size:15px;
+    color:#d7e1ef;
+}
+
+.zoom-controls{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.zoom-btn{
+    width:42px;
+    height:42px;
+    border-radius:12px;
+    border:none;
+    background:rgba(255,255,255,0.08);
+    color:white;
+    cursor:pointer;
+    font-size:18px;
+}
+
+#zoomLevel{
+    width:70px;
+    text-align:center;
+    color:#d7e1ef;
+}
+
+#pdfContainer{
+    flex:1;
+    overflow:auto;
+    display:flex;
+    justify-content:center;
+    padding:30px;
+}
+
+canvas{
+    border-radius:16px;
+    box-shadow:
+    0 10px 40px rgba(0,0,0,0.5);
+    animation:fadeCanvas .5s ease;
+}
+
+@keyframes fadeCanvas{
+    from{
+        opacity:0;
+        transform:scale(.97);
+    }
+    to{
+        opacity:1;
+        transform:scale(1);
+    }
+}
+
+.loader{
+    width:40px;
+    height:40px;
+    border:4px solid rgba(255,255,255,0.2);
+    border-top:4px solid white;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+    margin:auto;
+}
+
+@keyframes spin{
+    to{
+        transform:rotate(360deg);
+    }
+}
+
+</style>
 </head>
 <body>
 
-<h2>Shared File</h2>
+<div id="bgGlow"></div>
 
-<div id="status">
-Loading...
+<div id="passwordScreen">
+
+    <div class="password-card">
+
+        <div class="logo">🔐</div>
+
+        <h1>Protected Document</h1>
+
+        <div class="subtitle">
+            This shared file is encrypted and protected.
+            Enter password to continue.
+        </div>
+
+        <input
+        type="password"
+        id="sharePassword"
+        placeholder="Enter share password">
+
+        <button onclick="unlockShare()">
+            Open Secure Document
+        </button>
+
+        <div id="error"></div>
+
+    </div>
+
+</div>
+
+<div id="viewer">
+
+    <div id="toolbar">
+
+        <div class="toolbar-left">
+            <div class="toolbar-title" id="docTitle">
+                Shared Document
+            </div>
+        </div>
+
+        <div class="zoom-controls">
+
+            <button class="zoom-btn" onclick="zoomOut()">−</button>
+
+            <div id="zoomLevel">100%</div>
+
+            <button class="zoom-btn" onclick="zoomIn()">+</button>
+
+        </div>
+
+    </div>
+
+    <div id="pdfContainer">
+        <div class="loader" id="loader"></div>
+        <canvas id="pdfCanvas"></canvas>
+    </div>
+
 </div>
 
 <script>
 
-async function init() {
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+'/pdfjs/pdf.worker.min.js';
 
-  const params =
-    new URLSearchParams(
-      location.search
+let pdfDoc = null;
+let currentPage = 1;
+let scale = 1;
+let pdfBytes = null;
+
+
+async function sha256(text){
+
+    const buffer =
+    await crypto.subtle.digest(
+        'SHA-256',
+        new TextEncoder().encode(text)
     );
 
-  const token =
-    params.get("t");
-
-  if (!token) {
-
-    document.getElementById(
-      "status"
-    ).textContent =
-    "Missing token";
-
-    return;
-
-  }
-
-  try {
-
-    const data =
-      JSON.parse(
-        atob(token)
-      );
-
-    const now =
-      Date.now();
-
-    if (
-      data.exp &&
-      now > data.exp
-    ) {
-
-      document.getElementById(
-        "status"
-      ).textContent =
-      "Link expired";
-
-      return;
-
-    }
-
-    const fileUrl =
-
-      "https://backend.shinumaths989.workers.dev/docs/"
-      + data.file;
-
-    const res =
-      await fetch(fileUrl);
-
-    if (!res.ok) {
-
-      document.getElementById(
-        "status"
-      ).textContent =
-      "File not found";
-
-      return;
-
-    }
-
-    const blob =
-      await res.blob();
-
-    const a =
-      document.createElement("a");
-
-    a.href =
-      URL.createObjectURL(blob);
-
-    a.download =
-      data.name ||
-      data.file;
-
-    a.textContent =
-      "Download File";
-
-    document.getElementById(
-      "status"
-    ).innerHTML = "";
-
-    document.getElementById(
-      "status"
-    ).appendChild(a);
-
-  } catch (err) {
-
-    console.error(err);
-
-    document.getElementById(
-      "status"
-    ).textContent =
-    "Invalid share link";
-
-  }
+    return Array.from(
+        new Uint8Array(buffer)
+    )
+    .map(b =>
+        b.toString(16).padStart(2,'0')
+    )
+    .join('');
 
 }
 
-init();
+
+async function decryptSharedFile(encrypted){
+
+    // REPLACE WITH YOUR REAL DECRYPTION
+
+    return encrypted;
+
+}
+
+
+async function unlockShare(){
+
+    try{
+
+        const params =
+        new URLSearchParams(
+            location.search
+        );
+
+        const token =
+        params.get('t');
+
+        if(!token){
+
+            document.getElementById('error').textContent =
+            'Invalid share link';
+
+            return;
+
+        }
+
+        const data =
+        JSON.parse(
+            atob(token)
+        );
+
+        document.getElementById('docTitle').textContent =
+        data.name || 'Shared Document';
+
+        // Expiry
+
+        if(Date.now() > data.exp){
+
+            document.getElementById('error').textContent =
+            'This link has expired';
+
+            return;
+
+        }
+
+        // Password check
+
+        if(data.pwd){
+
+            const entered =
+            document.getElementById(
+                'sharePassword'
+            ).value;
+
+            const hash =
+            await sha256(entered);
+
+            if(hash !== data.pwd){
+
+                document.getElementById('error').textContent =
+                'Wrong password';
+
+                return;
+
+            }
+
+        }
+
+        // Load encrypted file
+
+        const res =
+        await fetch(
+            'https://backend.shinumaths989.workers.dev/docs/' +
+            data.file
+        );
+
+        if(!res.ok){
+
+            document.getElementById('error').textContent =
+            'File not found';
+
+            return;
+
+        }
+
+        const encrypted =
+        await res.arrayBuffer();
+
+        pdfBytes =
+        await decryptSharedFile(
+            encrypted
+        );
+
+        document.getElementById('passwordScreen').style.display =
+        'none';
+
+        document.getElementById('viewer').style.display =
+        'flex';
+
+        await loadPDF();
+
+    }catch(err){
+
+        console.error(err);
+
+        document.getElementById('error').textContent =
+        'Could not open shared file';
+
+    }
+
+}
+
+
+async function loadPDF(){
+
+    pdfDoc =
+    await pdfjsLib.getDocument({
+        data: pdfBytes
+    }).promise;
+
+    renderPage(currentPage);
+
+}
+
+
+async function renderPage(pageNum){
+
+    const page =
+    await pdfDoc.getPage(pageNum);
+
+    const viewport =
+    page.getViewport({ scale });
+
+    const canvas =
+    document.getElementById('pdfCanvas');
+
+    const ctx =
+    canvas.getContext('2d');
+
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    document.getElementById('loader').style.display =
+    'none';
+
+    await page.render({
+
+        canvasContext:ctx,
+
+        viewport
+
+    }).promise;
+
+    document.getElementById('zoomLevel').textContent =
+    Math.round(scale * 100) + '%';
+
+}
+
+
+function zoomIn(){
+
+    scale += 0.2;
+
+    renderPage(currentPage);
+
+}
+
+
+function zoomOut(){
+
+    scale -= 0.2;
+
+    if(scale < 0.4)
+        scale = 0.4;
+
+    renderPage(currentPage);
+
+}
+
+
+// Disable right click
+
+document.addEventListener('contextmenu',e=>{
+    e.preventDefault();
+});
+
+
+// Disable some shortcuts
+
+document.addEventListener('keydown',e=>{
+
+    if(
+        e.ctrlKey &&
+        ['s','p','u'].includes(
+            e.key.toLowerCase()
+        )
+    ){
+        e.preventDefault();
+    }
+
+});
 
 </script>
 
