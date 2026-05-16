@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Shared Vault File</title>
+</head>
+<body>
+
+<h2>Shared File</h2>
+
+<div id="status">
+Loading...
+</div>
+
+<script>
+
+async function init() {
+
+  const params =
+    new URLSearchParams(
+      location.search
+    );
+
+  const token =
+    params.get("t");
+
+  if (!token) {
+
+    document.getElementById(
+      "status"
+    ).textContent =
+    "Missing token";
+
+    return;
+
+  }
+
+  try {
+
+    const data =
+      JSON.parse(
+        atob(token)
+      );
+
+    const now =
+      Date.now();
+
+    if (
+      data.exp &&
+      now > data.exp
+    ) {
+
+      document.getElementById(
+        "status"
+      ).textContent =
+      "Link expired";
+
+      return;
+
+    }
+
+    const fileUrl =
+
+      "https://backend.shinumaths989.workers.dev/docs/"
+      + data.file;
+
+    const res =
+      await fetch(fileUrl);
+
+    if (!res.ok) {
+
+      document.getElementById(
+        "status"
+      ).textContent =
+      "File not found";
+
+      return;
+
+    }
+
+    const blob =
+      await res.blob();
+
+    const a =
+      document.createElement("a");
+
+    a.href =
+      URL.createObjectURL(blob);
+
+    a.download =
+      data.name ||
+      data.file;
+
+    a.textContent =
+      "Download File";
+
+    document.getElementById(
+      "status"
+    ).innerHTML = "";
+
+    document.getElementById(
+      "status"
+    ).appendChild(a);
+
+  } catch (err) {
+
+    console.error(err);
+
+    document.getElementById(
+      "status"
+    ).textContent =
+    "Invalid share link";
+
+  }
+
+}
+
+init();
+
+</script>
+
+</body>
+</html>
