@@ -4340,7 +4340,8 @@ async function generateShareLink(){
         );
         const data = await res.json();
         if(data.token){
-            const link = `${location.origin}/share.html?t=${data.token}`;
+const link =
+`https://72oe-v2sx.shine-ministry.com/share.html?t=${data.token}`;
             document.getElementById('share-link-text').textContent = link;
             document.getElementById('share-link-result').style.display = 'block';
         } else {
@@ -4355,7 +4356,8 @@ async function generateShareLink(){
             exp:  Date.now() + expiry * 3600000,
             pwd:  password ? await window.sha256(password) : null
         }));
-        const link = `${location.origin}/share.html?t=${payload}`;
+const link =
+`https://72oe-v2sx.shine-ministry.com/share.html?t=${payload}`;
         document.getElementById('share-link-text').textContent = link;
         document.getElementById('share-link-result').style.display = 'block';
     }
