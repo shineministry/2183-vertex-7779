@@ -384,30 +384,6 @@ async function unlockShare(){
             return;
 
         }
-
-        // Password check
-
-        if(data.pwd){
-
-            const entered =
-            document.getElementById(
-                'sharePassword'
-            ).value;
-
-            const hash =
-            await sha256(entered);
-
-            if(hash !== data.pwd){
-
-                document.getElementById('error').textContent =
-                'Wrong password';
-
-                return;
-
-            }
-
-        }
-
         // Load encrypted file
 
         const res =
