@@ -4324,17 +4324,20 @@ async function generateShareLink(){
     }catch(err){
         console.error(err);
         // Fallback: generate a signed token client-side for display purposes
-        const payload = btoa(JSON.stringify({
-            file: shareCurrentFile.file,
-            name: shareCurrentFile.name,
-            exp:  Date.now() + expiry * 3600000,
-            pwd:  password ? await window.sha256(password) : null
-        }));
-        const link = `${location.origin}/share.html?t=${payload}`;
-        document.getElementById('share-link-text').textContent = link;
-        document.getElementById('share-link-result').style.display = 'block';
-    }
-}
+const payload = btoa(JSON.stringify({
+    file: shareCurrentFile.file,
+    name: shareCurrentFile.name,
+
+    exp: Date.now() + expiry * 3600000,
+
+    // share-link password
+    pwd: password
+        ? await window.sha256(password)
+        : null,
+
+    // REAL vault decryption password
+    vaultKey: currentPassword
+}));
 
 function copyShareLink(){
     const text = document.getElementById('share-link-text').textContent;
@@ -5456,7 +5459,7 @@ document.addEventListener(
                     <button class="card-btn card-btn-pin" style="flex:1;padding:10px;" onclick="closeShareModal()">Done</button>
                 </div>
                 <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center;">
-                    🔒 Read-only · AES-256 encrypted · Auto-expires · Powered by Cloudflare
+                    🔒 Read-only · AES-256 encrypted · Auto-expires · Powered by SKM
                 </div>
             </div>
         </div>
