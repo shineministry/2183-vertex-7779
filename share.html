@@ -504,6 +504,49 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs" type="module"></script>
 
 <script type="module">
+  async function decryptFile(encryptedData, password) {
+    const enc = new TextEncoder();
+    const data = new Uint8Array(encryptedData);
+
+    const salt = data.slice(0, 16);
+    const iv = data.slice(16, 28);
+    const encrypted = data.slice(28);
+
+    const keyMaterial =
+        await crypto.subtle.importKey(
+            "raw",
+            enc.encode(password),
+            "PBKDF2",
+            false,
+            ["deriveKey"]
+        );
+
+    const key =
+        await crypto.subtle.deriveKey(
+            {
+                name: "PBKDF2",
+                salt,
+                iterations: 100000,
+                hash: "SHA-256"
+            },
+            keyMaterial,
+            {
+                name: "AES-GCM",
+                length: 256
+            },
+            false,
+            ["decrypt"]
+        );
+
+    return await crypto.subtle.decrypt(
+        {
+            name: "AES-GCM",
+            iv
+        },
+        key,
+        encrypted
+    );
+}
   // ── import pdf.js ──
   import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs';
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.mjs';
@@ -695,17 +738,48 @@
       dlSubmit.textContent = 'Downloading…';
       dlSubmit.classList.add('loading');
       try {
-        const fileUrl = 'https://backend.shinumaths989.workers.dev/docs/' + resolvedData.file;
-        const res = await fetch(fileUrl);
-        if (!res.ok) throw new Error('Fetch failed');
-        const blob = await res.blob();
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href = url; a.download = resolvedData.name || resolvedData.file;
-        document.body.appendChild(a); a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        dlModal.classList.remove('active');
+const fileUrl =
+'https://backend.shinumaths989.workers.dev/docs/' +
+resolvedData.file;
+
+const res = await fetch(fileUrl);
+if (!res.ok) throw new Error('Fetch failed');
+
+// fetch encrypted .enc
+const encrypted =
+await res.arrayBuffer();
+
+// decrypt file
+const decrypted =
+await decryptFile(
+    encrypted,
+    resolvedData.vaultKey
+);
+
+// make real PDF blob
+const blob =
+new Blob(
+    [decrypted],
+    { type: "application/pdf" }
+);
+
+const url =
+URL.createObjectURL(blob);
+
+const a =
+document.createElement('a');
+
+a.href = url;
+a.download =
+resolvedData.name ||
+resolvedData.file.replace('.enc', '.pdf');
+
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+
+URL.revokeObjectURL(url);
+dlModal.classList.remove('active');
       } catch (e) {
         console.error(e);
         dlErrHint.textContent = 'Download failed. Try again.';
