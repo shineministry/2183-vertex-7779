@@ -4296,48 +4296,112 @@ function closeShareModal(){
 }
 
 async function generateShareLink(){
+
     if(!shareCurrentFile) return;
-    const expiry  = parseInt(document.getElementById('share-expiry').value) || 24;
-    const password = document.getElementById('share-password').value.trim();
+
+    const expiry =
+    parseInt(
+        document.getElementById(
+        'share-expiry'
+        ).value
+    ) || 24;
+
+    const password =
+    document.getElementById(
+    'share-password'
+    ).value.trim();
+
     try{
-        const res = await fetch(
+
+        const res =
+        await fetch(
             'https://backend.shinumaths989.workers.dev/create-share',
             {
                 method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({
-                    file:   shareCurrentFile.file,
-                    name:   shareCurrentFile.name,
-                    expiry: expiry,
-                    password: password || null
+                headers:{
+                    'Content-Type':
+                    'application/json'
+                },
+                body: JSON.stringify({
+                    file:
+                    shareCurrentFile.file,
+
+                    name:
+                    shareCurrentFile.name,
+
+                    expiry:
+                    expiry,
+
+                    password:
+                    password || null
                 })
             }
         );
-        const data = await res.json();
+
+        const data =
+        await res.json();
+
         if(data.token){
-            const link = `${location.origin}/share.html?t=${data.token}`;
-            document.getElementById('share-link-text').textContent = link;
-            document.getElementById('share-link-result').style.display = 'block';
-        } else {
-            alert('Could not create share link. Check backend.');
+
+            const link =
+            `${location.origin}/share.html?t=${data.token}`;
+
+            document.getElementById(
+            'share-link-text'
+            ).textContent = link;
+
+            document.getElementById(
+            'share-link-result'
+            ).style.display = 'block';
+
+        }else{
+
+            alert(
+            'Could not create share link. Check backend.'
+            );
+
         }
+
     }catch(err){
+
         console.error(err);
-        // Fallback: generate a signed token client-side for display purposes
-const payload = btoa(JSON.stringify({
-    file: shareCurrentFile.file,
-    name: shareCurrentFile.name,
 
-    exp: Date.now() + expiry * 3600000,
+        // fallback client-side token
+        const payload =
+        btoa(JSON.stringify({
 
-    // share-link password
-    pwd: password
-        ? await window.sha256(password)
-        : null,
+            file:
+            shareCurrentFile.file,
 
-    // REAL vault decryption password
-    vaultKey: currentPassword
-}));
+            name:
+            shareCurrentFile.name,
+
+            exp:
+            Date.now() +
+            expiry * 3600000,
+
+            pwd:
+            password
+            ? await window.sha256(password)
+            : null,
+
+            // real vault password
+            vaultKey:
+            window.masterPassword
+        }));
+
+        const link =
+        `${location.origin}/share.html?t=${payload}`;
+
+        document.getElementById(
+        'share-link-text'
+        ).textContent = link;
+
+        document.getElementById(
+        'share-link-result'
+        ).style.display = 'block';
+    }
+}
 
 function copyShareLink(){
     const text = document.getElementById('share-link-text').textContent;
