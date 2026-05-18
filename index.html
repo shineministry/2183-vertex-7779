@@ -2400,51 +2400,34 @@ if(enteredHash !== realHash){
 }
 
 try{
+const res = await fetch( "https://backend.shinumaths989.workers.dev/get-secret", {
+ method:"POST",
+ headers:{
+ "Content-Type":"application/json"
+ },
+ body:JSON.stringify({ hash: enteredHash })
+});
 
-    const res =
-    await fetch(
-    "https://backend.shinumaths989.workers.dev/get-secret",
-    {
-        method:"POST",
-
-        headers:{
-            "Content-Type":"application/json"
-        },
-
-        body:JSON.stringify({
-
-            hash: enteredHash
-
-        })
-
-    });
-
-    const result =
-    await res.json();
-
-    if(!result.success){
-
-        alert(
-        "Backend authentication failed."
-        );
-
-        return;
+// 🛡️ Guard against firewall HTML intercept pages
+if (!res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+        throw new Error("Origin Access Refused: Vault Firewall actively dropped connection.");
     }
-
-    window.masterPassword =
-    result.secret;
-
-}catch(e){
-
-    console.error(e);
-
-    alert(
-    "Could not connect to secure backend."
-    );
-
-    return;
+    throw new Error(`Authentication server error status ${res.status}`);
 }
 
+const result = await res.json();
+if(!result.success){
+ alert( "Backend authentication failed." );
+ return;
+}
+window.masterPassword = result.secret;
+}catch(e){
+ console.error(e);
+ alert( e.message || "Could not connect to secure backend." );
+ return;
+}
    failedAttempts = 0;
 
     sessionStartTime =
@@ -3026,62 +3009,40 @@ async function logout(message=""){
 ========================= */
 
 async function initVault(){
+try{
+const res = await fetch( "https://backend.shinumaths989.workers.dev/files.json");
 
-    try{
-
-        const res =
-        await fetch(
-        "https://backend.shinumaths989.workers.dev/files.json");
-
-        const data =
-        await res.json();
-       allFilesData = data;
-
-        const list =
-        document.getElementById(
-        'cat-list');
-
-        list.innerHTML = "";
-
-        Object.keys(data)
-        .forEach(cat=>{
-
-            const li =
-            document.createElement(
-            'li');
-
-            li.textContent =
-            cat;
-
-            li.onclick = ()=>{
-
-                document.querySelectorAll(
-                '#cat-list li')
-                .forEach(el=>
-                el.classList.remove(
-                'active'));
-
-                li.classList.add(
-                'active');
-
-                renderFiles(
-                    data[cat],
-                    cat
-                );
-
-            };
-
-            list.appendChild(
-            li);
-
-        });
-
-    }catch(e){
-
-        console.error(e);
-
+// 🛡️ Intercept firewall HTML blocks before they crash JSON parsing
+if (!res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+        throw new Error("Security Exception: Domain rejected by Gateway Firewall.");
     }
+    throw new Error(`Server returned HTTP status ${res.status}`);
+}
 
+const data = await res.json();
+allFilesData = data;
+const list = document.getElementById( 'cat-list');
+list.innerHTML = "";
+Object.keys(data)
+ .forEach(cat=>{
+ const li = document.createElement( 'li');
+ li.textContent = cat;
+ li.onclick = ()=>{
+ document.querySelectorAll( '#cat-list li')
+ .forEach(el=> el.classList.remove( 'active'));
+ li.classList.add( 'active');
+ renderFiles( data[cat], cat );
+ };
+ list.appendChild( li);
+ });
+}catch(e){
+ console.error(e);
+ document.getElementById('cat-title').textContent = "Vault System Locked";
+ const grid = document.getElementById('file-grid');
+ grid.innerHTML = `<div style="grid-column:1/-1; padding:30px; text-align:center; color:var(--danger); font-weight:700;">🚨 ${e.message || "Failed to load secure database."}</div>`;
+}
 }
 
 /* =========================
