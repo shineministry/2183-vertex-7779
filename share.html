@@ -970,7 +970,7 @@ dlModal.classList.remove('active');
     });
 
     async function attempt() {
-      if (input.value === resolvedData.password) {
+      if (await window.sha256(input.value) === resolvedData.pwd || input.value === resolvedData.pwd) {
         btn.textContent = 'Unlocking…';
         btn.classList.add('loading');
         await showPDF(resolvedData);
@@ -988,6 +988,11 @@ dlModal.classList.remove('active');
     input.addEventListener('input', () => errHint.classList.add('hidden'));
   }
 
+  window.sha256 = async function(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+};
+
   // ── Init ──
   async function init() {
     const params = new URLSearchParams(location.search);
@@ -1000,7 +1005,7 @@ dlModal.classList.remove('active');
       if (data.exp && Date.now() > data.exp) { showError(iconExpired, 'This share link has expired.'); return; }
       resolvedData = data;
 
-      if (data.password) {
+      if (data.pwd) {
         showPasswordPrompt();
       } else {
         await showPDF(data);
