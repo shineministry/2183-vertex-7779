@@ -568,48 +568,48 @@ href="favicon.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs" type="module"></script>
 
 <script type="module">
-  async function decryptFile(encryptedData, password) {
-    const enc = new TextEncoder();
-    const data = new Uint8Array(encryptedData);
+async function decryptFile(encryptedData, password) {
+  const buffer = encryptedData;
 
-    const salt = data.slice(0, 16);
-    const iv = data.slice(16, 28);
-    const encrypted = data.slice(28);
+  // Read settings header (same format as index.html)
+  const settingsLength = new Uint32Array(buffer.slice(0, 4))[0];
+  const settingsBytes  = buffer.slice(4, 4 + settingsLength);
+  const settings       = JSON.parse(new TextDecoder().decode(settingsBytes));
 
-    const keyMaterial =
-        await crypto.subtle.importKey(
-            "raw",
-            enc.encode(password),
-            "PBKDF2",
-            false,
-            ["deriveKey"]
-        );
+  const saltStart = 4 + settingsLength;
+  const salt      = buffer.slice(saltStart, saltStart + 16);
+  const ivStart   = saltStart + 16;
+  const iv        = buffer.slice(ivStart, ivStart + 12);
+  const encrypted = buffer.slice(ivStart + 12);
 
-    const key =
-        await crypto.subtle.deriveKey(
-            {
-                name: "PBKDF2",
-                salt,
-                iterations: 100000,
-                hash: "SHA-256"
-            },
-            keyMaterial,
-            {
-                name: "AES-GCM",
-                length: 256
-            },
-            false,
-            ["decrypt"]
-        );
+  // Key must be derived from sha256(password), same as index.html
+  const passwordHashBuffer = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(password)
+  );
 
-    return await crypto.subtle.decrypt(
-        {
-            name: "AES-GCM",
-            iv
-        },
-        key,
-        encrypted
-    );
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', passwordHashBuffer, 'PBKDF2', false, ['deriveKey']
+  );
+
+  const key = await crypto.subtle.deriveKey(
+    {
+      name:       'PBKDF2',
+      salt:       new Uint8Array(salt),
+      iterations: settings.iterations,
+      hash:       settings.hash
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['decrypt']
+  );
+
+  return await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: new Uint8Array(iv) },
+    key,
+    encrypted
+  );
 }
   // ── import pdf.js ──
   import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs';
