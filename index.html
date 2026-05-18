@@ -4214,6 +4214,51 @@ e.preventDefault();
 
 let previewTimeout = null;
 
+// Cache: file.file -> ImageBitmap (rendered first page)
+const previewCache = new Map();
+// Track in-flight fetches so we don't double-fetch
+const previewInFlight = new Map();
+
+async function getPreviewBitmap(file) {
+    if (previewCache.has(file.file)) return previewCache.get(file.file);
+
+    // If already fetching this file, wait for it
+    if (previewInFlight.has(file.file)) return previewInFlight.get(file.file);
+
+    const promise = (async () => {
+        const res = await fetch("https://backend.shinumaths989.workers.dev/docs/" + file.file);
+        const buf = await res.arrayBuffer();
+        const sLen = new Uint32Array(buf.slice(0,4))[0];
+        const settings = JSON.parse(new TextDecoder().decode(buf.slice(4, 4+sLen)));
+        const saltStart = 4+sLen, saltEnd = saltStart+16;
+        const ivStart = saltEnd, ivEnd = ivStart+12;
+        const salt = buf.slice(saltStart, saltEnd);
+        const iv   = buf.slice(ivStart, ivEnd);
+        const enc  = buf.slice(ivEnd);
+        const phash = await sha256Bytes(masterPassword);
+        const km = await crypto.subtle.importKey("raw",phash,"PBKDF2",false,["deriveKey"]);
+        const key = await crypto.subtle.deriveKey(
+            {name:"PBKDF2",salt:new Uint8Array(salt),iterations:settings.iterations,hash:settings.hash},
+            km,{name:"AES-GCM",length:256},false,["decrypt"]
+        );
+        const dec = await crypto.subtle.decrypt({name:"AES-GCM",iv:new Uint8Array(iv)},key,enc);
+        const pdf  = await window.pdfjsLib.getDocument({data:dec}).promise;
+        const page = await pdf.getPage(1);
+        const vp   = page.getViewport({scale:0.5});
+        const offscreen = document.createElement('canvas');
+        offscreen.width  = vp.width;
+        offscreen.height = vp.height;
+        await page.render({canvasContext:offscreen.getContext('2d'),viewport:vp}).promise;
+        const bitmap = await createImageBitmap(offscreen);
+        previewCache.set(file.file, bitmap);
+        previewInFlight.delete(file.file);
+        return bitmap;
+    })();
+
+    previewInFlight.set(file.file, promise);
+    return promise;
+}
+
 async function startHoverPreview(file, e){
     clearTimeout(previewTimeout);
     previewTimeout = setTimeout(async ()=>{
@@ -4224,29 +4269,10 @@ async function startHoverPreview(file, e){
         tooltip.style.display = 'flex';
         positionTooltip(e);
         try{
-            const res = await fetch("https://backend.shinumaths989.workers.dev/docs/" + file.file);
-            const buf = await res.arrayBuffer();
-            // Read settings/salt/iv header
-            const sLen = new Uint32Array(buf.slice(0,4))[0];
-            const settings = JSON.parse(new TextDecoder().decode(buf.slice(4, 4+sLen)));
-            const saltStart = 4+sLen, saltEnd = saltStart+16;
-            const ivStart = saltEnd, ivEnd = ivStart+12;
-            const salt = buf.slice(saltStart, saltEnd);
-            const iv   = buf.slice(ivStart, ivEnd);
-            const enc  = buf.slice(ivEnd);
-            const phash = await sha256Bytes(masterPassword);
-            const km = await crypto.subtle.importKey("raw",phash,"PBKDF2",false,["deriveKey"]);
-            const key = await crypto.subtle.deriveKey(
-                {name:"PBKDF2",salt:new Uint8Array(salt),iterations:settings.iterations,hash:settings.hash},
-                km,{name:"AES-GCM",length:256},false,["decrypt"]
-            );
-            const dec = await crypto.subtle.decrypt({name:"AES-GCM",iv:new Uint8Array(iv)},key,enc);
-            const pdf = await window.pdfjsLib.getDocument({data:dec}).promise;
-            const page = await pdf.getPage(1);
-            const vp = page.getViewport({scale:0.5});
-            canvas.width = vp.width;
-            canvas.height = vp.height;
-            await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+            const bitmap = await getPreviewBitmap(file);
+            canvas.width  = bitmap.width;
+            canvas.height = bitmap.height;
+            canvas.getContext('2d').drawImage(bitmap, 0, 0);
         }catch(err){
             canvas.width = 160; canvas.height = 90;
             const ctx = canvas.getContext('2d');
@@ -4257,7 +4283,7 @@ async function startHoverPreview(file, e){
             ctx.textAlign = 'center';
             ctx.fillText('Preview unavailable',80,50);
         }
-    }, 400);
+    }, 150);
 }
 
 function positionTooltip(e){
