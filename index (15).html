@@ -1,0 +1,5543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<!--
+NOTE:
+Passkey / approval reachability abroad depends mainly on:
+1. Firebase regional availability
+2. Cloudflare Worker routing
+3. Internet/firewall restrictions
+4. Browser notification/background sync permissions
+
+Recommended:
+- Use Firebase Blaze plan
+- Enable Firestore multi-region
+- Use Cloudflare global routing
+- Avoid local-network-only approval systems
+-->
+
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+   <meta http-equiv="Cache-Control"
+content="no-store, no-cache, must-revalidate">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+   <script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
+   
+   <meta
+name="referrer"
+content="strict-origin-when-cross-origin">
+
+      <meta
+http-equiv="Permissions-Policy"
+content="camera=(), microphone=(), geolocation=()">
+   
+<title>
+SHINEIL KEITH MATHIAS | ONLINE VAULT
+</title>
+
+<link rel="icon"
+type="image/png"
+href="favicon.png">
+   
+<style>
+:root{
+
+    --bg:#f1f5f9;
+    --card:#ffffff;
+    --accent:#2563eb;
+    --accent2:#1d4ed8;
+    --text:#0f172a;
+    --muted:#64748b;
+    --border:#e2e8f0;
+    --danger:#ef4444;
+
+    --shadow:
+        0 10px 25px rgba(0,0,0,.08);
+
+}
+
+/* =========================
+   RESET
+========================= */
+
+*{
+
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+
+}
+
+html,
+body{
+
+    width:100%;
+    height:100%;
+
+    background:var(--bg);
+
+    font-family:
+        "Segoe UI",
+        system-ui,
+        sans-serif;
+
+    color:var(--text);
+
+    overflow-x:hidden;
+    overflow-y:auto;
+
+    scroll-behavior:smooth;
+
+}
+
+body{
+
+    user-select:none;
+    -webkit-user-select:none;
+
+}
+
+/* =========================
+   SCROLLBAR
+========================= */
+
+::-webkit-scrollbar{
+
+    width:8px;
+    height:8px;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#cbd5e1;
+    border-radius:10px;
+
+}
+
+/* =========================
+   ANIMATIONS
+========================= */
+
+@keyframes fadeInUp{
+
+    from{
+
+        opacity:0;
+
+        transform:
+            translateY(30px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:
+            translateY(0);
+
+    }
+
+}
+
+@keyframes modalScale{
+
+    from{
+
+        opacity:0;
+
+        transform:
+            scale(.92);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:
+            scale(1);
+
+    }
+
+}
+
+@keyframes floating{
+
+    0%{
+
+        transform:
+            translateY(0px);
+
+    }
+
+    50%{
+
+        transform:
+            translateY(-6px);
+
+    }
+
+    100%{
+
+        transform:
+            translateY(0px);
+
+    }
+
+}
+
+@keyframes glowPulse{
+
+    0%{
+
+        box-shadow:
+            0 0 0 rgba(37,99,235,0);
+
+    }
+
+    50%{
+
+        box-shadow:
+            0 0 35px rgba(37,99,235,.18);
+
+    }
+
+    100%{
+
+        box-shadow:
+            0 0 0 rgba(37,99,235,0);
+
+    }
+
+}
+
+@keyframes shimmer{
+
+    0%{
+
+        background-position:
+            -200% 0;
+
+    }
+
+    100%{
+
+        background-position:
+            200% 0;
+
+    }
+
+}
+
+@keyframes dashboardEnter{
+
+    0%{
+
+        opacity:0;
+
+        transform:
+            scale(1.04)
+            translateY(20px);
+
+        filter:blur(10px);
+
+    }
+
+    100%{
+
+        opacity:1;
+
+        transform:
+            scale(1)
+            translateY(0);
+
+        filter:blur(0);
+
+    }
+
+}
+
+/* =========================
+   OVERLAY
+========================= */
+
+.overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    padding:20px;
+
+    overflow-y:auto;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eff6ff,
+            #f8fafc,
+            #ffffff
+        );
+
+    z-index:9999;
+
+    transition:
+        all .8s cubic-bezier(
+            .77,
+            0,
+            .175,
+            1
+        );
+
+}
+
+.slide-up-exit{
+
+    transform:
+        translateY(-100%);
+
+    opacity:0;
+
+    pointer-events:none;
+
+}
+
+/* =========================
+   STEP CARD
+========================= */
+
+.step-card{
+
+    width:100%;
+
+    max-width:760px;
+
+    max-height:90vh;
+
+    overflow-y:auto;
+
+    background:
+        rgba(255,255,255,.96);
+
+    backdrop-filter:blur(18px);
+
+    border:
+        1px solid rgba(255,255,255,.4);
+
+    border-radius:28px;
+
+    padding:40px;
+
+    box-shadow:var(--shadow);
+
+    text-align:center;
+
+    animation:
+        fadeInUp .8s ease,
+        glowPulse 5s infinite;
+
+}
+
+.step-card::-webkit-scrollbar{
+
+    width:8px;
+
+}
+
+.step-card::-webkit-scrollbar-thumb{
+
+    background:#cbd5e1;
+
+    border-radius:10px;
+
+}
+
+/* =========================
+   TITLES
+========================= */
+
+.main-logo{
+
+    font-size:55px;
+
+    margin-bottom:15px;
+
+    animation:
+        floating 5s ease-in-out infinite;
+
+}
+
+h1{
+
+    font-size:2rem;
+
+    margin-bottom:8px;
+
+    color:var(--accent);
+
+}
+
+h2{
+
+    margin-bottom:10px;
+
+    color:var(--text);
+
+}
+
+.subtitle{
+
+    color:var(--muted);
+
+    margin-bottom:28px;
+
+    line-height:1.6;
+
+}
+
+/* =========================
+   INPUTS
+========================= */
+
+input,
+textarea{
+
+    width:100%;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:16px;
+
+    padding:15px;
+
+    margin-bottom:16px;
+
+    background:white;
+
+    font-size:14px;
+
+    transition:.3s;
+
+}
+
+input:focus,
+textarea:focus{
+
+    outline:none;
+
+    border-color:var(--accent);
+
+    box-shadow:
+        0 0 0 5px rgba(37,99,235,.12);
+
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+button{
+
+    touch-action:manipulation;
+
+}
+
+.btn-primary{
+
+    width:100%;
+
+    border:none;
+
+    border-radius:16px;
+
+    padding:15px;
+
+    font-weight:800;
+
+    letter-spacing:.4px;
+
+    color:white;
+
+    cursor:pointer;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--accent),
+            var(--accent2)
+        );
+
+    transition:.25s;
+
+    box-shadow:
+        0 10px 25px rgba(37,99,235,.2);
+
+}
+
+.btn-primary:hover{
+
+    transform:
+        translateY(-2px);
+
+}
+
+.btn-primary:active{
+
+    transform:
+        scale(.98);
+
+}
+
+/* =========================
+   LEGAL BOX
+========================= */
+
+.legal-box{
+
+    background:#f8fafc;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:18px;
+
+    padding:22px;
+
+    text-align:left;
+
+    line-height:1.8;
+
+    font-size:.9rem;
+
+    color:#334155;
+
+    margin-bottom:20px;
+
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+
+#vault-dashboard{
+
+    display:none;
+
+    flex-direction:column;
+
+    min-height:100vh;
+
+}
+
+.dashboard-enter{
+
+    animation:
+        dashboardEnter 1s
+        cubic-bezier(.22,1,.36,1);
+
+}
+
+/* =========================
+   PASSPORT NAVBAR
+========================= */
+
+.passport-navbar{
+
+    width:100%;
+
+    background:white;
+
+    border-bottom:
+        1px solid #dbe3ee;
+
+    box-shadow:
+        0 2px 12px rgba(0,0,0,.05);
+
+    position:relative;
+
+    z-index:100;
+
+}
+
+/* TOP BAR */
+
+.passport-top-utility{
+
+    display:flex;
+
+    align-items:center;
+
+    padding:9px 22px;
+
+    background:#f8fafc;
+
+    border-bottom:
+        1px solid #e2e8f0;
+
+}
+
+#passport-datetime{
+
+    font-size:13px;
+
+    font-weight:600;
+
+    color:#475569;
+
+}
+
+/* MAIN NAV */
+
+.passport-main-nav{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    gap:14px;
+
+    flex-wrap:wrap;
+
+    padding:10px 18px;
+
+}
+
+.nav-brand{
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    flex:1;
+
+    min-width:220px;
+
+}
+
+.brand-title{
+
+    font-size:18px;
+
+    font-weight:800;
+
+    color:#1d4ed8;
+
+    letter-spacing:.3px;
+
+    line-height:1.2;
+
+}
+
+.nav-auth{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    flex-wrap:wrap;
+
+}
+
+/* NAV BUTTONS */
+
+.btn-outline,
+.btn-solid{
+
+    border:none;
+
+    border-radius:10px;
+
+    padding:8px 14px;
+
+    font-size:11px;
+
+    font-weight:700;
+
+    letter-spacing:.3px;
+
+    cursor:pointer;
+
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease;
+
+    white-space:nowrap;
+
+}
+
+.btn-outline{
+
+    background:#eff6ff;
+
+    color:#2563eb;
+
+}
+
+.btn-solid{
+
+    background:
+        linear-gradient(
+            135deg,
+            #ef4444,
+            #dc2626
+        );
+
+    color:white;
+
+}
+
+.btn-logout{
+
+    border:none;
+
+    border-radius:10px;
+
+    padding:8px 14px;
+
+    font-size:11px;
+
+    font-weight:700;
+
+    letter-spacing:.3px;
+
+    cursor:pointer;
+
+    white-space:nowrap;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0f172a,
+            #334155
+        );
+
+    color:white;
+
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease;
+
+}
+
+.btn-outline:hover,
+.btn-solid:hover{
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 10px 25px rgba(0,0,0,.08);
+
+}
+
+/* =========================
+   MAIN CONTAINER
+========================= */
+
+.main-container{
+
+    flex:1;
+
+    display:flex;
+
+    min-height:0;
+
+    overflow:auto;
+
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar{
+
+    width:270px;
+
+    background:white;
+
+    border-right:
+        1px solid var(--border);
+
+    padding:25px 18px;
+
+    overflow-y:auto;
+
+}
+
+#cat-list{
+
+    list-style:none;
+
+}
+
+#cat-list li{
+
+    padding:14px 16px;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    margin-bottom:10px;
+
+    color:var(--muted);
+
+    font-weight:700;
+
+    transition:.25s;
+
+}
+
+#cat-list li:hover,
+#cat-list li.active{
+
+    background:#eff6ff;
+
+    color:var(--accent);
+
+    transform:
+        translateX(4px);
+
+}
+
+/* =========================
+   CONTENT
+========================= */
+
+.content-view{
+
+    flex:1;
+
+    overflow-y:auto;
+
+    padding:35px;
+
+}
+
+/* =========================
+   TIMER
+========================= */
+
+.timer-box{
+
+    background:#fffbeb;
+
+    border:
+        1px solid #fde68a;
+
+    border-radius:16px;
+
+    padding:16px 20px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:28px;
+
+    flex-wrap:wrap;
+
+    gap:10px;
+
+}
+
+.timer-text{
+
+    color:#92400e;
+
+    font-weight:600;
+
+}
+
+#session-timer{
+
+    font-weight:900;
+
+    color:#b45309;
+
+}
+
+/* =========================
+   FILE GRID
+========================= */
+
+.file-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(190px,1fr)
+        );
+
+    gap:22px;
+
+}
+
+.file-card{
+
+    background:white;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:20px;
+
+    padding:24px;
+
+    text-align:center;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+    animation:
+        fadeInUp .6s ease;
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+.file-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    background:
+        linear-gradient(
+            120deg,
+            transparent,
+            rgba(255,255,255,.6),
+            transparent
+        );
+
+    background-size:200% 100%;
+
+    animation:
+        shimmer 3s linear infinite;
+
+}
+
+.file-card:hover{
+
+    transform:
+        translateY(-4px)
+        scale(1.02);
+
+    border-color:var(--accent);
+
+    box-shadow:
+        0 15px 30px rgba(37,99,235,.12);
+
+}
+
+/* =========================
+   MODAL
+========================= */
+
+.modal{
+
+    display:none;
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+        rgba(15,23,42,.75);
+
+    backdrop-filter:blur(8px);
+
+    z-index:10001;
+
+}
+
+.modal-content{
+
+    width:92%;
+
+    height:92%;
+
+    margin:1.5% auto;
+
+    background:white;
+
+    border-radius:24px;
+
+    overflow:hidden;
+
+    display:flex;
+
+    flex-direction:column;
+
+    animation:
+        modalScale .35s ease;
+
+}
+
+.modal-content-small{
+
+    width:92%;
+
+    max-width:500px;
+
+    margin:80px auto;
+
+    background:white;
+
+    border-radius:22px;
+
+    overflow:hidden;
+
+    animation:
+        modalScale .35s ease;
+
+}
+
+.modal-header{
+
+    padding:15px 22px;
+
+    background:#f8fafc;
+
+    border-bottom:
+        1px solid var(--border);
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+.btn-close-modal{
+
+    border:none;
+
+    background:#ef4444;
+
+    color:white;
+
+    padding:9px 14px;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    font-weight:700;
+
+}
+
+/* PDF */
+
+#pdf-render-container{
+
+    flex:1;
+
+    overflow-y:auto;
+
+    background:#e5e7eb;
+
+    padding:30px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+}
+
+/* =========================
+   WATERMARK
+========================= */
+
+.watermark{
+
+    position:fixed;
+
+    inset:0;
+
+    display:none;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:42px;
+
+    font-weight:900;
+
+    letter-spacing:3px;
+
+    color:#000;
+
+    opacity:.05;
+
+    transform:rotate(-32deg);
+
+    pointer-events:none;
+
+    z-index:9999;
+
+    text-align:center;
+
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media screen and (max-width:768px){
+
+    .overlay{
+
+        align-items:flex-start;
+
+    }
+
+    .step-card{
+
+        padding:24px;
+
+        border-radius:22px;
+
+        margin-top:20px;
+        margin-bottom:20px;
+
+    }
+
+    .passport-top-utility{
+
+        justify-content:center;
+
+        text-align:center;
+
+        padding:10px;
+
+    }
+
+    .passport-main-nav{
+
+        flex-direction:column;
+
+        align-items:stretch;
+
+        padding:18px;
+
+    }
+
+    .brand-title{
+
+        font-size:20px;
+
+    }
+
+    .nav-auth{
+
+        width:100%;
+
+        flex-direction:column;
+
+        gap:10px;
+
+    }
+
+    .nav-auth button{
+
+        width:100%;
+
+    }
+
+    .btn-outline,
+    .btn-solid{
+
+        width:100%;
+
+    }
+
+    .main-container{
+
+        flex-direction:column;
+
+    }
+
+    .sidebar{
+
+        width:100%;
+
+        overflow-x:auto;
+
+        border-right:none;
+
+        border-bottom:
+            1px solid var(--border);
+
+    }
+
+    #cat-list{
+
+        display:flex;
+
+        gap:10px;
+
+    }
+
+    #cat-list li{
+
+        white-space:nowrap;
+
+        margin-bottom:0;
+
+    }
+
+    .content-view{
+
+        padding:16px;
+
+    }
+
+    .file-grid{
+
+        grid-template-columns:
+            repeat(2,1fr);
+
+        gap:14px;
+
+    }
+
+    .modal-content{
+
+        width:100%;
+
+        height:100%;
+
+        margin:0;
+
+        border-radius:0;
+
+    }
+
+    .modal-content-small{
+
+        width:95%;
+
+        margin:40px auto;
+
+    }
+
+    #pdf-render-container{
+
+        padding:15px;
+
+    }
+
+}
+
+/* SMALL MOBILE */
+
+@media screen and (max-width:480px){
+
+    .brand-title{
+
+        font-size:17px;
+
+    }
+
+    .file-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    #pdf-viewer-layout{
+
+        flex-direction:column;
+
+    }
+
+    #pdf-sidebar{
+
+        width:100%;
+
+        display:flex;
+
+        overflow-x:auto;
+
+        overflow-y:hidden;
+
+        gap:12px;
+
+        padding:10px;
+
+    }
+
+    .pdf-thumb{
+
+        min-width:90px;
+
+        margin-bottom:0;
+
+    }
+
+}
+   /* =========================
+   PDF VIEWER LAYOUT
+========================= */
+
+#pdf-viewer-layout{
+
+    display:flex;
+
+    height:100%;
+
+    overflow:hidden;
+
+}
+
+/* LEFT SIDEBAR */
+
+#pdf-sidebar{
+
+    width:170px;
+
+    background:#1e293b;
+
+    overflow-y:auto;
+
+    padding:14px;
+
+    border-right:
+        1px solid #334155;
+
+}
+
+/* THUMBNAILS */
+
+.pdf-thumb{
+
+    margin-bottom:18px;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+    text-align:center;
+
+    color:white;
+
+    font-size:13px;
+
+}
+
+.pdf-thumb:hover{
+
+    transform:
+        scale(1.03);
+
+}
+
+.pdf-thumb canvas{
+
+    width:100%;
+
+    border-radius:10px;
+
+    background:white;
+
+    box-shadow:
+        0 6px 14px rgba(0,0,0,.25);
+
+    margin-bottom:6px;
+
+}
+
+/* MAIN PDF AREA */
+
+#pdf-render-container{
+
+    flex:1;
+
+    overflow-y:auto;
+
+    background:#e5e7eb;
+
+    padding:30px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+}
+
+/* =========================
+   FEATURE: E2E BADGE
+========================= */
+
+.e2e-badge{
+
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:linear-gradient(135deg,#dcfce7,#bbf7d0);
+    border:1px solid #86efac;
+    color:#166534;
+    font-size:11px;
+    font-weight:800;
+    padding:5px 12px;
+    border-radius:20px;
+    letter-spacing:.3px;
+
+}
+
+/* =========================
+   FEATURE: HOVER PREVIEW
+========================= */
+
+.preview-tooltip{
+
+    position:fixed;
+    z-index:99999;
+    background:white;
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:0 20px 60px rgba(0,0,0,.18);
+    padding:10px;
+    pointer-events:none;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    max-width:200px;
+
+}
+
+.preview-tooltip canvas{
+
+    border-radius:8px;
+    max-width:180px;
+
+}
+
+.preview-tooltip-label{
+
+    font-size:11px;
+    font-weight:700;
+    color:var(--muted);
+
+}
+
+/* =========================
+   FEATURE: CARD ACTION BUTTONS
+========================= */
+
+.card-actions{
+
+    display:flex;
+    gap:6px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-top:10px;
+    position:relative;
+    z-index:2;
+
+}
+
+.card-btn{
+
+    border:none;
+    border-radius:8px;
+    padding:5px 10px;
+    font-size:10px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s;
+    letter-spacing:.2px;
+
+}
+
+.card-btn:hover{
+
+    transform:translateY(-1px);
+
+}
+
+.card-btn-pin{
+
+    background:#eff6ff;
+    color:#2563eb;
+
+}
+
+.card-btn-pin.pinned{
+
+    background:#2563eb;
+    color:white;
+
+}
+
+.card-btn-share{
+
+    background:#f0fdf4;
+    color:#16a34a;
+
+}
+
+.card-btn-compare{
+
+    background:#faf5ff;
+    color:#7c3aed;
+
+}
+
+/* =========================
+   FEATURE: PINNED SECTION
+========================= */
+
+.pinned-section{
+
+    background:linear-gradient(135deg,#eff6ff,#f0fdf4);
+    border:1px solid #bfdbfe;
+    border-radius:20px;
+    padding:20px 24px;
+    margin-bottom:24px;
+    animation:fadeInUp .5s ease;
+
+}
+
+.pinned-section h3{
+
+    font-size:13px;
+    color:#1d4ed8;
+    font-weight:800;
+    margin-bottom:14px;
+    letter-spacing:.3px;
+
+}
+
+.pinned-grid{
+
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+
+}
+
+.pinned-chip{
+
+    background:white;
+    border:1px solid #bfdbfe;
+    border-radius:12px;
+    padding:8px 14px;
+    font-size:12px;
+    font-weight:700;
+    color:#1d4ed8;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    transition:.2s;
+
+}
+
+.pinned-chip:hover{
+
+    background:#eff6ff;
+    transform:translateY(-2px);
+
+}
+
+/* =========================
+   FEATURE: COMPARE MODAL
+========================= */
+
+#compareModal .modal-content{
+
+    display:flex;
+    flex-direction:column;
+
+}
+
+.compare-body{
+
+    display:flex;
+    flex:1;
+    gap:0;
+    overflow:hidden;
+
+}
+
+.compare-pane{
+
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    border-right:2px solid var(--border);
+    overflow:hidden;
+
+}
+
+.compare-pane:last-child{
+
+    border-right:none;
+
+}
+
+.compare-pane-header{
+
+    padding:10px 16px;
+    background:#f8fafc;
+    border-bottom:1px solid var(--border);
+    font-size:12px;
+    font-weight:700;
+    color:var(--muted);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+}
+
+.compare-pane-content{
+
+    flex:1;
+    overflow-y:auto;
+    background:#e5e7eb;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:16px;
+
+}
+
+.compare-select-prompt{
+
+    margin:auto;
+    text-align:center;
+    color:var(--muted);
+    font-size:14px;
+    font-weight:600;
+    padding:40px;
+
+}
+
+/* =========================
+   FEATURE: SHARE MODAL
+========================= */
+
+.share-modal-inner{
+
+    max-width:480px;
+    margin:60px auto;
+    background:white;
+    border-radius:24px;
+    overflow:hidden;
+    animation:modalScale .35s ease;
+    box-shadow:0 30px 80px rgba(0,0,0,.2);
+
+}
+
+.share-form{
+
+    padding:28px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+
+}
+
+.share-form label{
+
+    font-size:12px;
+    font-weight:700;
+    color:var(--muted);
+    margin-bottom:4px;
+    display:block;
+
+}
+
+.share-form input{
+
+    margin-bottom:0;
+
+}
+
+.share-link-box{
+
+    background:#f8fafc;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 16px;
+    font-size:12px;
+    font-weight:600;
+    color:#0f172a;
+    word-break:break-all;
+    cursor:text;
+    user-select:all;
+    -webkit-user-select:all;
+
+}
+
+/* =========================
+   FEATURE: OFFLINE BANNER
+========================= */
+
+#offline-banner{
+
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+    color:white;
+    text-align:center;
+    padding:10px;
+    font-weight:700;
+    font-size:13px;
+    z-index:999999;
+    letter-spacing:.3px;
+
+}
+
+/* =========================
+   FEATURE: EXPIRY WARNING
+========================= */
+
+.expiry-badge{
+
+    font-size:10px;
+    font-weight:700;
+    padding:3px 8px;
+    border-radius:8px;
+    margin-top:6px;
+    display:inline-block;
+
+}
+
+.expiry-ok{
+
+    background:#dcfce7;
+    color:#166534;
+
+}
+
+.expiry-warn{
+
+    background:#fef9c3;
+    color:#713f12;
+
+}
+
+.expiry-danger{
+
+    background:#fee2e2;
+    color:#991b1b;
+
+}
+
+/* =========================
+   FEATURE: COMPARE PICKER BAR
+========================= */
+
+#compare-bar{
+
+    display:none;
+    position:fixed;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#0f172a;
+    color:white;
+    border-radius:20px;
+    padding:14px 24px;
+    font-size:13px;
+    font-weight:700;
+    z-index:10002;
+    box-shadow:0 10px 40px rgba(0,0,0,.3);
+    display:none;
+    align-items:center;
+    gap:16px;
+    white-space:nowrap;
+
+}
+
+#compare-bar button{
+
+    border:none;
+    border-radius:10px;
+    padding:8px 16px;
+    font-weight:700;
+    cursor:pointer;
+    font-size:12px;
+
+}
+
+#compare-bar-open{
+
+    background:#2563eb;
+    color:white;
+
+}
+
+#compare-bar-clear{
+
+    background:#ef4444;
+    color:white;
+
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- OFFLINE BANNER -->
+<div id="offline-banner">⚡ You are offline — Vault is running from cache (Cloudflare R2)</div>
+
+<!-- HOVER PREVIEW TOOLTIP -->
+<div class="preview-tooltip" id="previewTooltip">
+    <canvas id="previewCanvas"></canvas>
+    <div class="preview-tooltip-label" id="previewLabel"></div>
+</div>
+
+<!-- COMPARE PICKER BAR -->
+<div id="compare-bar">
+    <span id="compare-bar-text">📂 Select 2 documents to compare</span>
+    <button id="compare-bar-open" onclick="openCompareModal()">Compare Now</button>
+    <button id="compare-bar-clear" onclick="clearCompare()">✕ Clear</button>
+</div>
+
+<!-- =========================
+     STEP 1
+========================= -->
+
+<div id="step1" class="overlay">
+
+    <div class="step-card">
+
+        <div class="main-logo">
+            🔐
+        </div>
+
+        <h1>
+            Secure Online Vault
+        </h1>
+
+        <div class="subtitle">
+
+            Protected Digital Archive<br>
+            Identity Verification Required
+
+        </div>
+
+        <input
+        type="text"
+        id="user-name"
+        placeholder="Enter Full Name">
+
+        <textarea
+        id="user-purpose"
+        rows="3"
+        placeholder="Purpose of Access"></textarea>
+
+        <input
+        type="password"
+        id="vault-pass"
+        placeholder="Enter Access Key">
+
+<div style="
+display:flex;
+flex-direction:column;
+gap:12px;">
+
+    <button
+    class="btn-primary"
+    onclick="showStep2()">
+
+        CONTINUE SECURELY
+
+    </button>
+
+    <button
+    onclick="requestPasskeyAccess()"
+    style="
+    border:none;
+    background:#0f172a;
+    color:white;
+    padding:15px;
+    border-radius:16px;
+    font-weight:800;
+    cursor:pointer;">
+
+        REQUEST PASSKEY ACCESS
+
+    </button>
+
+</div>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     STEP 2
+========================= -->
+
+<div id="step2"
+class="overlay"
+style="display:none;">
+
+    <div class="step-card">
+
+        <h2>
+            Legal Declaration
+        </h2>
+
+        <div class="legal-box">
+
+            This secure vault contains highly confidential personal, academic, administrative, legal, identification, and sensitive digital records belonging exclusively to <b>Shineil Keith Mathias</b>. These protected materials are maintained within a controlled encrypted environment and are intended solely for authorized and legitimate viewing purposes. Unauthorized attempts to obtain, manipulate, misuse, or reproduce any information from this system are strictly prohibited.
+
+            <br><br>
+
+            By proceeding further into this protected environment, you acknowledge and agree that all documents, certificates, records, scans, archives, and related contents remain the personal and intellectual property of the owner. Any unauthorized screenshotting, downloading, copying, forwarding, extraction, recording, public distribution, cloud uploading, social media sharing, or third-party disclosure may constitute a breach of privacy, confidentiality obligations, and applicable legal protections.
+
+            <br><br>
+
+            You further confirm that your request for access is genuine, lawful, and made in good faith. You understand that this vault system may maintain temporary access logs, security monitoring, and session verification mechanisms for protective purposes. Any suspicious activity, unauthorized access attempt, misuse of credentials, or breach of trust may result in immediate termination of access privileges and may lead to further legal, administrative, or disciplinary action wherever applicable.
+
+            <br><br>
+
+            <label style="
+            display:flex;
+            align-items:center;
+            gap:10px;
+            font-weight:700;
+            cursor:pointer;">
+
+                <input
+                type="checkbox"
+                id="terms-tick">
+
+                I fully understand and agree to the above declaration.
+
+            </label>
+
+        </div>
+
+        <button
+        class="btn-primary"
+        onclick="showStep3()">
+
+            SUBMIT DECLARATION
+
+        </button>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     STEP 3
+========================= -->
+
+<div id="step3"
+class="overlay"
+style="display:none;">
+
+    <div class="step-card">
+
+        <h2>
+            Security Verification
+        </h2>
+
+        <div class="subtitle">
+
+            Complete reCAPTCHA verification
+            to continue secure access.
+
+        </div>
+
+        <div
+        class="g-recaptcha"
+        data-sitekey="6Lf9VeMsAAAAABzamBAJwc4NabgDTk4vqTrAe-nN"
+        data-callback="onCaptchaSuccess">
+        </div>
+
+        <div
+        id="loading-msg"
+        style="
+        display:none;
+        margin-top:20px;
+        font-weight:700;
+        color:var(--accent);">
+
+            Authenticating Secure Session...
+
+        </div>
+
+    </div>
+
+</div>
+
+   <div id="passkey-wait"
+class="overlay"
+style="display:none;">
+
+    <div class="step-card">
+
+        <h2>
+            Waiting For Approval
+        </h2>
+
+        <div class="subtitle">
+
+            Your access request has been sent securely.<br><br>
+
+            Waiting for administrator approval...
+
+        </div>
+
+    </div>
+
+</div>
+   
+<!-- =========================
+     DASHBOARD
+========================= -->
+
+<div id="vault-dashboard">
+
+<div class="passport-navbar">
+
+    <!-- TOP DATE BAR -->
+
+    <div class="passport-top-utility">
+
+        <div id="passport-datetime">
+            Thursday 14 May 2026 at 11:48 PM
+        </div>
+
+        <div style="margin-left:auto;">
+            <span class="e2e-badge">🔒 AES-256 End-to-End Encrypted</span>
+        </div>
+
+    </div>
+
+    <!-- MAIN NAV -->
+
+    <div class="passport-main-nav">
+
+        <!-- LEFT -->
+
+        <div class="nav-brand">
+
+            <div class="brand-title">
+                SHINEIL KEITH MATHIAS
+            </div>
+
+        </div>
+
+        <!-- RIGHT BUTTONS -->
+
+        <div class="nav-auth">
+
+            <button class="btn-outline" onclick="showPinned()">⭐ FAVOURITES</button>
+
+            <button class="btn-outline" onclick="startCompareMode()" id="compareNavBtn">⚖️ COMPARE</button>
+
+            <button class="btn-outline" onclick="openLogs()">
+                ACCESS LOG
+            </button>
+
+            <button class="btn-solid" onclick="openEmergencyContact()">
+                EMERGENCY CONTACT
+            </button>
+
+            <button class="btn-logout" onclick="logout('Logged out successfully.')">
+                LOGOUT
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <ul id="cat-list"></ul>
+        </aside>
+
+        <main class="content-view">
+            <div class="timer-box">
+                <div class="timer-text">
+                    ⚠️ <strong>Security Session:</strong> For your protection, you will be logged out after 1 hour of session time or 2 minutes of inactivity.
+                </div>
+                <div id="session-timer">60:00</div>
+            </div>
+
+            <h2 id="cat-title">Vault Ready To Use</h2>
+            <br>
+<input
+type="text"
+id="unified-search"
+placeholder="Search files and document text..."
+oninput="unifiedSearch()">
+
+<!-- PINNED DOCS SECTION -->
+<div id="pinned-section" class="pinned-section" style="display:none;">
+    <h3>⭐ PINNED DOCUMENTS</h3>
+    <div class="pinned-grid" id="pinned-grid"></div>
+</div>
+
+           <div id="file-grid" class="file-grid"></div>
+        </main>
+    </div>
+</div>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <strong id="modal-title">Document</strong>
+            <button onclick="closeModal()" class="btn-close-modal">CLOSE</button>
+        </div>
+<div id="pdf-viewer-layout">
+
+    <!-- LEFT SIDEBAR -->
+
+    <div id="pdf-sidebar"></div>
+
+    <!-- RIGHT PDF AREA -->
+
+    <div id="pdf-render-container"></div>
+
+</div>
+    </div>
+</div>
+
+<!-- =========================
+     SCRIPT
+========================= -->   
+<script>
+
+var masterPassword = "";
+
+let sessionSeconds = 3600;
+
+   let failedAttempts = 0;
+let lockUntil = 0;
+
+   let inactivityTimer;
+let currentBlobUrl = null;
+let currentDecryptedPdf = null;
+   
+let sessionStartTime = null;
+
+   let sessionId = crypto.randomUUID();
+let allFilesData = {};
+let currentCategory = "";
+
+   async function sha256Bytes(text){
+
+    const enc =
+    new TextEncoder();
+
+    const hashBuffer =
+    await crypto.subtle.digest(
+        "SHA-256",
+        enc.encode(text)
+    );
+
+    return new Uint8Array(
+        hashBuffer
+    );
+}
+
+/* =========================
+   CLOCK
+========================= */
+
+document.addEventListener(
+'DOMContentLoaded',
+()=>{
+
+    updateClock();
+
+    setInterval(
+        updateClock,
+        1000
+    );
+
+});
+
+function updateClock(){
+
+    return;
+
+}
+
+/* =========================
+   STEP 1
+========================= */
+
+async function showStep2() {
+    // Add this check at the very top
+if (!window.db || !window.firestoreFunctions) {
+
+    const popup =
+    document.createElement("div");
+
+    popup.innerHTML = `
+
+    <div style="
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,0.65);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:999999;
+        backdrop-filter:blur(8px);
+    ">
+
+        <div style="
+            width:340px;
+            background:#111827;
+            border:1px solid rgba(255,255,255,0.1);
+            border-radius:22px;
+            padding:28px;
+            text-align:center;
+            color:white;
+            font-family:sans-serif;
+            box-shadow:0 0 40px rgba(0,0,0,0.45);
+            animation:fadeIn .25s ease;
+        ">
+
+            <div style="
+                font-size:20px;
+                margin-bottom:14px;
+            ">
+                🔐 Secure Vault
+            </div>
+
+            <div style="
+                font-size:14px;
+                opacity:0.85;
+                line-height:1.6;
+            ">
+                Security system is still initializing.<br>
+                Please wait a moment...
+            </div>
+
+            <div style="
+                margin-top:22px;
+            ">
+                <div style="
+                    width:42px;
+                    height:42px;
+                    border:4px solid rgba(255,255,255,0.15);
+                    border-top-color:white;
+                    border-radius:50%;
+                    margin:auto;
+                    animation:spin 1s linear infinite;
+                "></div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <style>
+
+    @keyframes spin{
+        to{
+            transform:rotate(360deg);
+        }
+    }
+
+    @keyframes fadeIn{
+        from{
+            opacity:0;
+            transform:scale(0.95);
+        }
+        to{
+            opacity:1;
+            transform:scale(1);
+        }
+    }
+
+    </style>
+    `;
+
+    document.body.appendChild(popup);
+
+    setTimeout(()=>{
+        popup.remove();
+    },3000);
+
+    return;
+}
+    
+    const now = Date.now();
+
+if(now < lockUntil){
+
+    const remaining =
+    Math.ceil(
+        (lockUntil - now)/1000
+    );
+
+    alert(
+    `Too many wrong attempts.\nTry again in ${remaining} seconds.`
+    );
+
+    return;
+}
+   
+   const visitorName =
+    document.getElementById(
+    'user-name'
+    ).value.trim();
+
+    const pass =
+    document.getElementById(
+    'vault-pass'
+    ).value.trim();
+
+   const purpose =
+document.getElementById(
+'user-purpose'
+).value.trim();
+
+      if(!visitorName || !purpose || !pass){
+        alert(
+        "Full Name, Purpose, and Password are required."
+        );
+
+        return;
+    }
+
+const {
+    getDoc,
+    doc
+} = window.firestoreFunctions;
+
+const snap =
+await getDoc(
+    doc(window.db,"vaultConfig","main")
+);
+
+const realHash =
+snap.data().passwordHash;
+
+const enteredHash =
+await window.sha256(pass);
+
+if(enteredHash !== realHash){
+
+    failedAttempts++;
+
+    if(failedAttempts >= 5){
+
+        sendSecurityAlert(
+        "Multiple failed password attempts"
+        );
+
+        lockUntil =
+        Date.now() + 300000;
+
+        failedAttempts = 0;
+
+        alert(
+        "Too many failed attempts.\nVault locked for 5 minutes."
+        );
+
+    }else{
+
+        alert(
+        `Wrong Access Key.\nAttempts left: ${5 - failedAttempts}`
+        );
+
+    }
+
+    return;
+}
+
+try{
+const res = await fetch( "https://backend.shinumaths989.workers.dev/get-secret", {
+ method:"POST",
+ headers:{
+ "Content-Type":"application/json"
+ },
+ body:JSON.stringify({ hash: enteredHash })
+});
+
+// 🛡️ Guard against firewall HTML intercept pages
+if (!res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+        throw new Error("Origin Access Refused: Vault Firewall actively dropped connection.");
+    }
+    throw new Error(`Authentication server error status ${res.status}`);
+}
+
+const result = await res.json();
+if(!result.success){
+ alert( "Backend authentication failed." );
+ return;
+}
+window.masterPassword = result.secret;
+}catch(e){
+ console.error(e);
+ alert( e.message || "Could not connect to secure backend." );
+ return;
+}
+   failedAttempts = 0;
+
+    sessionStartTime =
+    new Date();
+
+    const step1 =
+    document.getElementById(
+    'step1'
+    );
+
+    step1.style.pointerEvents =
+    "none";
+
+    step1.classList.add(
+    'slide-up-exit'
+    );
+
+    setTimeout(()=>{
+
+        step1.style.display =
+        'none';
+
+        document.getElementById(
+        'step2'
+        ).style.display =
+        'flex';
+
+    },700);
+
+}
+
+/* =========================
+   STEP 2
+========================= */
+
+function showStep3(){
+
+    if(!document.getElementById(
+    'terms-tick').checked){
+
+        alert(
+        "You must agree to the declaration."
+        );
+
+        return;
+    }
+
+    const step2 =
+    document.getElementById(
+    'step2');
+
+    step2.style.pointerEvents =
+    "none";
+
+    step2.classList.add(
+    'slide-up-exit');
+
+    setTimeout(()=>{
+
+        step2.style.display =
+        'none';
+
+        document.getElementById(
+        'step3').style.display =
+        'flex';
+
+    },700);
+
+}
+
+/* =========================
+   CAPTCHA
+========================= */
+
+function onCaptchaSuccess(){
+
+    document.getElementById(
+    'loading-msg').style.display =
+    'block';
+
+    setTimeout(()=>{
+
+        document.getElementById(
+        'step3').classList.add(
+        'slide-up-exit');
+
+        setTimeout(()=>{
+
+            document.getElementById(
+            'step3').style.display =
+            'none';
+
+const dash =
+document.getElementById(
+'vault-dashboard');
+
+dash.style.display = 'flex';
+
+dash.classList.add(
+'dashboard-enter');
+
+            saveAccessLog();
+
+   registerActiveSession();
+
+           saveVisitorLog({
+
+    visitorName:
+    document.getElementById(
+    'user-name').value,
+
+    purpose:
+    document.getElementById(
+    'user-purpose').value,
+
+    loginTime:
+    new Date().toLocaleString(),
+
+    device:
+    /Mobi|Android/i.test(
+    navigator.userAgent)
+    ? "Mobile"
+    : "Desktop",
+
+    browser:
+    navigator.userAgent,
+
+    platform:
+    navigator.platform,
+
+    screen:
+    `${screen.width}x${screen.height}`,
+
+    timezone:
+    Intl.DateTimeFormat()
+    .resolvedOptions()
+    .timeZone
+
+});
+
+            initVault();
+
+            vaultPostInit();
+
+            startSessionTimer();
+
+            startInactivityMonitor();
+
+   listenForForceLogout();
+
+        },700);
+
+    },1200);
+
+}
+
+   async function saveVisitorLog(data){
+
+    let ip = "Unknown";
+
+    let location = "Unknown";
+
+    try{
+
+        const res =
+        await fetch(
+        "https://ipapi.co/json/"
+        );
+
+        const info =
+        await res.json();
+
+        ip =
+        info.ip || "Unknown";
+
+        location =
+        `${info.city}, ${info.region}, ${info.country_name}`;
+
+    }catch(e){
+
+        console.log(
+        "IP fetch failed",
+        e
+        );
+
+    }
+
+    const {
+        collection,
+        addDoc
+    } = window.firestoreFunctions;
+
+    try{
+
+        await addDoc(
+
+            collection(
+                window.db,
+                "visitorLogs"
+            ),
+
+            {
+
+                visitorName:
+                data.visitorName,
+
+                purpose:
+                data.purpose,
+
+                loginTime:
+                new Date()
+                .toLocaleString(),
+
+                device:
+                /Mobi|Android/i.test(
+                navigator.userAgent
+                )
+                ? "Mobile"
+                : "Desktop",
+
+                browser:
+                navigator.userAgent,
+
+                platform:
+                navigator.platform,
+
+                screen:
+                `${screen.width}x${screen.height}`,
+
+                timezone:
+                Intl.DateTimeFormat()
+                .resolvedOptions()
+                .timeZone,
+
+                ipAddress:
+                ip,
+
+                location:
+                location
+
+            }
+
+        );
+
+    }catch(err){
+
+        console.error(
+        "Firestore log error:",
+        err
+        );
+
+    }
+
+}
+
+   async function sendSecurityAlert(reason){
+
+    try{
+
+        const visitorName =
+        document.getElementById(
+        'user-name'
+        ).value || "Unknown";
+
+        const purpose =
+        document.getElementById(
+        'user-purpose'
+        ).value || "Unknown";
+
+        let ip = "Unknown";
+        let location = "Unknown";
+
+        try{
+
+            const res =
+            await fetch(
+            "https://ipapi.co/json/"
+            );
+
+            const info =
+            await res.json();
+
+            ip =
+            info.ip || "Unknown";
+
+            location =
+            `${info.city}, ${info.country_name}`;
+
+        }catch(e){}
+
+        await fetch(
+        "https://backend.shinumaths989.workers.dev/security-alert",
+        {
+
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/json"
+            },
+
+            body:JSON.stringify({
+
+                embeds:[{
+
+                    title:
+                    "🚨 SUSPICIOUS VAULT ACTIVITY",
+
+                    color:16711680,
+
+                    fields:[
+
+                        {
+                            name:"Visitor",
+                            value:visitorName,
+                            inline:true
+                        },
+
+                        {
+                            name:"Purpose",
+                            value:purpose,
+                            inline:true
+                        },
+
+                        {
+                            name:"Reason",
+                            value:reason,
+                            inline:false
+                        },
+
+                        {
+                            name:"IP Address",
+                            value:ip,
+                            inline:true
+                        },
+
+                        {
+                            name:"Location",
+                            value:location,
+                            inline:true
+                        },
+
+                        {
+                            name:"Device",
+                            value:
+                            navigator.userAgent
+                            .slice(0,100),
+                            inline:false
+                        }
+
+                    ],
+
+                    timestamp:
+                    new Date().toISOString()
+
+                }]
+
+            })
+
+        });
+
+    }catch(err){
+
+        console.error(
+        "Discord alert failed",
+        err
+        );
+
+    }
+
+}
+
+   async function registerActiveSession(){
+
+    const {
+        doc,
+        updateDoc,
+        setDoc
+    } = window.firestoreFunctions;
+
+    try{
+
+        await setDoc(
+
+            doc(
+                window.db,
+                "activeSessions",
+                sessionId
+            ),
+
+            {
+
+                visitor:
+                document.getElementById(
+                'user-name'
+                ).value,
+
+                active:true,
+
+                createdAt:
+                new Date().toISOString()
+
+            }
+
+        );
+
+    }catch(e){
+
+        console.log(e);
+
+    }
+
+}
+
+      async function listenForForceLogout(){
+
+    const {
+        doc,
+        onSnapshot
+    } = window.firestoreFunctions;
+
+    onSnapshot(
+
+        doc(
+            window.db,
+            "activeSessions",
+            sessionId
+        ),
+
+        (snap)=>{
+
+            if(!snap.exists()) return;
+
+            const data =
+            snap.data();
+
+            if(data.forceLogout){
+
+                alert(
+                "Administrator terminated your session."
+                );
+
+                location.reload();
+
+            }
+
+        }
+
+    );
+
+}
+   
+/* =========================
+   TIMER
+========================= */
+
+function startSessionTimer(){
+
+    const timer =
+    document.getElementById(
+    'session-timer');
+
+    setInterval(()=>{
+
+        sessionSeconds--;
+
+        const mins =
+        Math.floor(
+        sessionSeconds / 60);
+
+        const secs =
+        sessionSeconds % 60;
+
+        timer.textContent =
+        `${mins}:${secs<10?'0':''}${secs}`;
+
+        if(sessionSeconds<=0){
+
+            logout(
+            "Session Expired."
+            );
+
+        }
+
+    },1000);
+
+}
+
+/* =========================
+   INACTIVITY
+========================= */
+
+function startInactivityMonitor(){
+
+    const reset = ()=>{
+
+        clearTimeout(
+        inactivityTimer);
+
+        inactivityTimer =
+        setTimeout(()=>{
+
+            logout(
+            "Logged out due to inactivity."
+            );
+
+        },120000);
+
+    };
+
+    window.onclick = reset;
+
+    window.onmousemove = reset;
+
+    window.onkeydown = reset;
+
+    reset();
+
+}
+
+/* =========================
+   LOGOUT
+========================= */
+
+async function logout(message=""){
+
+    if(message){
+
+        alert(message);
+
+    }
+
+    try{
+
+        const {
+            collection,
+            addDoc
+        } = window.firestoreFunctions;
+
+        await addDoc(
+
+            collection(
+                window.db,
+                "visitorLogs"
+            ),
+
+            {
+
+                visitorName:
+                document.getElementById(
+                'user-name'
+                ).value,
+
+                logoutTime:
+                new Date()
+                .toLocaleString(),
+
+                status:
+                "Logged Out"
+
+            }
+
+        );
+
+    }catch(e){
+
+        console.error(
+        "Logout log error:",
+        e
+        );
+
+    }
+
+    location.reload();
+
+}
+
+/* =========================
+   INIT VAULT
+========================= */
+
+async function initVault(){
+try{
+const res = await fetch( "https://backend.shinumaths989.workers.dev/files.json");
+
+// 🛡️ Intercept firewall HTML blocks before they crash JSON parsing
+if (!res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+        throw new Error("Security Exception: Domain rejected by Gateway Firewall.");
+    }
+    throw new Error(`Server returned HTTP status ${res.status}`);
+}
+
+const data = await res.json();
+allFilesData = data;
+const list = document.getElementById( 'cat-list');
+list.innerHTML = "";
+Object.keys(data)
+ .forEach(cat=>{
+ const li = document.createElement( 'li');
+ li.textContent = cat;
+ li.onclick = ()=>{
+ document.querySelectorAll( '#cat-list li')
+ .forEach(el=> el.classList.remove( 'active'));
+ li.classList.add( 'active');
+ renderFiles( data[cat], cat );
+ };
+ list.appendChild( li);
+ });
+}catch(e){
+ console.error(e);
+ document.getElementById('cat-title').textContent = "Vault System Locked";
+ const grid = document.getElementById('file-grid');
+ grid.innerHTML = `<div style="grid-column:1/-1; padding:30px; text-align:center; color:var(--danger); font-weight:700;">🚨 ${e.message || "Failed to load secure database."}</div>`;
+}
+}
+
+/* =========================
+   FILES
+========================= */
+
+function renderFiles(
+files,
+category){
+
+   currentCategory = category;
+
+    document.getElementById(
+    'cat-title').textContent =
+    category;
+
+    const grid =
+    document.getElementById(
+    'file-grid');
+
+   if(category === "HOME"){
+
+    grid.innerHTML = `
+
+    <div style="
+    grid-column:1/-1;
+    background:white;
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:35px;
+    animation:fadeInUp .6s ease;
+    line-height:1.9;">
+
+        <div style="
+        display:flex;
+        align-items:center;
+        gap:25px;
+        flex-wrap:wrap;
+        margin-bottom:30px;">
+
+            <img src="profile.png"
+            style="
+            width:150px;
+            height:150px;
+            border-radius:24px;
+            object-fit:cover;
+            border:4px solid #eff6ff;">
+
+            <div>
+
+                <h1 style="
+                margin-bottom:10px;
+                color:var(--accent);">
+
+                    SHINEIL KEITH MATHIAS
+
+                </h1>
+
+                <div style="
+                color:var(--muted);
+                font-size:1rem;">
+
+                    Founder of SHINE MINISTRY • Student • Public Speaker • Digital Creator
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div style="
+        display:grid;
+        grid-template-columns:
+        repeat(auto-fit,minmax(260px,1fr));
+        gap:20px;">
+
+            <!-- PERSONAL -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Personal Details
+                </h3>
+
+                <b>Full Name:</b>
+                Shineil Keith Mathias<br>
+
+                <b>Date of Birth:</b>
+                7 March 2010<br>
+
+                <b>Gender:</b>
+                Male<br>
+
+                <b>Nationality:</b>
+                Indian<br>
+
+                <b>Location:</b>
+                Khandala, Pune, Maharashtra, India
+
+            </div>
+
+            <!-- CONTACT -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Contact Information
+                </h3>
+
+                <b>Phone:</b>
+                +91 8605586173<br>
+
+                <b>Email:</b>
+                shinumaths989@gmail.com<br>
+
+                <b>Website:</b>
+                www.shine-ministry.com<br>
+
+                <b>Instagram:</b>
+                @shinu_vordenker_7
+
+            </div>
+
+            <!-- EDUCATION -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Education
+                </h3>
+
+                <b>School:</b>
+                Don Bosco High School & Junior College, Lonavla<br>
+
+                <b>Academic Level:</b>
+                Class 5 to 10 Secondary Education<br>
+
+                <b>Period:</b>
+                2020 – 2026<br>
+
+                <b>EQF Level:</b>
+                Level 3
+
+            </div>
+
+            <!-- SKILLS -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Skills
+                </h3>
+
+                • Communication Skills<br>
+                • Public Speaking<br>
+                • Leadership<br>
+                • Microsoft Word & PowerPoint<br>
+                • Organizational Skills<br>
+                • Google Drive<br>
+                • Mathematics
+
+            </div>
+
+            <!-- LANGUAGES -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Languages
+                </h3>
+
+                <b>English:</b>
+                Fluent<br>
+
+                <b>Hindi:</b>
+                Fluent<br>
+
+                <b>German:</b>
+                Basic (A1)
+
+            </div>
+
+            <!-- ACHIEVEMENTS -->
+
+            <div style="
+            background:#f8fafc;
+            padding:22px;
+            border-radius:18px;">
+
+                <h3 style="margin-bottom:12px;">
+                    Achievements
+                </h3>
+
+                • Promising Student Of The Year<br>
+                • Green House Captain Leadership Award<br>
+                • Debate & Elocution Certificates<br>
+                • Science Exhibition Participation<br>
+                • Spell Bee & Quiz Awards
+
+            </div>
+
+        </div>
+
+        <!-- ABOUT -->
+
+        <div style="
+        margin-top:30px;
+        background:#eff6ff;
+        padding:24px;
+        border-radius:18px;
+        border:1px solid #dbeafe;">
+
+            <h3 style="
+            margin-bottom:12px;
+            color:var(--accent);">
+
+                About Me
+            </h3>
+
+            <p style="
+            color:#334155;
+            line-height:1.9;">
+
+                Motivated and responsible secondary school student with strong communication skills and a keen interest in learning, leadership, and personal development. Founder of SHINE MINISTRY and actively involved in public speaking, debates, leadership activities, and digital creativity. Passionate about technology, education, organizational growth, and making a positive impact through communication and service.
+
+            </p>
+
+        </div>
+
+        <!-- HOBBIES -->
+
+        <div style="
+        margin-top:25px;
+        background:#f8fafc;
+        padding:24px;
+        border-radius:18px;">
+
+            <h3 style="
+            margin-bottom:12px;">
+
+                Hobbies & Interests
+            </h3>
+
+            <p style="
+            color:#475569;
+            line-height:1.9;">
+
+                Public speaking, debating, reading, learning new topics, exploring technology and digital tools, participating in school leadership activities, current affairs, presentations, communication development, and creative ministry initiatives.
+
+            </p>
+
+        </div>
+
+    </div>
+
+    `;
+
+    return;
+}
+   
+    grid.innerHTML = "";
+
+    files.forEach(file=>{
+
+        const card =
+        document.createElement(
+        'div');
+
+        card.className =
+        'file-card';
+
+        // EXPIRY BADGE
+        let expiryBadge = '';
+        if(file.expiry){
+            const daysLeft = Math.ceil(
+                (new Date(file.expiry) - new Date()) / 86400000
+            );
+            if(daysLeft < 0){
+                expiryBadge = `<div class="expiry-badge expiry-danger">⚠️ Expired</div>`;
+            } else if(daysLeft <= 30){
+                expiryBadge = `<div class="expiry-badge expiry-warn">⏳ Expires in ${daysLeft}d</div>`;
+            } else {
+                expiryBadge = `<div class="expiry-badge expiry-ok">✓ Valid ${daysLeft}d</div>`;
+            }
+        }
+
+        const isPinned = pinnedDocs.some(p => p.file === file.file);
+
+        card.innerHTML = `
+        <div style="
+        font-size:48px;
+        margin-bottom:12px;">
+            📄
+        </div>
+
+        <div style="
+        font-weight:800;
+        line-height:1.5;">
+            ${file.name}
+        </div>
+
+        ${expiryBadge}
+
+        <div class="card-actions">
+            <button class="card-btn card-btn-pin ${isPinned ? 'pinned' : ''}"
+                onclick="event.stopPropagation();togglePin(${JSON.stringify(file).replace(/"/g,'&quot;')},this)">
+                ${isPinned ? '⭐ Pinned' : '☆ Pin'}
+            </button>
+            <button class="card-btn card-btn-share"
+                onclick="event.stopPropagation();openShareModal(${JSON.stringify(file).replace(/"/g,'&quot;')})">
+                🔗 Share
+            </button>
+            <button class="card-btn card-btn-compare"
+                onclick="event.stopPropagation();addToCompare(${JSON.stringify(file).replace(/"/g,'&quot;')})">
+                ⚖️ Compare
+            </button>
+        </div>
+        `;
+
+        card.onclick = ()=>{
+
+            openSecureFile(
+                "docs/" + file.file,
+                file.name
+            );
+
+        };
+
+        // HOVER QUICK PREVIEW
+        card.addEventListener('mouseenter', (e) => {
+            startHoverPreview(file, e);
+        });
+        card.addEventListener('mousemove', (e) => {
+            positionTooltip(e);
+        });
+        card.addEventListener('mouseleave', () => {
+            hidePreviewTooltip();
+        });
+
+        grid.appendChild(
+        card);
+
+    });
+
+}
+
+async function unifiedSearch(){
+
+    const query =
+    document.getElementById(
+        'unified-search'
+    ).value.toLowerCase().trim();
+
+    if(!query){
+
+        if(currentCategory &&
+        allFilesData[currentCategory]){
+
+            renderFiles(
+                allFilesData[currentCategory],
+                currentCategory
+            );
+        }
+
+        return;
+    }
+
+    let results = [];
+
+    // FILE NAME SEARCH
+
+    Object.keys(allFilesData)
+    .forEach(category=>{
+
+        const files =
+        allFilesData[category];
+
+        if(!Array.isArray(files)) return;
+
+        files.forEach(file=>{
+
+            if(
+                file.name
+                .toLowerCase()
+                .includes(query)
+            ){
+
+                results.push({
+                    ...file,
+                    category,
+                    source:"Filename"
+                });
+
+            }
+
+        });
+
+    });
+
+    renderSearchResults(results);
+
+}
+
+   function renderSearchResults(results){
+
+    document.getElementById(
+        'cat-title'
+    ).textContent =
+    `Search Results (${results.length})`;
+
+    const grid =
+    document.getElementById(
+        'file-grid'
+    );
+
+    grid.innerHTML = "";
+
+    if(results.length === 0){
+
+        grid.innerHTML = `
+        <div style="
+        grid-column:1/-1;
+        text-align:center;
+        padding:40px;
+        background:white;
+        border-radius:20px;">
+            No matching files found.
+        </div>
+        `;
+
+        return;
+    }
+
+    results.forEach(file=>{
+
+        const card =
+        document.createElement('div');
+
+        card.className =
+        'file-card';
+
+        card.innerHTML = `
+
+        <div style="
+        font-size:48px;
+        margin-bottom:12px;">
+            📄
+        </div>
+
+        <div style="
+        font-weight:800;
+        line-height:1.5;">
+            ${file.name}
+        </div>
+
+        <div style="
+        margin-top:10px;
+        color:var(--muted);
+        font-size:.85rem;">
+            ${file.category}
+        </div>
+
+        <div style="
+        margin-top:6px;
+        color:#2563eb;
+        font-size:.75rem;
+        font-weight:700;">
+            ${file.source}
+        </div>
+
+        `;
+
+        card.onclick = ()=>{
+
+            openSecureFile(
+                "docs/" + file.file,
+                file.name
+            );
+
+        };
+
+        grid.appendChild(card);
+
+    });
+
+}
+
+/* =========================
+   OPEN FILE
+========================= */
+
+async function openSecureFile(
+path,
+displayName){
+
+    if(!window.masterPassword){
+        alert("Session not unlocked. Please log in again.");
+        return;
+    }
+
+    try{
+
+        const res =
+        await fetch("https://backend.shinumaths989.workers.dev/" + path);
+
+        // GUARD: catch backend error responses before treating as binary
+        if(!res.ok){
+            const ct = res.headers.get('content-type') || '';
+            if(ct.includes('application/json')){
+                const errBody = await res.json();
+                throw new Error(errBody.message || `Server error: HTTP ${res.status}`);
+            }
+            throw new Error(`Server error: HTTP ${res.status}`);
+        }
+        const ct = res.headers.get('content-type') || '';
+        if(ct.includes('application/json')){
+            const errBody = await res.json();
+            throw new Error(errBody.message || 'Backend returned JSON instead of encrypted file.');
+        }
+
+        const buffer =
+        await res.arrayBuffer();
+
+        // SETTINGS LENGTH
+
+        const settingsLength =
+        new Uint32Array(
+            buffer.slice(0,4)
+        )[0];
+
+        // GUARD: validate header before slicing
+        if(settingsLength === 0 || settingsLength > buffer.byteLength - 32){
+            throw new Error('Corrupted file header: backend may have returned an error response.');
+        }
+
+        // SETTINGS JSON
+
+        const settingsBytes =
+        buffer.slice(
+            4,
+            4 + settingsLength
+        );
+
+        const settingsText =
+        new TextDecoder()
+        .decode(settingsBytes);
+
+        const settings =
+        JSON.parse(settingsText);
+
+        // SALT
+
+        const saltStart =
+        4 + settingsLength;
+
+        const saltEnd =
+        saltStart + 16;
+
+        const salt =
+        buffer.slice(
+            saltStart,
+            saltEnd
+        );
+
+        // IV
+
+        const ivStart =
+        saltEnd;
+
+        const ivEnd =
+        ivStart + 12;
+
+        const iv =
+        buffer.slice(
+            ivStart,
+            ivEnd
+        );
+
+        // ENCRYPTED DATA
+
+        const encryptedData =
+        buffer.slice(ivEnd);
+
+        // HASH PASSWORD
+
+        const passwordHash =
+        await sha256Bytes(
+            window.masterPassword
+        );
+
+        // IMPORT HASH
+
+        const keyMaterial =
+        await crypto.subtle.importKey(
+            "raw",
+            passwordHash,
+            "PBKDF2",
+            false,
+            ["deriveKey"]
+        );
+
+        // DERIVE AES KEY
+
+        const key =
+        await crypto.subtle.deriveKey(
+            {
+                name:"PBKDF2",
+
+                salt:new Uint8Array(
+                    salt
+                ),
+
+                iterations:
+                settings.iterations,
+
+                hash:
+                settings.hash
+
+            },
+
+            keyMaterial,
+
+            {
+                name:"AES-GCM",
+                length:256
+            },
+
+            false,
+
+            ["decrypt"]
+        );
+
+        // DECRYPT
+
+        const decrypted =
+        await crypto.subtle.decrypt(
+            {
+                name:"AES-GCM",
+
+                iv:new Uint8Array(
+                    iv
+                )
+            },
+
+            key,
+
+            encryptedData
+        );
+
+// Save a copy before pdfjsLib detaches the ArrayBuffer
+currentDecryptedPdf = decrypted.slice(0);
+
+// =========================
+// PDF.JS
+// =========================
+
+const pdfjsLib = window.pdfjsLib;
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// LOAD PDF
+
+const loadingTask =
+pdfjsLib.getDocument({
+    data: decrypted
+});
+
+const pdf =
+await loadingTask.promise;
+
+// CONTAINER
+
+const container =
+document.getElementById(
+'pdf-render-container'
+);
+
+const sidebar =
+document.getElementById(
+'pdf-sidebar'
+);
+
+container.innerHTML = "";
+sidebar.innerHTML = "";
+
+// ZOOM LEVEL
+
+let currentZoom = 4.0;
+
+// =========================
+// TOOLBAR
+// =========================
+
+const toolbar =
+document.createElement('div');
+
+toolbar.style.position = "sticky";
+toolbar.style.top = "0";
+toolbar.style.zIndex = "50";
+
+toolbar.style.display = "flex";
+toolbar.style.gap = "12px";
+
+toolbar.style.justifyContent = "center";
+
+toolbar.style.padding = "14px";
+
+toolbar.style.background = "#e5e7eb";
+
+toolbar.style.borderBottom =
+"1px solid #cbd5e1";
+
+// ZOOM OUT
+
+const zoomOutBtn =
+document.createElement('button');
+
+zoomOutBtn.innerText = "− Zoom Out";
+
+// ZOOM IN
+
+const zoomInBtn =
+document.createElement('button');
+
+zoomInBtn.innerText = "+ Zoom In";
+
+// DOWNLOAD
+
+const downloadBtn =
+document.createElement('button');
+
+downloadBtn.innerText = "⬇ Download";
+
+// BUTTON STYLE
+
+[zoomOutBtn, zoomInBtn, downloadBtn]
+.forEach(btn=>{
+
+    btn.style.padding =
+    "10px 18px";
+
+    btn.style.border = "none";
+
+    btn.style.borderRadius =
+    "12px";
+
+    btn.style.cursor =
+    "pointer";
+
+    btn.style.fontWeight =
+    "700";
+
+    btn.style.background =
+    "#2563eb";
+
+    btn.style.color =
+    "white";
+
+});
+
+// ADD TO TOOLBAR
+
+toolbar.appendChild(
+zoomOutBtn
+);
+
+toolbar.appendChild(
+zoomInBtn
+);
+
+toolbar.appendChild(
+downloadBtn
+);
+
+container.appendChild(
+toolbar
+);
+       
+// =========================
+// MOBILE: hide zoom controls but keep download available
+// =========================
+if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
+    // On small devices we hide zoom controls to save space,
+    // but keep the toolbar (and download) accessible for all devices.
+    zoomOutBtn.style.display = 'none';
+    zoomInBtn.style.display  = 'none';
+    toolbar.style.justifyContent = 'center';
+}
+
+// =========================
+// RENDER FUNCTION
+// =========================
+
+async function renderAllPages(){
+
+    // REMOVE OLD CANVASES
+
+    container
+    .querySelectorAll('.pdf-page')
+    .forEach(el=>el.remove());
+
+   sidebar.innerHTML = "";
+
+    // LOOP PAGES
+
+    for(
+        let pageNum = 1;
+        pageNum <= pdf.numPages;
+        pageNum++
+    ){
+
+        const page =
+        await pdf.getPage(
+            pageNum
+        );
+
+       // =========================
+// SIDEBAR THUMBNAIL
+// =========================
+
+const thumbViewport =
+page.getViewport({
+    scale:0.25
+});
+
+const thumbCanvas =
+document.createElement('canvas');
+
+const thumbContext =
+thumbCanvas.getContext('2d');
+
+thumbCanvas.width =
+thumbViewport.width;
+
+thumbCanvas.height =
+thumbViewport.height;
+
+await page.render({
+
+    canvasContext:thumbContext,
+
+    viewport:thumbViewport
+
+}).promise;
+
+const thumbWrap =
+document.createElement('div');
+
+thumbWrap.className =
+'pdf-thumb';
+
+thumbWrap.appendChild(
+thumbCanvas
+);
+
+const pageLabel =
+document.createElement('div');
+
+pageLabel.innerText =
+pageNum;
+
+thumbWrap.appendChild(
+pageLabel);
+
+// CLICK TO PAGE
+
+thumbWrap.onclick = ()=>{
+
+    pageWrap.scrollIntoView({
+
+        behavior:'smooth'
+
+    });
+
+};
+
+sidebar.appendChild(
+thumbWrap
+);
+
+        const viewport =
+        page.getViewport({
+            scale:currentZoom
+        });
+
+        // PAGE WRAPPER
+
+        const pageWrap =
+        document.createElement(
+        'div'
+        );
+
+        pageWrap.className =
+        "pdf-page";
+
+        pageWrap.style.marginBottom =
+        "24px";
+
+        pageWrap.style.background =
+        "white";
+
+        pageWrap.style.borderRadius =
+        "14px";
+
+        pageWrap.style.boxShadow =
+        "0 8px 22px rgba(0,0,0,.08)";
+
+        pageWrap.style.padding =
+        "10px";
+
+        // CANVAS
+
+        const canvas =
+        document.createElement(
+        'canvas'
+        );
+
+        const context =
+        canvas.getContext('2d');
+
+        canvas.width =
+        viewport.width;
+
+        canvas.height =
+        viewport.height;
+
+        canvas.style.width =
+        "100%";
+
+        canvas.style.borderRadius =
+        "10px";
+
+        pageWrap.appendChild(
+        canvas
+        );
+
+        container.appendChild(
+        pageWrap
+        );
+
+        // RENDER
+
+        await page.render({
+
+            canvasContext:context,
+
+            viewport:viewport
+
+        }).promise;
+
+    }
+
+}
+
+// INITIAL RENDER
+
+await renderAllPages();
+
+// =========================
+// ZOOM EVENTS
+// =========================
+
+zoomInBtn.onclick =
+async ()=>{
+
+    currentZoom += 0.2;
+
+    await renderAllPages();
+
+};
+
+zoomOutBtn.onclick =
+async ()=>{
+
+    if(currentZoom > 0.6){
+
+        currentZoom -= 0.2;
+
+        await renderAllPages();
+
+    }
+
+};
+
+// =========================
+// DOWNLOAD SECURELY
+// =========================
+
+downloadBtn.onclick = async ()=>{
+    try{
+        if(!currentDecryptedPdf){ alert('No file loaded.'); return; }
+
+        // === PASSWORD GATE (from backend) ===
+        const enteredPass = prompt('Enter download password:');
+        if(enteredPass === null) return; // user cancelled
+
+        let backendSecret;
+        try{
+            const secretRes = await fetch(
+                'https://backend.shinumaths989.workers.dev/get-secret',
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ approved: true })
+                }
+            );
+            const secretData = await secretRes.json();
+            if(!secretData || !secretData.secret){
+                alert('Could not retrieve download password from server.');
+                return;
+            }
+            backendSecret = secretData.secret;
+        }catch(fetchErr){
+            console.error('Backend secret fetch failed:', fetchErr);
+            alert('Could not connect to server to verify password.');
+            return;
+        }
+
+        if(enteredPass !== backendSecret){
+            alert('Incorrect download password.');
+            return;
+        }
+        // === END PASSWORD GATE ===
+
+        const pdfBlob = new Blob([new Uint8Array(currentDecryptedPdf)], { type: 'application/pdf' });
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = displayName + '.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+    }catch(err){
+        console.error(err);
+        alert('Download failed.');
+    }
+};
+
+
+// SHOW MODAL
+
+document.getElementById(
+'modal'
+).style.display = 'block';
+document.getElementById(
+'modal-title'
+).textContent =
+displayName;
+       
+
+    }catch(e){
+
+        console.error(e);
+
+        alert(
+        "Access Denied: Could not decrypt file."
+        );
+
+    }
+
+}
+/* =========================
+   CLOSE MODAL
+========================= */
+
+function closeModal(){
+
+    document.getElementById(
+    'modal').style.display =
+    'none';
+
+    document.getElementById(
+    'watermark').style.display =
+    'none';
+
+    if(currentBlobUrl){
+
+        URL.revokeObjectURL(
+        currentBlobUrl);
+
+        currentBlobUrl = null;
+    }
+
+    currentDecryptedPdf = null;
+}
+
+/* =========================
+   SECURITY
+========================= */
+
+document.addEventListener(
+"contextmenu",
+e=>{
+
+    sendSecurityAlert(
+    "Right click attempt detected"
+    );
+
+    e.preventDefault();
+
+});
+document.onkeydown =
+function(e){
+
+    if(
+        e.ctrlKey &&
+        (
+            e.key==='s' ||
+            e.key==='p' ||
+            e.key==='u'
+        )
+    ){
+
+   sendSecurityAlert(
+"Blocked keyboard shortcut attempt: " + e.key
+);
+
+e.preventDefault();
+    }
+};
+
+/* =========================
+   FEATURE 1: E2E ENCRYPTION
+   (AES-256-GCM already used in
+   openSecureFile – badge shown in
+   navbar. No additional JS needed.)
+========================= */
+
+/* =========================
+   FEATURE 2: HOVER QUICK PREVIEW
+========================= */
+
+let previewTimeout = null;
+
+// Cache: file.file -> ImageBitmap (rendered first page)
+const previewCache = new Map();
+// Track in-flight fetches so we don't double-fetch
+const previewInFlight = new Map();
+
+async function getPreviewBitmap(file) {
+    if (previewCache.has(file.file)) return previewCache.get(file.file);
+
+    // If already fetching this file, wait for it
+    if (previewInFlight.has(file.file)) return previewInFlight.get(file.file);
+
+    const promise = (async () => {
+        const res = await fetch("https://backend.shinumaths989.workers.dev/docs/" + file.file);
+        if(!res.ok){ const eb=await res.json().catch(()=>({})); throw new Error(eb.message||`HTTP ${res.status}`); }
+        const rct=res.headers.get('content-type')||'';
+        if(rct.includes('application/json')){ const eb=await res.json(); throw new Error(eb.message||'JSON error'); }
+        const buf = await res.arrayBuffer();
+        const sLen = new Uint32Array(buf.slice(0,4))[0];
+        if(sLen===0||sLen>buf.byteLength-32) throw new Error('Corrupted file header.');
+        const settings = JSON.parse(new TextDecoder().decode(buf.slice(4, 4+sLen)));
+        const saltStart = 4+sLen, saltEnd = saltStart+16;
+        const ivStart = saltEnd, ivEnd = ivStart+12;
+        const salt = buf.slice(saltStart, saltEnd);
+        const iv   = buf.slice(ivStart, ivEnd);
+        const enc  = buf.slice(ivEnd);
+        const phash = await sha256Bytes(masterPassword);
+        const km = await crypto.subtle.importKey("raw",phash,"PBKDF2",false,["deriveKey"]);
+        const key = await crypto.subtle.deriveKey(
+            {name:"PBKDF2",salt:new Uint8Array(salt),iterations:settings.iterations,hash:settings.hash},
+            km,{name:"AES-GCM",length:256},false,["decrypt"]
+        );
+        const dec = await crypto.subtle.decrypt({name:"AES-GCM",iv:new Uint8Array(iv)},key,enc);
+        const pdf  = await window.pdfjsLib.getDocument({data:dec}).promise;
+        const page = await pdf.getPage(1);
+        const vp   = page.getViewport({scale:0.5});
+        const offscreen = document.createElement('canvas');
+        offscreen.width  = vp.width;
+        offscreen.height = vp.height;
+        await page.render({canvasContext:offscreen.getContext('2d'),viewport:vp}).promise;
+        const bitmap = await createImageBitmap(offscreen);
+        previewCache.set(file.file, bitmap);
+        previewInFlight.delete(file.file);
+        return bitmap;
+    })();
+
+    previewInFlight.set(file.file, promise);
+    return promise;
+}
+
+async function startHoverPreview(file, e){
+    clearTimeout(previewTimeout);
+    previewTimeout = setTimeout(async ()=>{
+        const tooltip = document.getElementById('previewTooltip');
+        const canvas  = document.getElementById('previewCanvas');
+        const label   = document.getElementById('previewLabel');
+        label.textContent = file.name;
+        tooltip.style.display = 'flex';
+        positionTooltip(e);
+        try{
+            const bitmap = await getPreviewBitmap(file);
+            canvas.width  = bitmap.width;
+            canvas.height = bitmap.height;
+            canvas.getContext('2d').drawImage(bitmap, 0, 0);
+        }catch(err){
+            canvas.width = 160; canvas.height = 90;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillRect(0,0,160,90);
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Preview unavailable',80,50);
+        }
+    }, 150);
+}
+
+function positionTooltip(e){
+    const tooltip = document.getElementById('previewTooltip');
+    const x = e.clientX + 20;
+    const y = e.clientY - 20;
+    const maxX = window.innerWidth - 220;
+    const maxY = window.innerHeight - 260;
+    tooltip.style.left = Math.min(x,maxX) + 'px';
+    tooltip.style.top  = Math.min(y,maxY) + 'px';
+}
+
+function hidePreviewTooltip(){
+    clearTimeout(previewTimeout);
+    document.getElementById('previewTooltip').style.display = 'none';
+}
+
+/* =========================
+   FEATURE 3: SECURE SHARE LINKS
+========================= */
+
+let shareCurrentFile = null;
+
+function openShareModal(file){
+    shareCurrentFile = file;
+    document.getElementById('share-doc-name').textContent = file.name;
+    document.getElementById('share-link-result').style.display = 'none';
+    document.getElementById('share-expiry').value = '24';
+    document.getElementById('share-password').value = '';
+    document.getElementById('shareModal').style.display = 'block';
+}
+
+function closeShareModal(){
+    document.getElementById('shareModal').style.display = 'none';
+    shareCurrentFile = null;
+}
+
+async function generateShareLink(){
+
+    if(!shareCurrentFile) return;
+
+    const expiry =
+    parseInt(
+        document.getElementById(
+        'share-expiry'
+        ).value
+    ) || 24;
+
+    const password =
+    document.getElementById(
+    'share-password'
+    ).value.trim();
+
+    try{
+
+        const res =
+        await fetch(
+            'https://backend.shinumaths989.workers.dev/create-share',
+            {
+                method:'POST',
+                headers:{
+                    'Content-Type':
+                    'application/json'
+                },
+body: JSON.stringify({
+  file: selectedFile,
+  name: fileName,
+  expiry: expiryHours,
+  password: linkPassword || null,
+  vaultKey: theDecryptedVaultPassword  // ← add this
+})
+            }
+        );
+
+        const data =
+        await res.json();
+
+        if(data.token){
+
+            const link =
+            `${location.origin}/share.html?t=${data.token}`;
+
+            document.getElementById(
+            'share-link-text'
+            ).textContent = link;
+
+            document.getElementById(
+            'share-link-result'
+            ).style.display = 'block';
+
+        }else{
+
+            alert(
+            'Could not create share link. Check backend.'
+            );
+
+        }
+
+    }catch(err){
+
+        console.error(err);
+
+        // fallback client-side token
+        const payload =
+        btoa(JSON.stringify({
+
+            file:
+            shareCurrentFile.file,
+
+            name:
+            shareCurrentFile.name,
+
+            exp:
+            Date.now() +
+            expiry * 3600000,
+
+            pwd:
+            password
+            ? await window.sha256(password)
+            : null,
+
+            // real vault password
+            vaultKey:
+            window.masterPassword
+        }));
+
+        const link =
+        `${location.origin}/share.html?t=${payload}`;
+
+        document.getElementById(
+        'share-link-text'
+        ).textContent = link;
+
+        document.getElementById(
+        'share-link-result'
+        ).style.display = 'block';
+    }
+}
+
+function copyShareLink(){
+    const text = document.getElementById('share-link-text').textContent;
+    navigator.clipboard.writeText(text).then(()=>{
+        alert('Link copied to clipboard!');
+    }).catch(()=>{
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        alert('Link copied!');
+    });
+}
+
+/* =========================
+   FEATURE 4: OFFLINE ACCESS
+   (Cloudflare R2 + Service Worker)
+========================= */
+
+// Offline/online detection
+window.addEventListener('offline', ()=>{
+    document.getElementById('offline-banner').style.display = 'block';
+});
+window.addEventListener('online', ()=>{
+    document.getElementById('offline-banner').style.display = 'none';
+});
+
+// Register Service Worker for offline caching
+if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js').catch(()=>{
+        // sw.js not present in dev environment – silently ignore
+    });
+}
+
+/* =========================
+   FEATURE 5: (Email Login Notification removed)
+========================= */
+
+/* =========================
+   FEATURE 6: FAVOURITES / PIN DOCS
+========================= */
+
+let pinnedDocs = JSON.parse(localStorage.getItem('vaultPinned') || '[]');
+
+function savePinned(){
+    localStorage.setItem('vaultPinned', JSON.stringify(pinnedDocs));
+}
+
+function togglePin(file, btn){
+    const idx = pinnedDocs.findIndex(p => p.file === file.file);
+    if(idx === -1){
+        pinnedDocs.push(file);
+        btn.classList.add('pinned');
+        btn.textContent = '⭐ Pinned';
+    } else {
+        pinnedDocs.splice(idx, 1);
+        btn.classList.remove('pinned');
+        btn.textContent = '☆ Pin';
+    }
+    savePinned();
+    renderPinnedSection();
+}
+
+function renderPinnedSection(){
+    const section = document.getElementById('pinned-section');
+    const grid    = document.getElementById('pinned-grid');
+    if(!pinnedDocs.length){
+        section.style.display = 'none';
+        return;
+    }
+    section.style.display = 'block';
+    grid.innerHTML = '';
+    pinnedDocs.forEach(file=>{
+        const chip = document.createElement('div');
+        chip.className = 'pinned-chip';
+        chip.innerHTML = `📄 ${file.name} <span style="color:#ef4444;font-size:14px;margin-left:4px;" title="Unpin">✕</span>`;
+        chip.onclick = ()=> openSecureFile("docs/" + file.file, file.name);
+        chip.querySelector('span').onclick = (e)=>{
+            e.stopPropagation();
+            pinnedDocs = pinnedDocs.filter(p => p.file !== file.file);
+            savePinned();
+            renderPinnedSection();
+            // Re-render current category to update pin button states
+            if(currentCategory && allFilesData[currentCategory]){
+                renderFiles(allFilesData[currentCategory], currentCategory);
+            }
+        };
+        grid.appendChild(chip);
+    });
+}
+
+function showPinned(){
+    renderPinnedSection();
+    const section = document.getElementById('pinned-section');
+    if(pinnedDocs.length){
+        section.scrollIntoView({behavior:'smooth'});
+    } else {
+        alert('No pinned documents yet.\nClick ☆ Pin on any document card to favourite it.');
+    }
+}
+
+/* =========================
+   FEATURE 7: COMPARE 2 DOCS
+========================= */
+
+let compareQueue  = [];   // up to 2 files
+let compareSide   = null; // 'left' | 'right' – for manual pick
+
+function startCompareMode(){
+    if(compareQueue.length === 0){
+        alert('Click ⚖️ Compare on any two document cards first, then use this button — or use Compare from the cards directly.');
+        return;
+    }
+    openCompareModal();
+}
+
+function addToCompare(file){
+    // If already in queue, remove it
+    const idx = compareQueue.findIndex(f => f.file === file.file);
+    if(idx !== -1){
+        compareQueue.splice(idx,1);
+    } else {
+        if(compareQueue.length >= 2) compareQueue.shift();
+        compareQueue.push(file);
+    }
+    updateCompareBar();
+    if(compareQueue.length === 2){
+        if(confirm(`Compare "${compareQueue[0].name}" vs "${compareQueue[1].name}"?`)){
+            openCompareModal();
+        }
+    }
+}
+
+function updateCompareBar(){
+    const bar = document.getElementById('compare-bar');
+    const txt = document.getElementById('compare-bar-text');
+    if(compareQueue.length === 0){
+        bar.style.display = 'none';
+    } else {
+        bar.style.display = 'flex';
+        const names = compareQueue.map(f=>`"${f.name}"`).join(' vs ');
+        txt.textContent = `⚖️ ${compareQueue.length === 1 ? 'Pick one more: ' + compareQueue[0].name : names}`;
+    }
+}
+
+function clearCompare(){
+    compareQueue = [];
+    updateCompareBar();
+}
+
+async function openCompareModal(){
+    document.getElementById('compareModal').style.display = 'block';
+    if(compareQueue[0]) await renderComparePane('left',  compareQueue[0]);
+    if(compareQueue[1]) await renderComparePane('right', compareQueue[1]);
+}
+
+function closeCompareModal(){
+    document.getElementById('compareModal').style.display = 'none';
+}
+
+async function renderComparePane(side, file){
+    const titleEl   = document.getElementById(`compare-${side}-title`);
+    const contentEl = document.getElementById(`compare-${side}-content`);
+    titleEl.textContent = file.name;
+    contentEl.innerHTML = '<div class="compare-select-prompt">⏳ Decrypting & rendering…</div>';
+    try{
+        const res = await fetch("https://backend.shinumaths989.workers.dev/docs/" + file.file);
+        if(!res.ok){ const eb=await res.json().catch(()=>({})); throw new Error(eb.message||`HTTP ${res.status}`); }
+        const rct2=res.headers.get('content-type')||'';
+        if(rct2.includes('application/json')){ const eb=await res.json(); throw new Error(eb.message||'JSON error'); }
+        const buf = await res.arrayBuffer();
+        const sLen = new Uint32Array(buf.slice(0,4))[0];
+        if(sLen===0||sLen>buf.byteLength-32) throw new Error('Corrupted file header.');
+        const settings = JSON.parse(new TextDecoder().decode(buf.slice(4, 4+sLen)));
+        const saltStart = 4+sLen, saltEnd = saltStart+16;
+        const ivStart = saltEnd, ivEnd = ivStart+12;
+        const salt = buf.slice(saltStart, saltEnd);
+        const enc  = buf.slice(ivEnd);
+        const phash = await sha256Bytes(masterPassword);
+        const km = await crypto.subtle.importKey("raw",phash,"PBKDF2",false,["deriveKey"]);
+        const key = await crypto.subtle.deriveKey(
+            {name:"PBKDF2",salt:new Uint8Array(salt),iterations:settings.iterations,hash:settings.hash},
+            km,{name:"AES-GCM",length:256},false,["decrypt"]
+        );
+        const dec = await crypto.subtle.decrypt({name:"AES-GCM",iv:new Uint8Array(iv)},key,enc);
+        const pdf = await window.pdfjsLib.getDocument({data:dec}).promise;
+        contentEl.innerHTML = '';
+        for(let p=1; p<=pdf.numPages; p++){
+            const page = await pdf.getPage(p);
+            const vp   = page.getViewport({scale:1.0});
+            const wrap = document.createElement('div');
+            wrap.style.cssText = 'background:white;border-radius:10px;padding:8px;box-shadow:0 4px 12px rgba(0,0,0,.1);width:100%;';
+            const cvs  = document.createElement('canvas');
+            cvs.width  = vp.width;
+            cvs.height = vp.height;
+            cvs.style.width = '100%';
+            cvs.style.borderRadius = '6px';
+            await page.render({canvasContext:cvs.getContext('2d'),viewport:vp}).promise;
+            wrap.appendChild(cvs);
+            contentEl.appendChild(wrap);
+        }
+    }catch(err){
+        contentEl.innerHTML = `<div class="compare-select-prompt" style="color:#ef4444;">❌ Could not load document</div>`;
+        console.error(err);
+    }
+}
+
+function pickCompareDoc(side){
+    compareSide = side;
+    closeCompareModal();
+    alert(`Click ⚖️ Compare on the document you want for side ${side === 'left' ? 'A (Left)' : 'B (Right)'}, then re-open Compare.`);
+}
+
+/* =========================
+   FEATURE 8: DOC EXPIRY REMINDER
+========================= */
+
+async function checkDocExpiryReminders(){
+    const allFiles = [];
+    Object.values(allFilesData).forEach(cat=>{
+        if(Array.isArray(cat)) cat.forEach(f=>{ if(f.expiry) allFiles.push(f); });
+    });
+    if(!allFiles.length) return;
+    const expiringSoon = allFiles.filter(f=>{
+        const days = Math.ceil((new Date(f.expiry) - new Date()) / 86400000);
+        return days >= 0 && days <= 30;
+    });
+    if(!expiringSoon.length) return;
+    try{
+        await fetch(
+            'https://backend.shinumaths989.workers.dev/expiry-reminder',
+            {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    docs: expiringSoon.map(f=>({
+                        name:   f.name,
+                        expiry: f.expiry,
+                        daysLeft: Math.ceil((new Date(f.expiry) - new Date()) / 86400000)
+                    }))
+                })
+            }
+        );
+        console.log('Expiry reminder sent for', expiringSoon.length, 'document(s)');
+    }catch(err){
+        console.warn('Expiry reminder failed:', err);
+    }
+}
+
+// Post-init hook: called at end of onCaptchaSuccess after initVault()
+function vaultPostInit(){
+    renderPinnedSection();
+    setTimeout(checkDocExpiryReminders, 2000);
+}
+
+</script>
+
+<script src="https://www.google.com/recaptcha/api.js" defer></script>
+
+<script>
+
+document.addEventListener("visibilitychange", () => {
+
+    const dash =
+    document.getElementById(
+    'vault-dashboard');
+
+    if(document.hidden){
+
+        dash.style.filter =
+        "blur(18px)";
+
+    }else{
+
+        dash.style.filter =
+        "blur(0px)";
+    }
+
+});
+
+   function saveAccessLog(){
+
+    const logs =
+    JSON.parse(
+    localStorage.getItem(
+    'vaultLogs'
+    ) || '[]');
+
+    const visitorName =
+    document.getElementById(
+    'user-name').value;
+
+    const purpose =
+    document.getElementById(
+    'user-purpose').value;
+
+    const loginTime =
+    new Date().toLocaleString();
+
+    const device =
+    /Mobi|Android/i.test(
+    navigator.userAgent)
+    ? "Mobile"
+    : "Desktop";
+
+    const browser =
+    navigator.userAgent;
+
+    const platform =
+    navigator.platform;
+
+    const screenSize =
+    `${screen.width}x${screen.height}`;
+
+    const timezone =
+    Intl.DateTimeFormat()
+    .resolvedOptions()
+    .timeZone;
+
+    logs.push({
+
+        visitorName,
+        purpose,
+        loginTime,
+        device,
+        browser,
+        platform,
+        screenSize,
+        timezone
+
+    });
+
+    localStorage.setItem(
+    'vaultLogs',
+    JSON.stringify(logs)
+    );
+
+}
+
+async function openLogs(){
+
+    document.getElementById(
+    'logModal'
+    ).style.display =
+    'block';
+
+    const {
+        collection,
+        getDocs
+    } = window.firestoreFunctions;
+
+    const body =
+    document.getElementById(
+    'logBody'
+    );
+
+    body.innerHTML = "";
+
+    try{
+
+const {
+    collection,
+    getDocs,
+    query,
+    where
+} = window.firestoreFunctions;
+
+const currentBrowser =
+navigator.userAgent;
+
+const currentPlatform =
+navigator.platform;
+
+const q =
+query(
+
+    collection(
+        window.db,
+        "visitorLogs"
+    ),
+
+    where(
+        "browser",
+        "==",
+        currentBrowser
+    ),
+
+    where(
+        "platform",
+        "==",
+        currentPlatform
+    )
+
+);
+
+const snapshot =
+await getDocs(q);
+
+        snapshot.forEach(doc=>{
+
+            const log =
+            doc.data();
+
+            body.innerHTML += `
+
+            <tr>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.visitorName || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.purpose || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.loginTime || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.device || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.browser || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.platform || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.screen || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.timezone || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.ipAddress || '-'}
+                </td>
+
+                <td style="padding:10px;border:1px solid #ddd;">
+                    ${log.location || '-'}
+                </td>
+
+            </tr>
+
+            `;
+
+        });
+
+    }catch(e){
+
+        console.error(e);
+
+    }
+
+}
+
+function closeLogs(){
+
+    document.getElementById(
+    'logModal').style.display =
+    'none';
+
+}
+</script>
+
+   <div
+id="watermark"
+class="watermark">
+
+    AUTHORIZED ACCESS • SHINEIL KEITH MATHIAS
+
+</div>
+
+   <div id="logModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <strong>
+                ACCESS LOGS
+            </strong>
+
+            <button onclick="closeLogs()"
+            style="
+            border:none;
+            background:var(--danger);
+            color:white;
+            padding:10px 16px;
+            border-radius:10px;
+            font-weight:bold;
+            cursor:pointer;">
+
+                CLOSE
+
+            </button>
+
+        </div>
+
+        <div style="
+        padding:25px;
+        overflow:auto;
+        height:100%;
+        background:#f8fafc;">
+
+            <table id="logTable"
+            style="
+            width:100%;
+            border-collapse:collapse;
+            background:white;">
+
+                <thead>
+
+                    <tr style="
+                    background:#eff6ff;">
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Name
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Purpose
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Login Time
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Device
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Browser
+                        </th>
+
+                        <th style="padding:12px;border:1px solid #ddd;">
+                            Platform
+                        </th>
+
+                       <th style="padding:12px;border:1px solid #ddd;">
+    Screen
+</th>
+
+<th style="padding:12px;border:1px solid #ddd;">
+    Timezone
+</th>
+
+<th style="padding:12px;border:1px solid #ddd;">
+    IP Address
+</th>
+
+<th style="padding:12px;border:1px solid #ddd;">
+    Location
+</th>
+                    </tr>
+
+                </thead>
+
+                <tbody id="logBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+   <script type="module">
+      
+/* =========================
+   PASSKEY ACCESS
+========================= */
+
+async function requestPasskeyAccess(){
+
+    const visitorName =
+    document.getElementById(
+    'user-name'
+    ).value.trim();
+
+    const purpose =
+    document.getElementById(
+    'user-purpose'
+    ).value.trim();
+
+      if(!visitorName || !purpose){
+        alert(
+        "Enter full name and purpose."
+        );
+
+        return;
+    }
+
+    document.getElementById(
+    'step1'
+    ).style.display =
+    'none';
+
+    document.getElementById(
+    'passkey-wait'
+    ).style.display =
+    'flex';
+
+    const {
+        collection,
+        addDoc,
+        doc,
+        onSnapshot
+    } = window.firestoreFunctions;
+
+    try{
+
+        const requestRef =
+        await addDoc(
+
+            collection(
+                window.db,
+                "accessRequests"
+            ),
+
+            {
+
+                visitorName:
+                visitorName,
+
+                purpose:
+                purpose,
+
+                device:
+                /Mobi|Android/i.test(
+                navigator.userAgent
+                )
+                ? "Mobile"
+                : "Desktop",
+
+                browser:
+                navigator.userAgent,
+
+                status:
+                "pending",
+
+                createdAt:
+                new Date()
+                .toISOString()
+
+            }
+
+        );
+
+        onSnapshot(
+
+            doc(
+                window.db,
+                "accessRequests",
+                requestRef.id
+            ),
+
+            async (snapshot)=>{
+
+                const data =
+                snapshot.data();
+
+                if(!data) return;
+
+if (data.status === "approved") {
+
+    const passkeyRes =
+    await fetch(
+    "https://backend.shinumaths989.workers.dev/get-secret",
+    {
+        method: "POST",
+
+        headers: {
+            "Content-Type":
+            "application/json"
+        },
+
+        body: JSON.stringify({
+            approved: true
+        })
+    });
+
+    const passkeyResult =
+    await passkeyRes.json();
+
+    if (!passkeyResult || !passkeyResult.secret) {
+        alert("Passkey approved but backend did not return the secret. Cannot unlock.");
+        location.reload();
+        return;
+    }
+
+    window.masterPassword = passkeyResult.secret;
+
+    sessionStartTime = new Date();
+
+    document.getElementById(
+    'passkey-wait'
+    ).style.display = 'none';
+
+    document.getElementById(
+    'step2'
+    ).style.display = 'flex';
+}
+
+if (data.status === "denied") {
+
+    alert(
+    "Access request denied."
+    );
+
+    location.reload();
+               }
+               
+            }
+
+        );
+
+    }catch(e){
+
+console.error(
+"PASSKEY ERROR:",
+e
+);
+
+alert(
+e.message
+);
+
+        location.reload();
+
+    }
+
+}
+
+window.requestPasskeyAccess =
+requestPasskeyAccess;
+      
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    getDoc,
+    doc,
+    onSnapshot,
+    updateDoc,
+    setDoc,
+    query,
+    where
+}
+   
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+import { getAnalytics }
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyBbOd2ZKqiPHTBEMmjBMnxAU_mdwLz7uM0",
+    authDomain: "online-vault-shine-26.firebaseapp.com",
+    projectId: "online-vault-shine-26",
+    storageBucket: "online-vault-shine-26.firebasestorage.app",
+    messagingSenderId: "79788612818",
+    appId: "1:79788612818:web:41cfb16a4b36b1d5bfe10b",
+    measurementId: "G-BJKTZDF25J"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+
+      // ADD THIS LINE to make it globally accessible
+window.db = db;
+
+window.firestoreFunctions = {
+    collection,
+    addDoc,
+    getDocs,
+    getDoc,
+    doc,
+    onSnapshot,
+    updateDoc,
+    setDoc,
+    query,
+    where
+};
+
+window.sha256 = async function(text){
+   
+    const msgBuffer =
+    new TextEncoder().encode(text);
+
+    const hashBuffer =
+    await crypto.subtle.digest(
+        'SHA-256',
+        msgBuffer
+    );
+
+    const hashArray =
+    Array.from(
+        new Uint8Array(hashBuffer)
+    );
+
+    return hashArray
+    .map(b =>
+        b.toString(16).padStart(2,'0')
+    )
+    .join('');
+}
+
+            import {
+  initializeAppCheck,
+  ReCaptchaV3Provider
+} from
+"https://www.gstatic.com/firebasejs/12.13.0/firebase-app-check.js";
+
+const appCheck =
+initializeAppCheck(app, {
+
+  provider:
+  new ReCaptchaV3Provider(
+    "6LezSeMsAAAAAOi8LeGw3aEtBUtRDg2sAzMHKOPN"
+  ),
+
+  isTokenAutoRefreshEnabled:true
+
+});
+</script>
+   <!-- =========================
+     EMERGENCY CONTACT MODAL
+========================= -->
+
+<div id="emergencyModal" class="modal">
+
+    <div class="modal-content"
+    style="
+    max-width:500px;
+    height:auto;
+    margin:80px auto;
+    border-radius:24px;">
+
+        <div class="modal-header">
+
+            <strong>
+                EMERGENCY CONTACT
+            </strong>
+
+            <button
+            onclick="closeEmergencyContact()"
+            style="
+            border:none;
+            background:var(--danger);
+            color:white;
+            padding:10px 16px;
+            border-radius:10px;
+            font-weight:bold;
+            cursor:pointer;">
+
+                CLOSE
+
+            </button>
+
+        </div>
+
+        <div style="
+        padding:30px;
+        line-height:2;
+        background:white;
+        font-size:14px;">
+
+            <div>
+                <strong>Name:</strong>
+                Shineil Keith Mathias
+            </div>
+
+            <div>
+                <strong>Phone:</strong>
+                +91 8605586173
+            </div>
+
+            <div>
+                <strong>Email:</strong>
+                shinumaths989@gmail.com
+            </div>
+
+            <div>
+                <strong>Location:</strong>
+                Maharashtra, India
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+   <script>
+
+/* =========================
+   DATE + TIME
+========================= */
+
+function updatePassportTime(){
+
+    const now =
+    new Date();
+
+    const formatted =
+    now.toLocaleString(
+        "en-IN",
+        {
+
+            weekday:"long",
+
+            day:"2-digit",
+
+            month:"long",
+
+            year:"numeric",
+
+            hour:"2-digit",
+
+            minute:"2-digit",
+
+            second:"2-digit",
+
+            hour12:true
+
+        }
+    );
+
+    document.getElementById(
+    "passport-datetime"
+    ).innerHTML =
+    `🕒 ${formatted}`;
+
+}
+
+setInterval(
+    updatePassportTime,
+    1000
+);
+
+updatePassportTime();
+
+/* =========================
+   EMERGENCY MODAL
+========================= */
+
+function openEmergencyContact(){
+
+    document.getElementById(
+    'emergencyModal'
+    ).style.display = 'block';
+
+}
+
+function closeEmergencyContact(){
+
+    document.getElementById(
+    'emergencyModal'
+    ).style.display = 'none';
+
+}
+
+</script>
+<script>
+
+/* =========================
+   SCREENSHOT PROTECTION
+========================= */
+
+function triggerScreenProtection(){
+
+    const shield =
+    document.createElement('div');
+
+    shield.id =
+    "screen-protection-layer";
+
+    shield.style.position =
+    "fixed";
+
+    shield.style.inset =
+    "0";
+
+    shield.style.background =
+    "white";
+
+    shield.style.zIndex =
+    "999999";
+
+    shield.style.pointerEvents =
+    "none";
+
+    document.body.appendChild(
+    shield
+    );
+
+    setTimeout(()=>{
+
+        shield.remove();
+
+    },1200);
+
+}
+
+// Detect PrintScreen key
+
+document.addEventListener(
+'keyup',
+(e)=>{
+
+    if(e.key === 'PrintScreen'){
+
+        triggerScreenProtection();
+
+        sendSecurityAlert(
+        "Screenshot attempt detected"
+        );
+
+    }
+
+});
+
+// Blur when tab hidden
+
+document.addEventListener(
+'visibilitychange',
+()=>{
+
+    if(document.hidden){
+
+        triggerScreenProtection();
+
+    }
+
+});
+
+</script>
+
+<!-- =========================
+     COMPARE MODAL
+========================= -->
+<div id="compareModal" class="modal">
+    <div class="modal-content" style="height:95%;">
+        <div class="modal-header">
+            <strong>⚖️ DOCUMENT COMPARE</strong>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <span style="font-size:12px;color:var(--muted);font-weight:600;" id="compare-status-label"></span>
+                <button onclick="closeCompareModal()" class="btn-close-modal">CLOSE</button>
+            </div>
+        </div>
+        <div class="compare-body">
+            <!-- LEFT PANE -->
+            <div class="compare-pane">
+                <div class="compare-pane-header">
+                    <span id="compare-left-title">Document A</span>
+                    <button class="card-btn card-btn-share" onclick="pickCompareDoc('left')" style="font-size:10px;">Change</button>
+                </div>
+                <div class="compare-pane-content" id="compare-left-content">
+                    <div class="compare-select-prompt">📄 Document A will appear here</div>
+                </div>
+            </div>
+            <!-- RIGHT PANE -->
+            <div class="compare-pane">
+                <div class="compare-pane-header">
+                    <span id="compare-right-title">Document B</span>
+                    <button class="card-btn card-btn-share" onclick="pickCompareDoc('right')" style="font-size:10px;">Change</button>
+                </div>
+                <div class="compare-pane-content" id="compare-right-content">
+                    <div class="compare-select-prompt">📄 Document B will appear here</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =========================
+     SHARE MODAL
+========================= -->
+<div id="shareModal" class="modal">
+    <div class="share-modal-inner">
+        <div class="modal-header">
+            <strong>🔗 SECURE SHARE LINK</strong>
+            <button onclick="closeShareModal()" class="btn-close-modal">CLOSE</button>
+        </div>
+        <div class="share-form">
+            <div>
+                <label>Sharing: <span id="share-doc-name" style="color:var(--accent);"></span></label>
+            </div>
+            <div>
+                <label>Link Expiry (hours)</label>
+                <input type="number" id="share-expiry" value="24" min="1" max="720" style="margin-bottom:0;">
+            </div>
+            <div>
+                <label>Link Password (optional)</label>
+                <input type="password" id="share-password" placeholder="Leave blank for no password" style="margin-bottom:0;">
+            </div>
+            <button class="btn-primary" onclick="generateShareLink()" style="margin-top:4px;">Generate Secure Link</button>
+            <div id="share-link-result" style="display:none;">
+                <label>Your Secure Link (read-only, expires automatically)</label>
+                <div class="share-link-box" id="share-link-text"></div>
+                <div style="display:flex;gap:10px;margin-top:10px;">
+                    <button class="card-btn card-btn-share" style="flex:1;padding:10px;" onclick="copyShareLink()">📋 Copy Link</button>
+                    <button class="card-btn card-btn-pin" style="flex:1;padding:10px;" onclick="closeShareModal()">Done</button>
+                </div>
+                <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center;">
+                    🔒 Read-only · AES-256 encrypted · Auto-expires · Powered by SKM
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
