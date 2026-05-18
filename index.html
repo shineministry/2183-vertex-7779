@@ -4322,19 +4322,13 @@ async function generateShareLink(){
                     'Content-Type':
                     'application/json'
                 },
-                body: JSON.stringify({
-                    file:
-                    shareCurrentFile.file,
-
-                    name:
-                    shareCurrentFile.name,
-
-                    expiry:
-                    expiry,
-
-                    password:
-                    password || null
-                })
+body: JSON.stringify({
+  file: selectedFile,
+  name: fileName,
+  expiry: expiryHours,
+  password: linkPassword || null,
+  vaultKey: theDecryptedVaultPassword  // ← add this
+})
             }
         );
 
