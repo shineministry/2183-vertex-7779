@@ -681,31 +681,33 @@
   canvasWrap.addEventListener('contextmenu', e => e.preventDefault());
 
   // ── Show PDF ──
-  async function showPDF(data) {
-    const fileUrl = 'https://backend.shinumaths989.workers.dev/docs/' + data.file;
+async function showPDF(data) {
+  const fileUrl = 'https://backend.shinumaths989.workers.dev/docs/' + data.file;
 
-    // Switch to overlay
-    document.getElementById('auth-scene').style.display = 'none';
-    overlay.classList.add('active');
-    document.getElementById('pdf-file-name').textContent = data.name || data.file;
+  document.getElementById('auth-scene').style.display = 'none';
+  overlay.classList.add('active');
+  document.getElementById('pdf-file-name').textContent = data.name || data.file;
 
-    try {
-      const res = await fetch(fileUrl);
-      if (!res.ok) throw new Error('Fetch failed');
-      const arrayBuffer = await res.arrayBuffer();
+  try {
+    const res = await fetch(fileUrl);
+    if (!res.ok) throw new Error('Fetch failed');
+    const encrypted = await res.arrayBuffer();
 
-      pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    // ✅ Decrypt first, just like the download path does
+    const decrypted = await decryptFile(encrypted, data.vaultKey);
 
-      await renderAllPages();
-      document.getElementById('pdf-loading').style.display = 'none';
-      updateUI();
-    } catch (err) {
-      console.error(err);
-      overlay.classList.remove('active');
-      document.getElementById('auth-scene').style.display = '';
-      showError(iconBan, 'Could not load file. Please try again.');
-    }
+    pdfDoc = await pdfjsLib.getDocument({ data: decrypted }).promise;
+
+    await renderAllPages();
+    document.getElementById('pdf-loading').style.display = 'none';
+    updateUI();
+  } catch (err) {
+    console.error(err);
+    overlay.classList.remove('active');
+    document.getElementById('auth-scene').style.display = '';
+    showError(iconBan, 'Could not load file. Please try again.');
   }
+}
 
   // ── Download modal ──
   const dlModal   = document.getElementById('dl-modal-backdrop');
