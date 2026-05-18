@@ -863,20 +863,30 @@ async function attemptDownload() {
   const enteredPassword =
     dlInput.value.trim();
 
-  const actualPassword =
-    resolvedData.pwd?.trim();
+const enteredHash =
+await window.sha256(
+  enteredPassword
+);
 
-  // allow plain OR hashed password
-  const enteredHash =
-    await window.sha256(
-      enteredPassword
-    );
+const verifyRes =
+await fetch(
+'https://backend.shinumaths989.workers.dev/get-secret',
+{
+  method: 'POST',
+  headers: {
+    'Content-Type':
+    'application/json'
+  },
+  body: JSON.stringify({
+    hash: enteredHash
+  })
+}
+);
 
-  if (
-    !actualPassword ||
-    enteredPassword === actualPassword ||
-    enteredHash === actualPassword
-  ) {
+const verifyData =
+await verifyRes.json();
+
+if (verifyData.success) {
 
     dlSubmit.textContent =
       'Downloading…';
