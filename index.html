@@ -2117,7 +2117,7 @@ style="display:none;">
 <input
 type="text"
 id="unified-search"
-placeholder="Search files and document text..."
+placeholder="Search files..."
 oninput="unifiedSearch()">
 
 <!-- PINNED DOCS SECTION -->
@@ -5463,6 +5463,81 @@ document.addEventListener(
 
 });
 
+   document
+.addEventListener(
+'click',
+function(e){
+
+if(
+e.target.id !==
+'generateQRBtn'
+)
+return;
+
+const shareLink =
+document
+.getElementById(
+'share-link-text'
+)
+.textContent
+.trim();
+
+if(!shareLink){
+
+alert(
+'Generate link first'
+);
+
+return;
+}
+
+document
+.getElementById(
+'qr-box'
+)
+.style.display =
+'block';
+
+const canvas =
+document
+.getElementById(
+'qrCanvas'
+);
+
+canvas
+.getContext('2d')
+.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+QRCode.toCanvas(
+
+canvas,
+
+shareLink,
+
+{
+    width:220
+},
+
+function(error){
+
+if(error){
+
+console.error(
+error
+);
+
+alert(
+'QR generation failed'
+);
+}
+});
+
+});
 </script>
 
 <!-- =========================
@@ -5525,6 +5600,59 @@ document.addEventListener(
             </div>
             <button class="btn-primary" onclick="generateShareLink()" style="margin-top:4px;">Generate Secure Link</button>
             <div id="share-link-result" style="display:none;">
+               <div
+id="qr-sharing-container"
+style="
+margin-top:16px;
+text-align:center;
+">
+
+<button
+id="generateQRBtn"
+class="card-btn card-btn-share"
+style="
+width:100%;
+padding:12px;
+font-weight:700;
+">
+
+📱 QR CODE SHARING
+
+</button>
+
+<div
+id="qr-box"
+style="
+display:none;
+margin-top:14px;
+">
+
+<canvas
+id="qrCanvas"
+style="
+background:white;
+padding:14px;
+border-radius:18px;
+max-width:260px;
+box-shadow:
+0 10px 30px
+rgba(0,0,0,.15);
+">
+</canvas>
+
+<div style="
+margin-top:10px;
+font-size:12px;
+color:var(--muted);
+">
+
+Scan QR to open secure link
+
+</div>
+
+</div>
+
+</div>
                 <label>Your Secure Link (read-only, expires automatically)</label>
                 <div class="share-link-box" id="share-link-text"></div>
                 <div style="display:flex;gap:10px;margin-top:10px;">
@@ -5538,6 +5666,6 @@ document.addEventListener(
         </div>
     </div>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 </body>
 </html>
