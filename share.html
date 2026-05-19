@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon"
-type="image/png"
-href="favicon.png">
+  <link rel="icon" type="image/png" href="favicon.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shared Vault File</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght=0,300;0,400;1,300&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -141,12 +139,31 @@ href="favicon.png">
       animation: fadeUp 0.6s 0.25s both;
     }
     .subheading {
-      font-size: 13px; color: var(--text-dim); text-align: center; margin-bottom: 36px;
+      font-size: 13px; color: var(--text-dim); text-align: center; margin-bottom: 24px;
       animation: fadeUp 0.6s 0.32s both;
     }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     #status { animation: fadeUp 0.6s 0.4s both; }
+
+    /* ── Timer Style ── */
+    .timer-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--accent3);
+      background: rgba(244, 114, 182, 0.08);
+      border: 1px solid rgba(244, 114, 182, 0.2);
+      border-radius: 10px;
+      padding: 8px 14px;
+      margin: 0 auto 24px auto;
+      width: fit-content;
+      font-weight: 600;
+      animation: fadeUp 0.6s 0.36s both;
+    }
+    .timer-badge svg { width: 15px; height: 15px; }
 
     /* Loading */
     .loading-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 12px 0; }
@@ -439,16 +456,13 @@ href="favicon.png">
 </head>
 <body>
 
-<!-- Animated background -->
 <div class="bg">
   <div class="bg-grid"></div>
   <div class="bg-blob3"></div>
 </div>
 
-<!-- Floating particles -->
 <div class="particles" id="particles"></div>
 
-<!-- ── Auth / loading card ── -->
 <div class="scene" id="auth-scene">
   <div class="card">
 
@@ -463,6 +477,13 @@ href="favicon.png">
 
     <h1 class="heading">Shared File</h1>
     <p class="subheading">Secure file access via Vault</p>
+    
+    <div id="link-timer" class="timer-badge" style="display: none;">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span id="timer-text">Expires in: --:--:--</span>
+    </div>
 
     <div id="status">
       <div class="loading-wrap">
@@ -475,29 +496,22 @@ href="favicon.png">
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     PDF Viewer overlay
-══════════════════════════════════════════ -->
 <div id="pdf-overlay">
 
-  <!-- Loading screen while pdf.js renders -->
   <div id="pdf-loading">
     <div class="spinner"></div>
     <div class="loading-text">Loading document…</div>
   </div>
 
-  <!-- Toolbar -->
   <div class="pdf-toolbar">
     <div class="pdf-toolbar-left">
-      <!-- Nav -->
       <button class="nav-btn" id="btn-prev">‹ Prev</button>
       <span class="pdf-page-info" id="page-info">Page — / —</span>
       <button class="nav-btn" id="btn-next">Next ›</button>
 
-      <!-- Zoom -->
-      <div class="zoom-group">
+      <div class="zoom-group" id="zoom-controls-wrapper">
         <button class="zoom-btn" id="btn-zoom-out" title="Zoom out">−</button>
-        <span class="zoom-label" id="zoom-label">100%</span>
+        <span class="zoom-label" id="zoom-label">200%</span>
         <button class="zoom-btn" id="btn-zoom-in" title="Zoom in">+</button>
       </div>
 
@@ -505,7 +519,6 @@ href="favicon.png">
     </div>
 
     <div class="pdf-toolbar-right">
-      <!-- Download (password protected) -->
       <button class="dl-btn" id="btn-dl">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
@@ -515,18 +528,12 @@ href="favicon.png">
     </div>
   </div>
 
-  <!-- Viewer body: sidebar + canvas -->
   <div id="pdf-viewer-body">
-    <!-- Thumbnail sidebar -->
     <div id="pdf-thumb-sidebar"></div>
-    <!-- Canvas pages -->
     <div id="pdf-canvas-wrap"></div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     Download password modal
-══════════════════════════════════════════ -->
 <div id="dl-modal-backdrop">
   <div class="dl-modal-wrap">
     <div class="dl-modal">
@@ -564,7 +571,6 @@ href="favicon.png">
   </div>
 </div>
 
-<!-- pdf.js from cdnjs -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs" type="module"></script>
 
 <script type="module">
@@ -646,11 +652,19 @@ href="favicon.png">
     setStatus(`<div class="msg error">${icon}<span>${message}</span></div>`);
   }
 
+  // Helper to accurately check for desktop/laptop clients
+  function isDesktopDevice() {
+    const ua = navigator.userAgent.toLowerCase();
+    const hasTouch = navigator.maxTouchPoints > 1 || 'ontouchstart' in window;
+    const matchMobileUA = /mobile|android|iphone|ipad|phone|playbook|tablet|kindle/i.test(ua);
+    return !matchMobileUA && !hasTouch;
+  }
+
   // ── State ──
   let resolvedData  = null;
   let pdfDoc        = null;
   let currentPage   = 1;
-  let zoomLevel     = 0.5;   // 50%
+  let zoomLevel     = 2.0;   // Changed initial scale default to 200% for extreme clarity
   const ZOOM_MIN    = 0.5;   // 50%
   const ZOOM_MAX    = 4.0;   // 400%
   const ZOOM_STEP   = 0.25;
@@ -724,9 +738,11 @@ href="favicon.png">
   // ── Render a single page into a canvas ──
   async function renderPage(pageNum) {
     const page = await pdfDoc.getPage(pageNum);
+    
+    // High-DPI Clarity Logic: Multiplies viewport backing store based on monitor resolution ratios
+    const outputScale = window.devicePixelRatio || 1;
     const viewport = page.getViewport({ scale: zoomLevel });
 
-    // reuse existing canvas for this page or create new
     let canvas = canvasWrap.querySelector(`canvas[data-page="${pageNum}"]`);
     if (!canvas) {
       canvas = document.createElement('canvas');
@@ -734,10 +750,18 @@ href="favicon.png">
       canvas.dataset.page = pageNum;
       canvasWrap.appendChild(canvas);
     }
-    canvas.width  = viewport.width;
-    canvas.height = viewport.height;
+    
+    // Upsample inner canvas pixels to avoid blurriness
+    canvas.width  = Math.floor(viewport.width * outputScale);
+    canvas.height = Math.floor(viewport.height * outputScale);
+    
+    // Constrain standard CSS layer sizes to match intended standard sizes
+    canvas.style.width = Math.floor(viewport.width) + "px";
+    canvas.style.height = Math.floor(viewport.height) + "px";
 
     const ctx = canvas.getContext('2d');
+    ctx.transform(outputScale, 0, 0, outputScale, 0, 0); // Scale the context path matrices
+    
     await page.render({ canvasContext: ctx, viewport }).promise;
   }
 
@@ -754,8 +778,19 @@ href="favicon.png">
     btnPrev.disabled = currentPage <= 1;
     btnNext.disabled = currentPage >= pdfDoc.numPages;
     zoomLabel.textContent = Math.round(zoomLevel * 100) + '%';
-    btnZoomIn.disabled  = zoomLevel >= ZOOM_MAX;
-    btnZoomOut.disabled = zoomLevel <= ZOOM_MIN;
+    
+    // Device evaluation restriction for Zoom actions
+    if (!isDesktopDevice()) {
+      btnZoomIn.disabled  = true;
+      btnZoomOut.disabled = true;
+      btnZoomIn.style.opacity = "0.3";
+      btnZoomOut.style.opacity = "0.3";
+      btnZoomIn.style.cursor = "not-allowed";
+      btnZoomOut.style.cursor = "not-allowed";
+    } else {
+      btnZoomIn.disabled  = zoomLevel >= ZOOM_MAX;
+      btnZoomOut.disabled = zoomLevel <= ZOOM_MIN;
+    }
     setActiveThumb(currentPage);
   }
 
@@ -785,14 +820,14 @@ href="favicon.png">
   });
 
   btnZoomIn.addEventListener('click', async () => {
-    if (zoomLevel >= ZOOM_MAX) return;
+    if (!isDesktopDevice() || zoomLevel >= ZOOM_MAX) return;
     zoomLevel = Math.min(ZOOM_MAX, +(zoomLevel + ZOOM_STEP).toFixed(2));
     updateUI();
     await renderAllPages();
     scrollToPage(currentPage);
   });
   btnZoomOut.addEventListener('click', async () => {
-    if (zoomLevel <= ZOOM_MIN) return;
+    if (!isDesktopDevice() || zoomLevel <= ZOOM_MIN) return;
     zoomLevel = Math.max(ZOOM_MIN, +(zoomLevel - ZOOM_STEP).toFixed(2));
     updateUI();
     await renderAllPages();
@@ -859,147 +894,60 @@ href="favicon.png">
   });
 
 async function attemptDownload() {
+  const enteredPassword = dlInput.value.trim();
+  const enteredHash = await window.sha256(enteredPassword);
 
-  const enteredPassword =
-    dlInput.value.trim();
+  const verifyRes = await fetch(
+    'https://backend.shinumaths989.workers.dev/get-secret',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hash: enteredHash })
+    }
+  );
 
-const enteredHash =
-await window.sha256(
-  enteredPassword
-);
+  const verifyData = await verifyRes.json();
 
-const verifyRes =
-await fetch(
-'https://backend.shinumaths989.workers.dev/get-secret',
-{
-  method: 'POST',
-  headers: {
-    'Content-Type':
-    'application/json'
-  },
-  body: JSON.stringify({
-    hash: enteredHash
-  })
-}
-);
-
-const verifyData =
-await verifyRes.json();
-
-if (verifyData.success) {
-
-    dlSubmit.textContent =
-      'Downloading…';
-
-    dlSubmit.classList.add(
-      'loading'
-    );
+  if (verifyData.success) {
+    dlSubmit.textContent = 'Downloading…';
+    dlSubmit.classList.add('loading');
 
     try {
+      const fileUrl = 'https://backend.shinumaths989.workers.dev/docs/' + resolvedData.file;
+      const res = await fetch(fileUrl);
+      if (!res.ok) throw new Error('Fetch failed');
 
-      const fileUrl =
-      'https://backend.shinumaths989.workers.dev/docs/' +
-      resolvedData.file;
-
-      const res =
-      await fetch(fileUrl);
-
-      if (!res.ok)
-      throw new Error(
-        'Fetch failed'
-      );
-
-      const encrypted =
-      await res.arrayBuffer();
-
-      const decrypted =
-      await decryptFile(
-        encrypted,
-        resolvedData.vaultKey
-      );
-
-      const blob =
-      new Blob(
-        [decrypted],
-        {
-          type:
-          "application/pdf"
-        }
-      );
-
-      const url =
-      URL.createObjectURL(
-        blob
-      );
-
-      const a =
-      document.createElement(
-        'a'
-      );
+      const encrypted = await res.arrayBuffer();
+      const decrypted = await decryptFile(encrypted, resolvedData.vaultKey);
+      const blob = new Blob([decrypted], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
 
       a.href = url;
-
-      a.download =
-      resolvedData.name ||
-      resolvedData.file.replace(
-        '.enc',
-        '.pdf'
-      );
+      a.download = resolvedData.name || resolvedData.file.replace('.enc', '.pdf');
 
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
 
-      URL.revokeObjectURL(
-        url
-      );
-
-      dlModal.classList.remove(
-        'active'
-      );
-
+      URL.revokeObjectURL(url);
+      dlModal.classList.remove('active');
     } catch (e) {
-
       console.error(e);
-
-      dlErrHint.textContent =
-      'Download failed. Try again.';
-
-      dlErrHint.classList.remove(
-        'hidden'
-      );
+      dlErrHint.textContent = 'Download failed. Try again.';
+      dlErrHint.classList.remove('hidden');
     }
 
-    dlSubmit.textContent =
-    'Download File';
-
-    dlSubmit.classList.remove(
-      'loading'
-    );
-
+    dlSubmit.textContent = 'Download File';
+    dlSubmit.classList.remove('loading');
   } else {
-
-    dlErrHint.textContent =
-    'Incorrect password. Try again.';
-
-    dlErrHint.classList.remove(
-      'hidden'
-    );
-
-    dlInput.classList.add(
-      'shake'
-    );
-
+    dlErrHint.textContent = 'Incorrect password. Try again.';
+    dlErrHint.classList.remove('hidden');
+    dlInput.classList.add('shake');
     dlInput.value = '';
     dlInput.focus();
 
-    setTimeout(() => {
-
-      dlInput.classList.remove(
-        'shake'
-      );
-
-    }, 450);
+    setTimeout(() => { dlInput.classList.remove('shake'); }, 450);
   }
 }
 
@@ -1069,9 +1017,49 @@ if (verifyData.success) {
   }
 
   window.sha256 = async function(text) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-};
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  };
+
+  // ── Realtime Countdown Setup ──
+  function initializeExpiryTimer(expiryTimestamp) {
+    const timerContainer = document.getElementById('link-timer');
+    const timerText = document.getElementById('timer-text');
+    
+    if (!expiryTimestamp) return;
+    timerContainer.style.display = 'flex';
+
+    function updateCountdown() {
+      const now = Date.now();
+      const timeLeft = expiryTimestamp - now;
+
+      if (timeLeft <= 0) {
+        timerText.textContent = "Expired";
+        showError(iconExpired, 'This share link has expired.');
+        if(pdfDoc) {
+           document.getElementById('pdf-overlay').classList.remove('active');
+           document.getElementById('auth-scene').style.display = '';
+        }
+        clearInterval(timerInterval);
+        return;
+      }
+
+      // Convert time metric configurations
+      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+      // Pad zero configurations dynamically
+      const hDisplay = String(hours).padStart(2, '0');
+      const mDisplay = String(minutes).padStart(2, '0');
+      const sDisplay = String(seconds).padStart(2, '0');
+
+      timerText.textContent = `Expires in: ${hDisplay}h ${mDisplay}m ${sDisplay}s`;
+    }
+
+    updateCountdown();
+    const timerInterval = setInterval(updateCountdown, 1000);
+  }
 
   // ── Init ──
   async function init() {
@@ -1082,7 +1070,13 @@ if (verifyData.success) {
 
     try {
       const data = JSON.parse(atob(token));
-      if (data.exp && Date.now() > data.exp) { showError(iconExpired, 'This share link has expired.'); return; }
+      
+      // Hook up realtime clock handler directly from parameter extraction payloads
+      if (data.exp) {
+        initializeExpiryTimer(data.exp);
+        if (Date.now() > data.exp) { return; } 
+      }
+      
       resolvedData = data;
 
       if (data.pwd) {
