@@ -2198,17 +2198,16 @@ let currentCategory = "";
    CLOCK
 ========================= */
 
-document.addEventListener(
-'DOMContentLoaded',
-()=>{
+document.addEventListener('DOMContentLoaded', () => {
+    // Automatically retrieve the master password if the user is already authenticated
+    const savedSecret = sessionStorage.getItem("vault_session_secret");
+    if (savedSecret) {
+        masterPassword = savedSecret;
+        window.masterPassword = savedSecret;
+    }
 
     updateClock();
-
-    setInterval(
-        updateClock,
-        1000
-    );
-
+    setInterval(updateClock, 1000);
 });
 
 function updateClock(){
@@ -2335,20 +2334,15 @@ if(now < lockUntil){
     return;
 }
    
-   const visitorName =
-    document.getElementById(
-    'user-name'
-    ).value.trim();
+const visitorName = document.getElementById('user-name').value.trim();
+   const pass = document.getElementById('vault-pass').value.trim();
+   const purpose = document.getElementById('user-purpose').value.trim();
 
-    const pass =
-    document.getElementById(
-    'vault-pass'
-    ).value.trim();
-
-   const purpose =
-document.getElementById(
-'user-purpose'
-).value.trim();
+   // Save password securely in the session tab storage to avoid link errors
+   if (pass) {
+       masterPassword = pass;
+       sessionStorage.setItem("vault_session_secret", pass);
+   }
 
       if(!visitorName || !purpose || !pass){
         alert(
@@ -5117,9 +5111,9 @@ if (data.status === "approved") {
         return;
     }
 
-    window.masterPassword = passkeyResult.secret;
-
-    sessionStartTime = new Date();
+window.masterPassword = passkeyResult.secret;
+sessionStorage.setItem("vault_session_secret", passkeyResult.secret);
+sessionStartTime = new Date();
 
     document.getElementById(
     'passkey-wait'
