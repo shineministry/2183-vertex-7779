@@ -4056,31 +4056,28 @@ downloadBtn.onclick = async ()=>{
         if(enteredPass === null) return; // user cancelled
 
         let backendSecret;
-        try{
-            const secretRes = await fetch(
-                'https://backend.shinumaths989.workers.dev/get-secret',
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ approved: true })
-                }
-            );
-            const secretData = await secretRes.json();
-            if(!secretData || !secretData.secret){
-                alert('Could not retrieve download password from server.');
-                return;
-            }
-            backendSecret = secretData.secret;
-        }catch(fetchErr){
-            console.error('Backend secret fetch failed:', fetchErr);
-            alert('Could not connect to server to verify password.');
-            return;
-        }
-
-        if(enteredPass !== backendSecret){
-            alert('Incorrect download password.');
-            return;
-        }
+// === BEGIN PASSWORD GATE (get-secret) ===
+try {
+    const passkeyRes = await fetch("https://backend.shinumaths989.workers.dev/get-secret", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+            password: enteredPass,
+            file: displayName
+        })
+    });
+    
+    const passkeyResult = await passkeyRes.json();
+    
+    if (!passkeyResult || !passkeyResult.success) {
+        alert(passkeyResult.message || 'Incorrect download password.');
+        return;
+    }
+} catch (fetchErr) {
+    console.error('Password verification failed:', fetchErr);
+    alert('Could not connect to server to verify password.');
+    return;
+}
         // === END PASSWORD GATE ===
 
         const pdfBlob = new Blob([new Uint8Array(currentDecryptedPdf)], { type: 'application/pdf' });
