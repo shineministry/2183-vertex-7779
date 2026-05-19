@@ -75,7 +75,7 @@
       position: relative; z-index: 1;
       min-height: 100vh;
       display: flex; align-items: center; justify-content: center;
-      padding: 24px;
+      padding: 16px;
     }
 
     .card {
@@ -160,10 +160,12 @@
       padding: 8px 14px;
       margin: 0 auto 24px auto;
       width: fit-content;
+      max-width: 100%;
       font-weight: 600;
       animation: fadeUp 0.6s 0.36s both;
+      text-align: center;
     }
-    .timer-badge svg { width: 15px; height: 15px; }
+    .timer-badge svg { width: 15px; height: 15px; flex-shrink: 0; }
 
     /* Loading */
     .loading-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 12px 0; }
@@ -275,16 +277,15 @@
 
     /* Top toolbar */
     .pdf-toolbar {
-      display: flex; align-items: center; gap: 10px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
       padding: 10px 16px;
       background: rgba(13,16,32,0.95);
       border-bottom: 1px solid var(--glass-border);
       backdrop-filter: blur(12px);
       flex-shrink: 0;
-      flex-wrap: wrap;
     }
 
-    .pdf-toolbar-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .pdf-toolbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
     .pdf-toolbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
     .pdf-title {
@@ -424,6 +425,7 @@
       background: rgba(6,8,16,0.85);
       backdrop-filter: blur(8px);
       align-items: center; justify-content: center;
+      padding: 16px;
     }
     #dl-modal-backdrop.active { display: flex; }
 
@@ -451,7 +453,59 @@
     }
     .dl-modal-close:hover { color: var(--text); background: rgba(255,255,255,0.06); }
     .dl-modal-close svg { width: 18px; height: 18px; display: block; }
-    .dl-modal-wrap { position: relative; }
+    .dl-modal-wrap { position: relative; width: 100%; max-width: 360px; display: flex; justify-content: center; }
+
+    /* ══════════════════════════════════════════
+       RESPONSIVE DESIGN & SCREEN-SIZE HANDLING
+    ══════════════════════════════════════════ */
+    @media (max-width: 768px) {
+      /* Hide thumbnail preview container entirely on mobile/tablet screens */
+      #pdf-thumb-sidebar {
+        display: none !important;
+      }
+      
+      /* Hide zoom interface elements altogether */
+      #zoom-controls-wrapper {
+        display: none !important;
+      }
+
+      /* Hide long titles to secure space for structural actions */
+      .pdf-title {
+        display: none !important;
+      }
+
+      .pdf-toolbar {
+        padding: 8px 12px;
+      }
+
+      .pdf-toolbar-left {
+        gap: 6px;
+      }
+
+      .nav-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+
+      .pdf-page-info {
+        font-size: 11px;
+      }
+
+      .dl-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      .card {
+        padding: 32px 24px;
+      }
+
+      .timer-badge {
+        font-size: 12px;
+        padding: 6px 12px;
+        margin-bottom: 20px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -683,6 +737,8 @@
 
   // ── Thumbnail sidebar ──
   function buildThumbSkeletons(count) {
+    // Only build skeletons if running on a standard computer client environment
+    if (!isDesktopDevice()) return;
     thumbSidebar.innerHTML = '';
     for (let i = 0; i < count; i++) {
       const wrap = document.createElement('div');
@@ -700,6 +756,8 @@
   }
 
   async function renderThumb(pageNum) {
+    // Suppress processing thumbnails altogether on mobile/tablets
+    if (!isDesktopDevice()) return;
     const page     = await pdfDoc.getPage(pageNum);
     const viewport = page.getViewport({ scale: 0.18 });
     const canvas   = document.createElement('canvas');
@@ -719,6 +777,7 @@
   }
 
   async function renderAllThumbs() {
+    if (!isDesktopDevice()) return;
     buildThumbSkeletons(pdfDoc.numPages);
     for (let i = 1; i <= pdfDoc.numPages; i++) {
       await renderThumb(i);
@@ -727,6 +786,7 @@
   }
 
   function setActiveThumb(pageNum) {
+    if (!isDesktopDevice()) return;
     thumbSidebar.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
     const active = thumbSidebar.querySelector(`.thumb-item[data-page="${pageNum}"]`);
     if (active) {
@@ -741,7 +801,16 @@
     
     // High-DPI Clarity Logic: Multiplies viewport backing store based on monitor resolution ratios
     const outputScale = window.devicePixelRatio || 1;
-    const viewport = page.getViewport({ scale: zoomLevel });
+    
+    // Force logical adaptive scale adjustment on non-desktop viewports
+    let operationalZoom = zoomLevel;
+    if (!isDesktopDevice()) {
+      const viewportStandard = page.getViewport({ scale: 1.0 });
+      const clientWidthWidth = canvasWrap.clientWidth - 32; // Accommodate standard structural padding
+      operationalZoom = clientWidthWidth / viewportStandard.width;
+    }
+
+    const viewport = page.getViewport({ scale: operationalZoom });
 
     let canvas = canvasWrap.querySelector(`canvas[data-page="${pageNum}"]`);
     if (!canvas) {
@@ -821,7 +890,7 @@
 
   btnZoomIn.addEventListener('click', async () => {
     if (!isDesktopDevice() || zoomLevel >= ZOOM_MAX) return;
-    zoomLevel = Math.min(ZOOM_MAX, +(zoomLevel + ZOOM_STEP).toFixed(2));
+    zoomLevel = Math.min(ZOMAX, +(zoomLevel + ZOOM_STEP).toFixed(2));
     updateUI();
     await renderAllPages();
     scrollToPage(currentPage);
@@ -832,6 +901,13 @@
     updateUI();
     await renderAllPages();
     scrollToPage(currentPage);
+  });
+
+  // Re-adjust page widths correctly if a mobile device flips rotation status
+  window.addEventListener('resize', () => {
+    if (!isDesktopDevice() && pdfDoc) {
+      renderAllPages();
+    }
   });
 
   // ── Block right-click on canvas wrap (prevent save-as) ──
