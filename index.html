@@ -1123,12 +1123,17 @@ button{
 
 @media screen and (max-width:768px){
 
+    /* Hide the left sidebar thumbnail container on mobile/tablet screens */
+    #pdf-sidebar {
+        display: none !important;
+    }
+
     .overlay{
 
         align-items:flex-start;
 
     }
-
+   
     .step-card{
 
         padding:24px;
@@ -4265,7 +4270,7 @@ async function startHoverPreview(file, e){
             ctx.textAlign = 'center';
             ctx.fillText('Preview unavailable',80,50);
         }
-    }, 150);
+    }, 40);
 }
 
 function positionTooltip(e){
