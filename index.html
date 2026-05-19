@@ -2421,7 +2421,13 @@ if(!result.success){
  alert( "Backend authentication failed." );
  return;
 }
-window.masterPassword = result.secret;
+window.masterPassword =
+pass;
+
+sessionStorage.setItem(
+    "vault_session_secret",
+    pass
+);
 }catch(e){
  console.error(e);
  alert( e.message || "Could not connect to secure backend." );
@@ -3559,9 +3565,26 @@ path,
 displayName){
 
     if(!window.masterPassword){
-        alert("Session not unlocked. Please log in again.");
-        return;
-    }
+
+ const savedSecret =
+ sessionStorage.getItem(
+ "vault_session_secret"
+ );
+
+ if(savedSecret){
+
+  window.masterPassword =
+  savedSecret;
+
+ } else {
+
+  alert(
+  "Session not unlocked. Please log in again."
+  );
+
+  return;
+ }
+}
 
     try{
 
