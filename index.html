@@ -4296,6 +4296,13 @@ function openShareModal(file){
     document.getElementById('share-expiry').value = '24';
     document.getElementById('share-password').value = '';
     document.getElementById('shareModal').style.display = 'block';
+
+   // Paste the reset here:
+    if(document.getElementById('qr-box')) {
+        document.getElementById('qr-box').style.display = 'none';
+    }
+    
+    document.getElementById('shareModal').style.display = 'block';
 }
 
 function closeShareModal(){
@@ -5535,6 +5542,37 @@ alert(
 });
 
 });
+
+   function activateShareQR() {
+    // 1. Fetch the text value of the generated secure link 
+    const shareLinkText = document.getElementById('share-link-text').textContent.trim();
+    
+    if (!shareLinkText || shareLinkText === "") {
+        alert("Please generate a secure link first before rendering its QR Code.");
+        return;
+    }
+    
+    const canvasTarget = document.getElementById('qrCanvas');
+    const qrBoxContainer = document.getElementById('qr-box');
+    
+    // 2. Execute the render logic belonging to your standard jsdelivr build
+    QRCode.toCanvas(canvasTarget, shareLinkText, {
+        width: 230,
+        margin: 1,
+        color: {
+            dark: "#0f172a",
+            light: "#ffffff"
+        }
+    }, function (error) {
+        if (error) {
+            console.error('QR Generation failed:', error);
+            alert('Could not construct QR code reference.');
+            return;
+        }
+        // 3. Make the hidden block visible once the matrix is cleanly generated
+        qrBoxContainer.style.display = 'block';
+    });
+}
 </script>
 
 <!-- =========================
@@ -5607,14 +5645,13 @@ text-align:center;
 <button
 id="generateQRBtn"
 class="card-btn card-btn-share"
+onclick="activateShareQR()"
 style="
 width:100%;
 padding:12px;
 font-weight:700;
 ">
-
 📱 QR CODE SHARING
-
 </button>
 
 <div
