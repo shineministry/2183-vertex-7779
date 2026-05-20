@@ -3397,13 +3397,14 @@ displayName){
 
     try{
 
-        const token = window.masterPassword || masterPassword;
-    const res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
-        headers: {
-            "Authorization": "Bearer " + token,
-            "x-vault-password": token
-        }
-    });
+        const rawPassword = window.masterPassword || masterPassword;
+const token = await sha256(rawPassword);   // hash it — never send raw
+const res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
+    headers: {
+        "Authorization": "Bearer " + token,
+        "x-vault-password": token
+    }
+});
 
         // GUARD: catch backend error responses before treating as binary
         if(!res.ok){
@@ -4422,13 +4423,14 @@ async function renderComparePane(side, file){
     titleEl.textContent = file.name;
     contentEl.innerHTML = '<div class="compare-select-prompt">⏳ Decrypting & rendering…</div>';
     try{
-        const token = window.masterPassword || masterPassword;
-    const res = await fetch("https://backend.shinumaths989.workers.dev/docs/" + file.file, {
-        headers: {
-            "Authorization": "Bearer " + token,
-            "x-vault-password": token
-        }
-    });
+        const rawPassword = window.masterPassword || masterPassword;
+const token = await sha256(rawPassword);   // hash it
+const res = await fetch("https://backend.shinumaths989.workers.dev/docs/" + file.file, {
+    headers: {
+        "Authorization": "Bearer " + token,
+        "x-vault-password": token
+    }
+});
         if(!res.ok){ const eb=await res.json().catch(()=>({})); throw new Error(eb.message||`HTTP ${res.status}`); }
         const rct2=res.headers.get('content-type')||'';
         if(rct2.includes('application/json')){ const eb=await res.json(); throw new Error(eb.message||'JSON error'); }
