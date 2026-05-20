@@ -2828,7 +2828,6 @@ try{
     const res = await fetch("https://backend.shinumaths989.workers.dev/files.json", {
         headers: {
             "Authorization": "Bearer " + token,
-            "x-vault-password": token
         }
     });
 
@@ -3401,7 +3400,6 @@ displayName){
     const res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
         headers: {
             "Authorization": "Bearer " + token,
-            "x-vault-password": token
         }
     });
 
@@ -4426,7 +4424,6 @@ async function renderComparePane(side, file){
     const res = await fetch("https://backend.shinumaths989.workers.dev/docs/" + file.file, {
         headers: {
             "Authorization": "Bearer " + token,
-            "x-vault-password": token
         }
     });
         if(!res.ok){ const eb=await res.json().catch(()=>({})); throw new Error(eb.message||`HTTP ${res.status}`); }
