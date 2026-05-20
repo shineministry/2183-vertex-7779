@@ -3181,19 +3181,28 @@ category){
 
         };
 
-        // HOVER QUICK PREVIEW
+// HOVER QUICK PREVIEW
         card.addEventListener('mouseenter', (e) => {
+            // 📱 Check to disable hover previews on phones, tablets, and mobile touch devices
+            if (window.matchMedia("(max-width: 768px)").matches || ('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
+                return; // Stop right here, don't show the preview
+            }
             startHoverPreview(file, e);
         });
+
         card.addEventListener('mousemove', (e) => {
+            // 📱 Check to disable position tracking on other devices
+            if (window.matchMedia("(max-width: 768px)").matches || ('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
+                return;
+            }
             positionTooltip(e);
         });
+
         card.addEventListener('mouseleave', () => {
             hidePreviewTooltip();
         });
 
-        grid.appendChild(
-        card);
+        grid.appendChild(card);
 
     });
 
