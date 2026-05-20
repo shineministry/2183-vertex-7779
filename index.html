@@ -4807,14 +4807,25 @@ async function requestPasskeyAccess(){
         const createData = await createRes.json();
         const requestId = createData.requestId;
 
+// Save globally so any region can read it
+sessionStorage.setItem(
+    "vault_request_id",
+    requestId
+);
+
         if(!requestId) throw new Error("No request ID returned from backend");
 
         const pollInterval = setInterval(async ()=>{
 
             try{
 
-                const pollRes = await fetch(
-                    "https://backend.shinumaths989.workers.dev/check-passkey",
+                const requestId =
+sessionStorage.getItem(
+    "vault_request_id"
+);
+
+const pollRes = await fetch(
+    "https://backend.shinumaths989.workers.dev/check-passkey",
                     {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
