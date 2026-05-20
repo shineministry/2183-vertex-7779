@@ -923,32 +923,22 @@ import { initializeApp }
 from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 
 import {
-
     getFirestore,
     collection,
-    onSnapshot,
+    getDocs,
     doc,
     updateDoc
-
 }
 from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
 
-    apiKey: "AIzaSyBbOd2ZKqiPHTBEMmjBMnxAU_mdwLz7uM0",
-
+    apiKey: "YOUR_API_KEY",
     authDomain: "online-vault-shine-26.firebaseapp.com",
-
     projectId: "online-vault-shine-26",
-
-    storageBucket:
-    "online-vault-shine-26.firebasestorage.app",
-
-    messagingSenderId:
-    "79788612818",
-
-    appId:
-    "1:79788612818:web:41cfb16a4b36b1d5bfe10b"
+    storageBucket: "online-vault-shine-26.firebasestorage.app",
+    messagingSenderId: "79788612818",
+    appId: "1:79788612818:web:41cfb16a4b36b1d5bfe10b"
 
 };
 
@@ -963,212 +953,129 @@ document.getElementById(
 'requests'
 );
 
-const countDiv =
-document.getElementById(
-'request-count'
-);
+async function loadRequests(){
 
-onSnapshot(
+    try{
 
-    collection(
-        db,
-        "accessRequests"
-    ),
-
-    (snapshot)=>{
+        const snapshot =
+        await getDocs(
+            collection(
+                db,
+                "accessRequests"
+            )
+        );
 
         requestsDiv.innerHTML =
         "";
 
-        let pendingCount = 0;
-
-        snapshot.forEach((docSnap)=>{
+        snapshot.forEach(docSnap=>{
 
             const data =
             docSnap.data();
 
             if(
-            data.status !==
-            "pending"
+                data.status !==
+                "pending"
             ) return;
 
-            pendingCount++;
+            requestsDiv.innerHTML += `
 
-            const card =
-            document.createElement(
-            'div'
-            );
+            <div class="card">
 
-card.className =
-'card';
+                <h3>
+                    ${data.visitorName}
+                </h3>
 
-card.style.opacity =
-'0';
+                <p>
+                    ${data.purpose}
+                </p>
 
-card.style.transform =
-'translateY(30px)';
+                <p>
+                    ${data.device}
+                </p>
 
-setTimeout(()=>{
+                <button
+                class="approve"
+                onclick="approveRequest('${docSnap.id}')">
 
-    card.style.transition =
-    '.5s';
+                    APPROVE
 
-    card.style.opacity =
-    '1';
+                </button>
 
-    card.style.transform =
-    'translateY(0)';
+                <button
+                class="deny"
+                onclick="denyRequest('${docSnap.id}')">
 
-},100);
+                    DENY
 
-            card.innerHTML = `
-
-                <div class="user-row">
-
-                    <div class="avatar">
-
-                        ${data.visitorName
-                        ?.charAt(0)
-                        ?.toUpperCase() || "U"}
-
-                    </div>
-
-                    <div class="user-info">
-
-                        <h2>
-                            ${data.visitorName}
-                        </h2>
-
-                        <span>
-                            Access Request
-                        </span>
-
-                    </div>
-
-                </div>
-
-                <div class="info-box">
-
-                    <div class="info-title">
-                        Purpose
-                    </div>
-
-                    <div class="info-value">
-
-                        ${data.purpose ||
-                        "No purpose provided"}
-
-                    </div>
-
-                </div>
-
-                <div class="info-box">
-
-                    <div class="info-title">
-                        Device
-                    </div>
-
-                    <div class="info-value">
-
-                        ${data.device}
-
-                    </div>
-
-                </div>
-
-                <div class="button-group">
-
-                    <button
-                    class="btn approve">
-
-                        APPROVE
-
-                    </button>
-
-                    <button
-                    class="btn deny">
-
-                        DENY
-
-                    </button>
-
-                </div>
-
-            `;
-
-            card.querySelector(
-            '.approve'
-            ).onclick =
-            async()=>{
-
-                await updateDoc(
-
-                    doc(
-                        db,
-                        "accessRequests",
-                        docSnap.id
-                    ),
-
-                    {
-                        status:
-                        "approved"
-                    }
-
-                );
-
-            };
-
-            card.querySelector(
-            '.deny'
-            ).onclick =
-            async()=>{
-
-                document.getElementById(
-'approveSound'
-).play();
-                
-                await updateDoc(
-
-                    doc(
-                        db,
-                        "accessRequests",
-                        docSnap.id
-                    ),
-
-                    {
-                        status:
-                        "denied"
-                    }
-
-                );
-
-            };
-
-            requestsDiv.appendChild(
-            card
-            );
-
-        });
-
-        countDiv.textContent =
-        pendingCount;
-
-        if(pendingCount === 0){
-
-            requestsDiv.innerHTML = `
-
-            <div class="empty">
-
-                No pending access requests.
+                </button>
 
             </div>
-
             `;
-        }
+        });
+
+    }catch(err){
+
+        console.error(
+            "LOAD ERROR:",
+            err
+        );
 
     }
 
-);
+}
+
+window.approveRequest =
+async(id)=>{
+
+    await updateDoc(
+
+        doc(
+            db,
+            "accessRequests",
+            id
+        ),
+
+        {
+            status:"approved"
+        }
+
+    );
+
+    loadRequests();
+
+};
+
+window.denyRequest =
+async(id)=>{
+
+    await updateDoc(
+
+        doc(
+            db,
+            "accessRequests",
+            id
+        ),
+
+        {
+            status:"denied"
+        }
+
+    );
+
+    loadRequests();
+
+};
+
+// First load
+loadRequests();
+
+// Auto refresh every 2 sec
+setInterval(()=>{
+
+    loadRequests();
+
+},2000);
 
 </script>
 
