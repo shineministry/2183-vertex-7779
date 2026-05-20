@@ -3579,104 +3579,105 @@ let currentZoom = 4.0;
 // TOOLBAR
 // =========================
 
-const toolbar =
-document.createElement('div');
-
+const toolbar = document.createElement('div');
 toolbar.style.position = "sticky";
 toolbar.style.top = "0";
 toolbar.style.zIndex = "50";
-
 toolbar.style.display = "flex";
 toolbar.style.gap = "12px";
-
 toolbar.style.justifyContent = "center";
-
 toolbar.style.padding = "14px";
-
 toolbar.style.background = "#e5e7eb";
-
-toolbar.style.borderBottom =
-"1px solid #cbd5e1";
+toolbar.style.borderBottom = "1px solid #cbd5e1";
 
 // ZOOM OUT
-
-const zoomOutBtn =
-document.createElement('button');
-
+const zoomOutBtn = document.createElement('button');
 zoomOutBtn.innerText = "− Zoom Out";
 
+// ZOOM LEVEL INDICATOR LABEL
+const zoomLabel = document.createElement('span');
+zoomLabel.style.display = "flex";
+zoomLabel.style.alignItems = "center";
+zoomLabel.style.fontWeight = "700";
+zoomLabel.style.color = "#1e293b";
+zoomLabel.style.minWidth = "60px";
+zoomLabel.style.justifyContent = "center";
+
 // ZOOM IN
-
-const zoomInBtn =
-document.createElement('button');
-
+const zoomInBtn = document.createElement('button');
 zoomInBtn.innerText = "+ Zoom In";
 
-// ZOOM ACTIONS (Hooking up the missing functional logic)
+// DOWNLOAD
+const downloadBtn = document.createElement('button');
+downloadBtn.innerText = "⬇ Download";
+
+// INITIAL ZOOM VALUE SETTING (Starts at 4.0 / 400%)
+let currentZoom = 4.0; 
+
+// Universal helper to isolate traditional PCs & laptops from mobile devices/tablets
+function isDesktopDevice() {
+    const ua = navigator.userAgent.toLowerCase();
+    return !(/mobile|android|iphone|ipad|phone|playbook|tablet|kindle/i.test(ua));
+}
+
+// Visual and functional boundary safety checker
+function updateZoomButtonUI() {
+    zoomLabel.innerText = Math.round(currentZoom * 100) + "%";
+    
+    if (!isDesktopDevice()) {
+        // Enforce structural freeze on mobile platforms
+        zoomInBtn.disabled = true;
+        zoomOutBtn.disabled = true;
+        zoomInBtn.style.opacity = "0.3";
+        zoomOutBtn.style.opacity = "0.3";
+        zoomInBtn.style.cursor = "not-allowed";
+        zoomOutBtn.style.cursor = "not-allowed";
+    } else {
+        // Clean operating boundaries for PC / Mac laptops
+        zoomInBtn.disabled = currentZoom >= 10.0; // Hard lock at 1000%
+        zoomOutBtn.disabled = currentZoom <= 0.5;  // Floor at 50%
+        zoomInBtn.style.opacity = currentZoom >= 10.0 ? "0.3" : "";
+        zoomOutBtn.style.opacity = currentZoom <= 0.5 ? "0.3" : "";
+        zoomInBtn.style.cursor = currentZoom >= 10.0 ? "not-allowed" : "pointer";
+        zoomOutBtn.style.cursor = currentZoom <= 0.5 ? "not-allowed" : "pointer";
+    }
+}
+
+// CLICK INTERACTION HANDLERS
 zoomInBtn.onclick = async () => {
-    // Allows deep, granular scaling (e.g., 4.0 -> 4.5 -> 5.0)
-    currentZoom += 0.5; 
-    await renderAllPages();
+    if (!isDesktopDevice() || currentZoom >= 10.0) return;
+    currentZoom = +(currentZoom + 0.5).toFixed(1); // Increment by 50%
+    updateZoomButtonUI();
+    await renderAllPages(); // Triggers the missing canvas repaint loop
 };
 
 zoomOutBtn.onclick = async () => {
-    if (currentZoom > 0.5) { // Safeguard from zooming out to invisible values
-        currentZoom -= 0.5;
-        await renderAllPages();
-    }
+    if (!isDesktopDevice() || currentZoom <= 0.5) return;
+    currentZoom = +(currentZoom - 0.5).toFixed(1); // Decrement by 50%
+    updateZoomButtonUI();
+    await renderAllPages(); // Triggers the missing canvas repaint loop
 };
-       
-// DOWNLOAD
 
-const downloadBtn =
-document.createElement('button');
-
-downloadBtn.innerText = "⬇ Download";
-
-// BUTTON STYLE
-
-[zoomOutBtn, zoomInBtn, downloadBtn]
-.forEach(btn=>{
-
-    btn.style.padding =
-    "10px 18px";
-
+// BUTTON BASIC STYLING
+[zoomOutBtn, zoomInBtn, downloadBtn].forEach(btn => {
+    btn.style.padding = "10px 18px";
     btn.style.border = "none";
-
-    btn.style.borderRadius =
-    "12px";
-
-    btn.style.cursor =
-    "pointer";
-
-    btn.style.fontWeight =
-    "700";
-
-    btn.style.background =
-    "#2563eb";
-
-    btn.style.color =
-    "white";
-
+    btn.style.borderRadius = "12px";
+    btn.style.cursor = "pointer";
+    btn.style.fontWeight = "700";
+    btn.style.background = "#2563eb";
+    btn.style.color = "white";
 });
 
-// ADD TO TOOLBAR
+// Run UI check immediately to lock controls appropriately
+updateZoomButtonUI();
 
-toolbar.appendChild(
-zoomOutBtn
-);
-
-toolbar.appendChild(
-zoomInBtn
-);
-
-toolbar.appendChild(
-downloadBtn
-);
-
-container.appendChild(
-toolbar
-);
+// ASSEMBLE TOOLBAR ELEMENTS
+toolbar.appendChild(zoomOutBtn);
+toolbar.appendChild(zoomLabel);
+toolbar.appendChild(zoomInBtn);
+toolbar.appendChild(downloadBtn);
+container.appendChild(toolbar);
        
 // =========================
 // MOBILE: hide zoom controls but keep download available
@@ -3690,33 +3691,49 @@ if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
 }
 
 // =========================
-// RENDER FUNCTION
+// RE-RENDER CANVAS PIPELINE
 // =========================
+async function renderAllPages() {
+    // Locate or create wrapper to clear previous zoom views cleanly
+    let pageWrap = document.getElementById('pdf-canvas-wrapper');
+    if (!pageWrap) {
+        pageWrap = document.createElement('div');
+        pageWrap.id = 'pdf-canvas-wrapper';
+        container.appendChild(pageWrap);
+    }
+    
+    // Wipe previous canvases away to make way for the new zoom depth scale
+    pageWrap.innerHTML = "";
 
-async function renderAllPages(){
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        
+        // Dynamically compute vector layouts using currentZoom (up to 10.0)
+        const viewport = page.getViewport({ scale: currentZoom });
+        
+        const canvas = document.createElement('canvas');
+        canvas.style.display = "block";
+        canvas.style.margin = "20px auto";
+        canvas.style.boxShadow = "0 10px 25px rgba(0,0,0,0.15)";
+        
+        const context = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
 
-    // REMOVE OLD CANVASES
+        const renderContext = {
+            canvasContext: context,
+            viewport: viewport
+        };
+        
+        await page.render(renderContext).promise;
+        pageWrap.appendChild(canvas);
+    }
+}
 
-    container
-    .querySelectorAll('.pdf-page')
-    .forEach(el=>el.remove());
+// Run initial execution block immediately on file load
+await renderAllPages();
 
-   sidebar.innerHTML = "";
-
-    // LOOP PAGES
-
-    for(
-        let pageNum = 1;
-        pageNum <= pdf.numPages;
-        pageNum++
-    ){
-
-        const page =
-        await pdf.getPage(
-            pageNum
-        );
-
-       // =========================
+// =========================
 // SIDEBAR THUMBNAIL
 // =========================
 
