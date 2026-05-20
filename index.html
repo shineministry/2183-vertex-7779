@@ -3612,6 +3612,20 @@ document.createElement('button');
 
 zoomInBtn.innerText = "+ Zoom In";
 
+// ZOOM ACTIONS (Hooking up the missing functional logic)
+zoomInBtn.onclick = async () => {
+    // Allows deep, granular scaling (e.g., 4.0 -> 4.5 -> 5.0)
+    currentZoom += 0.5; 
+    await renderAllPages();
+};
+
+zoomOutBtn.onclick = async () => {
+    if (currentZoom > 0.5) { // Safeguard from zooming out to invisible values
+        currentZoom -= 0.5;
+        await renderAllPages();
+    }
+};
+       
 // DOWNLOAD
 
 const downloadBtn =
