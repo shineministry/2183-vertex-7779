@@ -4829,7 +4829,12 @@ const pollRes = await fetch(
                     {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ requestId: requestId })
+                        body: JSON.stringify({
+    requestId:
+    sessionStorage.getItem(
+        "vault_request_id"
+    )
+})
                     }
                 );
 
