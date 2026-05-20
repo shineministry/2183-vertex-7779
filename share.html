@@ -707,11 +707,17 @@
   }
 
   // Helper to accurately check for desktop/laptop clients
+  // Helper to accurately check for desktop/laptop clients
   function isDesktopDevice() {
     const ua = navigator.userAgent.toLowerCase();
     const hasTouch = navigator.maxTouchPoints > 1 || 'ontouchstart' in window;
     const matchMobileUA = /mobile|android|iphone|ipad|phone|playbook|tablet|kindle/i.test(ua);
-    return !matchMobileUA && !hasTouch;
+    
+    // If it has a mobile user agent, it's not a desktop/laptop PC
+    if (matchMobileUA) return false;
+    
+    // If it doesn't match mobile UAs, it's a desktop/laptop (even if it has a touchscreen)
+    return true;
   }
 
 // ── State ──
@@ -848,16 +854,27 @@
     btnNext.disabled = currentPage >= pdfDoc.numPages;
     zoomLabel.textContent = Math.round(zoomLevel * 100) + '%';
     
-    // REMOVED: The old restrictive "if (!isDesktopDevice())" check that disabled buttons
-    btnZoomIn.disabled  = zoomLevel >= ZOOM_MAX;
-    btnZoomOut.disabled = zoomLevel <= ZOOM_MIN;
+    // ── Enforce device-specific zoom visibility ──
+    if (!isDesktopDevice()) {
+      // Hard disable for mobile phones and tablets
+      btnZoomIn.disabled = true;
+      btnZoomOut.disabled = true;
+      btnZoomIn.style.opacity = "0.3";
+      btnZoomOut.style.opacity = "0.3";
+      btnZoomIn.style.cursor = "not-allowed";
+      btnZoomOut.style.cursor = "not-allowed";
+      zoomLabel.style.opacity = "0.5";
+    } else {
+      // Standard functional boundaries for PCs and Laptops
+      btnZoomIn.disabled  = zoomLevel >= ZOOM_MAX;
+      btnZoomOut.disabled = zoomLevel <= ZOOM_MIN;
+      btnZoomIn.style.opacity = "";
+      btnZoomOut.style.opacity = "";
+      btnZoomIn.style.cursor = "";
+      btnZoomOut.style.cursor = "";
+      zoomLabel.style.opacity = "";
+    }
     
-    // Reset styling overrides to ensure buttons remain clickable
-    btnZoomIn.style.opacity = "";
-    btnZoomOut.style.opacity = "";
-    btnZoomIn.style.cursor = "";
-    btnZoomOut.style.cursor = "";
-
     setActiveThumb(currentPage);
   }
 
@@ -887,7 +904,9 @@
   });
 
   btnZoomIn.addEventListener('click', async () => {
-    if (zoomLevel >= ZOOM_MAX) return; // Universal upper-bound limit check
+    // Block action if not a PC/Laptop or if maximum zoom is reached
+    if (!isDesktopDevice() || zoomLevel >= ZOOM_MAX) return;
+    
     zoomLevel = Math.min(ZOOM_MAX, +(zoomLevel + ZOOM_STEP).toFixed(2));
     updateUI();
     await renderAllPages();
@@ -895,7 +914,9 @@
   });
 
   btnZoomOut.addEventListener('click', async () => {
-    if (zoomLevel <= ZOOM_MIN) return; // Universal lower-bound limit check
+    // Block action if not a PC/Laptop or if minimum zoom is reached
+    if (!isDesktopDevice() || zoomLevel <= ZOOM_MIN) return;
+    
     zoomLevel = Math.max(ZOOM_MIN, +(zoomLevel - ZOOM_STEP).toFixed(2));
     updateUI();
     await renderAllPages();
