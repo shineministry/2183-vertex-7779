@@ -4402,59 +4402,101 @@ function closeCompareModal(){
 }
 
 async function renderComparePane(side, file){
-    const titleEl   = document.getElementById(`compare-${side}-title`);
+    const titleEl = document.getElementById(`compare-${side}-title`);
     const contentEl = document.getElementById(`compare-${side}-content`);
     titleEl.textContent = file.name;
     contentEl.innerHTML = '<div class="compare-select-prompt">⏳ Decrypting & rendering…</div>';
-    try{
+
+    try {
         const rawPassword = window.masterPassword || masterPassword;
-const token = await sha256(rawPassword);   // hash it
-const res = await fetch("https://backend.shinumaths989.workers.dev/docs/" + file.file, {
-    headers: {
-        "Authorization": "Bearer " + token,
-        "x-vault-password": token
-    }
-});
-        if(!res.ok){ const eb=await res.json().catch(()=>({})); throw new Error(eb.message||`HTTP ${res.status}`); }
-        const rct2=res.headers.get('content-type')||'';
-        if(rct2.includes('application/json')){ const eb=await res.json(); throw new Error(eb.message||'JSON error'); }
+        // 1. Hash the password for the authorization header (just like openSecureFile)
+        const token = await sha256(rawPassword); 
+
+        const res = await fetch("https://backend.shinumaths989.workers.dev/docs/" + file.file, {
+            headers: {
+                "Authorization": "Bearer " + token,
+                "x-vault-password": token
+            }
+        });
+
+        if(!res.ok){
+            const eb = await res.json().catch(()=>({}));
+            throw new Error(eb.message || `HTTP ${res.status}`);
+        }
+        const rct2 = res.headers.get('content-type') || '';
+        if(rct2.includes('application/json')){
+            const eb = await res.json();
+            throw new Error(eb.message || 'JSON error');
+        }
+
         const buf = await res.arrayBuffer();
         const sLen = new Uint32Array(buf.slice(0,4))[0];
-        if(sLen===0||sLen>buf.byteLength-32) throw new Error('Corrupted file header.');
-        const settings = JSON.parse(new TextDecoder().decode(buf.slice(4, 4+sLen)));
-        const saltStart = 4+sLen, saltEnd = saltStart+16;
-        const ivStart = saltEnd, ivEnd = ivStart+12;
+        if(sLen === 0 || sLen > buf.byteLength - 32) throw new Error('Corrupted file header.');
+
+        const settings = JSON.parse(new TextDecoder().decode(buf.slice(4, 4 + sLen)));
+        const saltStart = 4 + sLen;
+        const saltEnd = saltStart + 16;
         const salt = buf.slice(saltStart, saltEnd);
-        const enc  = buf.slice(ivEnd);
-        const phash = await sha256Bytes(masterPassword);
-        const km = await crypto.subtle.importKey("raw",phash,"PBKDF2",false,["deriveKey"]);
-        const key = await crypto.subtle.deriveKey(
-            {name:"PBKDF2",salt:new Uint8Array(salt),iterations:settings.iterations,hash:settings.hash},
-            km,{name:"AES-GCM",length:256},false,["decrypt"]
+        const ivStart = saltEnd;
+        const ivEnd = ivStart + 12;
+        const iv = buf.slice(ivStart, ivEnd);
+        const encryptedData = buf.slice(ivEnd);
+
+        // 2. Compute the correct byte array hash using the raw password string
+        const pHash = await sha256Bytes(rawPassword);
+
+        const km = await crypto.subtle.importKey(
+            "raw", pHash, "PBKDF2", false, ["deriveKey"]
         );
-        const dec = await crypto.subtle.decrypt({name:"AES-GCM",iv:new Uint8Array(iv)},key,enc);
-        const pdf = await window.pdfjsLib.getDocument({data:dec}).promise;
-        contentEl.innerHTML = '';
-        for(let p=1; p<=pdf.numPages; p++){
-            const page = await pdf.getPage(p);
-            const vp   = page.getViewport({scale:1.0});
-            const wrap = document.createElement('div');
-            wrap.style.cssText = 'background:white;border-radius:10px;padding:8px;box-shadow:0 4px 12px rgba(0,0,0,.1);width:100%;';
-            const cvs  = document.createElement('canvas');
-            cvs.width  = vp.width;
-            cvs.height = vp.height;
-            cvs.style.width = '100%';
-            cvs.style.borderRadius = '6px';
-            await page.render({canvasContext:cvs.getContext('2d'),viewport:vp}).promise;
-            wrap.appendChild(cvs);
-            contentEl.appendChild(wrap);
+
+        const key = await crypto.subtle.deriveKey(
+            {
+                name: "PBKDF2",
+                salt: new Uint8Array(salt),
+                iterations: settings.iterations,
+                hash: settings.hash
+            },
+            km,
+            { name: "AES-GCM", length: 256 },
+            false,
+            ["decrypt"]
+        );
+
+        const decrypted = await crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: new Uint8Array(iv) },
+            key,
+            encryptedData
+        );
+
+        // ==========================================
+        // Render implementation for individual panes
+        // ==========================================
+        const pdf = await window.pdfjsLib.getDocument({ data: decrypted }).promise;
+        contentEl.innerHTML = ""; // Clear loader
+
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 1.5 }); // adjust pane scale as needed
+            const canvas = document.createElement('canvas');
+            canvas.className = 'pdf-page';
+            canvas.style.marginBottom = "10px";
+            canvas.style.width = "100%";
+            canvas.style.maxWidth = "500px";
+            
+            const context = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            await page.render({ canvasContext: context, viewport: viewport }).promise;
+            contentEl.appendChild(canvas);
         }
-    }catch(err){
-        contentEl.innerHTML = `<div class="compare-select-prompt" style="color:#ef4444;">❌ Could not load document</div>`;
+
+    } catch (err) {
         console.error(err);
+        contentEl.innerHTML = `<div class="compare-select-prompt" style="color:var(--danger)">❌ Decryption Failed: ${err.message}</div>`;
     }
 }
-
+   
 function pickCompareDoc(side){
     compareSide = side;
     closeCompareModal();
