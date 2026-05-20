@@ -714,14 +714,14 @@
     return !matchMobileUA && !hasTouch;
   }
 
-  // ── State ──
+// ── State ──
   let resolvedData  = null;
   let pdfDoc        = null;
   let currentPage   = 1;
-  let zoomLevel     = 2.0;   // Changed initial scale default to 200% for extreme clarity
+  let zoomLevel     = 2.0;   // Initial scale default at 200%
   const ZOOM_MIN    = 0.5;   // 50%
-  const ZOOM_MAX    = 4.0;   // 400%
-  const ZOOM_STEP   = 0.25;
+  const ZOOM_MAX    = 10.0;  // Changed from 4.0 to 10.0 for deep microscopic zoom (1000%)
+  const ZOOM_STEP   = 0.25;  // Step increments
 
   // ── PDF viewer controls ──
   const overlay      = document.getElementById('pdf-overlay');
@@ -848,18 +848,16 @@
     btnNext.disabled = currentPage >= pdfDoc.numPages;
     zoomLabel.textContent = Math.round(zoomLevel * 100) + '%';
     
-    // Device evaluation restriction for Zoom actions
-    if (!isDesktopDevice()) {
-      btnZoomIn.disabled  = true;
-      btnZoomOut.disabled = true;
-      btnZoomIn.style.opacity = "0.3";
-      btnZoomOut.style.opacity = "0.3";
-      btnZoomIn.style.cursor = "not-allowed";
-      btnZoomOut.style.cursor = "not-allowed";
-    } else {
-      btnZoomIn.disabled  = zoomLevel >= ZOOM_MAX;
-      btnZoomOut.disabled = zoomLevel <= ZOOM_MIN;
-    }
+    // REMOVED: The old restrictive "if (!isDesktopDevice())" check that disabled buttons
+    btnZoomIn.disabled  = zoomLevel >= ZOOM_MAX;
+    btnZoomOut.disabled = zoomLevel <= ZOOM_MIN;
+    
+    // Reset styling overrides to ensure buttons remain clickable
+    btnZoomIn.style.opacity = "";
+    btnZoomOut.style.opacity = "";
+    btnZoomIn.style.cursor = "";
+    btnZoomOut.style.cursor = "";
+
     setActiveThumb(currentPage);
   }
 
@@ -889,14 +887,15 @@
   });
 
   btnZoomIn.addEventListener('click', async () => {
-    if (!isDesktopDevice() || zoomLevel >= ZOOM_MAX) return;
-    zoomLevel = Math.min(ZOMAX, +(zoomLevel + ZOOM_STEP).toFixed(2));
+    if (zoomLevel >= ZOOM_MAX) return; // Universal upper-bound limit check
+    zoomLevel = Math.min(ZOOM_MAX, +(zoomLevel + ZOOM_STEP).toFixed(2));
     updateUI();
     await renderAllPages();
     scrollToPage(currentPage);
   });
+
   btnZoomOut.addEventListener('click', async () => {
-    if (!isDesktopDevice() || zoomLevel <= ZOOM_MIN) return;
+    if (zoomLevel <= ZOOM_MIN) return; // Universal lower-bound limit check
     zoomLevel = Math.max(ZOOM_MIN, +(zoomLevel - ZOOM_STEP).toFixed(2));
     updateUI();
     await renderAllPages();
