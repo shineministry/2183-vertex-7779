@@ -1061,16 +1061,27 @@ async function loadDashboardData(){
         console.error("LOAD REQUESTS ERROR:", err);
     }
 
-    // 2. PROCESS ACTIVE SESSIONS (TRACKING AND FORCE LOGOUT TARGETS)
+    // 2. PROCESS ACTIVE SESSIONS (WITH EXPIRATION SAFETIES)
     try {
         const activeSnapshot = await getDocs(collection(db, "activeSessions"));
         let activeCount = 0;
         let activeHtml = "";
+        
+        // Expiration threshold: Ignore items older than 24 hours to handle cleanups automatically
+        const strictThreshold = Date.now() - (24 * 60 * 60 * 1000);
 
         activeSnapshot.forEach(docSnap => {
             const data = docSnap.data();
-            // Only show sessions that are active and have not been forced out yet
+            
+            // Bypass entries marked forced out
             if(data.forceLogout === true) return;
+            
+            // Bypass dead historical data if timestamp is tracked
+            if(data.timestamp && typeof data.timestamp.toMillis === 'function') {
+                if(data.timestamp.toMillis() < strictThreshold) return;
+            } else if (data.createdAt && data.createdAt < strictThreshold) {
+                return;
+            }
 
             activeCount++;
             const userInitial = data.username ? data.username.charAt(0).toUpperCase() : "A";
@@ -1080,7 +1091,7 @@ async function loadDashboardData(){
                 <div class="user-row">
                     <div class="avatar" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);">${userInitial}</div>
                     <div class="user-info">
-                        <h2>${data.username || 'Active Administrator'}</h2>
+                        <h2>${data.username || 'Active User'}</h2>
                         <span>Session: ${docSnap.id.substring(0,8)}...</span>
                     </div>
                 </div>
