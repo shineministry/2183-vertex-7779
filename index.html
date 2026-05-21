@@ -2759,12 +2759,18 @@ async function logout(message=""){
 async function initVault(){ 
 try{ 
     const token = window.masterPassword || masterPassword;
+    
+    // ADD THIS LOG TO SEE WHAT'S BEING SENT
+    console.log("Token being sent:", token);
+    
     const res = await fetch("https://backend.shinumaths989.workers.dev/files.json", {
         headers: {
             "Authorization": "Bearer " + token,
             "x-vault-password": token
         }
     });
+    
+    console.log("Response status:", res.status);
 
 // 🛡️ Intercept firewall HTML blocks before they crash JSON parsing
 if (!res.ok) {
