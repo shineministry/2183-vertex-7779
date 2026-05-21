@@ -35,6 +35,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 name="referrer"
 content="strict-origin-when-cross-origin">
 
+   <meta http-equiv="Content-Security-Policy" content="
+  script-src 'self' 'unsafe-inline' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/;
+  frame-src 'self' https://www.google.com/recaptcha/;
+  worker-src 'self' blob: https://www.google.com/recaptcha/;
+">
+   
       <meta
 http-equiv="Permissions-Policy"
 content="camera=(), microphone=(), geolocation=()">
@@ -2195,123 +2201,81 @@ function updateClock(){
    STEP 1
 ========================= */
 
+/* ========================= STEP 1 ========================= */
 async function showStep2() {
-    
     const now = Date.now();
-
-if(now < lockUntil){
-
-    const remaining =
-    Math.ceil(
-        (lockUntil - now)/1000
-    );
-
-    alert(
-    `Too many wrong attempts.\nTry again in ${remaining} seconds.`
-    );
-
-    return;
-}
-   
-const visitorName = document.getElementById('user-name').value.trim();
-   const pass = document.getElementById('vault-pass').value.trim();
-   const purpose = document.getElementById('user-purpose').value.trim();
-
-   // Save password securely in the session tab storage to avoid link errors
-   if (pass) {
-       masterPassword = pass;
-       sessionStorage.setItem("vault_session_secret", pass);
-   }
-
-      if(!visitorName || !purpose || !pass){
-        alert(
-        "Full Name, Purpose, and Password are required."
-        );
-
+    if (now < lockUntil) {
+        const remaining = Math.ceil((lockUntil - now) / 1000);
+        alert(`Too many wrong attempts.\nTry again in ${remaining} seconds.`);
         return;
     }
 
-const enteredHash =
-await window.sha256(pass);
+    const visitorName = document.getElementById('user-name').value.trim();
+    const pass = document.getElementById('vault-pass').value.trim();
+    const purpose = document.getElementById('user-purpose').value.trim();
 
-try{
-const res = await fetch( "https://backend.shinumaths989.workers.dev/get-secret", {
- method:"POST",
- headers:{
- "Content-Type":"application/json"
- },
- body:JSON.stringify({ hash: enteredHash })
-});
-
-// 🛡️ Guard against firewall HTML intercept pages
-if (!res.ok) {
-    const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('text/html')) {
-        throw new Error("Origin Access Refused: Vault Firewall actively dropped connection.");
+    if (!visitorName || !purpose || !pass) {
+        alert("Full Name, Purpose, and Password are required.");
+        return;
     }
-    // Try to parse error body for wrong password etc.
-    const errBody = await res.json().catch(()=>({}));
-    const errMsg = errBody.message || `Authentication server error status ${res.status}`;
 
-    // Wrong password handling
-    failedAttempts++;
-    if(failedAttempts >= 5){
-        sendSecurityAlert("Multiple failed password attempts");
-        lockUntil = Date.now() + 300000;
-        failedAttempts = 0;
-        alert("Too many failed attempts.\nVault locked for 5 minutes.");
-    } else {
-        alert(`Wrong Access Key.\nAttempts left: ${5 - failedAttempts}`);
+    // Capture password securely in memory
+    if (pass) {
+        masterPassword = pass;
+        sessionStorage.setItem("vault_session_secret", pass);
     }
-    return;
-}
 
-const result = await res.json();
-if(!result.success){
- alert( "Backend authentication failed." );
- return;
-}
-window.masterPassword =
-pass;
+    const enteredHash = await window.sha256(pass);
 
-sessionStorage.setItem(
-    "vault_session_secret",
-    pass
-);
-}catch(e){
- console.error(e);
- alert( e.message || "Could not connect to secure backend." );
- return;
-}
-   failedAttempts = 0;
+    try {
+        const res = await fetch("https://backend.shinumaths989.workers.dev/get-secret", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ hash: enteredHash })
+        });
 
-    sessionStartTime =
-    new Date();
+        if (!res.ok) {
+            const contentType = res.headers.get('content-type') || '';
+            if (contentType.includes('text/html')) {
+                throw new Error("Origin Access Refused: Vault Firewall actively dropped connection.");
+            }
 
-    const step1 =
-    document.getElementById(
-    'step1'
-    );
+            const errBody = await res.json().catch(() => ({}));
+            failedAttempts++;
+            if (failedAttempts >= 5) {
+                sendSecurityAlert("Multiple failed password attempts");
+                lockUntil = Date.now() + 300000;
+                failedAttempts = 0;
+                alert("Too many failed attempts.\nVault locked for 5 minutes.");
+            } else {
+                alert(`Wrong Access Key.\nAttempts left: ${5 - failedAttempts}`);
+            }
+            return;
+        }
 
-    step1.style.pointerEvents =
-    "none";
+        const result = await res.json();
+        if (!result.success) {
+            alert("Backend authentication failed.");
+            return;
+        }
 
-    step1.classList.add(
-    'slide-up-exit'
-    );
+        window.masterPassword = pass;
+        sessionStorage.setItem("vault_session_secret", pass);
+    } catch (e) {
+        console.error(e);
+        alert(e.message || "Could not connect to secure backend.");
+        return;
+    }
 
-    setTimeout(()=>{
-
-        step1.style.display =
-        'none';
-
-        document.getElementById(
-        'step2'
-        ).style.display =
-        'flex';
-
-    },700);
-
+    failedAttempts = 0;
+    sessionStartTime = new Date();
+    const step1 = document.getElementById('step1');
+    step1.style.pointerEvents = "none";
+    step1.classList.add('slide-up-exit');
+    setTimeout(() => {
+        step1.style.display = 'none';
+        document.getElementById('step2').style.display = 'flex';
+    }, 700);
 }
 
 /* =========================
@@ -3571,10 +3535,6 @@ document.getElementById(
 container.innerHTML = "";
 sidebar.innerHTML = "";
 
-// ZOOM LEVEL
-
-let currentZoom = 4.0;
-
 // =========================
 // TOOLBAR
 // =========================
@@ -4764,117 +4724,85 @@ function closeLogs(){
    PASSKEY ACCESS
 ========================= */
 
-async function requestPasskeyAccess(){
+/* ========================= MODE B: PASSKEY FLOW ========================= */
+async function requestPasskeyAccess() {
+    const visitorName = document.getElementById('user-name').value.trim();
+    const purpose = document.getElementById('user-purpose').value.trim();
 
-    const visitorName =
-    document.getElementById(
-    'user-name'
-    ).value.trim();
-
-    const purpose =
-    document.getElementById(
-    'user-purpose'
-    ).value.trim();
-
-    if(!visitorName || !purpose){
-        alert("Enter full name and purpose.");
+    if (!visitorName || !purpose) {
+        alert("Please enter your Full Name and Purpose of Access first before submitting a passkey request.");
         return;
     }
 
     document.getElementById('step1').style.display = 'none';
     document.getElementById('passkey-wait').style.display = 'flex';
 
-    try{
+    let trackingId = "";
 
-        const createRes = await fetch(
-            "https://backend.shinumaths989.workers.dev/request-passkey",
-            {
+    // 1. Submit the initial request payload to generate a Firestore document tracking track
+    try {
+        const initRes = await fetch("https://backend.shinumaths989.workers.dev/submit-access-request", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                visitorNameName: visitorName,
+                purposeOfAccess: purpose,
+                timestamp: new Date().toISOString()
+            })
+        });
+
+        const initData = await initRes.json();
+        if (initData && initData.requestId) {
+            trackingId = initData.requestId;
+        } else {
+            throw new Error("Failed to allocate an administrative tracking request payload identifier.");
+        }
+    } catch (err) {
+        alert("Failed to register access record: " + err.message);
+        document.getElementById('passkey-wait').style.display = 'none';
+        document.getElementById('step1').style.display = 'flex';
+        return;
+    }
+
+    // 2. Poll the worker securely using the allocated document identifier
+    const checkInterval = setInterval(async () => {
+        try {
+            const pollRes = await fetch("https://backend.shinumaths989.workers.dev/get-secret", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    visitorName: visitorName,
-                    purpose: purpose,
-                    device: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
-                    browser: navigator.userAgent,
-                    status: "pending",
-                    createdAt: new Date().toISOString()
+                    approved: true,
+                    requestId: trackingId
                 })
-            }
-        );
+            });
 
-        if(!createRes.ok) throw new Error("Failed to submit passkey request");
-
-        const createData = await createRes.json();
-        const requestId = createData.requestId;
-
-        if(!requestId) throw new Error("No request ID returned from backend");
-
-        const pollInterval = setInterval(async ()=>{
-
-            try{
-
-                const pollRes = await fetch(
-                    "https://backend.shinumaths989.workers.dev/check-passkey",
-                    {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ requestId: requestId })
-                    }
-                );
-
-                if(!pollRes.ok) return;
-
-                const pollData = await pollRes.json();
-
-                if(pollData.status === "approved"){
-
-                    clearInterval(pollInterval);
-
-                    const passkeyRes = await fetch(
-                        "https://backend.shinumaths989.workers.dev/get-secret",
-                        {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ approved: true })
-                        }
-                    );
-
-                    const passkeyResult = await passkeyRes.json();
-
-                    if(!passkeyResult || !passkeyResult.secret){
-                        alert("Passkey approved but backend did not return the secret. Cannot unlock.");
-                        location.reload();
-                        return;
-                    }
-
-                    window.masterPassword = passkeyResult.secret;
-                    sessionStorage.setItem("vault_session_secret", passkeyResult.secret);
-                    sessionStartTime = new Date();
-
+            if (pollRes.status === 200) {
+                clearInterval(checkInterval);
+                const data = await pollRes.json();
+                
+                if (data.success && data.secret) {
+                    // Inject the decrypted master password dynamically 
+                    masterPassword = data.secret;
+                    window.masterPassword = data.secret;
+                    sessionStorage.setItem("vault_session_secret", data.secret);
+                    
+                    // Route to legal screen to keep pipeline consistent
                     document.getElementById('passkey-wait').style.display = 'none';
                     document.getElementById('step2').style.display = 'flex';
                 }
-
-                if(pollData.status === "denied"){
-                    clearInterval(pollInterval);
-                    alert("Access request denied.");
+            } else if (pollRes.status === 403) {
+                // Keep waiting silently (admin hasn't clicked 'Approve' yet or denied it)
+                const data = await pollRes.json().catch(() => ({}));
+                if (data.error && data.error.includes("denied")) {
+                    clearInterval(checkInterval);
+                    alert("Your request for administrative authorization was declined.");
                     location.reload();
                 }
-
-            }catch(pollErr){
-                // Silently ignore poll errors
             }
-
-        }, 4000);
-
-    }catch(e){
-
-        console.error("PASSKEY ERROR:", e);
-        alert(e.message);
-        location.reload();
-
-    }
-
+        } catch (e) {
+            console.log("Polling connection drop, retrying...", e);
+        }
+    }, 3000); // Check status every 3 seconds
 }
 </script>
 
