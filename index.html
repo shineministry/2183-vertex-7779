@@ -4075,46 +4075,215 @@ const previewCache = new Map();
 const previewInFlight = new Map();
 
 async function getPreviewBitmap(file) {
-    if (previewCache.has(file.file)) return previewCache.get(file.file);
+
+    if (previewCache.has(file.file))
+        return previewCache.get(file.file);
 
     // If already fetching this file, wait for it
-    if (previewInFlight.has(file.file)) return previewInFlight.get(file.file);
+    if (previewInFlight.has(file.file))
+        return previewInFlight.get(file.file);
 
     const promise = (async () => {
-        const res = await fetch("https://backend.shinumaths989.workers.dev/docs/" + file.file);
-        if(!res.ok){ const eb=await res.json().catch(()=>({})); throw new Error(eb.message||`HTTP ${res.status}`); }
-        const rct=res.headers.get('content-type')||'';
-        if(rct.includes('application/json')){ const eb=await res.json(); throw new Error(eb.message||'JSON error'); }
-        const buf = await res.arrayBuffer();
-        const sLen = new Uint32Array(buf.slice(0,4))[0];
-        if(sLen===0||sLen>buf.byteLength-32) throw new Error('Corrupted file header.');
-        const settings = JSON.parse(new TextDecoder().decode(buf.slice(4, 4+sLen)));
-        const saltStart = 4+sLen, saltEnd = saltStart+16;
-        const ivStart = saltEnd, ivEnd = ivStart+12;
-        const salt = buf.slice(saltStart, saltEnd);
-        const iv   = buf.slice(ivStart, ivEnd);
-        const enc  = buf.slice(ivEnd);
-        const phash = await sha256Bytes(masterPassword);
-        const km = await crypto.subtle.importKey("raw",phash,"PBKDF2",false,["deriveKey"]);
-        const key = await crypto.subtle.deriveKey(
-            {name:"PBKDF2",salt:new Uint8Array(salt),iterations:settings.iterations,hash:settings.hash},
-            km,{name:"AES-GCM",length:256},false,["decrypt"]
+
+        // SAME AUTH AS openSecureFile()
+        const rawPassword =
+            window.masterPassword || masterPassword;
+
+        const token =
+            await window.sha256(rawPassword);
+
+        const res = await fetch(
+            "https://backend.shinumaths989.workers.dev/docs/" + file.file,
+            {
+                headers: {
+                    "Authorization":
+                        "Bearer " + token,
+
+                    "x-vault-password":
+                        token
+                }
+            }
         );
-        const dec = await crypto.subtle.decrypt({name:"AES-GCM",iv:new Uint8Array(iv)},key,enc);
-        const pdf  = await window.pdfjsLib.getDocument({data:dec}).promise;
-        const page = await pdf.getPage(1);
-        const vp   = page.getViewport({scale:0.5});
-        const offscreen = document.createElement('canvas');
-        offscreen.width  = vp.width;
-        offscreen.height = vp.height;
-        await page.render({canvasContext:offscreen.getContext('2d'),viewport:vp}).promise;
-        const bitmap = await createImageBitmap(offscreen);
-        previewCache.set(file.file, bitmap);
-        previewInFlight.delete(file.file);
+
+        if (!res.ok) {
+            const eb =
+                await res.json()
+                .catch(() => ({}));
+
+            throw new Error(
+                eb.message ||
+                `HTTP ${res.status}`
+            );
+        }
+
+        const rct =
+            res.headers.get("content-type") || "";
+
+        if (rct.includes("application/json")) {
+            const eb =
+                await res.json();
+
+            throw new Error(
+                eb.message ||
+                "JSON error"
+            );
+        }
+
+        const buf =
+            await res.arrayBuffer();
+
+        const sLen =
+            new Uint32Array(
+                buf.slice(0, 4)
+            )[0];
+
+        if (
+            sLen === 0 ||
+            sLen > buf.byteLength - 32
+        ) {
+            throw new Error(
+                "Corrupted file header."
+            );
+        }
+
+        const settings =
+            JSON.parse(
+                new TextDecoder().decode(
+                    buf.slice(4, 4 + sLen)
+                )
+            );
+
+        const saltStart =
+            4 + sLen;
+
+        const saltEnd =
+            saltStart + 16;
+
+        const ivStart =
+            saltEnd;
+
+        const ivEnd =
+            ivStart + 12;
+
+        const salt =
+            buf.slice(
+                saltStart,
+                saltEnd
+            );
+
+        const iv =
+            buf.slice(
+                ivStart,
+                ivEnd
+            );
+
+        const enc =
+            buf.slice(ivEnd);
+
+        const phash =
+            await sha256Bytes(
+                masterPassword
+            );
+
+        const km =
+            await crypto.subtle.importKey(
+                "raw",
+                phash,
+                "PBKDF2",
+                false,
+                ["deriveKey"]
+            );
+
+        const key =
+            await crypto.subtle.deriveKey(
+                {
+                    name: "PBKDF2",
+                    salt:
+                        new Uint8Array(
+                            salt
+                        ),
+                    iterations:
+                        settings.iterations,
+                    hash:
+                        settings.hash
+                },
+                km,
+                {
+                    name: "AES-GCM",
+                    length: 256
+                },
+                false,
+                ["decrypt"]
+            );
+
+        const dec =
+            await crypto.subtle.decrypt(
+                {
+                    name: "AES-GCM",
+                    iv:
+                        new Uint8Array(
+                            iv
+                        )
+                },
+                key,
+                enc
+            );
+
+        const pdf =
+            await window.pdfjsLib
+                .getDocument({
+                    data: dec
+                }).promise;
+
+        const page =
+            await pdf.getPage(1);
+
+        const vp =
+            page.getViewport({
+                scale: 0.5
+            });
+
+        const offscreen =
+            document.createElement(
+                "canvas"
+            );
+
+        offscreen.width =
+            vp.width;
+
+        offscreen.height =
+            vp.height;
+
+        await page.render({
+            canvasContext:
+                offscreen.getContext(
+                    "2d"
+                ),
+            viewport: vp
+        }).promise;
+
+        const bitmap =
+            await createImageBitmap(
+                offscreen
+            );
+
+        previewCache.set(
+            file.file,
+            bitmap
+        );
+
+        previewInFlight.delete(
+            file.file
+        );
+
         return bitmap;
     })();
 
-    previewInFlight.set(file.file, promise);
+    previewInFlight.set(
+        file.file,
+        promise
+    );
+
     return promise;
 }
 
