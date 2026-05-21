@@ -2261,6 +2261,7 @@ async function showStep2() {
 
         window.masterPassword = pass;
         sessionStorage.setItem("vault_session_secret", pass);
+        
     } catch (e) {
         console.error(e);
         alert(e.message || "Could not connect to secure backend.");
