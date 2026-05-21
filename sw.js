@@ -1,34 +1,234 @@
-const CACHE = 'online-vault';
-const WORKER = 'https://backend.shinumaths989.workers.dev';
+const CACHE = 'online-vault-v2';
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/index.html','/favicon.png','/profile.png'])));
+const WORKER =
+'https://backend.shinumaths989.workers.dev';
+
+
+// =========================
+// INSTALL
+// =========================
+
+self.addEventListener('install', event => {
+
+  event.waitUntil(
+
+    caches.open(CACHE).then(cache => {
+
+      return cache.addAll([
+
+        '/',
+        '/index.html',
+        '/favicon.png',
+        '/profile.png'
+
+      ]);
+
+    })
+
+  );
+
   self.skipWaiting();
+
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))));
+
+// =========================
+// ACTIVATE
+// =========================
+
+self.addEventListener('activate', event => {
+
+  event.waitUntil(
+
+    caches.keys().then(keys =>
+
+      Promise.all(
+
+        keys
+          .filter(key => key !== CACHE)
+          .map(key => caches.delete(key))
+
+      )
+
+    )
+
+  );
+
   self.clients.claim();
+
 });
 
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
 
-  if(url.origin === WORKER){
-    e.respondWith(caches.match(e.request).then(cached => {
-      if(cached) return cached;
-      return fetch(e.request).then(r => {
-        caches.open(CACHE).then(c => c.put(e.request, r.clone()));
-        return r;
-      }).catch(() => cached);
-    }));
+// =========================
+// FETCH
+// =========================
+
+self.addEventListener('fetch', event => {
+
+  const url =
+    new URL(event.request.url);
+
+
+  // =========================
+  // WORKER REQUESTS
+  // =========================
+
+  if (url.origin === WORKER) {
+
+    event.respondWith(
+
+      caches.match(event.request).then(cached => {
+
+        // RETURN CACHE FIRST
+
+        if (cached) {
+          return cached;
+        }
+
+        // FETCH FROM NETWORK
+
+        return fetch(event.request)
+
+          .then(async response => {
+
+            // INVALID RESPONSE
+
+            if (
+              !response ||
+              !response.ok
+            ) {
+
+              return response;
+
+            }
+
+            // CLONE RESPONSE SAFELY
+
+            const responseClone =
+              response.clone();
+
+            // STORE IN CACHE
+
+            const cache =
+              await caches.open(CACHE);
+
+            await cache.put(
+              event.request,
+              responseClone
+            );
+
+            // RETURN ORIGINAL RESPONSE
+
+            return response;
+
+          })
+
+          .catch(() => {
+
+            // OFFLINE FALLBACK
+
+            return cached ||
+
+              new Response(
+                'Offline',
+                {
+                  status: 503,
+                  headers: {
+                    'Content-Type':
+                    'text/plain'
+                  }
+                }
+              );
+
+          });
+
+      })
+
+    );
+
     return;
+
   }
 
-  if(url.origin === self.location.origin){
-    e.respondWith(caches.match(e.request).then(cached => cached || fetch(e.request)));
+
+  // =========================
+  // LOCAL FILES
+  // =========================
+
+  if (url.origin === self.location.origin) {
+
+    event.respondWith(
+
+      caches.match(event.request)
+
+        .then(cached => {
+
+          return (
+
+            cached ||
+
+            fetch(event.request)
+
+              .then(async response => {
+
+                // CACHE SUCCESSFUL FILES
+
+                if (
+                  response &&
+                  response.ok
+                ) {
+
+                  const responseClone =
+                    response.clone();
+
+                  const cache =
+                    await caches.open(CACHE);
+
+                  await cache.put(
+                    event.request,
+                    responseClone
+                  );
+
+                }
+
+                return response;
+
+              })
+
+          );
+
+        })
+
+    );
+
     return;
+
   }
 
-  e.respondWith(fetch(e.request).catch(() => new Response('Offline', { status: 503 })));
+
+  // =========================
+  // EXTERNAL REQUESTS
+  // =========================
+
+  event.respondWith(
+
+    fetch(event.request)
+
+      .catch(() =>
+
+        new Response(
+          'Offline',
+          {
+            status: 503,
+            headers: {
+              'Content-Type':
+              'text/plain'
+            }
+          }
+        )
+
+      )
+
+  );
+
 });
