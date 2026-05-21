@@ -2257,13 +2257,21 @@ async function showStep2() {
         }
 
         const result = await res.json();
-        if (!result.success) {
-            alert("Backend authentication failed.");
-            return;
-        }
 
-        window.masterPassword = pass;
-        sessionStorage.setItem("vault_session_secret", pass);
+if (!result.success || !result.authorized) {
+    alert("Backend authentication failed.");
+    return;
+}
+
+// SAVE TEMP SESSION TOKEN
+localStorage.setItem(
+    "vaultSession",
+    result.sessionToken
+);
+
+// keep password only in memory for decryption
+window.masterPassword = pass;
+masterPassword = pass;
         
     } catch (e) {
         console.error(e);
@@ -2765,56 +2773,116 @@ async function logout(message=""){
    INIT VAULT
 ========================= */
 
-async function initVault(){ 
-try{ 
-    const rawPassword = window.masterPassword || masterPassword;
-    
-    // Hash the password before sending
-    const enc = new TextEncoder();
-    const hashBuffer = await crypto.subtle.digest("SHA-256", enc.encode(rawPassword));
-    const token = Array.from(new Uint8Array(hashBuffer))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-    
-    console.log("Sending hash:", token);
-    
-    const res = await fetch("https://backend.shinumaths989.workers.dev/files.json", {
-        headers: {
-            "Authorization": "Bearer " + token,
-            "x-vault-password": token
+async function initVault() {
+try {
+
+    // GET TEMP SESSION TOKEN
+    const sessionToken =
+        localStorage.getItem("vaultSession");
+
+    // check login
+    if (!sessionToken) {
+        throw new Error(
+            "No active secure session. Please login again."
+        );
+    }
+
+    console.log(
+        "Using session token:",
+        sessionToken
+    );
+
+    const res = await fetch(
+        "https://backend.shinumaths989.workers.dev/files.json",
+        {
+            headers: {
+                "Authorization":
+                    "Bearer " + sessionToken
+            }
         }
+    );
+
+    // 🛡️ Firewall / backend errors
+    if (!res.ok) {
+
+        const contentType =
+            res.headers.get('content-type') || '';
+
+        if (
+            contentType.includes('text/html')
+        ) {
+            throw new Error(
+                "Security Exception: Domain rejected by Gateway Firewall."
+            );
+        }
+
+        throw new Error(
+            `Server returned HTTP status ${res.status}`
+        );
+    }
+
+    const data = await res.json();
+
+    allFilesData = data;
+
+    const list =
+        document.getElementById('cat-list');
+
+    list.innerHTML = "";
+
+    Object.keys(data).forEach(cat => {
+
+        const li =
+            document.createElement('li');
+
+        li.textContent = cat;
+
+        li.onclick = () => {
+
+            document
+            .querySelectorAll(
+                '#cat-list li'
+            )
+            .forEach(el =>
+                el.classList.remove('active')
+            );
+
+            li.classList.add('active');
+
+            renderFiles(
+                data[cat],
+                cat
+            );
+        };
+
+        list.appendChild(li);
     });
 
-// 🛡️ Intercept firewall HTML blocks before they crash JSON parsing
-if (!res.ok) {
-    const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('text/html')) {
-        throw new Error("Security Exception: Domain rejected by Gateway Firewall.");
-    }
-    throw new Error(`Server returned HTTP status ${res.status}`);
-}
+} catch (e) {
 
-const data = await res.json();
-allFilesData = data;
-const list = document.getElementById( 'cat-list');
-list.innerHTML = "";
-Object.keys(data)
- .forEach(cat=>{
- const li = document.createElement( 'li');
- li.textContent = cat;
- li.onclick = ()=>{
- document.querySelectorAll( '#cat-list li')
- .forEach(el=> el.classList.remove( 'active'));
- li.classList.add( 'active');
- renderFiles( data[cat], cat );
- };
- list.appendChild( li);
- });
-}catch(e){
- console.error(e);
- document.getElementById('cat-title').textContent = "Vault System Locked";
- const grid = document.getElementById('file-grid');
- grid.innerHTML = `<div style="grid-column:1/-1; padding:30px; text-align:center; color:var(--danger); font-weight:700;">🚨 ${e.message || "Failed to load secure database."}</div>`;
+    console.error(e);
+
+    document.getElementById(
+        'cat-title'
+    ).textContent =
+        "Vault System Locked";
+
+    const grid =
+        document.getElementById(
+            'file-grid'
+        );
+
+    grid.innerHTML = `
+    <div style="
+        grid-column:1/-1;
+        padding:30px;
+        text-align:center;
+        color:var(--danger);
+        font-weight:700;
+    ">
+        🚨 ${e.message ||
+        "Failed to load secure database."}
+    </div>`;
 }
 }
 
