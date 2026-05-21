@@ -2733,42 +2733,64 @@ function startInactivityMonitor(){
    LOGOUT
 ========================= */
 
-async function logout(message=""){
+async function logout(message="") {
 
-    if(message){
-
+    if (message) {
         alert(message);
-
     }
 
-    try{
+    try {
 
         await fetch(
             "https://backend.shinumaths989.workers.dev/save-visitor-log",
             {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
                 body: JSON.stringify({
-                    visitorName: document.getElementById('user-name').value,
-                    logoutTime: new Date().toLocaleString(),
-                    status: "Logged Out"
+                    visitorName:
+                        document.getElementById(
+                            'user-name'
+                        ).value,
+
+                    logoutTime:
+                        new Date()
+                        .toLocaleString(),
+
+                    status:
+                        "Logged Out"
                 })
             }
         );
 
-    }catch(e){
+    } catch(e) {
 
         console.error(
-        "Logout log error:",
-        e
+            "Logout log error:",
+            e
         );
 
     }
 
+    // REMOVE TEMP SESSION TOKEN
+    localStorage.removeItem(
+        "vaultSession"
+    );
+
+    // REMOVE PASSWORD SESSION
+    sessionStorage.removeItem(
+        "vault_session_secret"
+    );
+
+    // clear memory password
+    window.masterPassword = null;
+    masterPassword = null;
+
     location.reload();
-
 }
-
+   
 /* =========================
    INIT VAULT
 ========================= */
@@ -3431,9 +3453,10 @@ displayName){
         const token = await window.sha256(rawPassword);
 const res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
     headers: {
-        "Authorization": "Bearer " + token,
-        "x-vault-password": token
-    }
+    "Authorization":
+        "Bearer " +
+        localStorage.getItem("vaultSession")
+}
 });
 
         // GUARD: catch backend error responses before treating as binary
@@ -4160,18 +4183,18 @@ async function getPreviewBitmap(file) {
         const token =
             await window.sha256(rawPassword);
 
-        const res = await fetch(
-            "https://backend.shinumaths989.workers.dev/docs/" + file.file,
-            {
-                headers: {
-                    "Authorization":
-                        "Bearer " + token,
+        const sessionToken =
+    localStorage.getItem("vaultSession");
 
-                    "x-vault-password":
-                        token
-                }
-            }
-        );
+const res = await fetch(
+    "https://backend.shinumaths989.workers.dev/docs/" + file.file,
+    {
+        headers: {
+            "Authorization":
+                "Bearer " + sessionToken
+        }
+    }
+);
 
         if (!res.ok) {
             const eb =
