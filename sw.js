@@ -2,7 +2,7 @@ const CACHE = 'online-vault';
 const WORKER = 'https://backend.shinumaths989.workers.dev';
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/index (5).html','/favicon.png','/profile.png'])));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/index.html','/favicon.png','/profile.png'])));
   self.skipWaiting();
 });
 
