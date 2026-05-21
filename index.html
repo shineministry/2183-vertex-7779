@@ -2130,7 +2130,16 @@ oninput="unifiedSearch()">
 </div>
     </div>
 </div>
-
+   
+<script>
+// SHA-256 helper function - define once globally
+window.sha256 = async function(text){
+    const enc = new TextEncoder();
+    const hash = await crypto.subtle.digest("SHA-256", enc.encode(text));
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+</script>
+   
 <!-- =========================
      SCRIPT
 ========================= -->   
@@ -2758,10 +2767,16 @@ async function logout(message=""){
 
 async function initVault(){ 
 try{ 
-    const token = window.masterPassword || masterPassword;
+    const rawPassword = window.masterPassword || masterPassword;
     
-    // ADD THIS LOG TO SEE WHAT'S BEING SENT
-    console.log("Token being sent:", token);
+    // Hash the password before sending
+    const enc = new TextEncoder();
+    const hashBuffer = await crypto.subtle.digest("SHA-256", enc.encode(rawPassword));
+    const token = Array.from(new Uint8Array(hashBuffer))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    
+    console.log("Sending hash:", token);
     
     const res = await fetch("https://backend.shinumaths989.workers.dev/files.json", {
         headers: {
@@ -2769,8 +2784,6 @@ try{
             "x-vault-password": token
         }
     });
-    
-    console.log("Response status:", res.status);
 
 // 🛡️ Intercept firewall HTML blocks before they crash JSON parsing
 if (!res.ok) {
@@ -3347,7 +3360,7 @@ displayName){
     try{
 
         const rawPassword = window.masterPassword || masterPassword;
-const token = await sha256(rawPassword);   // hash it — never send raw
+        const token = await window.sha256(rawPassword);
 const res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
     headers: {
         "Authorization": "Bearer " + token,
