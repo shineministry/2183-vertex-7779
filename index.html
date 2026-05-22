@@ -1856,10 +1856,7 @@ button{
         rows="3"
         placeholder="Purpose of Access"></textarea>
 
-        <input
-        type="password"
-        id="vault-pass"
-        placeholder="Enter Access Key">
+        <input type="password" id="vault-pass" placeholder="Enter Access Key" autocomplete="new-password">
 
 <div style="
 display:flex;
@@ -2884,9 +2881,7 @@ function startSessionTimer(){
 
         if(sessionSeconds<=0){
 
-            logout(
-            "Session Expired."
-            );
+            logoutVault("Session Expired.")
 
         }
 
@@ -2908,9 +2903,7 @@ function startInactivityMonitor(){
         inactivityTimer =
         setTimeout(()=>{
 
-            logout(
-            "Logged out due to inactivity."
-            );
+            logoutVault("Logged out due to inactivity.")
 
         },120000);
 
