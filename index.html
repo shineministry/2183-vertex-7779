@@ -2184,50 +2184,24 @@ function logoutVault(
     "Logged out."
 ) {
 
-    // stop inactivity timer
     clearTimeout(
         inactivityTimer
     );
 
-    // clear session
-    sessionStorage.removeItem(
-        "vaultSession"
-    );
+    sessionStorage.clear();
 
-    sessionStorage.removeItem(
-        "vaultSessionToken"
-    );
-
-    sessionStorage.removeItem(
-        "vault_session_secret"
-    );
-
-    // clear password memory
     window.masterPassword =
         null;
 
     masterPassword =
         "";
 
-    // clear login form
-    const passField =
-        document.getElementById(
-            "vault-pass"
-        );
-
-    if (passField) {
-        passField.value =
-            "";
-    }
+    failedAttempts = 0;
 
     alert(reason);
 
-    // hard refresh
-    window.location.href =
-        window.location.pathname;
+    location.reload();
 }
-   
-  
 
 function resetInactivityTimer() {
 
@@ -2304,6 +2278,10 @@ async function hashPassword(password) {
    
 async function showStep2() {
 
+   clearTimeout(
+    inactivityTimer
+);
+
     const now = Date.now();
 
     if (now < lockUntil) {
@@ -2355,11 +2333,6 @@ async function showStep2() {
 
         // store password in memory only
         masterPassword = pass;
-
-        sessionStorage.setItem(
-            "vault_session_secret",
-            pass
-        );
 
         // hash password
         const hash =
@@ -2462,10 +2435,10 @@ async function showStep2() {
 resetInactivityTimer();
 
 window.masterPassword =
-    pass;
+    String(pass);
 
-        masterPassword =
-            pass;
+masterPassword =
+    String(pass);
 
         failedAttempts = 0;
 
