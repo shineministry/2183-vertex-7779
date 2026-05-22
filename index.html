@@ -2221,168 +2221,206 @@ async function hashPassword(password) {
     .join("");
 }
    
-   async function showStep2() {
+async function showStep2() {
+
     const now = Date.now();
+
     if (now < lockUntil) {
-        const remaining = Math.ceil((lockUntil - now) / 1000);
-        alert(`Too many wrong attempts.\nTry again in ${remaining} seconds.`);
-        return;
-    }
+        const remaining =
+            Math.ceil(
+                (lockUntil - now) / 1000
+            );
 
-    const visitorName = document.getElementById('user-name').value.trim();
-    const pass = document.getElementById('vault-pass').value.trim();
-    const purpose = document.getElementById('user-purpose').value.trim();
-
-    if (!visitorName || !purpose || !pass) {
-        alert("Full Name, Purpose, and Password are required.");
-        return;
-    }
-
-    // Capture password securely in memory
-    if (pass) {
-        masterPassword = pass;
-        sessionStorage.setItem("vault_session_secret", pass);
-    }
-
-    const enteredHash = await window.sha256(pass);
-
-try {
-
-    const passwordInput =
-      document.getElementById("password");
-
-    const hash =
-      await hashPassword(
-        passwordInput.value
-      );
-
-    const res =
-      await fetch(
-        "https://backend.shinumaths989.workers.dev/get-secret",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-          body: JSON.stringify({
-            hash
-          })
-        }
-      );
-
-    const contentType =
-      res.headers.get(
-        "content-type"
-      ) || "";
-
-    // Firewall HTML response
-    if (
-      !res.ok &&
-      contentType.includes(
-        "text/html"
-      )
-    ) {
-      throw new Error(
-        "Origin Access Refused: Vault Firewall actively dropped connection."
-      );
-    }
-
-    // Parse JSON ONCE only
-    let result = {};
-
-try {
-    result = await res.json();
-} catch (e) {
-    result = {};
-}
-
-    // Failed login
-    if (
-      !res.ok ||
-      !result.success ||
-      !result.authorized
-    ) {
-
-      failedAttempts++;
-
-      if (
-        failedAttempts >= 5
-      ) {
-
-        sendSecurityAlert(
-          "Multiple failed password attempts"
+        alert(
+            `Too many wrong attempts.\nTry again in ${remaining} seconds.`
         );
 
-        lockUntil =
-          Date.now() +
-          300000;
+        return;
+    }
+
+    const visitorName =
+        document
+        .getElementById(
+            "user-name"
+        )
+        .value.trim();
+
+    const pass =
+        document
+        .getElementById(
+            "vault-pass"
+        )
+        .value.trim();
+
+    const purpose =
+        document
+        .getElementById(
+            "user-purpose"
+        )
+        .value.trim();
+
+    if (
+        !visitorName ||
+        !purpose ||
+        !pass
+    ) {
+        alert(
+            "Full Name, Purpose, and Password are required."
+        );
+        return;
+    }
+
+    try {
+
+        // store password in memory only
+        masterPassword = pass;
+
+        sessionStorage.setItem(
+            "vault_session_secret",
+            pass
+        );
+
+        // hash password
+        const hash =
+            await hashPassword(
+                pass
+            );
+
+        const res =
+            await fetch(
+                "https://backend.shinumaths989.workers.dev/get-secret",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body: JSON.stringify({
+                        hash
+                    })
+                }
+            );
+
+        const contentType =
+            res.headers.get(
+                "content-type"
+            ) || "";
+
+        if (
+            !res.ok &&
+            contentType.includes(
+                "text/html"
+            )
+        ) {
+            throw new Error(
+                "Origin Access Refused: Vault Firewall actively dropped connection."
+            );
+        }
+
+        let result = {};
+
+        try {
+            result =
+                await res.json();
+        } catch {
+            result = {};
+        }
+
+        // failed login
+        if (
+            !res.ok ||
+            !result.success ||
+            !result.authorized
+        ) {
+
+            failedAttempts++;
+
+            if (
+                failedAttempts >= 5
+            ) {
+
+                sendSecurityAlert(
+                    "Multiple failed password attempts"
+                );
+
+                lockUntil =
+                    Date.now() +
+                    300000;
+
+                failedAttempts = 0;
+
+                alert(
+                    "Too many failed attempts.\nVault locked for 5 minutes."
+                );
+
+            } else {
+
+                alert(
+                    `Wrong Access Key.\nAttempts left: ${
+                        5 -
+                        failedAttempts
+                    }`
+                );
+            }
+
+            return;
+        }
+
+        // SUCCESS LOGIN
+        localStorage.setItem(
+            "vaultSessionToken",
+            result.sessionToken
+        );
+
+        localStorage.setItem(
+            "vaultSession",
+            result.sessionToken
+        );
+
+        window.masterPassword =
+            pass;
+
+        masterPassword =
+            pass;
 
         failedAttempts = 0;
 
-        alert(
-          "Too many failed attempts.\nVault locked for 5 minutes."
+        sessionStartTime =
+            new Date();
+
+        const step1 =
+            document.getElementById(
+                "step1"
+            );
+
+        step1.style.pointerEvents =
+            "none";
+
+        step1.classList.add(
+            "slide-up-exit"
         );
 
-      } else {
+        setTimeout(() => {
 
-        alert(
-          `Wrong Access Key.\nAttempts left: ${
-            5 - failedAttempts
-          }`
-        );
-      }
+            step1.style.display =
+                "none";
 
-      return;
-    }
+            document.getElementById(
+                "step2"
+            ).style.display =
+                "flex";
 
-    // SUCCESS LOGIN
-    localStorage.setItem(
-      "vaultSessionToken",
-      result.sessionToken
-    );
+        }, 700);
 
-    failedAttempts = 0;
-
-    console.log(
-      "Vault unlocked"
-    );
-
-} catch (err) {
-
-    console.error(err);
-
-    alert(
-      err.message ||
-      "Connection error"
-    );
-}
-
-// SAVE TEMP SESSION TOKEN
-localStorage.setItem(
-    "vaultSession",
-    result.sessionToken
-);
-
-// keep password only in memory for decryption
-window.masterPassword = pass;
-masterPassword = pass;
-        
     } catch (e) {
-        console.error(e);
-        alert(e.message || "Could not connect to secure backend.");
-        return;
-    }
 
-    failedAttempts = 0;
-    sessionStartTime = new Date();
-    const step1 = document.getElementById('step1');
-    step1.style.pointerEvents = "none";
-    step1.classList.add('slide-up-exit');
-    setTimeout(() => {
-        step1.style.display = 'none';
-        document.getElementById('step2').style.display = 'flex';
-    }, 700);
+        console.error(e);
+
+        alert(
+            e.message ||
+            "Could not connect to secure backend."
+        );
+    }
 }
 
 /* =========================
