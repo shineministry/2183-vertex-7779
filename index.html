@@ -3984,21 +3984,26 @@ downloadBtn.onclick = async () => {
 
         try {
 
-            const passkeyRes =
-            await fetch(
-                "https://backend.shinumaths989.workers.dev/get-secret",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        password: enteredPass,
-                        file: displayName
-                    })
-                }
-            );
+            const enteredHash =
+await window.sha256(
+    enteredPass
+);
 
+const passkeyRes =
+await fetch(
+ "https://backend.shinumaths989.workers.dev/get-secret",
+ {
+   method:"POST",
+   headers:{
+     "Content-Type":
+     "application/json"
+   },
+
+   body: JSON.stringify({
+      hash: enteredHash
+   })
+ }
+);
             const passkeyResult =
             await passkeyRes.json();
 
@@ -5060,7 +5065,7 @@ async function requestPasskeyAccess() {
 
     // 1. Submit the initial request payload to generate a Firestore document tracking track
     try {
-        const initRes = await fetch("https://backend.shinumaths989.workers.dev/submit-access-request", {
+        const initRes = await fetch("https://backend.shinumaths989.workers.dev/request-passkey", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -5086,11 +5091,10 @@ async function requestPasskeyAccess() {
     // 2. Poll the worker securely using the allocated document identifier
     const checkInterval = setInterval(async () => {
         try {
-            const pollRes = await fetch("https://backend.shinumaths989.workers.dev/get-secret", {
+            const pollRes = await fetch("https://backend.shinumaths989.workers.dev/check-passkey", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    approved: true,
                     requestId: trackingId
                 })
             });
