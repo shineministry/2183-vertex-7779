@@ -2139,20 +2139,6 @@ window.sha256 = async function(text){
     return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
-   async function hashPassword(password) {
-  const normalized = password
-    .trim()
-    .normalize("NFKC");
-
-  const encoder = new TextEncoder();
-  const data = encoder.encode(normalized);
-
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-
-  return Array.from(new Uint8Array(hashBuffer))
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
-}
 </script>
    
 <!-- =========================
@@ -2220,7 +2206,22 @@ function updateClock(){
 ========================= */
 
 /* ========================= STEP 1 ========================= */
-async function showStep2() {
+async function hashPassword(password) {
+  const normalized = password
+    .trim()
+    .normalize("NFKC");
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode(normalized);
+
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+   
+   async function showStep2() {
     const now = Date.now();
     if (now < lockUntil) {
         const remaining = Math.ceil((lockUntil - now) / 1000);
@@ -2288,9 +2289,13 @@ try {
     }
 
     // Parse JSON ONCE only
-    const result =
-      await res.json()
-      .catch(() => ({}));
+    let result = {};
+
+try {
+    result = await res.json();
+} catch (e) {
+    result = {};
+}
 
     // Failed login
     if (
