@@ -2138,6 +2138,21 @@ window.sha256 = async function(text){
     const hash = await crypto.subtle.digest("SHA-256", enc.encode(text));
     return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
+
+   async function hashPassword(password) {
+  const normalized = password
+    .trim()
+    .normalize("NFKC");
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode(normalized);
+
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 </script>
    
 <!-- =========================
@@ -2230,37 +2245,112 @@ async function showStep2() {
 
     const enteredHash = await window.sha256(pass);
 
-    try {
-        const res = await fetch("https://backend.shinumaths989.workers.dev/get-secret", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ hash: enteredHash })
-        });
+try {
 
-        if (!res.ok) {
-            const contentType = res.headers.get('content-type') || '';
-            if (contentType.includes('text/html')) {
-                throw new Error("Origin Access Refused: Vault Firewall actively dropped connection.");
-            }
+    const passwordInput =
+      document.getElementById("password");
 
-            const errBody = await res.json().catch(() => ({}));
-            failedAttempts++;
-            if (failedAttempts >= 5) {
-                sendSecurityAlert("Multiple failed password attempts");
-                lockUntil = Date.now() + 300000;
-                failedAttempts = 0;
-                alert("Too many failed attempts.\nVault locked for 5 minutes.");
-            } else {
-                alert(`Wrong Access Key.\nAttempts left: ${5 - failedAttempts}`);
-            }
-            return;
+    const hash =
+      await hashPassword(
+        passwordInput.value
+      );
+
+    const res =
+      await fetch(
+        "https://backend.shinumaths989.workers.dev/get-secret",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+          body: JSON.stringify({
+            hash
+          })
         }
+      );
 
-        const result = await res.json();
+    const contentType =
+      res.headers.get(
+        "content-type"
+      ) || "";
 
-if (!result.success || !result.authorized) {
-    alert("Backend authentication failed.");
-    return;
+    // Firewall HTML response
+    if (
+      !res.ok &&
+      contentType.includes(
+        "text/html"
+      )
+    ) {
+      throw new Error(
+        "Origin Access Refused: Vault Firewall actively dropped connection."
+      );
+    }
+
+    // Parse JSON ONCE only
+    const result =
+      await res.json()
+      .catch(() => ({}));
+
+    // Failed login
+    if (
+      !res.ok ||
+      !result.success ||
+      !result.authorized
+    ) {
+
+      failedAttempts++;
+
+      if (
+        failedAttempts >= 5
+      ) {
+
+        sendSecurityAlert(
+          "Multiple failed password attempts"
+        );
+
+        lockUntil =
+          Date.now() +
+          300000;
+
+        failedAttempts = 0;
+
+        alert(
+          "Too many failed attempts.\nVault locked for 5 minutes."
+        );
+
+      } else {
+
+        alert(
+          `Wrong Access Key.\nAttempts left: ${
+            5 - failedAttempts
+          }`
+        );
+      }
+
+      return;
+    }
+
+    // SUCCESS LOGIN
+    localStorage.setItem(
+      "vaultSessionToken",
+      result.sessionToken
+    );
+
+    failedAttempts = 0;
+
+    console.log(
+      "Vault unlocked"
+    );
+
+} catch (err) {
+
+    console.error(err);
+
+    alert(
+      err.message ||
+      "Connection error"
+    );
 }
 
 // SAVE TEMP SESSION TOKEN
