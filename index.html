@@ -2376,13 +2376,13 @@ async function showStep2() {
         }
 
         let result = {};
-
-        try {
-            result =
-                await res.json();
-        } catch {
-            result = {};
-        }
+try {
+    result = await res.json();
+} catch {
+    result = {};
+    alert("Server is offline or unreachable. Please try again in a moment.");
+    return;
+}
 
         // failed login
         if (
