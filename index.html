@@ -2180,27 +2180,51 @@ let currentCategory = "";
 }
 
 function logoutVault(
-  reason =
-    "Session expired."
+    reason =
+    "Logged out."
 ) {
 
-  sessionStorage.removeItem(
-    "vaultSessionToken"
-  );
+    // stop inactivity timer
+    clearTimeout(
+        inactivityTimer
+    );
 
-  sessionStorage.removeItem(
-    "vault_session_secret"
-  );
+    // clear session
+    sessionStorage.removeItem(
+        "vaultSession"
+    );
 
-  window.masterPassword =
-    null;
+    sessionStorage.removeItem(
+        "vaultSessionToken"
+    );
 
-  masterPassword =
-    null;
+    sessionStorage.removeItem(
+        "vault_session_secret"
+    );
 
-  alert(reason);
+    // clear password memory
+    window.masterPassword =
+        null;
 
-  location.reload();
+    masterPassword =
+        "";
+
+    // clear login form
+    const passField =
+        document.getElementById(
+            "vault-pass"
+        );
+
+    if (passField) {
+        passField.value =
+            "";
+    }
+
+    alert(reason);
+
+    // hard refresh
+    window.location.href =
+        window.location.pathname;
 }
    
   
