@@ -2179,28 +2179,35 @@ let currentCategory = "";
     );
 }
 
-function logoutVault(
-    reason =
-    "Logged out."
-) {
+function logoutVault( reason = "Logged out." ) {
 
-    clearTimeout(
-        inactivityTimer
-    );
+    clearTimeout( inactivityTimer );
 
+    // Wipe session storage entirely
     sessionStorage.clear();
 
-    window.masterPassword =
-        null;
-
-    masterPassword =
-        "";
-
+    // Clear memory string values
+    window.masterPassword = null;
+    masterPassword = "";
     failedAttempts = 0;
+
+    // FIX: Force clear inputs so the browser doesn't submit stale/cached text values
+    if (document.getElementById("user-name")) document.getElementById("user-name").value = "";
+    if (document.getElementById("user-purpose")) document.getElementById("user-purpose").value = "";
+    if (document.getElementById("vault-pass")) document.getElementById("vault-pass").value = "";
+    if (document.getElementById("terms-tick")) document.getElementById("terms-tick").checked = false;
+
+    // FIX: Reset reCAPTCHA if it was initialized
+    try {
+        if (typeof grecaptcha !== 'undefined') {
+            grecaptcha.reset();
+        }
+    } catch(e) { console.log(e); }
 
     alert(reason);
 
-    location.reload();
+    // Hard refresh to completely clear window context
+    location.reload(true);
 }
 
 function resetInactivityTimer() {
@@ -2937,16 +2944,28 @@ async function logout(message="") {
  })
  }
  );
- } catch(e) {
- console.error( "Logout log error:", e );
- }
+ } catch(e) { console.error( "Logout log error:", e ); }
 
- // FIX: Wipe everything out cleanly so no stale tokens remain to block re-login
+ // Wipe session storage entirely
  sessionStorage.clear(); 
 
+ // Clear memory password
  window.masterPassword = null;
  masterPassword = null;
- location.reload();
+
+ // FIX: Clear DOM states to prevent input caching bugs
+ if (document.getElementById("user-name")) document.getElementById("user-name").value = "";
+ if (document.getElementById("user-purpose")) document.getElementById("user-purpose").value = "";
+ if (document.getElementById("vault-pass")) document.getElementById("vault-pass").value = "";
+ if (document.getElementById("terms-tick")) document.getElementById("terms-tick").checked = false;
+
+ try {
+     if (typeof grecaptcha !== 'undefined') {
+         grecaptcha.reset();
+     }
+ } catch(e) {}
+
+ location.reload(true);
 }
    
 /* =========================
