@@ -2069,7 +2069,7 @@ style="display:none;">
                 EMERGENCY CONTACT
             </button>
 
-            <button class="btn-logout" onclick="logout('Logged out successfully.')">
+            <button class="btn-logout" onclick="logoutVault('Logged out successfully.')">
                 LOGOUT
             </button>
 
@@ -2179,6 +2179,63 @@ let currentCategory = "";
     );
 }
 
+function logoutVault(
+  reason =
+    "Session expired."
+) {
+
+  sessionStorage.removeItem(
+    "vaultSessionToken"
+  );
+
+  sessionStorage.removeItem(
+    "vault_session_secret"
+  );
+
+  window.masterPassword =
+    null;
+
+  masterPassword =
+    null;
+
+  alert(reason);
+
+  location.reload();
+}
+   
+   let inactivityTimer;
+
+function resetInactivityTimer() {
+
+  clearTimeout(
+    inactivityTimer
+  );
+
+  inactivityTimer =
+    setTimeout(() => {
+
+      logoutVault(
+        "Logged out due to inactivity (2 minutes)."
+      );
+
+    }, 2 * 60 * 1000);
+}
+
+[
+  "mousemove",
+  "mousedown",
+  "keypress",
+  "scroll",
+  "touchstart"
+].forEach(event => {
+
+  document.addEventListener(
+    event,
+    resetInactivityTimer
+  );
+
+});
+   
 /* =========================
    CLOCK
 ========================= */
@@ -2367,18 +2424,21 @@ async function showStep2() {
         }
 
         // SUCCESS LOGIN
-        localStorage.setItem(
+        sessionStorage.setItem(
             "vaultSessionToken",
             result.sessionToken
         );
 
-        localStorage.setItem(
-            "vaultSession",
-            result.sessionToken
-        );
+        sessionStorage.setItem(
+    "vaultSession",
+    result.sessionToken
+);
 
-        window.masterPassword =
-            pass;
+// START 2-MINUTE TIMER
+resetInactivityTimer();
+
+window.masterPassword =
+    pass;
 
         masterPassword =
             pass;
@@ -2908,7 +2968,7 @@ async function logout(message="") {
     }
 
     // REMOVE TEMP SESSION TOKEN
-    localStorage.removeItem(
+    sessionStorage.removeItem(
         "vaultSession"
     );
 
@@ -2933,7 +2993,7 @@ try {
 
     // GET TEMP SESSION TOKEN
     const sessionToken =
-        localStorage.getItem("vaultSession");
+        sessionStorage.getItem("vaultSession");
 
     // check login
     if (!sessionToken) {
@@ -3588,7 +3648,7 @@ const res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
     headers: {
     "Authorization":
         "Bearer " +
-        localStorage.getItem("vaultSession")
+        sessionStorage.getItem("vaultSession")
 }
 });
 
@@ -4322,7 +4382,7 @@ async function getPreviewBitmap(file) {
             await window.sha256(rawPassword);
 
         const sessionToken =
-    localStorage.getItem("vaultSession");
+    sessionStorage.getItem("vaultSession");
 
 const res = await fetch(
     "https://backend.shinumaths989.workers.dev/docs/" + file.file,
