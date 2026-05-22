@@ -2919,66 +2919,34 @@ function startInactivityMonitor(){
 
 }
 
-/* =========================
-   LOGOUT
-========================= */
-
+/* ========================= LOGOUT ========================= */
 async function logout(message="") {
+ if (message) {
+ alert(message);
+ }
+ try {
+ await fetch(
+ "https://backend.shinumaths989.workers.dev/save-visitor-log",
+ {
+ method: "POST",
+ headers: { "Content-Type": "application/json" },
+ body: JSON.stringify({
+ visitorName: document.getElementById( 'user-name' ).value,
+ logoutTime: new Date() .toLocaleString(),
+ status: "Logged Out"
+ })
+ }
+ );
+ } catch(e) {
+ console.error( "Logout log error:", e );
+ }
 
-    if (message) {
-        alert(message);
-    }
+ // FIX: Wipe everything out cleanly so no stale tokens remain to block re-login
+ sessionStorage.clear(); 
 
-    try {
-
-        await fetch(
-            "https://backend.shinumaths989.workers.dev/save-visitor-log",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-                body: JSON.stringify({
-                    visitorName:
-                        document.getElementById(
-                            'user-name'
-                        ).value,
-
-                    logoutTime:
-                        new Date()
-                        .toLocaleString(),
-
-                    status:
-                        "Logged Out"
-                })
-            }
-        );
-
-    } catch(e) {
-
-        console.error(
-            "Logout log error:",
-            e
-        );
-
-    }
-
-    // REMOVE TEMP SESSION TOKEN
-    sessionStorage.removeItem(
-        "vaultSession"
-    );
-
-    // REMOVE PASSWORD SESSION
-    sessionStorage.removeItem(
-        "vault_session_secret"
-    );
-
-    // clear memory password
-    window.masterPassword = null;
-    masterPassword = null;
-
-    location.reload();
+ window.masterPassword = null;
+ masterPassword = null;
+ location.reload();
 }
    
 /* =========================
