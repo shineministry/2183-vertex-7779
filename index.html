@@ -4118,8 +4118,7 @@ async function renderAllPages() {
         canvas.height =
         viewport.height;
 
-        canvas.style.width =
-        "100%";
+        canvas.style.width = viewport.width + "px";
 
         canvas.style.borderRadius =
         "10px";
@@ -4163,36 +4162,6 @@ async function renderAllPages() {
 
 // INITIAL RENDER
 await renderAllPages();
-
-// =========================
-// ZOOM EVENTS
-// =========================
-
-zoomInBtn.onclick =
-async () => {
-
-    if (currentZoom < 10) {
-
-        currentZoom += 0.2;
-
-        await renderAllPages();
-
-    }
-
-};
-
-zoomOutBtn.onclick =
-async () => {
-
-    if (currentZoom > 0.6) {
-
-        currentZoom -= 0.2;
-
-        await renderAllPages();
-
-    }
-
-};
 
 // =========================
 // DOWNLOAD SECURELY
