@@ -3678,17 +3678,20 @@ displayName){
  }
 }
 
-    try{
+    try {
+    const vaultSessionToken =
+        sessionStorage.getItem("vaultSessionToken") ||
+        sessionStorage.getItem("vaultSession");
 
-        const rawPassword = window.masterPassword || masterPassword;
-        const token = await window.sha256(rawPassword);
-const res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
-    headers: {
-    "Authorization":
-        "Bearer " +
-        sessionStorage.getItem("vaultSession")
-}
-});
+    if (!vaultSessionToken) {
+        throw new Error("Missing vault session token. Please log in again.");
+    }
+
+    const res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
+        headers: {
+            "Authorization": "Bearer " + vaultSessionToken
+        }
+    });
 
         // GUARD: catch backend error responses before treating as binary
         if(!res.ok){
@@ -4422,15 +4425,19 @@ async function getPreviewBitmap(file) {
         const sessionToken =
     sessionStorage.getItem("vaultSession");
 
-const sessionToken =
+const previewSessionToken =
     sessionStorage.getItem("vaultSessionToken") ||
     sessionStorage.getItem("vaultSession");
 
-const res = await fetch("https://backend.shinumaths989.workers.dev/docs/" + file.file, {
-    headers: {
-        "Authorization": "Bearer " + sessionToken
+const res = await fetch(
+    "https://backend.shinumaths989.workers.dev/docs/" + file.file,
+    {
+        headers: {
+            "Authorization":
+                "Bearer " + previewSessionToken
+        }
     }
-});
+);
 
         if (!res.ok) {
             const eb =
