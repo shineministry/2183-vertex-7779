@@ -4422,15 +4422,15 @@ async function getPreviewBitmap(file) {
         const sessionToken =
     sessionStorage.getItem("vaultSession");
 
-const res = await fetch(
-    "https://backend.shinumaths989.workers.dev/docs/" + file.file,
-    {
-        headers: {
-            "Authorization":
-                "Bearer " + sessionToken
-        }
+const sessionToken =
+    sessionStorage.getItem("vaultSessionToken") ||
+    sessionStorage.getItem("vaultSession");
+
+const res = await fetch("https://backend.shinumaths989.workers.dev/docs/" + file.file, {
+    headers: {
+        "Authorization": "Bearer " + sessionToken
     }
-);
+});
 
         if (!res.ok) {
             const eb =
