@@ -43,24 +43,18 @@ self.addEventListener("fetch", function(event) {
   var request = event.request;
   var url = new URL(request.url);
 
-  // Never intercept API calls. This permanently prevents fake service-worker
-  // 503 responses for /get-secret, /register-session, logs, docs, and files.
   if (url.hostname === BACKEND_HOST) {
     return;
   }
 
-  // Never intercept POST/PUT/DELETE/etc. Service workers should not cache
-  // mutations or auth checks.
   if (request.method !== "GET") {
     return;
   }
 
-  // Never intercept browser extension, data, blob, or other unsupported schemes.
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     return;
   }
 
-  // Only cache files served from the same website as this service worker.
   if (url.origin !== self.location.origin) {
     return;
   }
@@ -98,3 +92,36 @@ async function networkFirst(request) {
 
     return new Response("Offline", {
       status: 503,
+      headers: {
+        "Content-Type": "text/plain"
+      }
+    });
+  }
+}
+
+async function cacheFirst(request) {
+  var cached = await caches.match(request);
+
+  if (cached) {
+    return cached;
+  }
+
+  var response = await fetch(request);
+
+  if (isCacheable(response)) {
+    var cache = await caches.open(CACHE);
+    await cache.put(request, response.clone());
+  }
+
+  return response;
+}
+
+function isCacheable(response) {
+  if (!response || !response.ok) {
+    return false;
+  }
+
+  var type = response.type;
+
+  return type === "basic" || type === "default";
+}
