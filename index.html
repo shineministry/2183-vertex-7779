@@ -2204,7 +2204,7 @@ function logoutVault( reason = "Logged out." ) {
     alert(reason);
 
     // Hard refresh to completely clear window context
-    location.reload(true);
+    window.location.href = window.location.origin + window.location.pathname;
 }
 
 function resetInactivityTimer() {
@@ -2841,7 +2841,7 @@ dash.classList.add(
                 "Administrator terminated your session."
                 );
 
-                location.reload();
+                window.location.href = window.location.origin + window.location.pathname;
 
             }
 
@@ -2958,7 +2958,7 @@ async function logout(message="") {
      }
  } catch(e) {}
 
- location.reload(true);
+ window.location.href = window.location.origin + window.location.pathname;
 }
    
 /* =========================
@@ -5289,7 +5289,7 @@ async function requestPasskeyAccess() {
                 if (data.error && data.error.includes("denied")) {
                     clearInterval(checkInterval);
                     alert("Your request for administrative authorization was declined.");
-                    location.reload();
+                    window.location.href = window.location.origin + window.location.pathname;
                 }
             }
         } catch (e) {
