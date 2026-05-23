@@ -2176,9 +2176,55 @@ let currentCategory = "";
     );
 }
 
+function notifyBackendLogout(reason = "Logged out.") {
+
+    const visitorInput = document.getElementById("user-name");
+    const visitorName = visitorInput ? visitorInput.value : "";
+
+    const logPayload = JSON.stringify({
+        visitorName,
+        logoutTime: new Date().toLocaleString(),
+        status: reason
+    });
+
+    const sessionPayload = JSON.stringify({
+        sessionId,
+        visitor: visitorName,
+        active: false,
+        endedAt: new Date().toISOString(),
+        reason
+    });
+
+    try {
+        fetch(
+            "https://backend.shinumaths989.workers.dev/save-visitor-log",
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: logPayload,
+                keepalive: true
+            }
+        ).catch(() => {});
+    } catch(e) {}
+
+    try {
+        fetch(
+            "https://backend.shinumaths989.workers.dev/register-session",
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: sessionPayload,
+                keepalive: true
+            }
+        ).catch(() => {});
+    } catch(e) {}
+}
+
 function logoutVault( reason = "Logged out." ) {
 
     clearTimeout( inactivityTimer );
+
+    notifyBackendLogout(reason);
 
     // Wipe session storage entirely
     sessionStorage.clear();
@@ -2204,7 +2250,7 @@ function logoutVault( reason = "Logged out." ) {
     alert(reason);
 
     // Hard refresh to completely clear window context
-    window.location.href = window.location.origin + window.location.pathname;
+    location.reload(true);
 }
 
 function resetInactivityTimer() {
@@ -2358,6 +2404,20 @@ async function showStep2() {
                     })
                 }
             );
+
+        if (res.status >= 500) {
+            console.error(
+                "Backend unavailable during login:",
+                res.status,
+                await res.text().catch(() => "")
+            );
+
+            alert(
+                "Secure backend is temporarily unavailable. Please try again after a moment."
+            );
+
+            return;
+        }
 
         const contentType =
             res.headers.get(
@@ -2841,7 +2901,7 @@ dash.classList.add(
                 "Administrator terminated your session."
                 );
 
-                window.location.href = window.location.origin + window.location.pathname;
+                location.reload();
 
             }
 
@@ -2924,6 +2984,7 @@ async function logout(message="") {
  if (message) {
  alert(message);
  }
+ notifyBackendLogout(message || "Logged out.");
  try {
  await fetch(
  "https://backend.shinumaths989.workers.dev/save-visitor-log",
@@ -2958,7 +3019,7 @@ async function logout(message="") {
      }
  } catch(e) {}
 
- window.location.href = window.location.origin + window.location.pathname;
+ location.reload(true);
 }
    
 /* =========================
@@ -5289,7 +5350,7 @@ async function requestPasskeyAccess() {
                 if (data.error && data.error.includes("denied")) {
                     clearInterval(checkInterval);
                     alert("Your request for administrative authorization was declined.");
-                    window.location.href = window.location.origin + window.location.pathname;
+                    location.reload();
                 }
             }
         } catch (e) {
