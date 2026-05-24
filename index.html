@@ -4100,7 +4100,10 @@ async function renderAllPages() {
 
         // RESPONSIVE FIT TO CONTAINER
 const containerWidth =
-container.clientWidth - 50;
+Math.max(
+    container.clientWidth - 40,
+    700
+);
 
 const originalViewport =
 page.getViewport({ scale: 1 });
@@ -4220,6 +4223,11 @@ canvas.style.boxShadow =
 
 // INITIAL RENDER
 await renderAllPages();
+
+// Force second render after modal/layout settles
+setTimeout(async () => {
+    await renderAllPages();
+}, 120);
 
 // =========================
 // DOWNLOAD SECURELY
@@ -5075,12 +5083,18 @@ async function renderComparePane(side, file){
     originalViewport.width;
 
     // Apply user zoom INSIDE viewer only
-    const viewport =
-    page.getViewport({
-        scale:
-        fitScale *
-        currentZoom
-    });
+    const safeScale =
+Math.max(
+    fitScale,
+    0.7
+);
+
+const viewport =
+page.getViewport({
+    scale:
+    safeScale *
+    currentZoom
+});
 
     // Create canvas
     const canvas =
