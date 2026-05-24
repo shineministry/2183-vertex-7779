@@ -1802,7 +1802,7 @@ button{
 
 }
 
-   /* =========================
+/* =========================
    LITE MODE
 ========================= */
 
@@ -2280,16 +2280,13 @@ let lockUntil = 0;
    let inactivityTimer;
 let currentBlobUrl = null;
 let currentDecryptedPdf = null;
-let pageWrapContainer = null;
    
 let sessionStartTime = null;
 
    let sessionId = crypto.randomUUID();
 let allFilesData = {};
 let currentCategory = "";
-let pdfDoc = null;
-let pdfContainer = null;
-   
+
    async function sha256Bytes(text){
 
     const enc =
@@ -2394,7 +2391,7 @@ function toggleLiteMode(){
 }
 
 detectLiteMode();
-   
+
 function notifyBackendLogout(reason = "Logged out.") {
 
     const visitorInput = document.getElementById("user-name");
@@ -3712,7 +3709,7 @@ visibleFiles.forEach(file=>{
             }
             if(!window.LITE_MODE){
     startHoverPreview(file, e);
-}
+            }
         });
 
         card.addEventListener('mousemove', (e) => {
@@ -4070,8 +4067,6 @@ currentDecryptedPdf = decrypted.slice(0);
 // PDF.JS
 // =========================
 
-document.getElementById('modal').style.display = 'flex';
-document.getElementById('watermark').style.display = 'block';
 const pdfjsLib = window.pdfjsLib;
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -4130,12 +4125,6 @@ zoomLabel.style.color = "#1e293b";
 zoomLabel.style.minWidth = "60px";
 zoomLabel.style.justifyContent = "center";
 
-function updateZoomLabel() {
-    zoomLabel.innerText =
-    Math.round(currentZoom * 100)
-    + "%";
-}
-       
 // ZOOM IN
 const zoomInBtn = document.createElement('button');
 zoomInBtn.innerText = "+ Zoom In";
@@ -4198,83 +4187,29 @@ function updateZoomButtonUI() {
 zoomInBtn.onclick =
 async () => {
 
-    console.log(
-        "Zoom In:",
-        currentZoom
-    );
-
     if (
-        currentZoom >= 6
+        currentZoom >= 8
     ) return;
 
-    currentZoom += 0.3;
-
-   updateZoomLabel();
-   
-    if(window.LITE_MODE){
+    currentZoom =
+    +(currentZoom + 0.35)
+    .toFixed(2);
 
     await renderAllPages();
-
-}else{
-
-       if(!pageWrapContainer) return;
-
-    pageWrapContainer.style.transition =
-    "transform 0.15s ease";
-
-    pageWrapContainer.style.transform =
-    `scale(${currentZoom})`;
-
-    setTimeout(async () => {
-
-        pageWrapContainer.style.transform =
-        "";
-
-        await renderAllPages();
-
-    }, 100);
-}
 };
 
 zoomOutBtn.onclick =
 async () => {
 
-    console.log(
-        "Zoom Out:",
-        currentZoom
-    );
-
     if (
-        currentZoom <= 0.5
+        currentZoom <= 0.4
     ) return;
 
-    currentZoom -= 0.3;
-
-   updateZoomLabel();
-
-    if(window.LITE_MODE){
+    currentZoom =
+    +(currentZoom - 0.25)
+    .toFixed(2);
 
     await renderAllPages();
-
-}else{
-
-       if(!pageWrapContainer) return;
-       
-    pageWrapContainer.style.transition =
-    "transform 0.15s ease";
-
-    pageWrapContainer.style.transform =
-    `scale(${currentZoom})`;
-
-    setTimeout(async () => {
-
-        pageWrapContainer.style.transform =
-        "";
-
-        await renderAllPages();
-
-    }, 100);
-}
 };
 
 // BUTTON BASIC STYLING
@@ -4307,9 +4242,6 @@ if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
     zoomOutBtn.style.display = 'none';
     zoomInBtn.style.display  = 'none';
     toolbar.style.justifyContent = 'center';
-
-}
-} catch(err) { console.error(err); alert('Error opening file: ' + err.message); }
 }
 
 // =========================
@@ -4318,13 +4250,11 @@ if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
 
 async function renderAllPages() {
 
-   pageWrapContainer =
-document.getElementById(
-'pdf-canvas-wrapper'
-);
-
-   const savedScroll =
-pageWrapContainer?.scrollTop || 0;
+    // MAIN WRAPPER
+    let pageWrapContainer =
+    document.getElementById(
+        'pdf-canvas-wrapper'
+    );
 
     if (!pageWrapContainer) {
 
@@ -4353,27 +4283,7 @@ pageWrapContainer?.scrollTop || 0;
         const page =
         await pdf.getPage(pageNum);
 
-// =========================
-// SIDEBAR + FULL PDF RENDER
-// =========================
-
-const savedScroll =
-pageWrapContainer?.scrollTop || 0;
-
-// clear old pages before rerender
-pageWrapContainer.innerHTML = "";
-sidebar.innerHTML = "";
-
-for(
-let pageNum = 1;
-pageNum <= pdfDoc.numPages;
-pageNum++
-){
-
-const page =
-await pdfDoc.getPage(pageNum);
-
-// =========================
+        // =========================
 // SIDEBAR THUMBNAIL
 // =========================
 
@@ -4387,14 +4297,10 @@ if(!window.LITE_MODE){
     });
 
     const thumbCanvas =
-    document.createElement(
-        "canvas"
-    );
+    document.createElement('canvas');
 
     const thumbCtx =
-    thumbCanvas.getContext(
-        "2d"
-    );
+    thumbCanvas.getContext('2d');
 
     thumbCanvas.width =
     thumbViewport.width;
@@ -4413,165 +4319,316 @@ if(!window.LITE_MODE){
     }).promise;
 
     thumbWrap =
-    document.createElement(
-        "div"
-    );
+    document.createElement('div');
 
     thumbWrap.className =
-    "pdf-thumb";
+    'pdf-thumb';
 
     thumbWrap.appendChild(
         thumbCanvas
     );
 
-    thumbWrap.innerHTML +=
-    `<div>Page ${pageNum}</div>`;
+    thumbWrap.innerHTML += `
+    <div>
+        Page ${pageNum}
+    </div>
+    `;
 
+    thumbWrap.onclick = () => {
+
+        const pageEl =
+        document.getElementById(
+            'page-' + pageNum
+        );
+
+        if(pageEl){
+
+            pageEl.scrollIntoView({
+                behavior:'smooth'
+            });
+
+        }
+    };
+
+    sidebar.appendChild(
+        thumbWrap
+    );
 }
 
-// =========================
-// FULL PAGE VIEW
-// =========================
+        // =========================
+        // FULL PAGE VIEW
+        // =========================
 
+        // RESPONSIVE FIT TO CONTAINER
 const containerWidth =
 Math.max(
-container.clientWidth - 40,
-700
+    container.clientWidth - 40,
+    700
 );
 
 const originalViewport =
-page.getViewport({
-scale:1
-});
+page.getViewport({ scale: 1 });
 
 const fitScale =
 containerWidth /
 originalViewport.width;
 
+// final zoom remains INSIDE pdf only
 const viewport =
 page.getViewport({
-
-scale:
-fitScale *
-currentZoom
-
+    scale: fitScale * currentZoom
 });
 
-const pageWrap =
-document.createElement(
-"div"
-);
+        const pageWrap =
+        document.createElement('div');
 
-pageWrap.className =
-"pdf-page";
+        pageWrap.className =
+        "pdf-page";
 
-pageWrap.id =
-"page-" + pageNum;
+        pageWrap.style.marginBottom =
+        "24px";
 
-pageWrap.style.marginBottom =
-"24px";
+        pageWrap.style.background =
+        "white";
 
-pageWrap.style.background =
-"white";
+        pageWrap.style.borderRadius =
+        "14px";
 
-pageWrap.style.padding =
-"10px";
+        pageWrap.style.boxShadow =
+        "0 8px 22px rgba(0,0,0,.08)";
 
-pageWrap.style.borderRadius =
-"14px";
+        pageWrap.style.padding =
+        "10px";
 
-const canvas =
-document.createElement(
-"canvas"
-);
+        const canvas =
+        document.createElement('canvas');
 
-const context =
-canvas.getContext(
-"2d"
-);
+        const context =
+canvas.getContext('2d');
 
+// REAL internal canvas size
 canvas.width =
-Math.floor(
-viewport.width
-);
+Math.floor(viewport.width);
 
 canvas.height =
-Math.floor(
-viewport.height
+Math.floor(viewport.height);
+
+// Add canvas BEFORE render
+pageWrapContainer
+.appendChild(
+    canvas
 );
 
-// canvas INSIDE pageWrap
-pageWrap.appendChild(
-canvas
-);
-
-// render ONCE only
+// Render PDF
 await page.render({
-
-canvasContext:
-context,
-
-viewport:
-viewport
-
+    canvasContext:
+    context,
+    viewport:
+    viewport
 }).promise;
 
+// Resize visually AFTER render
 canvas.style.width =
-viewport.width +
-"px";
+"100%";
+
+canvas.style.maxWidth =
+"100%";
 
 canvas.style.height =
-viewport.height +
-"px";
+"auto";
 
 canvas.style.display =
 "block";
 
 canvas.style.margin =
-"0 auto";
+"0 auto 14px auto";
 
 canvas.style.borderRadius =
 "12px";
 
-// add page
-pageWrapContainer
-.appendChild(
-pageWrap
-);
+canvas.style.boxShadow =
+"0 4px 18px rgba(0,0,0,.12)";
 
-// thumbnail click
+        pageWrapContainer.appendChild(
+            pageWrap
+        );
+
+        await page.render({
+
+            canvasContext: context,
+            viewport: viewport
+
+        }).promise;
+
+        // =========================
+        // THUMBNAIL CLICK
+        // =========================
+
+        // =========================
+// THUMBNAIL CLICK
+// =========================
+
 if(thumbWrap){
 
-thumbWrap.onclick =
-() => {
+    thumbWrap.onclick = () => {
 
-pageWrap
-.scrollIntoView({
+        pageWrap.scrollIntoView({
 
-behavior:
-"smooth"
+            behavior: 'smooth'
 
-});
+        });
+
+    };
+
+}
+
+        sidebar.appendChild(
+            thumbWrap
+        );
+
+    }
+
+}
+
+// INITIAL RENDER
+await renderAllPages();
+
+// Force second render after modal/layout settles
+setTimeout(async () => {
+    await renderAllPages();
+}, 120);
+
+// =========================
+// DOWNLOAD SECURELY
+// =========================
+
+downloadBtn.onclick = async () => {
+
+    try {
+
+        if (!currentDecryptedPdf) {
+
+            alert('No file loaded.');
+            return;
+
+        }
+
+        // PASSWORD GATE
+        const enteredPass =
+        prompt('Enter download password:');
+
+        if (enteredPass === null)
+        return;
+
+        try {
+
+            const enteredHash =
+await window.sha256(
+    enteredPass
+);
+
+const passkeyRes =
+await fetch(
+ "https://backend.shinumaths989.workers.dev/get-secret",
+ {
+   method:"POST",
+   headers:{
+     "Content-Type":
+     "application/json"
+   },
+
+   body: JSON.stringify({
+      hash: enteredHash
+   })
+ }
+);
+            const passkeyResult =
+            await passkeyRes.json();
+
+            if (
+                !passkeyResult ||
+                !passkeyResult.success
+            ) {
+
+                alert(
+                    passkeyResult.message ||
+                    'Incorrect download password.'
+                );
+
+                return;
+            }
+
+        } catch (fetchErr) {
+
+            console.error(fetchErr);
+
+            alert(
+                'Could not verify password.'
+            );
+
+            return;
+        }
+
+        // DOWNLOAD PDF
+
+        const pdfBlob =
+        new Blob(
+            [new Uint8Array(currentDecryptedPdf)],
+            {
+                type: 'application/pdf'
+            }
+        );
+
+        const url =
+        URL.createObjectURL(pdfBlob);
+
+        const a =
+        document.createElement('a');
+
+        a.href = url;
+
+        a.download =
+        displayName + '.pdf';
+
+        document.body.appendChild(a);
+
+        a.click();
+
+        a.remove();
+
+        URL.revokeObjectURL(url);
+
+    } catch (err) {
+
+        console.error(err);
+
+        alert('Download failed.');
+
+    }
 
 };
 
-sidebar.appendChild(
-thumbWrap
-);
+// SHOW MODAL
+
+document.getElementById(
+    'modal'
+).style.display = 'block';
+
+document.getElementById(
+    'modal-title'
+).textContent =
+displayName;
+
+} catch (e) {
+
+    console.error(e);
+
+    alert(
+        "Access Denied: Could not decrypt file."
+    );
 
 }
 
-}
-
-// restore scroll
-if(pageWrapContainer){
-
-pageWrapContainer
-.scrollTop =
-savedScroll;
-
-}
-    }
 }
 /* =========================
    CLOSE MODAL
@@ -5289,20 +5346,28 @@ async function renderComparePane(side, file){
         scale: 1
     });
 
-// Calculate fit only once
-const fitScale =
-containerWidth /
-originalViewport.width;
+    // Auto fit scale
+    const fitScale =
+    containerWidth /
+    originalViewport.width;
 
-// REAL zoom multiplier
-const finalScale =
-fitScale *
-(1 + (currentZoom - 1) * 2.5);
+    // Apply user zoom INSIDE viewer only
+    const safeScale =
+Math.max(
+    fitScale,
+    1.25
+);
 
 const viewport =
 page.getViewport({
-    scale: finalScale
+    scale:
+safeScale *
+Math.pow(
+    currentZoom,
+    1.25
+)
 });
+
     // Create canvas
     const canvas =
     document.createElement(
@@ -5409,6 +5474,7 @@ function vaultPostInit(){
     renderPinnedSection();
     setTimeout(checkDocExpiryReminders, 2000);
 }
+
 </script>
 
 <script src="https://www.google.com/recaptcha/api.js" defer></script>
