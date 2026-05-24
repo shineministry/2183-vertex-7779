@@ -4187,13 +4187,16 @@ function updateZoomButtonUI() {
 zoomInBtn.onclick =
 async () => {
 
+    console.log(
+        "Zoom In:",
+        currentZoom
+    );
+
     if (
-        currentZoom >= 8
+        currentZoom >= 6
     ) return;
 
-    currentZoom =
-    +(currentZoom + 0.35)
-    .toFixed(2);
+    currentZoom += 0.3;
 
     await renderAllPages();
 };
@@ -4201,13 +4204,16 @@ async () => {
 zoomOutBtn.onclick =
 async () => {
 
+    console.log(
+        "Zoom Out:",
+        currentZoom
+    );
+
     if (
-        currentZoom <= 0.4
+        currentZoom <= 0.5
     ) return;
 
-    currentZoom =
-    +(currentZoom - 0.25)
-    .toFixed(2);
+    currentZoom -= 0.3;
 
     await renderAllPages();
 };
