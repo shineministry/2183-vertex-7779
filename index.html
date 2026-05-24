@@ -4430,11 +4430,9 @@ if(!window.LITE_MODE){
         thumbCanvas
     );
 
-    thumbWrap.innerHTML += `
-    <div>
-        Page ${pageNum}
-    </div>
-    `;
+    const pageLabel = document.createElement('div');
+pageLabel.textContent = `Page ${pageNum}`;
+thumbWrap.appendChild(pageLabel);
 
     thumbWrap.onclick = () => {
 
