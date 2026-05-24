@@ -4460,19 +4460,23 @@ canvas.style.boxShadow =
 
         }).promise;
 
-        // =========================
-        // THUMBNAIL CLICK
-        // =========================
+// =========================
+// THUMBNAIL CLICK
+// =========================
 
-        thumbWrap.onclick = () => {
+if(thumbWrap){
 
-            pageWrap.scrollIntoView({
+    thumbWrap.onclick = () => {
 
-                behavior: 'smooth'
+        pageWrap.scrollIntoView({
 
-            });
+            behavior: 'smooth'
 
-        };
+        });
+
+    };
+
+}
 
         sidebar.appendChild(
             thumbWrap
