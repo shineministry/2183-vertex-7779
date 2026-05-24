@@ -1801,6 +1801,133 @@ button{
     color:white;
 
 }
+
+   /* =========================
+   LITE MODE
+========================= */
+
+.lite-mode {
+
+    --shadow:none !important;
+
+}
+
+/* Disable expensive animations */
+
+.lite-mode *,
+.lite-mode *::before,
+.lite-mode *::after {
+
+    animation:none !important;
+    transition:none !important;
+
+}
+
+/* Remove blur/glassmorphism */
+
+.lite-mode .step-card,
+.lite-mode .modal,
+.lite-mode .modal-content,
+.lite-mode .modal-content-small {
+
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+
+}
+
+/* Remove heavy shadows */
+
+.lite-mode .step-card,
+.lite-mode .file-card,
+.lite-mode .passport-navbar,
+.lite-mode .modal-content {
+
+    box-shadow:none !important;
+
+}
+
+/* Remove shimmer effect */
+
+.lite-mode .file-card::before {
+
+    display:none !important;
+
+}
+
+/* Stop hover transforms */
+
+.lite-mode .file-card:hover,
+.lite-mode .btn-outline:hover,
+.lite-mode .btn-solid:hover,
+.lite-mode .btn-primary:hover {
+
+    transform:none !important;
+
+}
+
+/* Simpler cards */
+
+.lite-mode .file-card {
+
+    border-radius:14px;
+    padding:16px;
+
+}
+
+/* Smaller spacing */
+
+.lite-mode .content-view {
+
+    padding:18px;
+
+}
+
+.lite-mode .sidebar {
+
+    padding:14px;
+
+}
+
+/* Disable preview tooltip */
+
+.lite-mode .preview-tooltip {
+
+    display:none !important;
+
+}
+
+/* Hide PDF thumbnails sidebar */
+
+.lite-mode #pdf-sidebar {
+
+    display:none !important;
+
+}
+
+/* Simpler modal */
+
+.lite-mode .modal {
+
+    backdrop-filter:none !important;
+    background:rgba(0,0,0,.85);
+
+}
+
+/* Smaller file grid */
+
+.lite-mode .file-grid {
+
+    gap:12px;
+
+}
+
+/* Remove floating logo */
+
+.lite-mode .main-logo {
+
+    animation:none !important;
+
+}
 </style>
 
 </head>
@@ -2176,6 +2303,84 @@ let currentCategory = "";
     );
 }
 
+/* =========================
+   LITE MODE ENGINE
+========================= */
+
+window.LITE_MODE = false;
+
+function detectLiteMode() {
+
+    // Manual override first
+    const saved =
+        localStorage.getItem(
+            "vault-lite-mode"
+        );
+
+    if(saved !== null){
+
+        window.LITE_MODE =
+            saved === "true";
+
+        return;
+    }
+
+    const cpu =
+        navigator.hardwareConcurrency || 2;
+
+    const memory =
+        navigator.deviceMemory || 2;
+
+    const mobile =
+        /Android|iPhone|iPad|Mobile/i
+        .test(navigator.userAgent);
+
+    const smallScreen =
+        window.innerWidth <= 768;
+
+    // Weak device detection
+    const lowEnd =
+        cpu <= 4 ||
+        memory <= 4;
+
+    window.LITE_MODE =
+        lowEnd ||
+        (mobile && smallScreen);
+
+    if(window.LITE_MODE){
+
+        document.body.classList.add(
+            "lite-mode"
+        );
+
+    }
+
+    console.log(
+        "Lite Mode:",
+        window.LITE_MODE
+    );
+}
+
+function toggleLiteMode(){
+
+    window.LITE_MODE =
+        !window.LITE_MODE;
+
+    document.body.classList.toggle(
+        "lite-mode",
+        window.LITE_MODE
+    );
+
+    localStorage.setItem(
+        "vault-lite-mode",
+        window.LITE_MODE
+    );
+
+    location.reload();
+}
+
+detectLiteMode();
+   
 function notifyBackendLogout(reason = "Logged out.") {
 
     const visitorInput = document.getElementById("user-name");
@@ -3414,7 +3619,12 @@ category){
    
     grid.innerHTML = "";
 
-    files.forEach(file=>{
+    const visibleFiles =
+window.LITE_MODE
+? files.slice(0,20)
+: files;
+
+visibleFiles.forEach(file=>{
 
         const card =
         document.createElement(
@@ -3486,7 +3696,9 @@ category){
             if (window.matchMedia("(max-width: 768px)").matches || ('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
                 return; // Stop right here, don't show the preview
             }
-            startHoverPreview(file, e);
+            if(!window.LITE_MODE){
+    startHoverPreview(file, e);
+}
         });
 
         card.addEventListener('mousemove', (e) => {
@@ -4050,6 +4262,8 @@ async function renderAllPages() {
         // SIDEBAR THUMBNAIL
         // =========================
 
+       if(!window.LITE_MODE){
+
         const thumbViewport =
         page.getViewport({
             scale: 0.25
@@ -4093,6 +4307,7 @@ async function renderAllPages() {
         thumbWrap.appendChild(
             pageLabel
         );
+       }
 
         // =========================
         // FULL PAGE VIEW
