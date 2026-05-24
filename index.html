@@ -4957,7 +4957,7 @@ async function generateShareLink(){
                     'application/json'
                 },
 body: JSON.stringify({
-  file: selectedFile,
+  file: shareCurrentFile.file,
   name: fileName,
   expiry: expiryHours,
   password: linkPassword || null,
