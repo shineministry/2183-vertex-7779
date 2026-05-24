@@ -2280,6 +2280,7 @@ let lockUntil = 0;
    let inactivityTimer;
 let currentBlobUrl = null;
 let currentDecryptedPdf = null;
+let pageWrapContainer = null;
    
 let sessionStartTime = null;
 
@@ -4300,11 +4301,6 @@ if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
     toolbar.style.justifyContent = 'center';
 
 }
-           // MAIN WRAPPER
-    let pageWrapContainer =
-    document.getElementById(
-        'pdf-canvas-wrapper'
-    );
 
 // =========================
 // RE-RENDER CANVAS PIPELINE
@@ -4312,8 +4308,13 @@ if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
 
 async function renderAllPages() {
 
+   pageWrapContainer =
+document.getElementById(
+'pdf-canvas-wrapper'
+);
+
    const savedScroll =
-pageWrapContainer.scrollTop;
+pageWrapContainer?.scrollTop || 0;
 
     if (!pageWrapContainer) {
 
@@ -4343,6 +4344,26 @@ pageWrapContainer.scrollTop;
         await pdf.getPage(pageNum);
 
 // =========================
+// SIDEBAR + FULL PDF RENDER
+// =========================
+
+const savedScroll =
+pageWrapContainer?.scrollTop || 0;
+
+// clear old pages before rerender
+pageWrapContainer.innerHTML = "";
+sidebar.innerHTML = "";
+
+for(
+let pageNum = 1;
+pageNum <= pdfDoc.numPages;
+pageNum++
+){
+
+const page =
+await pdfDoc.getPage(pageNum);
+
+// =========================
 // SIDEBAR THUMBNAIL
 // =========================
 
@@ -4356,10 +4377,14 @@ if(!window.LITE_MODE){
     });
 
     const thumbCanvas =
-    document.createElement('canvas');
+    document.createElement(
+        "canvas"
+    );
 
     const thumbCtx =
-    thumbCanvas.getContext('2d');
+    thumbCanvas.getContext(
+        "2d"
+    );
 
     thumbCanvas.width =
     thumbViewport.width;
@@ -4378,316 +4403,163 @@ if(!window.LITE_MODE){
     }).promise;
 
     thumbWrap =
-    document.createElement('div');
+    document.createElement(
+        "div"
+    );
 
     thumbWrap.className =
-    'pdf-thumb';
+    "pdf-thumb";
 
     thumbWrap.appendChild(
         thumbCanvas
     );
 
-    thumbWrap.innerHTML += `
-    <div>
-        Page ${pageNum}
-    </div>
-    `;
+    thumbWrap.innerHTML +=
+    `<div>Page ${pageNum}</div>`;
 
-    thumbWrap.onclick = () => {
-
-        const pageEl =
-        document.getElementById(
-            'page-' + pageNum
-        );
-
-        if(pageEl){
-
-            pageEl.scrollIntoView({
-                behavior:'smooth'
-            });
-
-        }
-    };
-
-    sidebar.appendChild(
-        thumbWrap
-    );
 }
 
-        // =========================
-        // FULL PAGE VIEW
-        // =========================
+// =========================
+// FULL PAGE VIEW
+// =========================
 
-        // RESPONSIVE FIT TO CONTAINER
 const containerWidth =
 Math.max(
-    container.clientWidth - 40,
-    700
+container.clientWidth - 40,
+700
 );
 
 const originalViewport =
-page.getViewport({ scale: 1 });
+page.getViewport({
+scale:1
+});
 
 const fitScale =
 containerWidth /
 originalViewport.width;
 
-// final zoom remains INSIDE pdf only
 const viewport =
 page.getViewport({
-    scale: fitScale * currentZoom
+
+scale:
+fitScale *
+currentZoom
+
 });
 
-        const pageWrap =
-        document.createElement('div');
-
-        pageWrap.className =
-        "pdf-page";
-
-        pageWrap.style.marginBottom =
-        "24px";
-
-        pageWrap.style.background =
-        "white";
-
-        pageWrap.style.borderRadius =
-        "14px";
-
-        pageWrap.style.boxShadow =
-        "0 8px 22px rgba(0,0,0,.08)";
-
-        pageWrap.style.padding =
-        "10px";
-
-        const canvas =
-        document.createElement('canvas');
-
-        const context =
-canvas.getContext('2d');
-
-// REAL internal canvas size
-canvas.width =
-Math.floor(viewport.width);
-
-canvas.height =
-Math.floor(viewport.height);
-
-// Add canvas BEFORE render
-pageWrapContainer
-.appendChild(
-    canvas
+const pageWrap =
+document.createElement(
+"div"
 );
 
-// Render PDF
+pageWrap.className =
+"pdf-page";
+
+pageWrap.id =
+"page-" + pageNum;
+
+pageWrap.style.marginBottom =
+"24px";
+
+pageWrap.style.background =
+"white";
+
+pageWrap.style.padding =
+"10px";
+
+pageWrap.style.borderRadius =
+"14px";
+
+const canvas =
+document.createElement(
+"canvas"
+);
+
+const context =
+canvas.getContext(
+"2d"
+);
+
+canvas.width =
+Math.floor(
+viewport.width
+);
+
+canvas.height =
+Math.floor(
+viewport.height
+);
+
+// canvas INSIDE pageWrap
+pageWrap.appendChild(
+canvas
+);
+
+// render ONCE only
 await page.render({
-    canvasContext:
-    context,
-    viewport:
-    viewport
+
+canvasContext:
+context,
+
+viewport:
+viewport
+
 }).promise;
 
-// Resize visually AFTER render
-// REAL ZOOM
 canvas.style.width =
-viewport.width + "px";
+viewport.width +
+"px";
 
 canvas.style.height =
-viewport.height + "px";
-
-canvas.style.maxWidth =
-"none";
+viewport.height +
+"px";
 
 canvas.style.display =
 "block";
 
 canvas.style.margin =
-"0 auto 14px auto";
+"0 auto";
 
 canvas.style.borderRadius =
 "12px";
 
-canvas.style.boxShadow =
-"0 4px 18px rgba(0,0,0,.12)";
+// add page
+pageWrapContainer
+.appendChild(
+pageWrap
+);
 
-        pageWrapContainer.appendChild(
-            pageWrap
-        );
-
-        await page.render({
-
-            canvasContext: context,
-            viewport: viewport
-
-        }).promise;
-
-// =========================
-// THUMBNAIL CLICK
-// =========================
-
+// thumbnail click
 if(thumbWrap){
 
-    thumbWrap.onclick = () => {
+thumbWrap.onclick =
+() => {
 
-        pageWrap.scrollIntoView({
+pageWrap
+.scrollIntoView({
 
-            behavior: 'smooth'
+behavior:
+"smooth"
 
-        });
-
-    };
-
-}
-
-        sidebar.appendChild(
-            thumbWrap
-        );
-
-    }
-
-}
-
-// INITIAL RENDER
-await renderAllPages();
-
-updateZoomLabel();
-
-// Force second render after modal/layout settles
-setTimeout(async () => {
-    await renderAllPages();
-}, 120);
-
-// =========================
-// DOWNLOAD SECURELY
-// =========================
-
-downloadBtn.onclick = async () => {
-
-    try {
-
-        if (!currentDecryptedPdf) {
-
-            alert('No file loaded.');
-            return;
-
-        }
-
-        // PASSWORD GATE
-        const enteredPass =
-        prompt('Enter download password:');
-
-        if (enteredPass === null)
-        return;
-
-        try {
-
-            const enteredHash =
-await window.sha256(
-    enteredPass
-);
-
-const passkeyRes =
-await fetch(
- "https://backend.shinumaths989.workers.dev/get-secret",
- {
-   method:"POST",
-   headers:{
-     "Content-Type":
-     "application/json"
-   },
-
-   body: JSON.stringify({
-      hash: enteredHash
-   })
- }
-);
-            const passkeyResult =
-            await passkeyRes.json();
-
-            if (
-                !passkeyResult ||
-                !passkeyResult.success
-            ) {
-
-                alert(
-                    passkeyResult.message ||
-                    'Incorrect download password.'
-                );
-
-                return;
-            }
-
-        } catch (fetchErr) {
-
-            console.error(fetchErr);
-
-            alert(
-                'Could not verify password.'
-            );
-
-            return;
-        }
-
-        // DOWNLOAD PDF
-
-        const pdfBlob =
-        new Blob(
-            [new Uint8Array(currentDecryptedPdf)],
-            {
-                type: 'application/pdf'
-            }
-        );
-
-        const url =
-        URL.createObjectURL(pdfBlob);
-
-        const a =
-        document.createElement('a');
-
-        a.href = url;
-
-        a.download =
-        displayName + '.pdf';
-
-        document.body.appendChild(a);
-
-        a.click();
-
-        a.remove();
-
-        URL.revokeObjectURL(url);
-
-    } catch (err) {
-
-        console.error(err);
-
-        alert('Download failed.');
-
-    }
+});
 
 };
 
-// SHOW MODAL
-
-document.getElementById(
-    'modal'
-).style.display = 'block';
-
-document.getElementById(
-    'modal-title'
-).textContent =
-displayName;
-
-} catch (e) {
-
-    console.error(e);
-
-    alert(
-        "Access Denied: Could not decrypt file."
-    );
+sidebar.appendChild(
+thumbWrap
+);
 
 }
-pageWrapContainer.scrollTop =
+
+}
+
+// restore scroll
+if(pageWrapContainer){
+
+pageWrapContainer
+.scrollTop =
 savedScroll;
+
 }
 /* =========================
    CLOSE MODAL
