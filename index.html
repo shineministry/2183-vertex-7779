@@ -4125,6 +4125,12 @@ zoomLabel.style.color = "#1e293b";
 zoomLabel.style.minWidth = "60px";
 zoomLabel.style.justifyContent = "center";
 
+function updateZoomLabel() {
+    zoomLabel.innerText =
+    Math.round(currentZoom * 100)
+    + "%";
+}
+       
 // ZOOM IN
 const zoomInBtn = document.createElement('button');
 zoomInBtn.innerText = "+ Zoom In";
@@ -4198,7 +4204,29 @@ async () => {
 
     currentZoom += 0.3;
 
+   updateZoomLabel();
+   
+    if(window.LITE_MODE){
+
     await renderAllPages();
+
+}else{
+
+    pageWrapContainer.style.transition =
+    "transform 0.15s ease";
+
+    pageWrapContainer.style.transform =
+    `scale(${currentZoom})`;
+
+    setTimeout(async () => {
+
+        pageWrapContainer.style.transform =
+        "";
+
+        await renderAllPages();
+
+    }, 100);
+}
 };
 
 zoomOutBtn.onclick =
@@ -4215,7 +4243,29 @@ async () => {
 
     currentZoom -= 0.3;
 
+   updateZoomLabel();
+
+    if(window.LITE_MODE){
+
     await renderAllPages();
+
+}else{
+
+    pageWrapContainer.style.transition =
+    "transform 0.15s ease";
+
+    pageWrapContainer.style.transform =
+    `scale(${currentZoom})`;
+
+    setTimeout(async () => {
+
+        pageWrapContainer.style.transform =
+        "";
+
+        await renderAllPages();
+
+    }, 100);
+}
 };
 
 // BUTTON BASIC STYLING
@@ -4256,6 +4306,9 @@ if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
 
 async function renderAllPages() {
 
+   const savedScroll =
+pageWrapContainer.scrollTop;
+   
     // MAIN WRAPPER
     let pageWrapContainer =
     document.getElementById(
@@ -4496,6 +4549,8 @@ if(thumbWrap){
 // INITIAL RENDER
 await renderAllPages();
 
+updateZoomLabel();
+
 // Force second render after modal/layout settles
 setTimeout(async () => {
     await renderAllPages();
@@ -4631,7 +4686,8 @@ displayName;
     );
 
 }
-
+pageWrapContainer.scrollTop =
+savedScroll;
 }
 /* =========================
    CLOSE MODAL
