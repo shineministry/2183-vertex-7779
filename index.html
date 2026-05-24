@@ -5342,28 +5342,20 @@ async function renderComparePane(side, file){
         scale: 1
     });
 
-    // Auto fit scale
-    const fitScale =
-    containerWidth /
-    originalViewport.width;
+// Calculate fit only once
+const fitScale =
+containerWidth /
+originalViewport.width;
 
-    // Apply user zoom INSIDE viewer only
-    const safeScale =
-Math.max(
-    fitScale,
-    0.7
-);
+// REAL zoom multiplier
+const finalScale =
+fitScale *
+(1 + (currentZoom - 1) * 2.5);
 
 const viewport =
 page.getViewport({
-    scale:
-safeScale *
-Math.pow(
-    currentZoom,
-    1.25
-)
+    scale: finalScale
 });
-
     // Create canvas
     const canvas =
     document.createElement(
