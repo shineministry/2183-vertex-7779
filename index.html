@@ -2287,7 +2287,9 @@ let sessionStartTime = null;
    let sessionId = crypto.randomUUID();
 let allFilesData = {};
 let currentCategory = "";
-
+let pdfDoc = null;
+let pdfContainer = null;
+   
    async function sha256Bytes(text){
 
     const enc =
