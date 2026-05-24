@@ -4298,7 +4298,13 @@ if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
     zoomOutBtn.style.display = 'none';
     zoomInBtn.style.display  = 'none';
     toolbar.style.justifyContent = 'center';
+
 }
+           // MAIN WRAPPER
+    let pageWrapContainer =
+    document.getElementById(
+        'pdf-canvas-wrapper'
+    );
 
 // =========================
 // RE-RENDER CANVAS PIPELINE
@@ -4308,12 +4314,6 @@ async function renderAllPages() {
 
    const savedScroll =
 pageWrapContainer.scrollTop;
-   
-    // MAIN WRAPPER
-    let pageWrapContainer =
-    document.getElementById(
-        'pdf-canvas-wrapper'
-    );
 
     if (!pageWrapContainer) {
 
