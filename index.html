@@ -5060,7 +5060,7 @@ async function renderComparePane(side, file){
 
     // Get parent width
     const containerWidth =
-    contentEl.clientWidth - 30;
+    container.clientWidth - 30;
 
     // Original PDF size
     const originalViewport =
@@ -5129,9 +5129,9 @@ async function renderComparePane(side, file){
         viewport
     }).promise;
 
-    contentEl.appendChild(
-        canvas
-    );
+    pageWrapContainer.appendChild(
+    canvas
+);
 }
 
     } catch (err) {
