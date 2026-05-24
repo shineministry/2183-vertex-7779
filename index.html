@@ -4140,22 +4140,49 @@ page.getViewport({
         document.createElement('canvas');
 
         const context =
-        canvas.getContext('2d');
+canvas.getContext('2d');
 
-        canvas.width =
-        viewport.width;
+// REAL internal canvas size
+canvas.width =
+Math.floor(viewport.width);
 
-        canvas.height =
-        viewport.height;
+canvas.height =
+Math.floor(viewport.height);
 
-        canvas.style.width = viewport.width + "px";
+// Add canvas BEFORE render
+contentEl.appendChild(
+    canvas
+);
 
-        canvas.style.borderRadius =
-        "10px";
+// Render PDF
+await page.render({
+    canvasContext:
+    context,
+    viewport:
+    viewport
+}).promise;
 
-        pageWrap.appendChild(
-            canvas
-        );
+// Resize visually AFTER render
+canvas.style.width =
+"100%";
+
+canvas.style.maxWidth =
+"100%";
+
+canvas.style.height =
+"auto";
+
+canvas.style.display =
+"block";
+
+canvas.style.margin =
+"0 auto 14px auto";
+
+canvas.style.borderRadius =
+"12px";
+
+canvas.style.boxShadow =
+"0 4px 18px rgba(0,0,0,.12)";
 
         pageWrapContainer.appendChild(
             pageWrap
