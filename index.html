@@ -961,15 +961,15 @@ button{
 
 .modal-content{
 
-    width:96%;
+    width:92%;
 
-    height:94%;
+    height:92%;
 
-    margin:2% auto;
+    margin:1.5% auto;
 
     background:white;
 
-    border-radius:20px;
+    border-radius:24px;
 
     overflow:hidden;
 
@@ -979,9 +979,6 @@ button{
 
     animation:
         modalScale .35s ease;
-
-    box-shadow:
-        0 30px 80px rgba(0,0,0,0.4);
 
 }
 
@@ -1006,26 +1003,18 @@ button{
 
 .modal-header{
 
-    padding:12px 18px;
+    padding:15px 22px;
 
-    background:#1e293b;
+    background:#f8fafc;
 
     border-bottom:
-        1px solid #334155;
+        1px solid var(--border);
 
     display:flex;
 
     justify-content:space-between;
 
     align-items:center;
-
-    flex-shrink:0;
-
-    color:white;
-
-    font-size:14px;
-
-    font-weight:700;
 
 }
 
@@ -1054,11 +1043,10 @@ button{
     flex:1;
 
     overflow-y:auto;
-    overflow-x:auto;
 
-    background:#374151;
+    background:#e5e7eb;
 
-    padding:20px;
+    padding:30px;
 
     display:flex;
 
@@ -1118,28 +1106,18 @@ button{
     .overlay{
 
         align-items:flex-start;
-        padding:12px;
 
     }
    
     .step-card{
 
-        padding:20px 16px;
+        padding:24px;
 
-        border-radius:18px;
+        border-radius:22px;
 
-        margin-top:10px;
-        margin-bottom:10px;
-        max-height:none;
+        margin-top:20px;
+        margin-bottom:20px;
 
-    }
-
-    .step-card h1 {
-        font-size:1.4rem;
-    }
-
-    .main-logo {
-        font-size:40px;
     }
 
     .passport-top-utility{
@@ -1148,14 +1126,8 @@ button{
 
         text-align:center;
 
-        padding:8px 10px;
-        flex-wrap:wrap;
-        gap:6px;
+        padding:10px;
 
-    }
-
-    #passport-datetime {
-        font-size:11px;
     }
 
     .passport-main-nav{
@@ -1164,8 +1136,7 @@ button{
 
         align-items:stretch;
 
-        padding:10px 12px;
-        gap:8px;
+        padding:12px 14px;
 
     }
 
@@ -1181,9 +1152,9 @@ button{
         width:100%;
 
         display:grid;
-        grid-template-columns:1fr 1fr;
+        grid-template-columns: 1fr 1fr;
 
-        gap:6px;
+        gap:8px;
 
     }
 
@@ -1200,7 +1171,6 @@ button{
     .btn-logout{
 
         width:100%;
-        font-size:10px;
 
     }
 
@@ -1213,17 +1183,13 @@ button{
     .sidebar{
 
         width:100%;
-        height:auto;
 
         overflow-x:auto;
-        overflow-y:hidden;
 
         border-right:none;
 
         border-bottom:
             1px solid var(--border);
-
-        padding:10px 12px;
 
     }
 
@@ -1231,7 +1197,7 @@ button{
 
         display:flex;
 
-        gap:8px;
+        gap:10px;
 
     }
 
@@ -1240,14 +1206,12 @@ button{
         white-space:nowrap;
 
         margin-bottom:0;
-        padding:10px 12px;
-        font-size:12px;
 
     }
 
     .content-view{
 
-        padding:12px;
+        padding:16px;
 
     }
 
@@ -1256,11 +1220,10 @@ button{
         grid-template-columns:
             repeat(2,1fr);
 
-        gap:10px;
+        gap:14px;
 
     }
 
-    /* Modal: full screen on mobile */
     .modal-content{
 
         width:100%;
@@ -1277,39 +1240,43 @@ button{
 
         width:95%;
 
-        margin:20px auto;
+        margin:40px auto;
 
     }
 
     #pdf-render-container{
 
-        padding:10px;
+        padding:15px;
 
     }
 
-    /* PDF viewer toolbar: compact on mobile */
-    #pdf-viewer-layout > div:first-child + div {
-        padding:8px;
-    }
-
-    .timer-box {
-        padding:10px 12px;
-        font-size:12px;
-    }
-
-    .share-modal-inner {
-        margin:20px auto;
-        width:95%;
-    }
-
-    .compare-body {
+    /* Compare modal: stack panes vertically on mobile */
+    .compare-body{
         flex-direction:column;
     }
-
-    .compare-pane {
+    .compare-pane{
         border-right:none;
         border-bottom:2px solid var(--border);
-        min-height:300px;
+        min-height:40vh;
+    }
+    .compare-pane:last-child{
+        border-bottom:none;
+    }
+
+    /* Compare bar: wrap on mobile */
+    #compare-bar{
+        flex-wrap:wrap;
+        bottom:12px;
+        width:90%;
+        white-space:normal;
+        text-align:center;
+        justify-content:center;
+    }
+
+    /* Share modal: full width on mobile */
+    .share-modal-inner{
+        margin:20px auto;
+        width:95%;
     }
 
 }
@@ -1320,7 +1287,7 @@ button{
 
     .brand-title{
 
-        font-size:14px;
+        font-size:17px;
 
     }
 
@@ -1328,10 +1295,6 @@ button{
 
         grid-template-columns:1fr;
 
-    }
-
-    .nav-auth {
-        grid-template-columns:1fr;
     }
 
     #pdf-viewer-layout{
@@ -1358,18 +1321,10 @@ button{
 
     .pdf-thumb{
 
-        min-width:80px;
+        min-width:90px;
 
         margin-bottom:0;
 
-    }
-
-    .step-card h1 {
-        font-size:1.2rem;
-    }
-
-    .main-logo {
-        font-size:34px;
     }
 
 }
@@ -1451,11 +1406,10 @@ button{
     flex:1;
 
     overflow-y:auto;
-    overflow-x:auto;
 
-    background:#374151;
+    background:#e5e7eb;
 
-    padding:20px;
+    padding:30px;
 
     display:flex;
 
@@ -4186,38 +4140,28 @@ toolbar.style.position = "sticky";
 toolbar.style.top = "0";
 toolbar.style.zIndex = "50";
 toolbar.style.display = "flex";
-toolbar.style.gap = "8px";
+toolbar.style.gap = "12px";
 toolbar.style.justifyContent = "center";
-toolbar.style.alignItems = "center";
-toolbar.style.padding = "10px 12px";
-toolbar.style.background = "#1e293b";
-toolbar.style.borderBottom = "1px solid #334155";
-toolbar.style.flexWrap = "wrap";
+toolbar.style.padding = "14px";
+toolbar.style.background = "#e5e7eb";
+toolbar.style.borderBottom = "1px solid #cbd5e1";
 
 // ZOOM OUT
 const zoomOutBtn = document.createElement('button');
-zoomOutBtn.innerText = "− Out";
+zoomOutBtn.innerText = "− Zoom Out";
 
 // ZOOM LEVEL INDICATOR LABEL
 const zoomLabel = document.createElement('span');
 zoomLabel.style.display = "flex";
 zoomLabel.style.alignItems = "center";
-zoomLabel.style.fontWeight = "800";
-zoomLabel.style.color = "white";
-zoomLabel.style.minWidth = "58px";
+zoomLabel.style.fontWeight = "700";
+zoomLabel.style.color = "#1e293b";
+zoomLabel.style.minWidth = "60px";
 zoomLabel.style.justifyContent = "center";
-zoomLabel.style.fontSize = "13px";
-zoomLabel.style.background = "rgba(255,255,255,0.1)";
-zoomLabel.style.borderRadius = "8px";
-zoomLabel.style.padding = "4px 8px";
 
 // ZOOM IN
 const zoomInBtn = document.createElement('button');
-zoomInBtn.innerText = "+ In";
-
-// ZOOM RESET
-const zoomResetBtn = document.createElement('button');
-zoomResetBtn.innerText = "⟳ Fit";
+zoomInBtn.innerText = "+ Zoom In";
 
 // DOWNLOAD
 const downloadBtn = document.createElement('button');
@@ -4232,7 +4176,7 @@ function getInitialZoom() {
 
     // Mobile
     if (screenWidth <= 480) {
-        return 0.9;
+        return 0.85;
     }
 
     // Tablet
@@ -4250,17 +4194,27 @@ function isDesktopDevice() {
     return !(/mobile|android|iphone|ipad|phone|playbook|tablet|kindle/i.test(ua));
 }
 
-// Visual and functional boundary safety checker — zoom works on ALL devices
+// Visual and functional boundary safety checker
 function updateZoomButtonUI() {
     zoomLabel.innerText = Math.round(currentZoom * 100) + "%";
     
-    // Enable zoom on ALL devices (mobile + desktop)
-    zoomInBtn.disabled = currentZoom >= 10.0; // Hard lock at 1000%
-    zoomOutBtn.disabled = currentZoom <= 0.1;  // Floor at 10%
-    zoomInBtn.style.opacity = currentZoom >= 10.0 ? "0.3" : "1";
-    zoomOutBtn.style.opacity = currentZoom <= 0.1 ? "0.3" : "1";
-    zoomInBtn.style.cursor = currentZoom >= 10.0 ? "not-allowed" : "pointer";
-    zoomOutBtn.style.cursor = currentZoom <= 0.1 ? "not-allowed" : "pointer";
+    if (!isDesktopDevice()) {
+        // Enforce structural freeze on mobile platforms
+        zoomInBtn.disabled = true;
+        zoomOutBtn.disabled = true;
+        zoomInBtn.style.opacity = "0.3";
+        zoomOutBtn.style.opacity = "0.3";
+        zoomInBtn.style.cursor = "not-allowed";
+        zoomOutBtn.style.cursor = "not-allowed";
+    } else {
+        // Clean operating boundaries for PC / Mac laptops
+        zoomInBtn.disabled = currentZoom >= 10.0; // Hard lock at 1000%
+        zoomOutBtn.disabled = currentZoom <= 0.5;  // Floor at 50%
+        zoomInBtn.style.opacity = currentZoom >= 10.0 ? "0.3" : "";
+        zoomOutBtn.style.opacity = currentZoom <= 0.5 ? "0.3" : "";
+        zoomInBtn.style.cursor = currentZoom >= 10.0 ? "not-allowed" : "pointer";
+        zoomOutBtn.style.cursor = currentZoom <= 0.5 ? "not-allowed" : "pointer";
+    }
 }
 
 // CLICK INTERACTION HANDLERS
@@ -4268,14 +4222,13 @@ zoomInBtn.onclick =
 async () => {
 
     if (
-        currentZoom >= 10.0
+        currentZoom >= 8
     ) return;
 
     currentZoom =
-    +(currentZoom + 0.25)
+    +(currentZoom + 0.35)
     .toFixed(2);
 
-    updateZoomButtonUI();
     await renderAllPages();
 };
 
@@ -4283,52 +4236,26 @@ zoomOutBtn.onclick =
 async () => {
 
     if (
-        currentZoom <= 0.1
+        currentZoom <= 0.4
     ) return;
 
     currentZoom =
     +(currentZoom - 0.25)
     .toFixed(2);
 
-    updateZoomButtonUI();
     await renderAllPages();
 };
 
 // BUTTON BASIC STYLING
 [zoomOutBtn, zoomInBtn, downloadBtn].forEach(btn => {
-    btn.style.padding = "10px 16px";
+    btn.style.padding = "10px 18px";
     btn.style.border = "none";
     btn.style.borderRadius = "12px";
     btn.style.cursor = "pointer";
     btn.style.fontWeight = "700";
     btn.style.background = "#2563eb";
     btn.style.color = "white";
-    btn.style.fontSize = "13px";
-    btn.style.touchAction = "manipulation";
-    btn.style.minHeight = "42px";
 });
-
-// Reset button style
-zoomResetBtn.style.padding = "10px 16px";
-zoomResetBtn.style.border = "none";
-zoomResetBtn.style.borderRadius = "12px";
-zoomResetBtn.style.cursor = "pointer";
-zoomResetBtn.style.fontWeight = "700";
-zoomResetBtn.style.background = "#475569";
-zoomResetBtn.style.color = "white";
-zoomResetBtn.style.fontSize = "13px";
-zoomResetBtn.style.touchAction = "manipulation";
-zoomResetBtn.style.minHeight = "42px";
-
-// Download button distinct color
-downloadBtn.style.background = "#059669";
-
-zoomResetBtn.onclick =
-async () => {
-    currentZoom = getInitialZoom();
-    updateZoomButtonUI();
-    await renderAllPages();
-};
 
 // Run UI check immediately to lock controls appropriately
 updateZoomButtonUI();
@@ -4337,14 +4264,19 @@ updateZoomButtonUI();
 toolbar.appendChild(zoomOutBtn);
 toolbar.appendChild(zoomLabel);
 toolbar.appendChild(zoomInBtn);
-toolbar.appendChild(zoomResetBtn);
 toolbar.appendChild(downloadBtn);
 container.appendChild(toolbar);
        
 // =========================
-// MOBILE: show zoom controls on all devices
+// MOBILE: hide zoom controls but keep download available
 // =========================
-// Zoom is fully enabled on all devices including mobile
+if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
+    // On small devices we hide zoom controls to save space,
+    // but keep the toolbar (and download) accessible for all devices.
+    zoomOutBtn.style.display = 'none';
+    zoomInBtn.style.display  = 'none';
+    toolbar.style.justifyContent = 'center';
+}
 
 // =========================
 // RE-RENDER CANVAS PIPELINE
@@ -4430,9 +4362,11 @@ if(!window.LITE_MODE){
         thumbCanvas
     );
 
-    const pageLabel = document.createElement('div');
-pageLabel.textContent = `Page ${pageNum}`;
-thumbWrap.appendChild(pageLabel);
+    thumbWrap.innerHTML += `
+    <div>
+        Page ${pageNum}
+    </div>
+    `;
 
     thumbWrap.onclick = () => {
 
@@ -4459,11 +4393,11 @@ thumbWrap.appendChild(pageLabel);
         // FULL PAGE VIEW
         // =========================
 
-// RESPONSIVE FIT TO CONTAINER
+        // RESPONSIVE FIT TO CONTAINER
 const containerWidth =
 Math.max(
     container.clientWidth - 40,
-    300
+    700
 );
 
 const originalViewport =
@@ -4473,7 +4407,7 @@ const fitScale =
 containerWidth /
 originalViewport.width;
 
-// final zoom applied to canvas resolution
+// final zoom remains INSIDE pdf only
 const viewport =
 page.getViewport({
     scale: fitScale * currentZoom
@@ -4527,15 +4461,18 @@ await page.render({
     viewport
 }).promise;
 
-// Canvas display: let it scroll horizontally when zoomed in
-canvas.style.display =
-"block";
+// Resize visually AFTER render
+canvas.style.width =
+"100%";
 
 canvas.style.maxWidth =
-"none"; // Allow zoom > 100% to overflow and scroll
+"100%";
 
 canvas.style.height =
 "auto";
+
+canvas.style.display =
+"block";
 
 canvas.style.margin =
 "0 auto 14px auto";
@@ -5120,10 +5057,10 @@ async function generateShareLink(){
                 },
 body: JSON.stringify({
   file: shareCurrentFile.file,
-  name: fileName,
-  expiry: expiryHours,
-  password: linkPassword || null,
-  vaultKey: theDecryptedVaultPassword  // ← add this
+  name: shareCurrentFile.name,
+  expiry: expiry,
+  password: password || null,
+  vaultKey: window.masterPassword || masterPassword
 })
             }
         );
@@ -5363,13 +5300,17 @@ async function renderComparePane(side, file){
 
     try {
         const rawPassword = window.masterPassword || masterPassword;
-        // 1. Hash the password for the authorization header (just like openSecureFile)
-        const token = await sha256(rawPassword); 
+
+        // FIX: use the real session token (same as openSecureFile/initVault)
+        const vaultSessionToken =
+            sessionStorage.getItem("vaultSessionToken") ||
+            sessionStorage.getItem("vaultSession");
+
+        if (!vaultSessionToken) throw new Error("Missing session token. Please log in again.");
 
         const res = await fetch("https://backend.shinumaths989.workers.dev/docs/" + file.file, {
             headers: {
-                "Authorization": "Bearer " + token,
-                "x-vault-password": token
+                "Authorization": "Bearer " + vaultSessionToken
             }
         });
 
@@ -5435,7 +5376,7 @@ async function renderComparePane(side, file){
 
     // Get parent width
     const containerWidth =
-    container.clientWidth - 30;
+    contentEl.clientWidth - 30;
 
     // Original PDF size
     const originalViewport =
@@ -5452,17 +5393,12 @@ async function renderComparePane(side, file){
     const safeScale =
 Math.max(
     fitScale,
-    1.25
+    0.8
 );
 
 const viewport =
 page.getViewport({
-    scale:
-safeScale *
-Math.pow(
-    currentZoom,
-    1.25
-)
+    scale: safeScale
 });
 
     // Create canvas
@@ -5513,7 +5449,7 @@ Math.pow(
         viewport
     }).promise;
 
-    pageWrapContainer.appendChild(
+    contentEl.appendChild(
     canvas
 );
 }
