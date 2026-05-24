@@ -629,6 +629,12 @@
 
 <script type="module">
   async function decryptFile(encryptedData, password) {
+    // FIX: normalize password same as backend normalizePassword()
+    const normalizedPassword = (password || "")
+      .trim()
+      .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
+      .normalize("NFKC");
+
     const buffer = encryptedData;
 
     // Read settings header — exactly matches index.html openSecureFile format
@@ -647,7 +653,7 @@
 
     // sha256Bytes equivalent — returns Uint8Array, same as index.html
     const passwordHash = new Uint8Array(
-      await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password))
+      await crypto.subtle.digest('SHA-256', new TextEncoder().encode(normalizedPassword))
     );
 
     const keyMaterial = await crypto.subtle.importKey(
@@ -933,6 +939,27 @@
   // ── Block right-click on canvas wrap (prevent save-as) ──
   canvasWrap.addEventListener('contextmenu', e => e.preventDefault());
 
+  // ── Get a session token using the vaultKey embedded in the share token ──
+  async function getShareSessionToken(vaultKey) {
+    try {
+      const normalized = (vaultKey || "")
+        .trim()
+        .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
+        .normalize("NFKC");
+      const hash = await window.sha256(normalized);
+      const res = await fetch('https://backend.shinumaths989.workers.dev/get-secret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hash })
+      });
+      const data = await res.json();
+      return data.sessionToken || '';
+    } catch (e) {
+      console.error('getShareSessionToken failed:', e);
+      return '';
+    }
+  }
+
   // ── Show PDF ──
   async function showPDF(data) {
     const fileUrl = 'https://backend.shinumaths989.workers.dev/docs/' + data.file;
@@ -943,7 +970,11 @@
     document.getElementById('pdf-file-name').textContent = data.name || data.file;
 
     try {
-      const res = await fetch(fileUrl);
+      // FIX: get a real session token using the vaultKey from the share token
+      const sessionToken = await getShareSessionToken(data.vaultKey);
+      const res = await fetch(fileUrl, {
+        headers: { 'Authorization': 'Bearer ' + sessionToken }
+      });
       if (!res.ok) throw new Error('Fetch failed');
       const encrypted = await res.arrayBuffer();
 
@@ -1010,7 +1041,11 @@ async function attemptDownload() {
 
     try {
       const fileUrl = 'https://backend.shinumaths989.workers.dev/docs/' + resolvedData.file;
-      const res = await fetch(fileUrl);
+      // FIX: get session token using vaultKey from the share token
+      const dlSessionToken = await getShareSessionToken(resolvedData.vaultKey);
+      const res = await fetch(fileUrl, {
+        headers: { 'Authorization': 'Bearer ' + dlSessionToken }
+      });
       if (!res.ok) throw new Error('Fetch failed');
 
       const encrypted = await res.arrayBuffer();
