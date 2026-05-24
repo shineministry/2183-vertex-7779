@@ -2239,6 +2239,23 @@ style="display:none;">
 
     <div class="main-container">
         <aside class="sidebar">
+            <select id="member-select" style="
+                width:100%;
+                padding:12px;
+                border-radius:12px;
+                margin-bottom:18px;
+                border:1px solid #e2e8f0;
+                font-weight:700;
+                font-size:13px;
+                cursor:pointer;
+                background:white;
+                color:#0f172a;
+            ">
+                <option value="all">👥 All Members</option>
+                <option value="shineil">🧑 Me (Shineil)</option>
+                <option value="father">👨 Father</option>
+                <option value="mother">👩 Mother</option>
+            </select>
             <ul id="cat-list"></ul>
         </aside>
 
@@ -3352,10 +3369,18 @@ try {
 
             li.classList.add('active');
 
-            renderFiles(
-                data[cat],
-                cat
-            );
+            const selectedMember =
+                document.getElementById('member-select')?.value || 'all';
+
+            let filteredFiles = data[cat];
+
+            if (selectedMember !== 'all') {
+                filteredFiles = data[cat].filter(file =>
+                    file.member === selectedMember
+                );
+            }
+
+            renderFiles(filteredFiles, cat);
         };
 
         list.appendChild(li);
@@ -4284,23 +4309,15 @@ if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
 
 async function renderAllPages() {
 
-    // MAIN WRAPPER
+    // MAIN WRAPPER — reuse or create
     let pageWrapContainer =
-    document.getElementById(
-        'pdf-canvas-wrapper'
-    );
+    document.getElementById('pdf-canvas-wrapper');
 
     if (!pageWrapContainer) {
-
-        pageWrapContainer =
-        document.createElement('div');
-
-        pageWrapContainer.id =
-        'pdf-canvas-wrapper';
-
-        container.appendChild(
-            pageWrapContainer
-        );
+        pageWrapContainer = document.createElement('div');
+        pageWrapContainer.id = 'pdf-canvas-wrapper';
+        pageWrapContainer.style.overflowX = 'auto'; // allow horizontal scroll when zoomed
+        container.appendChild(pageWrapContainer);
     }
 
     // CLEAR OLD PAGES
@@ -4308,217 +4325,74 @@ async function renderAllPages() {
     sidebar.innerHTML = "";
 
     // LOOP THROUGH ALL PAGES
-    for (
-        let pageNum = 1;
-        pageNum <= pdf.numPages;
-        pageNum++
-    ) {
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
 
-        const page =
-        await pdf.getPage(pageNum);
+        const page = await pdf.getPage(pageNum);
 
         // =========================
-// SIDEBAR THUMBNAIL
-// =========================
+        // SIDEBAR THUMBNAIL
+        // =========================
+        let thumbWrap = null;
 
-let thumbWrap = null;
+        if (!window.LITE_MODE) {
+            const thumbViewport = page.getViewport({ scale: 0.25 });
+            const thumbCanvas = document.createElement('canvas');
+            thumbCanvas.width  = thumbViewport.width;
+            thumbCanvas.height = thumbViewport.height;
+            await page.render({ canvasContext: thumbCanvas.getContext('2d'), viewport: thumbViewport }).promise;
 
-if(!window.LITE_MODE){
-
-    const thumbViewport =
-    page.getViewport({
-        scale:0.25
-    });
-
-    const thumbCanvas =
-    document.createElement('canvas');
-
-    const thumbCtx =
-    thumbCanvas.getContext('2d');
-
-    thumbCanvas.width =
-    thumbViewport.width;
-
-    thumbCanvas.height =
-    thumbViewport.height;
-
-    await page.render({
-
-        canvasContext:
-        thumbCtx,
-
-        viewport:
-        thumbViewport
-
-    }).promise;
-
-    thumbWrap =
-    document.createElement('div');
-
-    thumbWrap.className =
-    'pdf-thumb';
-
-    thumbWrap.appendChild(
-        thumbCanvas
-    );
-
-    thumbWrap.innerHTML += `
-    <div>
-        Page ${pageNum}
-    </div>
-    `;
-
-    thumbWrap.onclick = () => {
-
-        const pageEl =
-        document.getElementById(
-            'page-' + pageNum
-        );
-
-        if(pageEl){
-
-            pageEl.scrollIntoView({
-                behavior:'smooth'
-            });
-
+            thumbWrap = document.createElement('div');
+            thumbWrap.className = 'pdf-thumb';
+            thumbWrap.appendChild(thumbCanvas);
+            thumbWrap.innerHTML += `<div>Page ${pageNum}</div>`;
+            sidebar.appendChild(thumbWrap);
         }
-    };
-
-    sidebar.appendChild(
-        thumbWrap
-    );
-}
 
         // =========================
-        // FULL PAGE VIEW
+        // FULL PAGE VIEW — zoom is applied here
         // =========================
 
-        // RESPONSIVE FIT TO CONTAINER
-const containerWidth =
-Math.max(
-    container.clientWidth - 40,
-    700
-);
+        // Base: fit page to container width, then apply currentZoom on top
+        const containerWidth = Math.max(container.clientWidth - 60, 300);
+        const naturalViewport = page.getViewport({ scale: 1 });
+        const fitScale = containerWidth / naturalViewport.width;
+        const finalScale = fitScale * currentZoom;
 
-const originalViewport =
-page.getViewport({ scale: 1 });
+        const viewport = page.getViewport({ scale: finalScale });
 
-const fitScale =
-containerWidth /
-originalViewport.width;
+        // pageWrap holds the canvas and gives it a card look
+        const pageWrap = document.createElement('div');
+        pageWrap.id = 'page-' + pageNum;
+        pageWrap.style.cssText = `
+            display:block;
+            margin:0 auto 24px auto;
+            background:white;
+            border-radius:14px;
+            box-shadow:0 8px 22px rgba(0,0,0,.08);
+            padding:10px;
+            width:fit-content;
+        `;
 
-// final zoom remains INSIDE pdf only
-const viewport =
-page.getViewport({
-    scale: fitScale * currentZoom
-});
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
 
-        const pageWrap =
-        document.createElement('div');
+        // Set ACTUAL pixel dimensions — DO NOT override with CSS width/height
+        // That is what was breaking zoom: setting width:100% collapsed it visually
+        canvas.width  = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+        canvas.style.display = 'block';
+        canvas.style.borderRadius = '10px';
 
-        pageWrap.className =
-        "pdf-page";
+        pageWrap.appendChild(canvas);
+        pageWrapContainer.appendChild(pageWrap);
 
-        pageWrap.style.marginBottom =
-        "24px";
+        // Single render — no duplicate
+        await page.render({ canvasContext: context, viewport }).promise;
 
-        pageWrap.style.background =
-        "white";
-
-        pageWrap.style.borderRadius =
-        "14px";
-
-        pageWrap.style.boxShadow =
-        "0 8px 22px rgba(0,0,0,.08)";
-
-        pageWrap.style.padding =
-        "10px";
-
-        const canvas =
-        document.createElement('canvas');
-
-        const context =
-canvas.getContext('2d');
-
-// REAL internal canvas size
-canvas.width =
-Math.floor(viewport.width);
-
-canvas.height =
-Math.floor(viewport.height);
-
-// Add canvas BEFORE render
-pageWrapContainer
-.appendChild(
-    canvas
-);
-
-// Render PDF
-await page.render({
-    canvasContext:
-    context,
-    viewport:
-    viewport
-}).promise;
-
-// Resize visually AFTER render
-canvas.style.width =
-"100%";
-
-canvas.style.maxWidth =
-"100%";
-
-canvas.style.height =
-"auto";
-
-canvas.style.display =
-"block";
-
-canvas.style.margin =
-"0 auto 14px auto";
-
-canvas.style.borderRadius =
-"12px";
-
-canvas.style.boxShadow =
-"0 4px 18px rgba(0,0,0,.12)";
-
-        pageWrapContainer.appendChild(
-            pageWrap
-        );
-
-        await page.render({
-
-            canvasContext: context,
-            viewport: viewport
-
-        }).promise;
-
-        // =========================
-        // THUMBNAIL CLICK
-        // =========================
-
-        // =========================
-// THUMBNAIL CLICK
-// =========================
-
-if(thumbWrap){
-
-    thumbWrap.onclick = () => {
-
-        pageWrap.scrollIntoView({
-
-            behavior: 'smooth'
-
-        });
-
-    };
-
-}
-
-        sidebar.appendChild(
-            thumbWrap
-        );
+        // Wire up thumbnail click AFTER pageWrap is in DOM
+        if (thumbWrap) {
+            thumbWrap.onclick = () => pageWrap.scrollIntoView({ behavior: 'smooth' });
+        }
 
     }
 
@@ -4527,10 +4401,10 @@ if(thumbWrap){
 // INITIAL RENDER
 await renderAllPages();
 
-// Force second render after modal/layout settles
+// Force second render after modal/layout settles (gives container time to measure width)
 setTimeout(async () => {
     await renderAllPages();
-}, 120);
+}, 150);
 
 // =========================
 // DOWNLOAD SECURELY
@@ -5506,6 +5380,23 @@ async function checkDocExpiryReminders(){
 function vaultPostInit(){
     renderPinnedSection();
     setTimeout(checkDocExpiryReminders, 2000);
+
+    // ── Member filter: read URL param ──
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedMember = urlParams.get('member');
+    if (sharedMember) {
+        const sel = document.getElementById('member-select');
+        if (sel) {
+            sel.value = sharedMember;
+            sel.disabled = true; // lock dropdown when opened via shared link
+        }
+    }
+
+    // ── Member filter: re-render current category on dropdown change ──
+    document.getElementById('member-select')?.addEventListener('change', () => {
+        const activeLi = document.querySelector('#cat-list li.active');
+        if (activeLi) activeLi.click();
+    });
 }
 
 </script>
