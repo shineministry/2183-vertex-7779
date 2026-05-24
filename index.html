@@ -1043,10 +1043,11 @@ button{
     flex:1;
 
     overflow-y:auto;
+    overflow-x:auto;
 
-    background:#e5e7eb;
+    background:#374151;
 
-    padding:30px;
+    padding:20px;
 
     display:flex;
 
@@ -1406,10 +1407,11 @@ button{
     flex:1;
 
     overflow-y:auto;
+    overflow-x:auto;
 
-    background:#e5e7eb;
+    background:#374151;
 
-    padding:30px;
+    padding:20px;
 
     display:flex;
 
@@ -4165,28 +4167,38 @@ toolbar.style.position = "sticky";
 toolbar.style.top = "0";
 toolbar.style.zIndex = "50";
 toolbar.style.display = "flex";
-toolbar.style.gap = "12px";
+toolbar.style.gap = "8px";
 toolbar.style.justifyContent = "center";
-toolbar.style.padding = "14px";
-toolbar.style.background = "#e5e7eb";
-toolbar.style.borderBottom = "1px solid #cbd5e1";
+toolbar.style.alignItems = "center";
+toolbar.style.padding = "10px 12px";
+toolbar.style.background = "#1e293b";
+toolbar.style.borderBottom = "1px solid #334155";
+toolbar.style.flexWrap = "wrap";
 
 // ZOOM OUT
 const zoomOutBtn = document.createElement('button');
-zoomOutBtn.innerText = "− Zoom Out";
+zoomOutBtn.innerText = "− Out";
 
 // ZOOM LEVEL INDICATOR LABEL
 const zoomLabel = document.createElement('span');
 zoomLabel.style.display = "flex";
 zoomLabel.style.alignItems = "center";
-zoomLabel.style.fontWeight = "700";
-zoomLabel.style.color = "#1e293b";
-zoomLabel.style.minWidth = "60px";
+zoomLabel.style.fontWeight = "800";
+zoomLabel.style.color = "white";
+zoomLabel.style.minWidth = "58px";
 zoomLabel.style.justifyContent = "center";
+zoomLabel.style.fontSize = "13px";
+zoomLabel.style.background = "rgba(255,255,255,0.1)";
+zoomLabel.style.borderRadius = "8px";
+zoomLabel.style.padding = "4px 8px";
 
 // ZOOM IN
 const zoomInBtn = document.createElement('button');
-zoomInBtn.innerText = "+ Zoom In";
+zoomInBtn.innerText = "+ In";
+
+// ZOOM RESET
+const zoomResetBtn = document.createElement('button');
+zoomResetBtn.innerText = "⟳ Fit";
 
 // DOWNLOAD
 const downloadBtn = document.createElement('button');
@@ -4196,112 +4208,69 @@ downloadBtn.innerText = "⬇ Download";
 let currentZoom = getInitialZoom();
 
 function getInitialZoom() {
-
     const screenWidth = window.innerWidth;
-
-    // Mobile
-    if (screenWidth <= 480) {
-        return 0.85;
-    }
-
-    // Tablet
-    if (screenWidth <= 768) {
-        return 1.0;
-    }
-
-    // Laptop/Desktop
+    if (screenWidth <= 480) return 0.9;
+    if (screenWidth <= 768) return 1.0;
     return 1.15;
 }
 
-// Universal helper to isolate traditional PCs & laptops from mobile devices/tablets
-function isDesktopDevice() {
-    const ua = navigator.userAgent.toLowerCase();
-    return !(/mobile|android|iphone|ipad|phone|playbook|tablet|kindle/i.test(ua));
-}
-
-// Visual and functional boundary safety checker
+// Zoom works on ALL devices — no mobile lock
 function updateZoomButtonUI() {
     zoomLabel.innerText = Math.round(currentZoom * 100) + "%";
-    
-    if (!isDesktopDevice()) {
-        // Enforce structural freeze on mobile platforms
-        zoomInBtn.disabled = true;
-        zoomOutBtn.disabled = true;
-        zoomInBtn.style.opacity = "0.3";
-        zoomOutBtn.style.opacity = "0.3";
-        zoomInBtn.style.cursor = "not-allowed";
-        zoomOutBtn.style.cursor = "not-allowed";
-    } else {
-        // Clean operating boundaries for PC / Mac laptops
-        zoomInBtn.disabled = currentZoom >= 10.0; // Hard lock at 1000%
-        zoomOutBtn.disabled = currentZoom <= 0.5;  // Floor at 50%
-        zoomInBtn.style.opacity = currentZoom >= 10.0 ? "0.3" : "";
-        zoomOutBtn.style.opacity = currentZoom <= 0.5 ? "0.3" : "";
-        zoomInBtn.style.cursor = currentZoom >= 10.0 ? "not-allowed" : "pointer";
-        zoomOutBtn.style.cursor = currentZoom <= 0.5 ? "not-allowed" : "pointer";
-    }
+    zoomInBtn.disabled  = currentZoom >= 10.0;
+    zoomOutBtn.disabled = currentZoom <= 0.1;
+    zoomInBtn.style.opacity  = currentZoom >= 10.0 ? "0.3" : "1";
+    zoomOutBtn.style.opacity = currentZoom <= 0.1  ? "0.3" : "1";
+    zoomInBtn.style.cursor   = currentZoom >= 10.0 ? "not-allowed" : "pointer";
+    zoomOutBtn.style.cursor  = currentZoom <= 0.1  ? "not-allowed" : "pointer";
 }
 
-// CLICK INTERACTION HANDLERS
-zoomInBtn.onclick =
-async () => {
-
-    if (
-        currentZoom >= 8
-    ) return;
-
-    currentZoom =
-    +(currentZoom + 0.35)
-    .toFixed(2);
-
+zoomInBtn.onclick = async () => {
+    if (currentZoom >= 10.0) return;
+    currentZoom = +(currentZoom + 0.25).toFixed(2);
+    updateZoomButtonUI();
     await renderAllPages();
 };
 
-zoomOutBtn.onclick =
-async () => {
-
-    if (
-        currentZoom <= 0.4
-    ) return;
-
-    currentZoom =
-    +(currentZoom - 0.25)
-    .toFixed(2);
-
+zoomOutBtn.onclick = async () => {
+    if (currentZoom <= 0.1) return;
+    currentZoom = +(currentZoom - 0.25).toFixed(2);
+    updateZoomButtonUI();
     await renderAllPages();
 };
 
-// BUTTON BASIC STYLING
+zoomResetBtn.onclick = async () => {
+    currentZoom = getInitialZoom();
+    updateZoomButtonUI();
+    await renderAllPages();
+};
+
+// BUTTON STYLING
 [zoomOutBtn, zoomInBtn, downloadBtn].forEach(btn => {
-    btn.style.padding = "10px 18px";
+    btn.style.padding = "10px 16px";
     btn.style.border = "none";
     btn.style.borderRadius = "12px";
     btn.style.cursor = "pointer";
     btn.style.fontWeight = "700";
     btn.style.background = "#2563eb";
     btn.style.color = "white";
+    btn.style.fontSize = "13px";
+    btn.style.touchAction = "manipulation";
+    btn.style.minHeight = "42px";
 });
+zoomResetBtn.style.cssText = "padding:10px 16px;border:none;border-radius:12px;cursor:pointer;font-weight:700;background:#475569;color:white;font-size:13px;touch-action:manipulation;min-height:42px;";
+downloadBtn.style.background = "#059669";
 
-// Run UI check immediately to lock controls appropriately
+// Run UI check immediately
 updateZoomButtonUI();
 
-// ASSEMBLE TOOLBAR ELEMENTS
+// ASSEMBLE TOOLBAR
 toolbar.appendChild(zoomOutBtn);
 toolbar.appendChild(zoomLabel);
 toolbar.appendChild(zoomInBtn);
+toolbar.appendChild(zoomResetBtn);
 toolbar.appendChild(downloadBtn);
 container.appendChild(toolbar);
-       
-// =========================
-// MOBILE: hide zoom controls but keep download available
-// =========================
-if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
-    // On small devices we hide zoom controls to save space,
-    // but keep the toolbar (and download) accessible for all devices.
-    zoomOutBtn.style.display = 'none';
-    zoomInBtn.style.display  = 'none';
-    toolbar.style.justifyContent = 'center';
-}
 
 // =========================
 // RE-RENDER CANVAS PIPELINE
@@ -4310,13 +4279,11 @@ if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)){
 async function renderAllPages() {
 
     // MAIN WRAPPER — reuse or create
-    let pageWrapContainer =
-    document.getElementById('pdf-canvas-wrapper');
-
+    let pageWrapContainer = document.getElementById('pdf-canvas-wrapper');
     if (!pageWrapContainer) {
         pageWrapContainer = document.createElement('div');
         pageWrapContainer.id = 'pdf-canvas-wrapper';
-        pageWrapContainer.style.overflowX = 'auto'; // allow horizontal scroll when zoomed
+        pageWrapContainer.style.width = '100%';
         container.appendChild(pageWrapContainer);
     }
 
@@ -4336,31 +4303,46 @@ async function renderAllPages() {
 
         if (!window.LITE_MODE) {
             const thumbViewport = page.getViewport({ scale: 0.25 });
-            const thumbCanvas = document.createElement('canvas');
+            const thumbCanvas   = document.createElement('canvas');
+            const thumbCtx      = thumbCanvas.getContext('2d');
+
+            // Set canvas internal dimensions to actual pixel size
             thumbCanvas.width  = thumbViewport.width;
             thumbCanvas.height = thumbViewport.height;
-            await page.render({ canvasContext: thumbCanvas.getContext('2d'), viewport: thumbViewport }).promise;
+
+            // Render thumbnail BEFORE appending so it has a valid context
+            await page.render({ canvasContext: thumbCtx, viewport: thumbViewport }).promise;
+
+            // CSS width:100% makes it fit the dark sidebar column — this is correct for thumbs
+            // because the thumb canvas resolution is already set, width:100% just scales display
+            thumbCanvas.style.width = '100%';
+            thumbCanvas.style.borderRadius = '8px';
+            thumbCanvas.style.display = 'block';
+            thumbCanvas.style.background = 'white';
+            thumbCanvas.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+            thumbCanvas.style.marginBottom = '6px';
 
             thumbWrap = document.createElement('div');
             thumbWrap.className = 'pdf-thumb';
             thumbWrap.appendChild(thumbCanvas);
-            thumbWrap.innerHTML += `<div>Page ${pageNum}</div>`;
+            thumbWrap.innerHTML += `<div style="color:white;font-size:11px;text-align:center;">Page ${pageNum}</div>`;
             sidebar.appendChild(thumbWrap);
         }
 
         // =========================
-        // FULL PAGE VIEW — zoom is applied here
+        // FULL PAGE VIEW — zoom applied correctly
         // =========================
 
-        // Base: fit page to container width, then apply currentZoom on top
-        const containerWidth = Math.max(container.clientWidth - 60, 300);
+        // Base: fit page to container width × currentZoom
+        // container.clientWidth excludes the sidebar since it's a sibling
+        const containerWidth = Math.max(container.clientWidth - 40, 300);
         const naturalViewport = page.getViewport({ scale: 1 });
         const fitScale = containerWidth / naturalViewport.width;
         const finalScale = fitScale * currentZoom;
 
         const viewport = page.getViewport({ scale: finalScale });
 
-        // pageWrap holds the canvas and gives it a card look
+        // Card wrapper — width:fit-content lets it grow beyond container when zoomed in
         const pageWrap = document.createElement('div');
         pageWrap.id = 'page-' + pageNum;
         pageWrap.style.cssText = `
@@ -4368,43 +4350,40 @@ async function renderAllPages() {
             margin:0 auto 24px auto;
             background:white;
             border-radius:14px;
-            box-shadow:0 8px 22px rgba(0,0,0,.08);
+            box-shadow:0 8px 22px rgba(0,0,0,0.25);
             padding:10px;
             width:fit-content;
+            min-width:0;
         `;
 
-        const canvas = document.createElement('canvas');
+        const canvas  = document.createElement('canvas');
         const context = canvas.getContext('2d');
 
-        // Set ACTUAL pixel dimensions — DO NOT override with CSS width/height
-        // That is what was breaking zoom: setting width:100% collapsed it visually
+        // Pixel dimensions = actual render size — never override with CSS width/height
+        // (overriding with width:100% was the zoom bug — it collapsed canvas visually)
         canvas.width  = Math.floor(viewport.width);
         canvas.height = Math.floor(viewport.height);
-        canvas.style.display = 'block';
+        canvas.style.display      = 'block';
         canvas.style.borderRadius = '10px';
 
         pageWrap.appendChild(canvas);
         pageWrapContainer.appendChild(pageWrap);
 
-        // Single render — no duplicate
+        // Render once — no duplicate render call
         await page.render({ canvasContext: context, viewport }).promise;
 
-        // Wire up thumbnail click AFTER pageWrap is in DOM
+        // Thumbnail click → scroll to this page
         if (thumbWrap) {
             thumbWrap.onclick = () => pageWrap.scrollIntoView({ behavior: 'smooth' });
         }
-
     }
-
 }
 
 // INITIAL RENDER
 await renderAllPages();
 
-// Force second render after modal/layout settles (gives container time to measure width)
-setTimeout(async () => {
-    await renderAllPages();
-}, 150);
+// Second render after modal layout settles (so container.clientWidth is accurate)
+setTimeout(async () => { await renderAllPages(); }, 150);
 
 // =========================
 // DOWNLOAD SECURELY
