@@ -4434,14 +4434,15 @@ await page.render({
 }).promise;
 
 // Resize visually AFTER render
+// REAL ZOOM
 canvas.style.width =
-"100%";
-
-canvas.style.maxWidth =
-"100%";
+viewport.width + "px";
 
 canvas.style.height =
-"auto";
+viewport.height + "px";
+
+canvas.style.maxWidth =
+"none";
 
 canvas.style.display =
 "block";
