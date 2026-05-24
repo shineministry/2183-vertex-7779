@@ -4173,18 +4173,32 @@ function updateZoomButtonUI() {
 }
 
 // CLICK INTERACTION HANDLERS
-zoomInBtn.onclick = async () => {
-    if (!isDesktopDevice() || currentZoom >= 10.0) return;
-    currentZoom = +(currentZoom + 0.5).toFixed(1); // Increment by 50%
-    updateZoomButtonUI();
-    await renderAllPages(); // Triggers the missing canvas repaint loop
+zoomInBtn.onclick =
+async () => {
+
+    if (
+        currentZoom >= 8
+    ) return;
+
+    currentZoom =
+    +(currentZoom + 0.35)
+    .toFixed(2);
+
+    await renderAllPages();
 };
 
-zoomOutBtn.onclick = async () => {
-    if (!isDesktopDevice() || currentZoom <= 0.5) return;
-    currentZoom = +(currentZoom - 0.5).toFixed(1); // Decrement by 50%
-    updateZoomButtonUI();
-    await renderAllPages(); // Triggers the missing canvas repaint loop
+zoomOutBtn.onclick =
+async () => {
+
+    if (
+        currentZoom <= 0.4
+    ) return;
+
+    currentZoom =
+    +(currentZoom - 0.25)
+    .toFixed(2);
+
+    await renderAllPages();
 };
 
 // BUTTON BASIC STYLING
@@ -4258,56 +4272,77 @@ async function renderAllPages() {
         const page =
         await pdf.getPage(pageNum);
 
-        // =========================
-        // SIDEBAR THUMBNAIL
-        // =========================
+// =========================
+// SIDEBAR THUMBNAIL
+// =========================
 
-       if(!window.LITE_MODE){
+let thumbWrap = null;
 
-        const thumbViewport =
-        page.getViewport({
-            scale: 0.25
-        });
+if(!window.LITE_MODE){
 
-        const thumbCanvas =
-        document.createElement('canvas');
+    const thumbViewport =
+    page.getViewport({
+        scale:0.25
+    });
 
-        const thumbContext =
-        thumbCanvas.getContext('2d');
+    const thumbCanvas =
+    document.createElement('canvas');
 
-        thumbCanvas.width =
-        thumbViewport.width;
+    const thumbCtx =
+    thumbCanvas.getContext('2d');
 
-        thumbCanvas.height =
-        thumbViewport.height;
+    thumbCanvas.width =
+    thumbViewport.width;
 
-        await page.render({
+    thumbCanvas.height =
+    thumbViewport.height;
 
-            canvasContext: thumbContext,
-            viewport: thumbViewport
+    await page.render({
 
-        }).promise;
+        canvasContext:
+        thumbCtx,
 
-        const thumbWrap =
-        document.createElement('div');
+        viewport:
+        thumbViewport
 
-        thumbWrap.className =
-        'pdf-thumb';
+    }).promise;
 
-        thumbWrap.appendChild(
-            thumbCanvas
+    thumbWrap =
+    document.createElement('div');
+
+    thumbWrap.className =
+    'pdf-thumb';
+
+    thumbWrap.appendChild(
+        thumbCanvas
+    );
+
+    thumbWrap.innerHTML += `
+    <div>
+        Page ${pageNum}
+    </div>
+    `;
+
+    thumbWrap.onclick = () => {
+
+        const pageEl =
+        document.getElementById(
+            'page-' + pageNum
         );
 
-        const pageLabel =
-        document.createElement('div');
+        if(pageEl){
 
-        pageLabel.innerText =
-        pageNum;
+            pageEl.scrollIntoView({
+                behavior:'smooth'
+            });
 
-        thumbWrap.appendChild(
-            pageLabel
-        );
-       }
+        }
+    };
+
+    sidebar.appendChild(
+        thumbWrap
+    );
+}
 
         // =========================
         // FULL PAGE VIEW
@@ -5307,8 +5342,11 @@ Math.max(
 const viewport =
 page.getViewport({
     scale:
-    safeScale *
-    currentZoom
+safeScale *
+Math.pow(
+    currentZoom,
+    1.25
+)
 });
 
     // Create canvas
