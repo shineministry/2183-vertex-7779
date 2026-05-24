@@ -2311,49 +2311,60 @@ window.LITE_MODE = false;
 
 function detectLiteMode() {
 
-    // Manual override first
+    // Manual override
     const saved =
-        localStorage.getItem(
-            "vault-lite-mode"
-        );
+    localStorage.getItem(
+        "vault-lite-mode"
+    );
 
     if(saved !== null){
 
         window.LITE_MODE =
-            saved === "true";
+        saved === "true";
+
+        document.body.classList.toggle(
+            "lite-mode",
+            window.LITE_MODE
+        );
 
         return;
     }
 
     const cpu =
-        navigator.hardwareConcurrency || 2;
+    navigator.hardwareConcurrency || 4;
 
     const memory =
-        navigator.deviceMemory || 2;
+    navigator.deviceMemory || 8;
 
-    const mobile =
-        /Android|iPhone|iPad|Mobile/i
-        .test(navigator.userAgent);
+    const isMobile =
+    /Android|iPhone|iPad|iPod|Mobile/i
+    .test(navigator.userAgent);
 
     const smallScreen =
-        window.innerWidth <= 768;
+    window.innerWidth <= 768;
 
-    // Weak device detection
-    const lowEnd =
-        cpu <= 4 ||
-        memory <= 4;
+    // Desktop/Laptop → NEVER lite automatically
+    if(!isMobile){
 
-    window.LITE_MODE =
-        lowEnd ||
-        (mobile && smallScreen);
+        window.LITE_MODE =
+        false;
 
-    if(window.LITE_MODE){
+    } else {
 
-        document.body.classList.add(
-            "lite-mode"
-        );
+        // Mobile only
+        window.LITE_MODE =
 
+            cpu <= 4 ||
+
+            memory <= 4 ||
+
+            smallScreen;
     }
+
+    document.body.classList.toggle(
+        "lite-mode",
+        window.LITE_MODE
+    );
 
     console.log(
         "Lite Mode:",
