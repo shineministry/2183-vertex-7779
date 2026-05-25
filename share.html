@@ -1024,14 +1024,40 @@ async function attemptDownload() {
   const enteredPassword = dlInput.value.trim();
   const enteredHash = await window.sha256(enteredPassword);
 
-  const verifyRes = await fetch(
+  let verifyRes = {
+  ok: true
+};
+
+// Only verify if share link has password
+if (
+  resolvedData.pwd !== null &&
+  resolvedData.pwd !== ""
+) {
+
+  verifyRes = await fetch(
     'https://backend.shinumaths989.workers.dev/get-secret',
     {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ hash: enteredHash })
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({
+        hash:enteredHash
+      })
     }
   );
+
+}
+
+if (!verifyRes.ok) {
+
+  throw new Error(
+    "Wrong password"
+  );
+
+}
+
+await showPDF(resolvedData);
 
   const verifyData = await verifyRes.json();
 
@@ -1246,15 +1272,18 @@ async function init() {
 
     resolvedData = data;
 
-    if (data.pwd) {
+    resolvedData = data;
 
-      showPasswordPrompt();
+// Ask password ONLY if sharing link was created with password
+if (data.pwd !== null && data.pwd !== "") {
 
-    } else {
+  showPasswordPrompt();
+  return;
 
-      await showPDF(data);
+}
 
-    }
+// No password added → open directly
+await showPDF(data);
 
   } catch(err){
 
