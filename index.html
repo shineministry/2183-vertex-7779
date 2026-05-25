@@ -2217,6 +2217,71 @@ button{
     .adv-box { width:98%; height:92vh; }
 }
 
+/* =========================
+   SETTINGS PANEL FIX
+========================= */
+
+.setting-row{
+
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+
+    gap:18px;
+
+    flex-wrap:wrap;
+
+    width:100%;
+}
+
+.setting-row-left{
+
+    flex:1;
+    min-width:220px;
+}
+
+.setting-row-label{
+
+    font-size:15px;
+    font-weight:700;
+    color:#0f172a;
+
+    margin-bottom:4px;
+}
+
+.setting-row-hint{
+
+    font-size:12px;
+    line-height:1.55;
+
+    color:#64748b;
+
+    max-width:520px;
+}
+
+.adv-input,
+.adv-input-sm{
+
+    width:100%;
+    max-width:520px;
+
+    min-height:44px;
+
+    border-radius:12px;
+
+    border:1px solid #dbe2ea;
+
+    padding:12px 14px;
+
+    font-size:14px;
+
+    background:white;
+}
+
+.adv-panel{
+
+    overflow:hidden;
+}
 </style>
 
 </head>
@@ -2637,7 +2702,7 @@ let sessionStartTime = null;
    let sessionId = crypto.randomUUID();
 let allFilesData = {};
 let currentCategory = "";
-
+   
    async function sha256Bytes(text){
 
     const enc =
@@ -4609,11 +4674,21 @@ async function renderAllPages() {
             thumbCanvas.height = thumbViewport.height;
 
             // Render thumbnail BEFORE appending so it has a valid context
-            await page.render({ canvasContext: thumbCtx, viewport: thumbViewport }).promise;
+            await new Promise(r => requestAnimationFrame(r));
+
+const renderTask = page.render({
+    canvasContext: thumbCtx,
+    viewport: thumbViewport
+});
+
+await renderTask.promise;
 
             // CSS width:100% makes it fit the dark sidebar column — this is correct for thumbs
             // because the thumb canvas resolution is already set, width:100% just scales display
             thumbCanvas.style.width = '100%';
+           thumbCanvas.style.height = 'auto';
+thumbCanvas.style.objectFit = 'contain';
+thumbCanvas.style.imageRendering = 'auto';
             thumbCanvas.style.borderRadius = '8px';
             thumbCanvas.style.display = 'block';
             thumbCanvas.style.background = 'white';
@@ -6549,6 +6624,10 @@ Scan QR to open secure link
       <!-- LEFT MENU -->
       <nav class="adv-menu" id="advMenu">
         <div class="adv-menu-section">General</div>
+         <div class="adv-menu-item" onclick="switchAdvPanel('about-vault')">
+    <span class="adv-icon">ℹ️</span>
+    <span>About Vault</span>
+</div>
         <div class="adv-menu-item active" onclick="switchAdvPanel('vault-identity')"><span class="adv-icon">🏷️</span><span>Vault Name</span></div>
         <div class="adv-menu-item" onclick="switchAdvPanel('vault-logo')"><span class="adv-icon">🖼️</span><span>Vault Logo / Icon</span></div>
         <div class="adv-menu-item" onclick="switchAdvPanel('default-page')"><span class="adv-icon">🏠</span><span>Default Opening Page</span></div>
@@ -7457,12 +7536,82 @@ Scan QR to open secure link
           </div>
         </div>
 
+         <div class="adv-panel" id="panel-about-vault">
+
+    <div class="adv-panel-title">
+        ℹ️ About Fortress Online Vault
+    </div>
+
+    <div class="adv-panel-desc">
+
+        Fortress Online Vault is a secure encrypted
+        document management platform designed for
+        protected storage, controlled sharing,
+        encrypted PDF viewing, identity organization,
+        and secure family document management.
+
+        <br><br>
+
+        Features include:
+
+        <br><br>
+
+        • AES-256 encrypted storage<br>
+        • Secure PDF streaming<br>
+        • Offline access support<br>
+        • Shareable secure links<br>
+        • Multi-member organization<br>
+        • Device adaptive rendering<br>
+        • Session security controls<br>
+        • Advanced vault personalization
+
+        <br><br>
+
+        Powered by <b>Shineil Keith Mathias</b> Secure Systems.
+
+    </div>
+
+</div>
       </div><!-- end adv-content -->
     </div><!-- end adv-body -->
   </div><!-- end adv-box -->
 </div><!-- end advSettingsModal -->
 
 <script>
+
+   /* =========================
+   STARTUP
+========================= */
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    initVault();
+
+    loadSettings();
+
+    /* LOAD SAVED SETTINGS */
+
+    const savedVaultName =
+    localStorage.getItem('vault-name');
+
+    if(savedVaultName){
+
+        const brand =
+        document.querySelector('.brand-title');
+
+        if(brand)
+        brand.textContent = savedVaultName;
+    }
+
+    const savedTabTitle =
+    localStorage.getItem('vault-tab-title');
+
+    if(savedTabTitle){
+
+        document.title = savedTabTitle;
+    }
+
+});
 // ---- ADVANCED SETTINGS LOGIC ----
 
 document.getElementById('share-gear').onclick = () => {
@@ -7485,18 +7634,56 @@ function switchAdvPanel(id){
 }
 
 function applyVaultName(){
-    const name = document.getElementById('vaultNameInput').value.trim();
-    const tab = document.getElementById('tabTitleInput').value.trim();
-    if(name){
-        const brand = document.querySelector('.brand-title');
-        if(brand) brand.textContent = name;
-    }
-    if(tab) document.title = tab;
-    const btn = event.currentTarget;
-    btn.textContent = '✓ Applied!';
-    setTimeout(() => btn.textContent = '💾 Apply Name', 2000);
-}
 
+    const name =
+    document.getElementById(
+        'vaultNameInput'
+    ).value.trim();
+
+    const tab =
+    document.getElementById(
+        'tabTitleInput'
+    ).value.trim();
+
+    if(name){
+
+        const brand =
+        document.querySelector(
+            '.brand-title'
+        );
+
+        if(brand)
+        brand.textContent = name;
+
+        localStorage.setItem(
+            'vault-name',
+            name
+        );
+    }
+
+    if(tab){
+
+        document.title = tab;
+
+        localStorage.setItem(
+            'vault-tab-title',
+            tab
+        );
+    }
+
+    const btn =
+    event.currentTarget;
+
+    btn.textContent =
+    '✓ Applied!';
+
+    setTimeout(() => {
+
+        btn.textContent =
+        '💾 Apply Name';
+
+    }, 2000);
+}
 function setAccent(hex, el){
     document.documentElement.style.setProperty('--accent', hex);
     document.documentElement.style.setProperty('--accent2', hex);
