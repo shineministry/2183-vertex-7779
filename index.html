@@ -2117,6 +2117,80 @@ transition:.25s;
 .generate-btn:hover{
 transform:translateY(-2px);
 }
+   .settings-modal{
+
+display:none;
+position:fixed;
+inset:0;
+
+background:
+rgba(0,0,0,.4);
+
+backdrop-filter:blur(8px);
+
+justify-content:center;
+align-items:center;
+
+z-index:99999;
+}
+
+.settings-box{
+
+width:85%;
+height:80%;
+
+background:white;
+
+border-radius:30px;
+
+display:flex;
+
+overflow:hidden;
+
+animation:
+modalScale .3s;
+}
+
+/* LEFT */
+
+.settings-sidebar{
+
+width:260px;
+
+background:#f8fafc;
+
+padding:20px;
+
+border-right:
+1px solid #ddd;
+}
+
+.settings-sidebar div{
+
+padding:14px;
+
+cursor:pointer;
+
+border-radius:12px;
+
+margin-bottom:8px;
+}
+
+.settings-sidebar div:hover{
+
+background:#eff6ff;
+}
+
+/* RIGHT */
+
+.settings-content{
+
+flex:1;
+
+padding:30px;
+
+overflow:auto;
+}
 
 </style>
 </style>
@@ -2439,7 +2513,7 @@ style="display:none;">
 
             </select>
 
-            <button id="share-gear" style="
+            <button id="share-gear" onclick="openSettings()" style="
                 width:46px;
                 height:46px;
                 border:1px solid #e2e8f0;
@@ -6428,162 +6502,135 @@ Scan QR to open secure link
     </div>
 </div>
 
-<div id="share-modal" class="share-modal">
+<div id="settingsModal"
+class="settings-modal">
 
-  <div class="share-box">
+<div class="settings-box">
 
-    <div class="share-header">
-      <h2>Share Vault</h2>
-      <button id="close-share" class="close-btn">
-        ✕
-      </button>
-    </div>
+<!-- LEFT -->
 
-    <p class="share-subtitle">
-      Choose which family members
-      will appear in this shared vault.
-    </p>
+<div class="settings-sidebar">
 
-    <div class="member-list">
+<h3>Settings</h3>
 
-      <label class="member-item">
-        <span>👨 Stephen Mathias</span>
-        <input type="checkbox"
-        value="father">
-      </label>
+<div onclick="showSetting('security')">
+🔒 Security
+</div>
 
-      <label class="member-item">
-        <span>👩 Kanchan Mathias</span>
-        <input type="checkbox"
-        value="mother">
-      </label>
+<div onclick="showSetting('appearance')">
+🎨 Appearance
+</div>
 
-      <label class="member-item">
-        <span>👦 Kevin Mathias</span>
-        <input type="checkbox"
-        value="brother">
-      </label>
+<div onclick="showSetting('session')">
+⏱ Session
+</div>
 
-    </div>
+<div onclick="showSetting('privacy')">
+🛡 Privacy
+</div>
 
-    <div class="input-group">
-      <label>Password (Optional)</label>
-
-      <input
-      id="share-password-vault"
-      type="password"
-      placeholder="Leave blank for no password">
-    </div>
-
-    <div class="input-group">
-      <label>Link Name</label>
-
-      <input
-      id="share-link-name"
-      type="text"
-      placeholder="Example: parents">
-    </div>
-
-    <button
-    id="generate-link"
-    class="generate-btn">
-
-      Generate Link
-
-    </button>
-
-  </div>
+<div onclick="showSetting('notifications')">
+🔔 Notifications
+</div>
 
 </div>
-   <!-- YOUR HTML -->
 
-<script>
-document
-.getElementById(
-'generate-link'
-)
-.onclick = () => {
 
-const selectedMembers =
-[
-...document.querySelectorAll(
-'#share-modal input[type="checkbox"]:checked'
-)
-].map(cb => cb.value);
+<!-- RIGHT -->
 
-const password =
+<div class="settings-content">
+
+<button
+onclick="closeSettings()"
+style="float:right">
+✕
+</button>
+
+<div id="settingBody">
+
+<h2>Advanced Settings</h2>
+
+Select from left side.
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+   <style>
+   function openSettings(){
+
 document.getElementById(
-'vault-share-password'
-).value;
+"settingsModal"
+).style.display =
+"flex";
 
-const linkName =
-document.getElementById(
-'share-link-name'
-).value.trim();
-
-if(!linkName){
-
-alert(
-'Please enter link name'
-);
-
-return;
 }
 
-const shareLink =
-window.location.origin +
-'/?share=' +
-encodeURIComponent(
-linkName
+
+function closeSettings(){
+
+document.getElementById(
+"settingsModal"
+).style.display =
+"none";
+
+}
+
+
+function showSetting(type){
+
+const body =
+document.getElementById(
+"settingBody"
 );
 
-alert(
-'Generated Link:\n\n' +
-shareLink
-);
+if(type==="security"){
 
-console.log({
-linkName,
-selectedMembers,
-password,
-shareLink
-});
+body.innerHTML=`
 
-};
-   
-document
-.getElementById(
-'share-gear'
-)
-.onclick = () => {
+<h2>Security</h2>
 
-document
-.getElementById(
-'share-modal'
-)
-.classList.add(
-'show'
-);
+<label>
+<input type="checkbox">
+ Lite Mode
+</label>
 
-};
+<br><br>
 
-document
-.getElementById(
-'close-share'
-)
-.onclick = () => {
+<label>
+<input type="checkbox">
+ Trusted Device Only
+</label>
 
-document
-.getElementById(
-'share-modal'
-)
-.classList.remove(
-'show'
-);
+`;
 
-};
+}
 
-</script>
+
+if(type==="appearance"){
+
+body.innerHTML=`
+
+<h2>Appearance</h2>
+
+<button onclick="
+toggleLiteMode()
+">
+
+Toggle Lite Mode
+
+</button>
+
+`;
+
+}
+
+} 
+   </style>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 </body>
 </html>
