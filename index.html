@@ -4799,11 +4799,17 @@ await renderTask.promise;
             thumbCanvas.style.width = '100%';
            thumbCanvas.style.height = 'auto';
 thumbCanvas.style.objectFit = 'contain';
-thumbCanvas.style.imageRendering = 'auto';
-            thumbCanvas.style.borderRadius = '8px';
-            thumbCanvas.style.display = 'block';
-            thumbCanvas.style.background = 'white';
-            thumbCanvas.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+thumbWrap = document.createElement('div');
+thumbWrap.className = 'pdf-thumb';
+thumbWrap.appendChild(thumbCanvas);
+
+// ✅ Use createElement instead of innerHTML += (which destroys the canvas)
+const pageLabel = document.createElement('div');
+pageLabel.style.cssText = 'color:white;font-size:11px;text-align:center;';
+pageLabel.textContent = `Page ${pageNum}`;
+thumbWrap.appendChild(pageLabel);
+
+sidebar.appendChild(thumbWrap);
             thumbCanvas.style.marginBottom = '6px';
 
             thumbWrap = document.createElement('div');
