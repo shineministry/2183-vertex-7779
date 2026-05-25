@@ -5362,6 +5362,13 @@ async function generateShareLink(){
 
     if(!shareCurrentFile) return;
 
+     // ADD THIS BLOCK ↓
+  const masterPwd = window.masterPassword || masterPassword;
+  if(!masterPwd) {
+    alert('Cannot create share link: vault is not unlocked.');
+    return;
+  }
+   
     const expiry =
     parseInt(
         document.getElementById(
@@ -5390,7 +5397,7 @@ body: JSON.stringify({
   name: shareCurrentFile.name,
   expiry: expiry,
   password: password || null,
-  vaultKey: window.masterPassword || masterPassword
+  vaultKey: masterPwd
 })
             }
         );
