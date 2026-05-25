@@ -1193,35 +1193,83 @@ async function attemptDownload() {
   }
 
   // ── Init ──
-  async function init() {
-    const params = new URLSearchParams(location.search);
-    const token  = params.get('t');
+async function init() {
 
-    if (!token) { showError(iconBan, 'Missing or invalid share token.'); return; }
+  const params = new URLSearchParams(location.search);
+  const token = params.get("t");
 
-    try {
-      const data = JSON.parse(atob(token));
-      
-      // Hook up realtime clock handler directly from parameter extraction payloads
-      if (data.exp) {
-        initializeExpiryTimer(data.exp);
-        if (Date.now() > data.exp) { return; } 
-      }
-      
-      resolvedData = data;
-
-      if (data.pwd) {
-        showPasswordPrompt();
-      } else {
-        await showPDF(data);
-      }
-    } catch (err) {
-      console.error(err);
-      showError(iconBan, 'Invalid share link. Please request a new one.');
-    }
+  if (!token) {
+    showError(iconBan,"Missing or invalid share token.");
+    return;
   }
 
-  init();
+  try {
+
+    let data;
+
+    // Try local Base64 token first
+    try {
+
+      data = JSON.parse(atob(token));
+
+    } catch {
+
+      // Backend token fallback
+      const res = await fetch(
+        `https://backend.shinumaths989.workers.dev/share/${token}`
+      );
+
+      if (!res.ok) {
+        throw new Error("Invalid backend token");
+      }
+
+      data = await res.json();
+
+    }
+
+    if (data.exp) {
+
+      initializeExpiryTimer(data.exp);
+
+      if (Date.now() > data.exp) {
+
+        showError(
+          iconExpired,
+          "This share link has expired."
+        );
+
+        return;
+
+      }
+
+    }
+
+    resolvedData = data;
+
+    if (data.pwd) {
+
+      showPasswordPrompt();
+
+    } else {
+
+      await showPDF(data);
+
+    }
+
+  } catch(err){
+
+    console.error(err);
+
+    showError(
+      iconBan,
+      "Invalid share link. Please request a new one."
+    );
+
+  }
+
+}
+
+init();
 </script>
 
 </body>
