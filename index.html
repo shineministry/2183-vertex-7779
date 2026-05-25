@@ -2259,6 +2259,10 @@ style="display:none;">
                 <option value="father">STEPHEN MATHIAS</option>
                 <option value="mother">KANCHAN MATHIAS</option>
             </select>
+
+           <button id="share-gear">
+⚙️
+</button>
             <ul id="cat-list"></ul>
         </aside>
 
@@ -6228,6 +6232,99 @@ Scan QR to open secure link
         </div>
     </div>
 </div>
+
+   <div id="share-modal"
+style="
+display:none;
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:white;
+padding:20px;
+border-radius:20px;
+width:350px;
+z-index:9999;
+box-shadow:0 0 30px rgba(0,0,0,0.2);
+">
+
+<h2>Share Vault</h2>
+
+<label>
+<input type="checkbox"
+value="father">
+Father
+</label>
+
+<br>
+
+<label>
+<input type="checkbox"
+value="mother">
+Mother
+</label>
+
+<br>
+
+<label>
+<input type="checkbox"
+value="brother">
+Brother
+</label>
+
+<br><br>
+
+Password (optional)
+
+<input id="share-password"
+type="password">
+
+<br><br>
+
+<button id="generate-link">
+Generate Link
+</button>
+
+<button id="close-share">
+Close
+</button>
+
+</div>
+   <!-- YOUR HTML -->
+
+<script>
+
+document
+.getElementById(
+'share-gear'
+)
+.onclick = () => {
+
+document
+.getElementById(
+'share-modal'
+)
+.style.display =
+'block';
+
+};
+
+document
+.getElementById(
+'close-share'
+)
+.onclick = () => {
+
+document
+.getElementById(
+'share-modal'
+)
+.style.display =
+'none';
+
+};
+
+</script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 </body>
 </html>
