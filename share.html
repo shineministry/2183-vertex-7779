@@ -939,6 +939,12 @@
   // ── Block right-click on canvas wrap (prevent save-as) ──
   canvasWrap.addEventListener('contextmenu', e => e.preventDefault());
 
+  // ── SHA-256 helper (must be defined before any function that uses it) ──
+  window.sha256 = async function(text) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  };
+
   // ── Get a session token using the vaultKey embedded in the share token ──
   async function getShareSessionToken(vaultKey) {
     try {
@@ -1024,40 +1030,14 @@ async function attemptDownload() {
   const enteredPassword = dlInput.value.trim();
   const enteredHash = await window.sha256(enteredPassword);
 
-  let verifyRes = {
-  ok: true
-};
-
-// Only verify if share link has password
-if (
-  resolvedData.pwd !== null &&
-  resolvedData.pwd !== ""
-) {
-
-  verifyRes = await fetch(
+  const verifyRes = await fetch(
     'https://backend.shinumaths989.workers.dev/get-secret',
     {
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json'
-      },
-      body:JSON.stringify({
-        hash:enteredHash
-      })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hash: enteredHash })
     }
   );
-
-}
-
-if (!verifyRes.ok) {
-
-  throw new Error(
-    "Wrong password"
-  );
-
-}
-
-await showPDF(resolvedData);
 
   const verifyData = await verifyRes.json();
 
@@ -1173,11 +1153,6 @@ await showPDF(resolvedData);
     input.addEventListener('input', () => errHint.classList.add('hidden'));
   }
 
-  window.sha256 = async function(text) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-  };
-
   // ── Realtime Countdown Setup ──
   function initializeExpiryTimer(expiryTimestamp) {
     const timerContainer = document.getElementById('link-timer');
@@ -1218,87 +1193,72 @@ await showPDF(resolvedData);
     const timerInterval = setInterval(updateCountdown, 1000);
   }
 
+  // ── Decode token: supports both JWT (backend) and plain btoa-JSON (fallback) ──
+  function decodeShareToken(token) {
+    // Try JWT format first: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length === 3) {
+      try {
+        // JWT payload is base64url encoded — convert to standard base64
+        const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const padded = b64 + '=='.slice(0, (4 - b64.length % 4) % 4);
+        return JSON.parse(atob(padded));
+      } catch (e) { /* not a valid JWT, fall through */ }
+    }
+    // Try plain btoa(JSON.stringify(...)) fallback token
+    return JSON.parse(atob(token));
+  }
+
   // ── Init ──
-async function init() {
+  async function init() {
+    const params = new URLSearchParams(location.search);
+    const token  = params.get('t');
 
-  const params = new URLSearchParams(location.search);
-  const token = params.get("t");
+    if (!token) { showError(iconBan, 'Missing or invalid share token.'); return; }
 
-  if (!token) {
-    showError(iconBan,"Missing or invalid share token.");
-    return;
-  }
-
-  try {
-
-    let data;
-
-    // Try local Base64 token first
     try {
+      const data = decodeShareToken(token);
 
-      data = JSON.parse(atob(token));
-
-    } catch {
-
-      // Backend token fallback
-      const res = await fetch(
-        `https://backend.shinumaths989.workers.dev/share/${token}`
-      );
-
-      if (!res.ok) {
-        throw new Error("Invalid backend token");
+      // exp field: backend JWTs use seconds, fallback tokens use milliseconds
+      let expMs = null;
+      if (data.exp) {
+        // If exp looks like a Unix timestamp in seconds (< year 3000 in ms), convert
+        expMs = data.exp < 1e12 ? data.exp * 1000 : data.exp;
+        initializeExpiryTimer(expMs);
+        if (Date.now() > expMs) {
+          showError(iconExpired, 'This share link has expired.');
+          return;
+        }
       }
 
-      data = await res.json();
+      // Backend tokens may use different field names — normalize them
+      const normalized = {
+        file:     data.file     || data.f,
+        name:     data.name     || data.n || data.file,
+        vaultKey: data.vaultKey || data.vk || data.key,
+        pwd:      data.pwd      || data.password || null,
+        exp:      expMs,
+      };
 
-    }
-
-    if (data.exp) {
-
-      initializeExpiryTimer(data.exp);
-
-      if (Date.now() > data.exp) {
-
-        showError(
-          iconExpired,
-          "This share link has expired."
-        );
-
+      if (!normalized.file) {
+        showError(iconBan, 'Invalid share token: missing file reference.');
         return;
-
       }
 
+      resolvedData = normalized;
+
+      if (normalized.pwd) {
+        showPasswordPrompt();
+      } else {
+        await showPDF(normalized);
+      }
+    } catch (err) {
+      console.error(err);
+      showError(iconBan, 'Invalid share link. Please request a new one.');
     }
-
-    resolvedData = data;
-
-    resolvedData = data;
-
-// Ask password ONLY if sharing link was created with password
-if (data.pwd !== null && data.pwd !== "") {
-
-  showPasswordPrompt();
-  return;
-
-}
-
-// No password added → open directly
-await showPDF(data);
-
-  } catch(err){
-
-    console.error(err);
-
-    showError(
-      iconBan,
-      "Invalid share link. Please request a new one."
-    );
-
   }
 
-}
-
-init();
+  init();
 </script>
 
 </body>
