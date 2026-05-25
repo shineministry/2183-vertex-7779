@@ -6343,7 +6343,7 @@ Password (optional)
 </label>
 
 <input
-id="share-password"
+id="vault-share-password"
 type="password"
 placeholder="Enter password"
 style="
@@ -6371,6 +6371,27 @@ cursor:pointer;
 Close
 </button>
 
+<label style="
+display:block;
+margin-bottom:8px;
+font-weight:600;
+">
+Link Name
+</label>
+
+<input
+id="share-link-name"
+type="text"
+placeholder="Example: parents"
+style="
+width:100%;
+padding:14px;
+border-radius:14px;
+border:1px solid #ddd;
+box-sizing:border-box;
+margin-bottom:16px;
+">
+   
 <button id="generate-link"
 style="
 padding:10px 16px;
@@ -6388,7 +6409,59 @@ Generate Link
    <!-- YOUR HTML -->
 
 <script>
+document
+.getElementById(
+'generate-link'
+)
+.onclick = () => {
 
+const selectedMembers =
+[
+...document.querySelectorAll(
+'#share-modal input[type="checkbox"]:checked'
+)
+].map(cb => cb.value);
+
+const password =
+document.getElementById(
+'vault-share-password'
+).value;
+
+const linkName =
+document.getElementById(
+'share-link-name'
+).value.trim();
+
+if(!linkName){
+
+alert(
+'Please enter link name'
+);
+
+return;
+}
+
+const shareLink =
+window.location.origin +
+'/?share=' +
+encodeURIComponent(
+linkName
+);
+
+alert(
+'Generated Link:\n\n' +
+shareLink
+);
+
+console.log({
+linkName,
+selectedMembers,
+password,
+shareLink
+});
+
+};
+   
 document
 .getElementById(
 'share-gear'
