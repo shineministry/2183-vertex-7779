@@ -757,49 +757,45 @@ button{
    SIDEBAR
 ========================= */
 
-.sidebar {
-    width: 270px;
-    background: white;
-    border-right: 1px solid var(--border);
-    padding: 25px 18px;
-    overflow-y: auto; /* Keeps document list scrollable independently */
-    height: 100%;
-}
+@media screen and (max-width:768px){
 
-#cat-list{
+    .sidebar{
+        width:100%;
+        overflow-x:auto;
+        overflow-y:hidden;
+        border-right:none;
+        border-bottom:1px solid var(--border);
+        padding:12px 10px;
+        scrollbar-width:none;
+    }
 
-    list-style:none;
+    .sidebar::-webkit-scrollbar{
+        display:none;
+    }
 
-}
+    #cat-list{
+        display:flex;
+        gap:8px;
+        flex-wrap:nowrap;
+        width:max-content;
+    }
 
-#cat-list li{
+    #cat-list li{
+        white-space:nowrap;
+        margin-bottom:0;
 
-    padding:14px 16px;
+        /* SMALLER SIZE */
+        padding:8px 12px;
+        font-size:13px;
+        border-radius:12px;
+        font-weight:600;
 
-    border-radius:14px;
+        flex-shrink:0;
+    }
 
-    cursor:pointer;
-
-    margin-bottom:10px;
-
-    color:var(--muted);
-
-    font-weight:700;
-
-    transition:.25s;
-
-}
-
-#cat-list li:hover,
-#cat-list li.active{
-
-    background:#eff6ff;
-
-    color:var(--accent);
-
-    transform:
-        translateX(4px);
-
+    #cat-list li.active{
+        transform:none;
+    }
 }
 
 /* =========================
