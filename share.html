@@ -458,6 +458,36 @@
     /* ══════════════════════════════════════════
        RESPONSIVE DESIGN & SCREEN-SIZE HANDLING
     ══════════════════════════════════════════ */
+    /* ── Floating expiry timer (always on top, both auth and PDF views) ── */
+    .timer-badge-float {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent3);
+      background: rgba(6, 8, 16, 0.85);
+      border: 1px solid rgba(244, 114, 182, 0.3);
+      border-radius: 10px;
+      padding: 8px 16px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(244, 114, 182, 0.15);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .timer-badge-float svg { width: 15px; height: 15px; flex-shrink: 0; }
+    .timer-badge-float.expired {
+      color: var(--error);
+      border-color: rgba(248, 113, 113, 0.3);
+      background: rgba(248, 113, 113, 0.1);
+    }
+
     @media (max-width: 768px) {
       /* Hide thumbnail preview container entirely on mobile/tablet screens */
       #pdf-thumb-sidebar {
@@ -510,6 +540,14 @@
 </head>
 <body>
 
+<!-- ── Floating expiry timer — always visible regardless of which view is active ── -->
+<div id="link-timer" class="timer-badge-float" style="display: none;">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+  <span id="timer-text">Expires in: --:--:--</span>
+</div>
+
 <div class="bg">
   <div class="bg-grid"></div>
   <div class="bg-blob3"></div>
@@ -532,13 +570,6 @@
     <h1 class="heading">Shared File</h1>
     <p class="subheading">Secure file access via Vault</p>
     
-    <div id="link-timer" class="timer-badge" style="display: none;">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span id="timer-text">Expires in: --:--:--</span>
-    </div>
-
     <div id="status">
       <div class="loading-wrap">
         <div class="spinner"></div>
@@ -1092,6 +1123,92 @@ async function attemptDownload() {
   dlInput.addEventListener('keydown', e => { if (e.key === 'Enter') attemptDownload(); });
   dlInput.addEventListener('input', () => dlErrHint.classList.add('hidden'));
 
+  // ── Vault key prompt (when share token has no vaultKey embedded) ──
+  function showVaultKeyPrompt() {
+    setStatus(`
+      <div class="pwd-form" id="vault-form">
+        <div>
+          <div class="field-label">Vault Password</div>
+          <div class="field-wrap">
+            <input type="password" id="vault-input" placeholder="Enter your vault password" autocomplete="current-password" />
+            <button class="toggle-eye" id="vault-eye-btn" title="Show/hide password" tabindex="-1">
+              <svg id="vault-eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="err-hint hidden" id="vault-err-hint">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/></svg>
+            Incorrect password. Try again.
+          </div>
+        </div>
+        <button class="btn-submit" id="vault-submit-btn">Open File</button>
+        <div class="lock-badge">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+          Enter vault password to access this file
+        </div>
+      </div>
+    `);
+
+    const input   = document.getElementById('vault-input');
+    const btn     = document.getElementById('vault-submit-btn');
+    const errHint = document.getElementById('vault-err-hint');
+    const eyeBtn  = document.getElementById('vault-eye-btn');
+    input.focus();
+
+    eyeBtn.addEventListener('click', () => {
+      const shown = input.type === 'text';
+      input.type = shown ? 'password' : 'text';
+      document.getElementById('vault-eye-icon').innerHTML = shown
+        ? `<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>`
+        : `<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>`;
+    });
+
+    async function attemptVault() {
+      const enteredKey = input.value;
+      if (!enteredKey) return;
+
+      btn.textContent = 'Verifying…';
+      btn.classList.add('loading');
+
+      try {
+        // Try to get a session token using the entered password as the vaultKey.
+        // If /get-secret returns a sessionToken, the password is correct.
+        const normalized = enteredKey.trim()
+          .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
+          .normalize("NFKC");
+        const hash = await window.sha256(normalized);
+        const res = await fetch('https://backend.shinumaths989.workers.dev/get-secret', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hash })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.sessionToken) {
+          // Correct vault password — inject it and proceed
+          resolvedData.vaultKey = enteredKey;
+          await showPDF(resolvedData);
+        } else {
+          throw new Error('Invalid vault key');
+        }
+      } catch (e) {
+        btn.textContent = 'Open File';
+        btn.classList.remove('loading');
+        errHint.classList.remove('hidden');
+        input.classList.add('shake');
+        input.value = '';
+        input.focus();
+        setTimeout(() => input.classList.remove('shake'), 450);
+      }
+    }
+
+    btn.addEventListener('click', attemptVault);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') attemptVault(); });
+    input.addEventListener('input', () => errHint.classList.add('hidden'));
+  }
+
   // ── Password prompt (for link-level password) ──
   function showPasswordPrompt() {
     setStatus(`
@@ -1166,7 +1283,8 @@ async function attemptDownload() {
       const timeLeft = expiryTimestamp - now;
 
       if (timeLeft <= 0) {
-        timerText.textContent = "Expired";
+        timerText.textContent = "Link Expired";
+        timerContainer.classList.add('expired');
         showError(iconExpired, 'This share link has expired.');
         if(pdfDoc) {
            document.getElementById('pdf-overlay').classList.remove('active');
@@ -1247,7 +1365,11 @@ async function attemptDownload() {
 
       resolvedData = normalized;
 
-      if (normalized.pwd) {
+      if (!normalized.vaultKey) {
+        // Token was generated without a vaultKey (masterPassword was undefined at share time).
+        // Ask the recipient to enter the vault password to authenticate + decrypt.
+        showVaultKeyPrompt();
+      } else if (normalized.pwd) {
         showPasswordPrompt();
       } else {
         await showPDF(normalized);
