@@ -1072,26 +1072,28 @@ async function loadDashboardData(){
 
         activeSnapshot.forEach(docSnap => {
             const data = docSnap.data();
-            
-            // Bypass entries marked forced out
-            if(data.forceLogout === true) return;
-            
-            // Bypass dead historical data if timestamp is tracked
-            if(data.timestamp && typeof data.timestamp.toMillis === 'function') {
-                if(data.timestamp.toMillis() < strictThreshold) return;
-            } else if (data.createdAt && data.createdAt < strictThreshold) {
-                return;
+
+            // Skip inactive or force-logged-out sessions
+            if (data.active === false) return;
+            if (data.forceLogout === true) return;
+
+            // Fix date comparison — createdAt is an ISO string, parse it first
+            if (data.createdAt) {
+                const createdMs = typeof data.createdAt === 'number'
+                    ? data.createdAt
+                    : new Date(data.createdAt).getTime();
+                if (!isNaN(createdMs) && createdMs < strictThreshold) return;
             }
 
             activeCount++;
-            const userInitial = data.username ? data.username.charAt(0).toUpperCase() : "A";
+            const userInitial = data.visitor ? data.visitor.charAt(0).toUpperCase() : "A";
 
             activeHtml += `
             <div class="card">
                 <div class="user-row">
                     <div class="avatar" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);">${userInitial}</div>
                     <div class="user-info">
-                        <h2>${data.username || 'Active User'}</h2>
+                        <h2>${data.visitor || 'Active User'}</h2>
                         <span>Session: ${docSnap.id.substring(0,8)}...</span>
                     </div>
                 </div>
@@ -1200,6 +1202,25 @@ document.addEventListener(
 
 );
 
+        // Add button in HTML next to section divider:
+// <button onclick="clearStaleSessions()" class="btn deny" style="width:auto;padding:10px 20px;margin-bottom:20px;">
+//   Clear All Stale Sessions
+// </button>
+
+async function clearStaleSessions() {
+    if (!confirm("This will mark all sessions with active=false as cleaned. Continue?")) return;
+    const snapshot = await getDocs(collection(db, "activeSessions"));
+    let count = 0;
+    for (const docSnap of snapshot.docs) {
+        const data = docSnap.data();
+        if (data.active === false || data.forceLogout === true) {
+            await updateDoc(doc(db, "activeSessions", docSnap.id), { active: false });
+            count++;
+        }
+    }
+    alert(`Cleaned ${count} stale sessions.`);
+    loadDashboardData();
+}
 </script>
 </body>
 </html>
