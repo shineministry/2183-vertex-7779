@@ -3787,6 +3787,200 @@ function renderFiles(
 files,
 category){
 
+   const profiles = {
+
+shineil:{
+image:"profile.png",
+name:"SHINEIL KEITH MATHIAS",
+role:"Founder of SHINE MINISTRY • Student • Public Speaker • Digital Creator",
+
+personal:`
+<b>Full Name:</b> Shineil Keith Mathias<br>
+<b>Date of Birth:</b> 7 March 2010<br>
+<b>Gender:</b> Male<br>
+<b>Nationality:</b> Indian<br>
+<b>Location:</b> Khandala, Pune
+`,
+
+contact:`
+<b>Phone:</b> +91 8605586173<br>
+<b>Email:</b> shinumaths989@gmail.com<br>
+<b>Website:</b> shine-ministry.com<br>
+<b>Instagram:</b> @shinu_vordenker_7
+`,
+
+education:`
+Don Bosco High School<br>
+2020–2026<br>
+Secondary Education
+`,
+
+skills:`
+• Public Speaking<br>
+• Leadership<br>
+• Mathematics<br>
+• Web Editing
+`,
+
+languages:`
+English — Fluent<br>
+Hindi — Fluent<br>
+German — Basic
+`,
+
+achievements:`
+• Green House Captain<br>
+• Debate Awards<br>
+• Student Recognition
+`,
+
+experience:`
+Founder — SHINE MINISTRY<br>
+Digital Projects<br>
+Leadership Activities
+`,
+
+projects:`
+Secure Vault<br>
+SHINE MINISTRY<br>
+PDF Systems
+`,
+
+goals:`
+Technology<br>
+Education<br>
+Leadership
+`,
+
+faith:`
+Founder of SHINE MINISTRY<br>
+Christian Service
+`,
+
+about:`
+Student with strong communication,
+leadership and ministry interests.
+`,
+
+hobbies:`
+Debating, technology,
+public speaking, reading
+`
+},
+
+
+
+brother:{
+
+image:"kevin.png",
+name:"KEVIN STEPHEN MATHIAS",
+role:"Bartender • Hospitality",
+
+personal:`
+<b>Name:</b> Kevin Stephen Mathias<br>
+<b>Location:</b> Pune<br>
+<b>Industry:</b> Hospitality
+`,
+
+contact:`
+Add Number<br>
+Add Email
+`,
+
+education:`
+Guardian School — SSC<br>
+IHM Mumbai<br>
+Flair Mania Bartending Academy
+`,
+
+skills:`
+• Bartending<br>
+• Customer Service<br>
+• POS<br>
+• Inventory
+`,
+
+languages:`
+English<br>
+Hindi
+`,
+
+achievements:`
+Assistant Bartender — Bombay Cartel<br>
+Assistant Bartender — Janwani
+`,
+
+experience:`
+2023–2025 Bombay Cartel<br>
+Present — Janwani
+`,
+
+projects:`
+Hospitality Training<br>
+Service Experience
+`,
+
+goals:`
+Career Growth<br>
+Hospitality Industry
+`,
+
+faith:`-`,
+
+about:`
+Hospitality professional with
+bartending and customer service experience.
+`,
+
+hobbies:`
+Service industry,
+teamwork,
+food & beverage
+`
+},
+
+
+
+father:{
+image:"father.png",
+name:"STEPHEN MATHIAS",
+role:"Father",
+personal:`Add`,
+contact:`Add`,
+education:`Add`,
+skills:`Add`,
+languages:`Add`,
+achievements:`Add`,
+experience:`Add`,
+projects:`Add`,
+goals:`Add`,
+faith:`Add`,
+about:`Add`,
+hobbies:`Add`
+},
+
+
+
+mother:{
+image:"mother.png",
+name:"KANCHAN MATHIAS",
+role:"Mother",
+personal:`Add`,
+contact:`Add`,
+education:`Add`,
+skills:`Add`,
+languages:`Add`,
+achievements:`Add`,
+experience:`Add`,
+projects:`Add`,
+goals:`Add`,
+faith:`Add`,
+about:`Add`,
+hobbies:`Add`
+}
+
+};
+   
    currentCategory = category;
 
     document.getElementById(
@@ -3797,259 +3991,169 @@ category){
     document.getElementById(
     'file-grid');
 
-   if(category === "HOME"){
+   if(category==="HOME"){
 
-    grid.innerHTML = `
+const member =
+document.getElementById(
+"member-select"
+).value || "shineil";
 
-    <div style="
-    grid-column:1/-1;
-    background:white;
-    border:1px solid var(--border);
-    border-radius:24px;
-    padding:35px;
-    animation:fadeInUp .6s ease;
-    line-height:1.9;">
+const p =
+profiles[member]
+|| profiles.shineil;
 
-        <div style="
-        display:flex;
-        align-items:center;
-        gap:25px;
-        flex-wrap:wrap;
-        margin-bottom:30px;">
 
-            <img src="profile.png"
-            style="
-            width:150px;
-            height:150px;
-            border-radius:24px;
-            object-fit:cover;
-            border:4px solid #eff6ff;">
+grid.innerHTML=`
 
-            <div>
+<div style="
+grid-column:1/-1;
+background:white;
+border:1px solid var(--border);
+border-radius:24px;
+padding:35px;">
 
-                <h1 style="
-                margin-bottom:10px;
-                color:var(--accent);">
+<div style="
+display:flex;
+gap:25px;
+flex-wrap:wrap;
+margin-bottom:30px;">
 
-                    SHINEIL KEITH MATHIAS
+<img src="${p.image}"
+style="
+width:150px;
+height:150px;
+border-radius:24px;
+object-fit:cover;">
 
-                </h1>
+<div>
 
-                <div style="
-                color:var(--muted);
-                font-size:1rem;">
+<h1 style="
+color:var(--accent);">
 
-                    Founder of SHINE MINISTRY • Student • Public Speaker • Digital Creator
+${p.name}
 
-                </div>
+</h1>
 
-            </div>
+<div style="
+color:var(--muted);">
 
-        </div>
+${p.role}
 
-        <div style="
-        display:grid;
-        grid-template-columns:
-        repeat(auto-fit,minmax(260px,1fr));
-        gap:20px;">
+</div>
 
-            <!-- PERSONAL -->
+</div>
+</div>
 
-            <div style="
-            background:#f8fafc;
-            padding:22px;
-            border-radius:18px;">
 
-                <h3 style="margin-bottom:12px;">
-                    Personal Details
-                </h3>
 
-                <b>Full Name:</b>
-                Shineil Keith Mathias<br>
+<div style="
+display:grid;
+grid-template-columns:
+repeat(auto-fit,minmax(260px,1fr));
+gap:20px;">
 
-                <b>Date of Birth:</b>
-                7 March 2010<br>
+<div class="profile-box">
+<h3>Personal Details</h3>
+${p.personal}
+</div>
 
-                <b>Gender:</b>
-                Male<br>
+<div class="profile-box">
+<h3>Contact</h3>
+${p.contact}
+</div>
 
-                <b>Nationality:</b>
-                Indian<br>
+<div class="profile-box">
+<h3>Education</h3>
+${p.education}
+</div>
 
-                <b>Location:</b>
-                Khandala, Pune, Maharashtra, India
+<div class="profile-box">
+<h3>Skills</h3>
+${p.skills}
+</div>
 
-            </div>
+<div class="profile-box">
+<h3>Languages</h3>
+${p.languages}
+</div>
 
-            <!-- CONTACT -->
+<div class="profile-box">
+<h3>Achievements</h3>
+${p.achievements}
+</div>
 
-            <div style="
-            background:#f8fafc;
-            padding:22px;
-            border-radius:18px;">
+<div class="profile-box">
+<h3>Experience</h3>
+${p.experience}
+</div>
 
-                <h3 style="margin-bottom:12px;">
-                    Contact Information
-                </h3>
+<div class="profile-box">
+<h3>Projects</h3>
+${p.projects}
+</div>
 
-                <b>Phone:</b>
-                +91 8605586173<br>
+<div class="profile-box">
+<h3>Future Goals</h3>
+${p.goals}
+</div>
 
-                <b>Email:</b>
-                shinumaths989@gmail.com<br>
+<div class="profile-box">
+<h3>Faith / Ministry</h3>
+${p.faith}
+</div>
 
-                <b>Website:</b>
-                www.shine-ministry.com<br>
+</div>
 
-                <b>Instagram:</b>
-                @shinu_vordenker_7
 
-            </div>
 
-            <!-- EDUCATION -->
+<div style="
+margin-top:25px;
+background:#eff6ff;
+padding:24px;
+border-radius:18px;">
 
-            <div style="
-            background:#f8fafc;
-            padding:22px;
-            border-radius:18px;">
+<h3>About Me</h3>
 
-                <h3 style="margin-bottom:12px;">
-                    Education
-                </h3>
+${p.about}
 
-                <b>School:</b>
-                Don Bosco High School & Junior College, Lonavla<br>
+</div>
 
-                <b>Academic Level:</b>
-                Class 5 to 10 Secondary Education<br>
 
-                <b>Period:</b>
-                2020 – 2026<br>
 
-                <b>EQF Level:</b>
-                Level 3
+<div style="
+margin-top:25px;
+background:#f8fafc;
+padding:24px;
+border-radius:18px;">
 
-            </div>
+<h3>Hobbies & Interests</h3>
 
-            <!-- SKILLS -->
+${p.hobbies}
 
-            <div style="
-            background:#f8fafc;
-            padding:22px;
-            border-radius:18px;">
+</div>
 
-                <h3 style="margin-bottom:12px;">
-                    Skills
-                </h3>
 
-                • Communication Skills<br>
-                • Public Speaking<br>
-                • Leadership<br>
-                • Microsoft Word & PowerPoint<br>
-                • Organizational Skills<br>
-                • Google Drive<br>
-                • Mathematics
 
-            </div>
+<div style="
+margin-top:25px;
+background:#f8fafc;
+padding:24px;
+border-radius:18px;">
 
-            <!-- LANGUAGES -->
+<h3>Timeline</h3>
 
-            <div style="
-            background:#f8fafc;
-            padding:22px;
-            border-radius:18px;">
+2010 — Born<br>
+2020 — Education<br>
+2024 — Projects<br>
+2025 — Present
 
-                <h3 style="margin-bottom:12px;">
-                    Languages
-                </h3>
+</div>
 
-                <b>English:</b>
-                Fluent<br>
+</div>
 
-                <b>Hindi:</b>
-                Fluent<br>
+`;
 
-                <b>German:</b>
-                Basic (A1)
-
-            </div>
-
-            <!-- ACHIEVEMENTS -->
-
-            <div style="
-            background:#f8fafc;
-            padding:22px;
-            border-radius:18px;">
-
-                <h3 style="margin-bottom:12px;">
-                    Achievements
-                </h3>
-
-                • Promising Student Of The Year<br>
-                • Green House Captain Leadership Award<br>
-                • Debate & Elocution Certificates<br>
-                • Science Exhibition Participation<br>
-                • Spell Bee & Quiz Awards
-
-            </div>
-
-        </div>
-
-        <!-- ABOUT -->
-
-        <div style="
-        margin-top:30px;
-        background:#eff6ff;
-        padding:24px;
-        border-radius:18px;
-        border:1px solid #dbeafe;">
-
-            <h3 style="
-            margin-bottom:12px;
-            color:var(--accent);">
-
-                About Me
-            </h3>
-
-            <p style="
-            color:#334155;
-            line-height:1.9;">
-
-                Motivated and responsible secondary school student with strong communication skills and a keen interest in learning, leadership, and personal development. Founder of SHINE MINISTRY and actively involved in public speaking, debates, leadership activities, and digital creativity. Passionate about technology, education, organizational growth, and making a positive impact through communication and service.
-
-            </p>
-
-        </div>
-
-        <!-- HOBBIES -->
-
-        <div style="
-        margin-top:25px;
-        background:#f8fafc;
-        padding:24px;
-        border-radius:18px;">
-
-            <h3 style="
-            margin-bottom:12px;">
-
-                Hobbies & Interests
-            </h3>
-
-            <p style="
-            color:#475569;
-            line-height:1.9;">
-
-                Public speaking, debating, reading, learning new topics, exploring technology and digital tools, participating in school leadership activities, current affairs, presentations, communication development, and creative ministry initiatives.
-
-            </p>
-
-        </div>
-
-    </div>
-
-    `;
-
-    return;
+return;
 }
    
     grid.innerHTML = "";
