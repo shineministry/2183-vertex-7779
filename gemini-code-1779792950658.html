@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detailed Duolingo Academic Credential Portal</title>
+  <script src="https://cdn.tailwindcss.com">
+// ===== ULTRA DETAILS PATCH =====
+function getUltraStats(user){
+ const bundles = user.currencyRewardBundles || [];
+ const courses = user.courses || [];
+ return {
+   totalCrowns: courses.reduce((a,c)=>a+(c.crowns||0),0),
+   totalCourseXP: courses.reduce((a,c)=>a+(c.xp||0),0),
+   rewardBundles: bundles.length,
+   accountAgeDays: user.creationDate ? Math.floor((Date.now()/1000-user.creationDate)/86400) : 0,
+   premiumStatus: user.hasPlus ? 'Super Duolingo' : 'Free',
+   securityMethods: [
+      user.hasGoogleId ? 'Google' : null,
+      user.hasFacebookId ? 'Facebook' : null,
+      user.hasPhoneNumber ? 'Phone' : null
+   ].filter(Boolean).join(', ') || 'Standard'
+ };
+}
+
+const _oldRender = renderCertificateAndLogs;
+renderCertificateAndLogs = function(user, originalUsername){
+ _oldRender(user, originalUsername);
+ const stats = getUltraStats(user);
+ const tbody = document.querySelector('tbody');
+ const rows = [
+ ['country_code', user.countryCode || 'N/A', 'Profile country code'],
+ ['email_verified', String(user.emailVerified), 'Email verification status'],
+ ['account_age_days', stats.accountAgeDays, 'Days since account creation'],
+ ['reward_bundles', stats.rewardBundles, 'Reward ecosystem size'],
+ ['security_methods', stats.securityMethods, 'Authentication providers'],
+ ['motivation', user.motivation || 'N/A', 'Learning motivation'],
+ ['acquisition_reason', user.acquisitionSurveyReason || 'N/A', 'Why user joined'],
+ ['longest_streak', user?.streakData?.longestStreak?.length || 0, 'Longest streak'],
+ ['xp_goal', user?.streakData?.xpGoal || 0, 'Daily XP goal'],
+ ['total_courses', (user.courses||[]).length, 'Total enrolled courses'],
+ ['total_crowns', stats.totalCrowns, 'Combined crowns'],
+ ['premium_status', stats.premiumStatus, 'Subscription class']
+ ];
+ rows.forEach(r=>{
+   const tr=document.createElement('tr');
+   tr.innerHTML=`<td class="px-4 py-3 font-semibold text-white">${r[0]}</td>
+   <td class="px-4 py-3 text-emerald-400">${r[1]}</td>
+   <td class="px-4 py-3 text-slate-500">${r[2]}</td>`;
+   tbody.appendChild(tr);
+ });
+}
+
+
+// ===== 100% RESPONSE ULTRA ENGINE =====
+function flattenObject(obj, prefix='', out=[]){
+ for(const key in obj){
+   const val = obj[key];
+   const path = prefix ? `${prefix}.${key}` : key;
+   if(val && typeof val === 'object'){
+      if(Array.isArray(val)){
+        out.push([path + '.length', val.length, 'Array size']);
+        val.forEach((v,i)=>{
+           if(typeof v==='object') flattenObject(v, `${path}[${i}]`, out);
+           else out.push([`${path}[${i}]`, String(v), 'Array item']);
+        });
+      } else flattenObject(val, path, out);
+   } else {
+      out.push([path, String(val), 'Live API response value']);
+   }
+ }
+ return out;
+}
+
+const _render2 = renderCertificateAndLogs;
+renderCertificateAndLogs = function(user, originalUsername){
+ _render2(user, originalUsername);
+
+ const mode = document.querySelector('input[name="certMode"]:checked')?.value || 'a4';
+ const cert = document.getElementById('certificate-document');
+ if(mode === 'landscape'){
+    cert.style.aspectRatio='1.7/1';
+    cert.style.maxWidth='1500px';
+ } else {
+    cert.style.aspectRatio='1/1.414';
+    cert.style.maxWidth='1000px';
+ }
+
+ const tbody = document.querySelector('tbody');
+ const allRows = flattenObject(user);
+ allRows.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="px-4 py-3 font-semibold text-white">${r[0]}</td>
+    <td class="px-4 py-3 text-emerald-400 break-all">${r[1]}</td>
+    <td class="px-4 py-3 text-slate-500">${r[2]}</td>`;
+    tbody.appendChild(tr);
+ });
+
+ // profile image
+ if(user.picture && !document.getElementById('duo-avatar')){
+    const img=document.createElement('img');
+    img.id='duo-avatar';
+    img.src='https:' + user.picture;
+    img.className='w-24 h-24 rounded-full border-4 border-emerald-700 object-cover mx-auto mb-4';
+    const certName=document.getElementById('cert-name');
+    certName.parentNode.insertBefore(img, certName);
+ }
+}
+
+</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .cert-font-serif { font-family: 'Playfair Display', serif; }
+    .cert-font-heading { font-family: 'Cinzel', serif; }
+    .cert-border {
+      border: 18px double #1e3a1e;
+      outline: 4px solid #2d5a27;
+      outline-offset: -26px;
+    }
+    @keyframes fade-in-up {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fade-in-up 0.5s ease-out forwards; }
+    @media print {
+      body { background: white; color: black; p: 0; }
+      .no-print { display: none !important; }
+      .print-shadow-none { shadow: none !important; box-shadow: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 min-h-screen text-slate-100 flex flex-col items-center justify-start p-4 md:p-8">
+
+  <div id="input-screen" class="w-full max-w-md bg-slate-900 p-8 rounded-2xl shadow-2xl border border-slate-800 my-auto z-10 no-print">
+    <div class="flex flex-col items-center mb-6">
+      <div class="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center text-3xl shadow-lg mb-3">🏅</div>
+      <h1 class="text-2xl font-bold tracking-tight text-center text-white">Academic Ledger Registry</h1>
+      <p class="text-sm text-slate-400 mt-1 text-center">Verify learning paths via Cloudflare infrastructure</p>
+    </div>
+    
+    <div class="space-y-4">
+      <div>
+        <label for="username" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Target Profile Identifier</label>
+        <input type="text" id="username" placeholder="e.g., Shinu709" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+      </div>
+      <button onclick="fetchDuolingoData()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg font-semibold tracking-wide">
+        Compile Profile Records
+      </button>
+      <p id="error-msg" class="text-red-400 text-sm hidden text-center font-medium mt-2"></p>
+    </div>
+  </div>
+
+  <div id="loading-screen" class="hidden flex flex-col items-center justify-center space-y-4 my-auto z-10 no-print">
+    <div class="w-14 h-14 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin"></div>
+    <div class="text-center">
+      <h3 class="text-lg font-semibold text-white">Aggregating Global Ledger Objects...</h3>
+      <p class="text-sm text-slate-500">Unpacking nested fields & mapping crowns variables</p>
+    </div>
+  </div>
+
+  <div id="certificate-screen" class="hidden w-full max-w-5xl flex flex-col items-center space-y-8 my-4 animate-fade-in">
+    
+    <div class="w-full flex justify-between items-center bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-md no-print">
+      <button onclick="resetApp()" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">
+        ← Query Alternative Account
+      </button>
+      <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-sm font-bold py-2 px-5 rounded-lg transition-colors shadow-md">
+        Print Certificate & Ledger Table
+      </button>
+    </div>
+
+    <div id="certificate-document" class="w-full bg-[#fcfaf2] text-slate-900 p-12 md:p-16 rounded-sm shadow-2xl relative cert-border aspect-[1.414/1] flex flex-col justify-between print-shadow-none">
+      
+      <div class="absolute top-0 left-12 w-14 h-24 bg-emerald-900 flex items-end justify-center pb-3 shadow-sm">
+        <div class="w-8 h-8 rounded-full border border-amber-400/40 flex items-center justify-center text-xs">📜</div>
+      </div>
+      <div class="text-right text-[10px] text-emerald-800/40 font-mono tracking-wider uppercase pr-4 mt-2">Document ID: <span id="cert-uid">00000</span></div>
+
+      <div class="text-center mt-4">
+        <h2 class="cert-font-heading text-3xl md:text-4xl tracking-[0.2em] font-extrabold text-emerald-950">Credential Certification</h2>
+        <p class="cert-font-serif text-amber-700 text-xs md:text-sm tracking-[0.25em] uppercase font-bold mt-1">International Language Ecosystem</p>
+        <div class="w-40 h-[1px] bg-gradient-to-r from-transparent via-amber-600 to-transparent mx-auto mt-4"></div>
+      </div>
+
+      <div class="text-center my-6">
+        <p class="cert-font-serif italic text-base text-slate-600">This official record proclaims that</p>
+        <h1 id="cert-name" class="cert-font-heading text-4xl md:text-5xl font-bold text-slate-950 border-b-2 border-amber-800/20 inline-block px-12 py-2 my-2 tracking-wide uppercase">
+          Profile Name Placeholder
+        </h1>
+        <p class="cert-font-serif text-sm text-slate-600 max-w-2xl mx-auto mt-4 leading-relaxed">
+          has successfully maintained strict language study discipline, achieving comprehensive milestone proficiency parameters for the primary curriculum sequence listed below.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto w-full my-4">
+        <div class="bg-[#f5f2e6] border border-slate-300/60 rounded-xl p-3 text-center shadow-sm">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Target Curriculum</span>
+          <span id="cert-lang" class="text-lg font-bold text-emerald-900 block truncate mt-1">Evaluating</span>
+        </div>
+        <div class="bg-[#f5f2e6] border border-slate-300/60 rounded-xl p-3 text-center shadow-sm">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Curriculum XP</span>
+          <span id="cert-lang-xp" class="text-lg font-bold text-slate-900 block mt-1">0</span>
+        </div>
+        <div class="bg-[#f5f2e6] border border-slate-300/60 rounded-xl p-3 text-center shadow-sm">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Course Crowns</span>
+          <span id="cert-crowns" class="text-lg font-bold text-amber-700 block mt-1">0</span>
+        </div>
+        <div class="bg-[#f5f2e6] border border-slate-300/60 rounded-xl p-3 text-center shadow-sm">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Active Streak Run</span>
+          <span id="cert-streak" class="text-lg font-bold text-orange-600 block mt-1">0 Days</span>
+        </div>
+      </div>
+
+      <div class="pt-6 border-t border-slate-300/60 grid grid-cols-3 items-end text-[11px] text-slate-500">
+        <div class="space-y-1 text-left">
+          <p class="uppercase font-bold tracking-widest text-slate-400 text-[9px]">Timestamp Evaluated</p>
+          <p id="cert-date" class="font-medium text-slate-800">Current Date</p>
+        </div>
+
+        <div class="flex flex-col items-center justify-center space-y-1">
+          <div id="qrcode" class="bg-white p-1 border border-slate-200 rounded"></div>
+          <p class="text-[8px] uppercase tracking-widest text-slate-400 font-bold">Verifiable Root Link</p>
+        </div>
+
+        <div class="text-right space-y-1">
+          <div class="cert-font-serif italic text-base text-emerald-900 font-bold h-5 flex items-end justify-end">
+            <span id="cert-tier">Premium Class</span>
+          </div>
+          <div class="w-28 h-[1px] bg-slate-300 ml-auto"></div>
+          <p class="uppercase font-bold tracking-widest text-slate-400 text-[9px]">Ecosystem Validation Seal</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl print-shadow-none">
+      <div class="border-b border-slate-800 pb-4 mb-4 flex justify-between items-center">
+        <div>
+          <h3 class="text-lg font-bold text-white tracking-wide">Lower Ledger Execution Logs</h3>
+          <p class="text-xs text-slate-400">Granular profile parameters compiled from raw node vectors</p>
+        </div>
+        <span class="bg-slate-800 border border-slate-700 text-emerald-400 text-xs px-2.5 py-1 rounded-full font-mono font-medium">Status: Synchronized</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-950 text-slate-400 uppercase text-xs tracking-wider border border-slate-800">
+            <tr>
+              <th class="px-4 py-3">Variable Metric Block</th>
+              <th class="px-4 py-3">Compiled Internal Database Value</th>
+              <th class="px-4 py-3">Ecosystem Structural Meaning</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800 border-x border-b border-slate-800 font-mono text-xs">
+            <tr>
+              <td class="px-4 py-3 font-semibold text-white">user_id</td>
+              <td id="log-uid" class="px-4 py-3 text-slate-400">N/A</td>
+              <td class="px-4 py-3 text-slate-500">Unique global system integer assigned upon initial user allocation.</td>
+            </tr>
+            <tr class="bg-slate-950/40">
+              <td class="px-4 py-3 font-semibold text-white">username_id</td>
+              <td id="log-username" class="px-4 py-3 text-slate-400">N/A</td>
+              <td class="px-4 py-3 text-slate-500">The canonical handle utilized for public endpoint synchronization.</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-semibold text-white">aggregated_total_xp</td>
+              <td id="log-txp" class="px-4 py-3 font-bold text-amber-400">0 XP</td>
+              <td class="px-4 py-3 text-slate-500">Historical accumulation of points combined across all language courses.</td>
+            </tr>
+            <tr class="bg-slate-950/40">
+              <td class="px-4 py-3 font-semibold text-white">historical_max_streak</td>
+              <td id="log-maxstreak" class="px-4 py-3 text-orange-400">0 Days</td>
+              <td class="px-4 py-3 text-slate-500">The highest consecutive logging cycle count recorded on database nodes.</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-semibold text-white">account_creation_timestamp</td>
+              <td id="log-created" class="px-4 py-3 text-slate-400">N/A</td>
+              <td class="px-4 py-3 text-slate-500">Decoded UNIX timestamp marking structural creation sequence.</td>
+            </tr>
+            <tr class="bg-slate-950/40">
+              <td class="px-4 py-3 font-semibold text-white">account_tier_class</td>
+              <td id="log-tier" class="px-4 py-3 text-slate-400">N/A</td>
+              <td class="px-4 py-3 text-slate-500">Boolean check identifying if account registers active premium status flags.</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-semibold text-white">daily_streak_goal</td>
+              <td id="log-goal" class="px-4 py-3 text-slate-400">0 XP</td>
+              <td class="px-4 py-3 text-slate-500">The daily operational milestone threshold chosen by the user profile.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function fetchDuolingoData() {
+      const usernameInput = document.getElementById('username').value.trim();
+      const errorEl = document.getElementById('error-msg');
+      
+      if (!usernameInput) {
+        showError("Operational parameters require a valid user handle.");
+        return;
+      }
+
+      errorEl.classList.add('hidden');
+      document.getElementById('input-screen').classList.add('hidden');
+      document.getElementById('loading-screen').classList.remove('hidden');
+
+      // ⚠️ UPDATE THIS URL TO MATCH YOUR LIVE CLOUDFLARE WORKER ROUTE LINK
+      const workerBaseUrl = "https://rough-hill-2180.shinuspirituality2024.workers.dev"; 
+      const targetUrl = `${workerBaseUrl}?username=${encodeURIComponent(usernameInput)}`;
+
+      fetch(targetUrl)
+        .then(response => {
+          if (!response.ok) throw new Error("CORS request validation failed or user records are inaccessible.");
+          return response.json();
+        })
+        .then(data => {
+
+  const user =
+    data.profile ||
+    data.users?.[0];
+
+  if (!user) {
+    throw new Error(
+      "Target user profile was not found on the live database ledger."
+    );
+  }
+          renderCertificateAndLogs(
+  data.profile || data.users?.[0],
+  usernameInput
+);
+        })
+        .catch(error => {
+          console.error(error);
+          showError(error.message || "An exception occurred inside the Cloudflare edge pipeline.");
+          resetApp();
+        });
+    }
+
+    function renderCertificateAndLogs(user, originalUsername) {
+      // --- SECTION 1: RENDER UPPER HIGH-FIDELITY CERTIFICATE ---
+      document.getElementById('cert-uid').innerText = user.id || "00000";
+      document.getElementById('cert-name').innerText = user.name || user.username || "Linguistic Academic";
+      document.getElementById('cert-streak').innerText = `${user.streak || 0} Days`;
+      
+      // Select the primary language track with the highest XP count
+      if (user.courses && user.courses.length > 0) {
+        const primaryCourse = user.courses.reduce((max, c) => (c.xp > max.xp) ? c : max, user.courses[0]);
+        document.getElementById('cert-lang').innerText = primaryCourse.title || "Foreign Study";
+        document.getElementById('cert-lang-xp').innerText = (primaryCourse.xp || 0).toLocaleString() + " XP";
+        document.getElementById('cert-crowns').innerText = (primaryCourse.crowns || 0).toLocaleString();
+      } else {
+        document.getElementById('cert-lang').innerText = "General Studies";
+        document.getElementById('cert-lang-xp').innerText = "0 XP";
+        document.getElementById('cert-crowns').innerText = "0";
+      }
+
+      // Format current validation date
+      const today = new Date();
+      document.getElementById('cert-date').innerText = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      // Determine payment/subscription class tier
+      const isPremium = user.hasPlus === true;
+      document.getElementById('cert-tier').innerText = isPremium ? "Verified Super Class" : "Standard Class";
+
+      // Reinitialize QR node
+      const qrContainer = document.getElementById("qrcode");
+      qrContainer.innerHTML = "";
+      new QRCode(qrContainer, {
+        text: `https://www.duolingo.com/profile/${originalUsername}`,
+        width: 60,
+        height: 60,
+        colorDark : "#052e16",
+        colorLight : "#fcfaf2",
+        correctLevel : QRCode.CorrectLevel.M
+      });
+
+      // --- SECTION 2: MAP LOWER GRANULAR LEDGER METADATA LOGS ---
+      document.getElementById('log-uid').innerText = user.id || "N/A";
+      document.getElementById('log-username').innerText = user.username || "N/A";
+      document.getElementById('log-txp').innerText = `${(user.totalXp || 0).toLocaleString()} XP`;
+      
+      const longestStreak = user.streakData && user.streakData.longestStreak ? user.streakData.longestStreak.length : user.streak || 0;
+      document.getElementById('log-maxstreak').innerText = `${longestStreak} Days`;
+
+      // Decode the Unix creation timestamp safely
+      if (user.creationDate) {
+        const dateCreated = new Date(user.creationDate * 1000);
+        document.getElementById('log-created').innerText = dateCreated.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      } else {
+        document.getElementById('log-created').innerText = "N/A";
+      }
+
+      document.getElementById('log-tier').innerText = isPremium ? "TRUE (Plus/Super Track Active)" : "FALSE (Ad Supported Track)";
+      
+      const xpGoal = user.streakData && user.streakData.xpGoal ? user.streakData.xpGoal : "N/A";
+      document.getElementById('log-goal').innerText = `${xpGoal} XP / Daily`;
+
+      // --- SECTION 3: RESTRUCTURE VIEW VISIBILITY ---
+      document.getElementById('loading-screen').classList.add('hidden');
+      document.getElementById('certificate-screen').classList.remove('hidden');
+    }
+
+    function showError(message) {
+      const errorEl = document.getElementById('error-msg');
+      errorEl.innerText = message;
+      errorEl.classList.remove('hidden');
+    }
+
+    function resetApp() {
+      document.getElementById('loading-screen').classList.add('hidden');
+      document.getElementById('certificate-screen').classList.add('hidden');
+      document.getElementById('input-screen').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
