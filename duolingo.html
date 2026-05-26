@@ -323,20 +323,25 @@ renderCertificateAndLogs = function(user, originalUsername){
         })
         .then(data => {
 
+  console.log("FULL RESPONSE:", data);
+
   const user =
     data.profile ||
     data.users?.[0];
+
+  console.log("USER:", user);
 
   if (!user) {
     throw new Error(
       "Target user profile was not found on the live database ledger."
     );
   }
-          renderCertificateAndLogs(
-  data.profile || data.users?.[0],
-  usernameInput
-);
-        })
+
+  renderCertificateAndLogs(
+    user,
+    usernameInput
+  );
+})
         .catch(error => {
           console.error(error);
           showError(error.message || "An exception occurred inside the Cloudflare edge pipeline.");
