@@ -48,6 +48,11 @@
       <button onclick="fetchDuolingoData()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg font-semibold tracking-wide">
         Compile Profile Records
       </button>
+      <button
+  onclick="connectDuolingo()"
+  class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg mt-2">
+  Connect Logged-In Duolingo Account
+</button>
       <p id="error-msg" class="text-red-400 text-sm hidden text-center font-medium mt-2"></p>
     </div>
   </div>
@@ -421,6 +426,59 @@ renderCertificateAndLogs = function(user, originalUsername){
     const certName=document.getElementById('cert-name');
     certName.parentNode.insertBefore(img, certName);
  }
+}
+    async function connectDuolingo() {
+
+  try {
+
+    document
+      .getElementById('input-screen')
+      .classList.add('hidden');
+
+    document
+      .getElementById('loading-screen')
+      .classList.remove('hidden');
+
+    // Try reading logged-in browser session
+    const response = await fetch(
+      "https://www.duolingo.com/2017-06-30/users",
+      {
+        credentials: "include"
+      }
+    );
+
+    const data =
+      await response.json();
+
+    console.log(
+      "SESSION DATA:",
+      data
+    );
+
+    const user =
+      data?.users?.[0];
+
+    if (!user) {
+      throw new Error(
+        "No logged-in Duolingo account found in this browser."
+      );
+    }
+
+    renderCertificateAndLogs(
+      user,
+      user.username
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    showError(
+      "Please log into Duolingo in this browser first."
+    );
+
+    resetApp();
+  }
 }
   </script>
 </body>
