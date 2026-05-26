@@ -5,54 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Detailed Duolingo Academic Credential Portal</title>
   <script src="https://cdn.tailwindcss.com">
-// ===== ULTRA DETAILS PATCH =====
-function getUltraStats(user){
- const bundles = user.currencyRewardBundles || [];
- const courses = user.courses || [];
- return {
-   totalCrowns: courses.reduce((a,c)=>a+(c.crowns||0),0),
-   totalCourseXP: courses.reduce((a,c)=>a+(c.xp||0),0),
-   rewardBundles: bundles.length,
-   accountAgeDays: user.creationDate ? Math.floor((Date.now()/1000-user.creationDate)/86400) : 0,
-   premiumStatus: user.hasPlus ? 'Super Duolingo' : 'Free',
-   securityMethods: [
-      user.hasGoogleId ? 'Google' : null,
-      user.hasFacebookId ? 'Facebook' : null,
-      user.hasPhoneNumber ? 'Phone' : null
-   ].filter(Boolean).join(', ') || 'Standard'
- };
-}
-
-const _oldRender = renderCertificateAndLogs;
-renderCertificateAndLogs = function(user, originalUsername){
- _oldRender(user, originalUsername);
- const stats = getUltraStats(user);
- const tbody = document.querySelector('tbody');
- const rows = [
- ['country_code', user.countryCode || 'N/A', 'Profile country code'],
- ['email_verified', String(user.emailVerified), 'Email verification status'],
- ['account_age_days', stats.accountAgeDays, 'Days since account creation'],
- ['reward_bundles', stats.rewardBundles, 'Reward ecosystem size'],
- ['security_methods', stats.securityMethods, 'Authentication providers'],
- ['motivation', user.motivation || 'N/A', 'Learning motivation'],
- ['acquisition_reason', user.acquisitionSurveyReason || 'N/A', 'Why user joined'],
- ['longest_streak', user?.streakData?.longestStreak?.length || 0, 'Longest streak'],
- ['xp_goal', user?.streakData?.xpGoal || 0, 'Daily XP goal'],
- ['total_courses', (user.courses||[]).length, 'Total enrolled courses'],
- ['total_crowns', stats.totalCrowns, 'Combined crowns'],
- ['premium_status', stats.premiumStatus, 'Subscription class']
- ];
- rows.forEach(r=>{
-   const tr=document.createElement('tr');
-   tr.innerHTML=`<td class="px-4 py-3 font-semibold text-white">${r[0]}</td>
-   <td class="px-4 py-3 text-emerald-400">${r[1]}</td>
-   <td class="px-4 py-3 text-slate-500">${r[2]}</td>`;
-   tbody.appendChild(tr);
- });
-}
-
-
-// ===== 100% RESPONSE ULTRA ENGINE =====
 function flattenObject(obj, prefix='', out=[]){
  for(const key in obj){
    const val = obj[key];
@@ -106,7 +58,54 @@ renderCertificateAndLogs = function(user, originalUsername){
     certName.parentNode.insertBefore(img, certName);
  }
 }
+// ===== ULTRA DETAILS PATCH =====
+function getUltraStats(user){
+ const bundles = user.currencyRewardBundles || [];
+ const courses = user.courses || [];
+ return {
+   totalCrowns: courses.reduce((a,c)=>a+(c.crowns||0),0),
+   totalCourseXP: courses.reduce((a,c)=>a+(c.xp||0),0),
+   rewardBundles: bundles.length,
+   accountAgeDays: user.creationDate ? Math.floor((Date.now()/1000-user.creationDate)/86400) : 0,
+   premiumStatus: user.hasPlus ? 'Super Duolingo' : 'Free',
+   securityMethods: [
+      user.hasGoogleId ? 'Google' : null,
+      user.hasFacebookId ? 'Facebook' : null,
+      user.hasPhoneNumber ? 'Phone' : null
+   ].filter(Boolean).join(', ') || 'Standard'
+ };
+}
 
+const _oldRender = renderCertificateAndLogs;
+renderCertificateAndLogs = function(user, originalUsername){
+ _oldRender(user, originalUsername);
+ const stats = getUltraStats(user);
+ const tbody = document.querySelector('tbody');
+ const rows = [
+ ['country_code', user.countryCode || 'N/A', 'Profile country code'],
+ ['email_verified', String(user.emailVerified), 'Email verification status'],
+ ['account_age_days', stats.accountAgeDays, 'Days since account creation'],
+ ['reward_bundles', stats.rewardBundles, 'Reward ecosystem size'],
+ ['security_methods', stats.securityMethods, 'Authentication providers'],
+ ['motivation', user.motivation || 'N/A', 'Learning motivation'],
+ ['acquisition_reason', user.acquisitionSurveyReason || 'N/A', 'Why user joined'],
+ ['longest_streak', user?.streakData?.longestStreak?.length || 0, 'Longest streak'],
+ ['xp_goal', user?.streakData?.xpGoal || 0, 'Daily XP goal'],
+ ['total_courses', (user.courses||[]).length, 'Total enrolled courses'],
+ ['total_crowns', stats.totalCrowns, 'Combined crowns'],
+ ['premium_status', stats.premiumStatus, 'Subscription class']
+ ];
+ rows.forEach(r=>{
+   const tr=document.createElement('tr');
+   tr.innerHTML=`<td class="px-4 py-3 font-semibold text-white">${r[0]}</td>
+   <td class="px-4 py-3 text-emerald-400">${r[1]}</td>
+   <td class="px-4 py-3 text-slate-500">${r[2]}</td>`;
+   tbody.appendChild(tr);
+ });
+}
+
+
+// ===== 100% RESPONSE ULTRA ENGINE =====
 </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
