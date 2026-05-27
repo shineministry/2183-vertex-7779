@@ -2847,10 +2847,7 @@ function detectLiteMode() {
         window.LITE_MODE
     );
 
-    console.log(
-        "Lite Mode:",
-        window.LITE_MODE
-    );
+
 }
 
 function toggleLiteMode(){
@@ -3777,8 +3774,6 @@ try {
         );
     }
 
-    console.log("Using session token:", sessionToken);
-
     const res = await fetch(
         "https://backend.shinumaths989.workers.dev/files.json",
         {
@@ -3798,8 +3793,6 @@ try {
     }
 
     const raw = await res.json();
-    console.log("files.json raw response type:", Array.isArray(raw) ? "ARRAY" : typeof raw, raw);
-
     // ── Normalise: backend may return either
     //    a) category-keyed object  { "Passport": [{...}], "ID": [{...}] }
     //    b) flat array             [ {name, file, member, category}, ... ]
@@ -3812,7 +3805,7 @@ try {
             if (!data[cat]) data[cat] = [];
             data[cat].push(file);
         });
-        console.log("Converted flat array → category object:", Object.keys(data));
+
     } else if (raw && typeof raw === 'object') {
         data = raw;
     } else {
@@ -3821,26 +3814,11 @@ try {
 
     allFilesData = data;
 
-    // ── DIAGNOSTIC: show exact data shape in console ──
-    const catKeys = Object.keys(data);
-    console.log("initVault: category keys =", catKeys);
-    console.log("initVault: VAULT_MODE =", window.VAULT_MODE);
-    console.log("initVault: vaultMode (session) =", sessionStorage.getItem("vaultMode"));
-    if (catKeys.length > 0) {
-        const firstCat = catKeys[0];
-        const firstItems = data[firstCat];
-        console.log("initVault: first category =", firstCat, "items =", JSON.stringify(firstItems).slice(0, 300));
-    } else {
-        console.warn("initVault: data object is EMPTY — backend returned no categories!");
-    }
-
     const list = document.getElementById('cat-list');
     list.innerHTML = "";
 
     const mode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "VIEWER";
     const currentMember = document.getElementById('member-select')?.value || 'all';
-
-    console.log("initVault: mode =", mode, "| currentMember =", currentMember);
 
     // Backend already filters by mode — show ALL returned categories.
     // The frontend should NOT re-filter here; trust the backend.
@@ -3848,7 +3826,6 @@ try {
 
     if (categories.length === 0) {
         list.innerHTML = '<li style="color:var(--muted);font-size:12px;pointer-events:none;font-weight:normal;">No documents found</li>';
-        console.warn("initVault: No categories to display. Check files.json member fields vs backend allowed[] map.");
         return;
     }
 
@@ -4651,9 +4628,6 @@ displayName){
         buffer.slice(ivEnd);
 
         // HASH PASSWORD
-        console.log("🔑 masterPassword at decrypt time:", JSON.stringify(window.masterPassword));
-        console.log("🔑 result.secret was:", JSON.stringify(sessionStorage.getItem("vault_session_secret")));
-        console.log("🔑 settings from file header:", JSON.stringify(settings));
 
         const passwordHash =
         await sha256Bytes(
