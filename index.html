@@ -3831,10 +3831,12 @@ try {
             let filteredFiles = data[cat];
 
             if (selectedMember !== 'all') {
-                filteredFiles = data[cat].filter(file =>
-                    file.member === selectedMember
-                );
-            }
+    filteredFiles = data[cat].filter(file =>
+        Array.isArray(file.members)
+            ? file.members.includes(selectedMember)
+            : file.member === selectedMember
+    );
+}
 
             renderFiles(filteredFiles, cat);
         };
@@ -5938,6 +5940,13 @@ async function checkDocExpiryReminders(){
 
 // Post-init hook: called at end of onCaptchaSuccess after initVault()
 function vaultPostInit(){
+   // ── Hide member dropdown for non-ADMIN modes ──
+    const mode = sessionStorage.getItem("vaultMode");
+    const memberSelectWrap = document.getElementById('member-select')?.parentElement;
+    if (mode !== "ADMIN" && memberSelectWrap) {
+        memberSelectWrap.style.display = "none";
+    }
+
     renderPinnedSection();
     setTimeout(checkDocExpiryReminders, 2000);
 
