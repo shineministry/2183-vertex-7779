@@ -3198,6 +3198,25 @@ resetInactivityTimer();
 window.masterPassword =
     String(pass);
 
+   window.VAULT_MODE=
+result.mode;
+
+       if(
+
+window.VAULT_MODE
+!=="ADMIN"
+
+){
+
+document
+.getElementById(
+"share-gear"
+)
+.style.display=
+"none";
+
+}
+
 masterPassword =
     String(pass);
 
