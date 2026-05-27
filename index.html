@@ -3844,6 +3844,13 @@ try {
         list.appendChild(li);
     });
 
+   // ✅ FIX
+const firstLi = list.querySelector('li');
+
+if (firstLi) {
+    firstLi.classList.add('active');
+    firstLi.click();
+}
 } catch (e) {
 
     console.error(e);
