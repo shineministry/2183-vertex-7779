@@ -3765,80 +3765,94 @@ try {
         );
     }
 
-    console.log(
-        "Using session token:",
-        sessionToken
-    );
+    console.log("Using session token:", sessionToken);
 
     const res = await fetch(
         "https://backend.shinumaths989.workers.dev/files.json",
         {
             headers: {
-                "Authorization":
-                    "Bearer " + sessionToken
+                "Authorization": "Bearer " + sessionToken
             }
         }
     );
 
     // 🛡️ Firewall / backend errors
     if (!res.ok) {
-
-        const contentType =
-            res.headers.get('content-type') || '';
-
-        if (
-            contentType.includes('text/html')
-        ) {
-            throw new Error(
-                "Security Exception: Domain rejected by Gateway Firewall."
-            );
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('text/html')) {
+            throw new Error("Security Exception: Domain rejected by Gateway Firewall.");
         }
-
-        throw new Error(
-            `Server returned HTTP status ${res.status}`
-        );
+        throw new Error(`Server returned HTTP status ${res.status}`);
     }
 
-    const data = await res.json();
+    const raw = await res.json();
+    console.log("files.json raw response type:", Array.isArray(raw) ? "ARRAY" : typeof raw, raw);
+
+    // ── Normalise: backend may return either
+    //    a) category-keyed object  { "Passport": [{...}], "ID": [{...}] }
+    //    b) flat array             [ {name, file, member, category}, ... ]
+    //    Convert (b) → (a) so the rest of the code always works the same way.
+    let data = {};
+    if (Array.isArray(raw)) {
+        // Flat array — group by category field (fallback: "Documents")
+        raw.forEach(file => {
+            const cat = file.category || file.type || "Documents";
+            if (!data[cat]) data[cat] = [];
+            data[cat].push(file);
+        });
+        console.log("Converted flat array → category object:", Object.keys(data));
+    } else if (raw && typeof raw === 'object') {
+        data = raw;
+    } else {
+        throw new Error("Unexpected response format from files.json");
+    }
 
     allFilesData = data;
 
-    const list =
-        document.getElementById('cat-list');
-
+    const list = document.getElementById('cat-list');
     list.innerHTML = "";
 
-    Object.keys(data).forEach(cat => {
+    const mode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "VIEWER";
+    const currentMember = document.getElementById('member-select')?.value || 'all';
 
-        const li =
-            document.createElement('li');
+    // For non-admin, filter categories to only those containing the user's files
+    const categories = Object.keys(data).filter(cat => {
+        if (mode === "ADMIN") return true; // admin sees all
+        if (currentMember === 'all') return true;
+        const files = data[cat];
+        return Array.isArray(files) && files.some(file =>
+            Array.isArray(file.members)
+                ? file.members.includes(currentMember)
+                : (file.member === currentMember || !file.member)
+        );
+    });
 
+    if (categories.length === 0) {
+        list.innerHTML = '<li style="color:var(--muted);font-size:12px;pointer-events:none;font-weight:normal;">No documents found</li>';
+        return;
+    }
+
+    categories.forEach(cat => {
+        const li = document.createElement('li');
         li.textContent = cat;
 
         li.onclick = () => {
-
-            document
-            .querySelectorAll(
-                '#cat-list li'
-            )
-            .forEach(el =>
-                el.classList.remove('active')
-            );
-
+            document.querySelectorAll('#cat-list li')
+                .forEach(el => el.classList.remove('active'));
             li.classList.add('active');
 
             const selectedMember =
                 document.getElementById('member-select')?.value || 'all';
 
-            let filteredFiles = data[cat];
+            let filteredFiles = data[cat] || [];
 
             if (selectedMember !== 'all') {
-    filteredFiles = data[cat].filter(file =>
-        Array.isArray(file.members)
-            ? file.members.includes(selectedMember)
-            : file.member === selectedMember
-    );
-}
+                filteredFiles = filteredFiles.filter(file =>
+                    Array.isArray(file.members)
+                        ? file.members.includes(selectedMember)
+                        : (file.member === selectedMember || !file.member)
+                );
+            }
 
             renderFiles(filteredFiles, cat);
         };
@@ -3846,27 +3860,20 @@ try {
         list.appendChild(li);
     });
 
-   // ✅ FIX
-const firstLi = list.querySelector('li');
+    // Auto-click first item
+    const firstLi = list.querySelector('li');
+    if (firstLi) {
+        firstLi.classList.add('active');
+        firstLi.click();
+    }
 
-if (firstLi) {
-    firstLi.classList.add('active');
-    firstLi.click();
-}
 } catch (e) {
 
-    console.error(e);
+    console.error("initVault error:", e);
 
-    document.getElementById(
-        'cat-title'
-    ).textContent =
-        "Vault System Locked";
+    document.getElementById('cat-title').textContent = "Vault System Locked";
 
-    const grid =
-        document.getElementById(
-            'file-grid'
-        );
-
+    const grid = document.getElementById('file-grid');
     grid.innerHTML = `
     <div style="
         grid-column:1/-1;
@@ -3875,8 +3882,7 @@ if (firstLi) {
         color:var(--danger);
         font-weight:700;
     ">
-        🚨 ${e.message ||
-        "Failed to load secure database."}
+        🚨 ${e.message || "Failed to load secure database."}
     </div>`;
 }
 }
@@ -8008,10 +8014,8 @@ document.getElementById('advSettingsModal').addEventListener('click', (e) => {
     if(e.target === document.getElementById('advSettingsModal')) closeAdvSettings();
 });
 
-   // NOTE: Sidebar navigation and file grid are populated by initVault()
-// which runs after successful login for ALL modes (admin and non-admin).
-// The member-select change listener re-renders files via the existing
-// allFilesData object that initVault() already loaded.
+   // Sidebar and file grid are populated by initVault() after login.
+// initVault() handles both flat-array and category-object formats from the backend.
 </script>
 </body>
 </html>
