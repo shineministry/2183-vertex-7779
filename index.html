@@ -3201,6 +3201,8 @@ window.masterPassword =
    window.VAULT_MODE=
 result.mode;
 
+   sessionStorage.setItem("vaultMode", result.mode);
+
        if(
 
 window.VAULT_MODE
@@ -8006,107 +8008,10 @@ document.getElementById('advSettingsModal').addEventListener('click', (e) => {
     if(e.target === document.getElementById('advSettingsModal')) closeAdvSettings();
 });
 
-   // Global state holding document assets
-let allVaultDocuments = [];
-
-// 1. Direct Pipeline to your Cloudflare Worker endpoint package
-async function loadDocumentsFromJSON() {
-    try {
-        const targetAPI = 'https://backend.shinumaths989.workers.dev/files.json';
-        const response = await fetch(targetAPI);
-        
-        if (!response.ok) throw new Error('Network retrieval failed');
-        allVaultDocuments = await response.json();
-        
-        // Populate layout frames
-        renderDocumentNavigation();
-        renderMainDashboardGrid();
-    } catch (error) {
-        console.error('Failed to query files backend. Loading locally cached assets:', error);
-        // Fallback default setup to protect system from empty screens
-        allVaultDocuments = [
-            { id: "doc1", title: "Passport Scan (Cached Fallback)", member: "shineil", category: "Identification" }
-        ];
-        renderDocumentNavigation();
-        renderMainDashboardGrid();
-    }
-}
-
-// 2. Clear and Render Sidebar Navigation elements across ALL system layout states
-function renderDocumentNavigation() {
-    const catList = document.getElementById('cat-list');
-    if (!catList) return;
-    
-    catList.innerHTML = ''; // Clear target layout inner container
-    const selectedMember = document.getElementById('member-select').value || 'all';
-
-    // Filter documents based on dropdown value
-    const filteredDocs = allVaultDocuments.filter(doc => 
-        selectedMember === 'all' || doc.member === selectedMember
-    );
-
-    if (filteredDocs.length === 0) {
-        catList.innerHTML = '<li style="color:var(--muted); font-size:12px; pointer-events:none; font-weight:normal;">No matching documents</li>';
-        return;
-    }
-
-    // Append dynamic list tracking links
-    filteredDocs.forEach(doc => {
-        const li = document.createElement('li');
-        li.textContent = `📄 ${doc.title}`;
-        li.dataset.id = doc.id;
-        
-        li.addEventListener('click', () => {
-            catList.querySelectorAll('li').forEach(item => item.classList.remove('active'));
-            li.classList.add('active');
-            
-            // Execute portal viewer engine logic 
-            if (typeof loadSecurePDF === 'function') {
-                loadSecurePDF(doc.id);
-            }
-        });
-        
-        catList.appendChild(li);
-    });
-}
-
-// 3. Render Dashboard Center Files Grid Framework
-function renderMainDashboardGrid() {
-    const fileGrid = document.querySelector('.file-grid');
-    if (!fileGrid) return;
-    
-    fileGrid.innerHTML = '';
-    const selectedMember = document.getElementById('member-select').value || 'all';
-
-    const filteredDocs = allVaultDocuments.filter(doc => 
-        selectedMember === 'all' || doc.member === selectedMember
-    );
-
-    filteredDocs.forEach(doc => {
-        const card = document.createElement('div');
-        card.className = 'file-card';
-        card.innerHTML = `
-            <div style="font-size:32px; margin-bottom:8px;">📄</div>
-            <div style="font-weight:700; font-size:13px; color:var(--text);">${doc.title}</div>
-            <div style="font-size:11px; color:var(--muted); margin-top:4px;">${doc.member.toUpperCase()}</div>
-        `;
-        
-        card.addEventListener('click', () => {
-            if (typeof loadSecurePDF === 'function') loadSecurePDF(doc.id);
-        });
-        
-        fileGrid.appendChild(card);
-    });
-}
-
-// 4. Connect selection dropdown target listener to rebuild views
-document.getElementById('member-select').addEventListener('change', () => {
-    renderDocumentNavigation();
-    renderMainDashboardGrid();
-});
-
-// 5. Trigger the asset builder pipeline upon application initialization
-loadDocumentsFromJSON();
+   // NOTE: Sidebar navigation and file grid are populated by initVault()
+// which runs after successful login for ALL modes (admin and non-admin).
+// The member-select change listener re-renders files via the existing
+// allFilesData object that initVault() already loaded.
 </script>
 </body>
 </html>
