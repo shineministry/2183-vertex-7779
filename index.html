@@ -3829,6 +3829,17 @@ try {
         return;
     }
 
+    // ── Inject HOME profile item first ──
+    const homeLi = document.createElement('li');
+    homeLi.textContent = '🏠 HOME';
+    homeLi.onclick = () => {
+        document.querySelectorAll('#cat-list li')
+            .forEach(el => el.classList.remove('active'));
+        homeLi.classList.add('active');
+        renderFiles([], 'HOME');
+    };
+    list.appendChild(homeLi);
+
     categories.forEach(cat => {
         const li = document.createElement('li');
         li.textContent = cat;
@@ -3857,12 +3868,9 @@ try {
         list.appendChild(li);
     });
 
-    // Auto-click first item
-    const firstLi = list.querySelector('li');
-    if (firstLi) {
-        firstLi.classList.add('active');
-        firstLi.click();
-    }
+    // Auto-click HOME first
+    homeLi.classList.add('active');
+    homeLi.click();
 
 } catch (e) {
 
@@ -4098,10 +4106,24 @@ hobbies:`Add`
 
    if(category==="HOME"){
 
-const member =
-document.getElementById(
-"member-select"
-).value || "shineil";
+// For non-admin modes the dropdown is hidden, so derive member from VAULT_MODE
+const modeToMember = {
+    "SHINEIL": "shineil",
+    "KEVIN": "brother",
+    "KEVIN_PARENTS": "brother",
+    "SHINEIL_PARENTS": "shineil",
+    "PARENTS": "father",
+    "OFFICIAL": "shineil",
+    "ADMIN": null
+};
+
+const vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
+const dropdownVal = document.getElementById("member-select").value;
+
+// Admin uses dropdown; other modes use their assigned member
+const member = (vaultMode === "ADMIN")
+    ? (dropdownVal || "shineil")
+    : (modeToMember[vaultMode] || dropdownVal || "shineil");
 
 const p =
 profiles[member]
@@ -4908,13 +4930,6 @@ pageLabel.textContent = `Page ${pageNum}`;
 thumbWrap.appendChild(pageLabel);
 
 sidebar.appendChild(thumbWrap);
-            thumbCanvas.style.marginBottom = '6px';
-
-            thumbWrap = document.createElement('div');
-            thumbWrap.className = 'pdf-thumb';
-            thumbWrap.appendChild(thumbCanvas);
-            thumbWrap.innerHTML += `<div style="color:white;font-size:11px;text-align:center;">Page ${pageNum}</div>`;
-            sidebar.appendChild(thumbWrap);
         }
 
         // =========================
