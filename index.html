@@ -3195,8 +3195,18 @@ try {
 // START 2-MINUTE TIMER
 resetInactivityTimer();
 
+// Use the master encryption password returned by the backend (not the user's
+// login password) — all files are encrypted with the admin master password,
+// so every mode needs it to decrypt, regardless of which key they logged in with.
 window.masterPassword =
-    String(pass);
+    result.secret
+    ? String(result.secret)
+    : String(pass);
+
+// Also persist so passkey / session-restore path can find it
+if(result.secret){
+    sessionStorage.setItem("vault_session_secret", result.secret);
+}
 
    window.VAULT_MODE=
 result.mode;
@@ -3219,8 +3229,7 @@ document
 
 }
 
-masterPassword =
-    String(pass);
+masterPassword = window.masterPassword;
 
         failedAttempts = 0;
 
@@ -4642,6 +4651,9 @@ displayName){
         buffer.slice(ivEnd);
 
         // HASH PASSWORD
+        console.log("🔑 masterPassword at decrypt time:", JSON.stringify(window.masterPassword));
+        console.log("🔑 result.secret was:", JSON.stringify(sessionStorage.getItem("vault_session_secret")));
+        console.log("🔑 settings from file header:", JSON.stringify(settings));
 
         const passwordHash =
         await sha256Bytes(
