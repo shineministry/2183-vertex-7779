@@ -1164,6 +1164,36 @@ button{
        CONTENT
     ========================= */
 
+   /* FORCE DESKTOP BUTTONS HIDE */
+.nav-auth-desktop{
+    display:none !important;
+}
+
+/* FORCE MOBILE ICONS SHOW */
+.nav-auth-mobile{
+    display:flex !important;
+    align-items:center;
+    gap:6px;
+}
+
+/* KEEP ICON STYLE GOOD */
+.nav-icon-btn{
+    width:38px;
+    height:38px;
+    border-radius:10px;
+    font-size:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+}
+
+/* NAVBAR HEIGHT */
+.passport-main-nav{
+    min-height:56px;
+    padding:8px 10px;
+}
+   
     .content-view{
         flex:1;
         overflow-y:auto;
