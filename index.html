@@ -1156,214 +1156,184 @@ button{
 }
 
 /* =========================
-   MOBILE
+   PERFECT MOBILE NAV FIX
+   (ANDROID + IPHONE)
 ========================= */
-
-@media screen and (min-width:769px){
-    .nav-auth-mobile{ display:none !important; }
-    .nav-auth-desktop{ display:flex !important; }
-    .brand-title{ font-size:17px; }
-}
 
 @media screen and (max-width:768px){
 
-   .passport-top-utility{
-        padding:5px 10px;
+    /* iPhone viewport fix */
+    html,
+    body{
+        height:100%;
+        overflow:hidden;
+        -webkit-overflow-scrolling:touch;
     }
 
-    #passport-datetime{
-        font-size:10px;
-    }
-
-    .e2e-badge{
-        font-size:9px;
-        padding:3px 7px;
-    }
-
-    /* HIDE desktop buttons, SHOW mobile icons */
-    .nav-auth-desktop{
-        display:none !important;
-    }
-
-    .nav-auth-mobile{
-        display:flex !important;
-    }
-
-    .passport-main-nav{
-        padding:5px 10px;
-        gap:6px;
-        min-height:44px;
-    }
-
-    .nav-brand{
-        max-width:calc(100% - 140px);
-    }
-
-    .brand-title{
-        font-size:11px;
-        letter-spacing:0;
-    }
-
-.btn-outline,
-.btn-solid,
-.btn-logout{
-width:auto;
-}
-
-    /* Hide the left sidebar thumbnail container on mobile/tablet screens */
-    #pdf-sidebar {
-        display: none !important;
-    }
-
-    .overlay{
-
-        align-items:flex-start;
-
-    }
-   
-    .step-card{
-
-        padding:24px;
-
-        border-radius:22px;
-
-        margin-top:20px;
-        margin-bottom:20px;
-
-    }
-
-    .passport-top-utility{
-
-        justify-content:center;
-
-        text-align:center;
-
-        padding:10px;
-
-    }
-
-    .brand-title{
-
-        font-size:16px;
-        text-align:center;
-
+    #vault-dashboard{
+        height:100dvh; /* Better for iPhone Safari */
+        overflow:hidden;
     }
 
     .main-container{
         flex-direction:column;
+        height:100%;
         overflow:hidden;
+        min-height:0;
     }
+
+    /* =========================
+       COMPACT TOP NAV
+    ========================= */
 
     .sidebar{
         width:100%;
         height:auto;
-        max-height:110px;
+        max-height:105px;
+        min-height:auto;
         overflow:hidden;
-        padding:10px;
+        padding:10px 10px 8px;
         border-right:none;
         border-bottom:1px solid var(--border);
-        background:white;
+        background:#fff;
+        flex-shrink:0;
+        position:relative;
+        z-index:5;
+    }
+
+    /* top row */
+    .sidebar > div{
+        margin-bottom:10px !important;
+        gap:8px !important;
+    }
+
+    /* member dropdown */
+    #member-select{
+        height:44px !important;
+        padding:0 12px !important;
+        font-size:14px !important;
+        border-radius:14px !important;
+        min-width:0;
+    }
+
+    /* settings button */
+    #share-gear{
+        width:44px !important;
+        height:44px !important;
+        border-radius:14px !important;
         flex-shrink:0;
     }
 
-   .sidebar > div{
-        margin-bottom:10px !important;
-    }
+    /* =========================
+       CATEGORY NAV
+    ========================= */
 
     #cat-list{
         display:flex;
-        flex-direction:row;
+        flex-wrap:nowrap;
         overflow-x:auto;
         overflow-y:hidden;
         gap:10px;
+        padding-bottom:2px;
+
+        /* smooth iPhone scrolling */
+        -webkit-overflow-scrolling:touch;
+        scroll-behavior:smooth;
+
+        /* hide scrollbar */
         scrollbar-width:none;
         -ms-overflow-style:none;
-        padding-bottom:2px;
     }
 
     #cat-list::-webkit-scrollbar{
         display:none;
     }
 
+    /* compact navbar buttons */
     #cat-list li{
+        flex-shrink:0;
         white-space:nowrap;
         margin-bottom:0;
-        padding:10px 16px;
+        padding:10px 18px;
         font-size:14px;
-        border-radius:16px;
-        flex-shrink:0;
+        font-weight:700;
+        border-radius:18px;
+        min-height:44px;
+
+        display:flex;
+        align-items:center;
+        justify-content:center;
     }
+
+    #cat-list li.active{
+        transform:none;
+    }
+
+    /* =========================
+       CONTENT
+    ========================= */
 
     .content-view{
         flex:1;
         overflow-y:auto;
+        overflow-x:hidden;
+        min-height:0;
         padding:14px;
+
+        /* iPhone smooth scroll */
+        -webkit-overflow-scrolling:touch;
+    }
+
+    /* timer compact */
+    .timer-box{
+        padding:14px;
+        gap:8px;
+        border-radius:16px;
+    }
+
+    .timer-text{
+        font-size:12px;
+        line-height:1.5;
+    }
+
+    #session-timer{
+        font-size:15px;
+    }
+
+    /* file grid */
+    .file-grid{
+        grid-template-columns:repeat(2,1fr);
+        gap:12px;
+    }
+
+    /* stop iPhone zooming */
+    input,
+    select,
+    textarea{
+        font-size:16px !important;
+    }
+}
+
+/* EXTRA SMALL IPHONE (SE/mini) */
+@media screen and (max-width:430px){
+
+    .sidebar{
+        max-height:100px;
+        padding:8px;
+    }
+
+    #cat-list li{
+        padding:9px 15px;
+        font-size:13px;
+    }
+
+    .content-view{
+        padding:12px;
     }
 
     .file-grid{
-
-        grid-template-columns:
-            repeat(2,1fr);
-
-        gap:14px;
-
+        grid-template-columns:1fr;
     }
-
-    .modal-content{
-
-        width:100%;
-
-        height:100%;
-
-        margin:0;
-
-        border-radius:0;
-
-    }
-
-    .modal-content-small{
-
-        width:95%;
-
-        margin:40px auto;
-
-    }
-
-    #pdf-render-container{
-
-        padding:15px;
-
-    }
-
-    /* Compare modal: stack panes vertically on mobile */
-    .compare-body{
-        flex-direction:column;
-    }
-    .compare-pane{
-        border-right:none;
-        border-bottom:2px solid var(--border);
-        min-height:40vh;
-    }
-    .compare-pane:last-child{
-        border-bottom:none;
-    }
-
-    /* Compare bar: wrap on mobile */
-    #compare-bar{
-        flex-wrap:wrap;
-        bottom:12px;
-        width:90%;
-        white-space:normal;
-        text-align:center;
-        justify-content:center;
-    }
-
-    /* Share modal: full width on mobile */
-    .share-modal-inner{
-        margin:20px auto;
-        width:95%;
-    }
-
 }
 
 /* SMALL MOBILE */
