@@ -592,6 +592,14 @@ button{
 
 }
 
+.brand-full{ display:inline; }
+.brand-short{ display:none; }
+
+@media screen and (max-width:768px){
+    .brand-full{ display:none; }
+    .brand-short{ display:inline; }
+}
+
 /* MAIN NAV */
 
 .passport-main-nav{
@@ -604,8 +612,10 @@ button{
 }
 
 .nav-brand{
-    flex:1;
+    flex:0 1 auto;
     min-width:0;
+    overflow:hidden;
+    max-width:55%;
 }
 
 .brand-title{
@@ -617,6 +627,7 @@ button{
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
+    max-width:100%;
 }
 
 /* DESKTOP NAV BUTTONS */
@@ -1178,21 +1189,25 @@ button{
         display:flex !important;
     }
 
-    .brand-title{
-        font-size:13px;
+    .passport-main-nav{
+        padding:5px 10px;
+        gap:6px;
+        min-height:44px;
     }
 
-    .passport-main-nav{
-        padding:6px 12px;
-        min-height:46px;
+    .nav-brand{
+        max-width:calc(100% - 140px);
+    }
+
+    .brand-title{
+        font-size:11px;
+        letter-spacing:0;
     }
 
 .btn-outline,
 .btn-solid,
 .btn-logout{
-
 width:auto;
-
 }
 
     /* Hide the left sidebar thumbnail container on mobile/tablet screens */
@@ -2588,7 +2603,10 @@ style="display:none;">
 
         <!-- LEFT: BRAND -->
         <div class="nav-brand">
-            <div class="brand-title">FORTRESS ONLINE VAULT</div>
+            <div class="brand-title">
+                <span class="brand-full">FORTRESS ONLINE VAULT</span>
+                <span class="brand-short">🔐 VAULT</span>
+            </div>
         </div>
 
         <!-- RIGHT: DESKTOP BUTTONS (hidden on mobile) -->
