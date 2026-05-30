@@ -190,7 +190,6 @@
             gap: 25px;
         }
 
-        /* Stable Cards - Shine and Hover scaling completely eliminated */
         .card {
             background: var(--glass);
             border: 1px solid var(--border);
@@ -352,6 +351,9 @@
 
     <script>
         const ADMIN_PASSWORD = "Mfyi2019wIbSC@Justice";
+        
+        // Dynamic holder tracking this specific open admin instance's session ID
+        window.currentAdminSessionId = null; 
 
         function unlockAdmin(){
             const pass = document.getElementById('admin-pass').value.trim();
@@ -360,6 +362,11 @@
                 return;
             }
             document.getElementById('login-screen').style.display = 'none';
+            
+            // Trigger administrative session generation logic if available
+            if(window.initializeAdminSession) {
+                window.initializeAdminSession();
+            }
         }
 
         async function forceLogout(id){
@@ -385,7 +392,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
@@ -402,12 +409,28 @@
         const requestsDiv = document.getElementById('requests');
         const activeSessionsDiv = document.getElementById('active-sessions-grid');
 
+        // Registers this browser session into firestore when successfully logged in
+        window.initializeAdminSession = async () => {
+            try {
+                const docRef = await addDoc(collection(db, "activeSessions"), {
+                    visitor: "System Administrator",
+                    active: true,
+                    forceLogout: false,
+                    createdAt: Date.now(),
+                    ipAddress: "Secure Dashboard Session Node",
+                    userAgent: navigator.userAgent
+                });
+                window.currentAdminSessionId = docRef.id;
+            } catch (e) {
+                console.error("Error creating active registration context token:", e);
+            }
+        };
+
         window.firebaseActions = {
             forceLogout: async (id) => {
                 try {
                     await updateDoc(doc(db, "activeSessions", id), { forceLogout: true });
                     alert("Force logout signal transmitted successfully!");
-                    loadDashboardData();
                 } catch(err) {
                     console.error("LOGOUT ERROR:", err);
                 }
@@ -417,7 +440,6 @@
                     await updateDoc(doc(db, "accessRequests", id), { status: "approved" });
                     const sound = document.getElementById('approveSound');
                     if (sound) sound.play().catch(()=>{});
-                    loadDashboardData();
                 } catch(err) {
                     console.error("APPROVE ERROR:", err);
                 }
@@ -425,119 +447,118 @@
             denyRequest: async (id) => {
                 try {
                     await updateDoc(doc(db, "accessRequests", id), { status: "denied" });
-                    loadDashboardData();
                 } catch(err) {
                     console.error("DENY ERROR:", err);
                 }
             }
         };
 
-        async function loadDashboardData() {
-            // 1. ACCESS CONTROL MANAGEMENT LISTENER
-            try {
-                const snapshot = await getDocs(collection(db, "accessRequests"));
-                let pendingCount = 0;
-                let htmlContent = "";
+        // ==========================================================================
+        // REAL-TIME EVENT STREAM MONITORING (ONSNAPSHOT)
+        // ==========================================================================
 
-                snapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    if (data.status !== "pending") return;
+        // 1. Live Requests Watcher
+        onSnapshot(collection(db, "accessRequests"), (snapshot) => {
+            let pendingCount = 0;
+            let htmlContent = "";
 
-                    pendingCount++;
-                    const initial = data.visitorName ? data.visitorName.charAt(0).toUpperCase() : "V";
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                if (data.status !== "pending") return;
 
-                    htmlContent += `
-                    <div class="card">
-                        <div class="user-row">
-                            <div class="avatar">${initial}</div>
-                            <div class="user-info">
-                                <h2>${data.visitorName || 'Unknown Requestor'}</h2>
-                                <span>${data.location || 'Austria/Global Location'}</span>
-                            </div>
-                        </div>
-                        <div class="info-box">
-                            <div class="info-title">Purpose of Entry</div>
-                            <div class="info-value">${data.purpose || 'Not stated'}</div>
-                        </div>
-                        <div class="info-box">
-                            <div class="info-title">Device Fingerprint</div>
-                            <div class="info-value">${data.device || 'Unknown Hardware Target'}</div>
-                        </div>
-                        <div class="button-group">
-                            <button class="btn approve" onclick="approveRequest('${docSnap.id}')">APPROVE</button>
-                            <button class="btn deny" onclick="denyRequest('${docSnap.id}')">DENY</button>
+                pendingCount++;
+                const initial = data.visitorName ? data.visitorName.charAt(0).toUpperCase() : "V";
+
+                htmlContent += `
+                <div class="card">
+                    <div class="user-row">
+                        <div class="avatar">${initial}</div>
+                        <div class="user-info">
+                            <h2>${data.visitorName || 'Unknown Requestor'}</h2>
+                            <span>${data.location || 'Austria/Global Location'}</span>
                         </div>
                     </div>
-                    `;
-                });
+                    <div class="info-box">
+                        <div class="info-title">Purpose of Entry</div>
+                        <div class="info-value">${data.purpose || 'Not stated'}</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-title">Device Fingerprint</div>
+                        <div class="info-value">${data.device || 'Unknown Hardware Target'}</div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn approve" onclick="approveRequest('${docSnap.id}')">APPROVE</button>
+                        <button class="btn deny" onclick="denyRequest('${docSnap.id}')">DENY</button>
+                    </div>
+                </div>
+                `;
+            });
 
-                document.getElementById('request-count').innerText = pendingCount;
-                if (htmlContent === "") {
-                    requestsDiv.innerHTML = `<div class="empty">Waiting for incoming requests...</div>`;
-                } else {
-                    requestsDiv.innerHTML = htmlContent;
-                }
-            } catch(err) {
-                console.error("LOAD REQUESTS ERROR:", err);
+            document.getElementById('request-count').innerText = pendingCount;
+            if (htmlContent === "") {
+                requestsDiv.innerHTML = `<div class="empty">Waiting for incoming requests...</div>`;
+            } else {
+                requestsDiv.innerHTML = htmlContent;
             }
+        }, (err) => {
+            console.error("LIVE REQUESTS MONITOR ERROR:", err);
+        });
 
-            // 2. LIVE ACTIVE ADMINISTRATIVE MONITORING LOOP
-            try {
-                const activeSnapshot = await getDocs(collection(db, "activeSessions"));
-                let activeCount = 0;
-                let activeHtml = "";
-                const strictThreshold = Date.now() - (2 * 60 * 60 * 1000); // Strict 2 Hour Threshold Lock
+        // 2. Live Active System Context Watcher
+        onSnapshot(collection(db, "activeSessions"), (snapshot) => {
+            let activeCount = 0;
+            let activeHtml = "";
+            const strictThreshold = Date.now() - (2 * 60 * 60 * 1000); 
 
-                activeSnapshot.forEach(docSnap => {
-                    const data = docSnap.data();
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
 
-                    if (data.active !== true) return;
-                    if (data.forceLogout === true) return;
-                    if (!data.createdAt) return;
+                if (data.active !== true) return;
+                if (data.forceLogout === true) return;
+                if (!data.createdAt) return;
 
-                    const createdMs = typeof data.createdAt === 'number'
-                        ? data.createdAt
-                        : new Date(data.createdAt).getTime();
-                    
-                    if (isNaN(createdMs) || createdMs < strictThreshold) return;
+                const createdMs = typeof data.createdAt === 'number'
+                    ? data.createdAt
+                    : new Date(data.createdAt).getTime();
+                
+                if (isNaN(createdMs) || createdMs < strictThreshold) return;
 
-                    activeCount++;
-                    const userInitial = data.visitor ? data.visitor.charAt(0).toUpperCase() : "A";
+                activeCount++;
+                const userInitial = data.visitor ? data.visitor.charAt(0).toUpperCase() : "A";
 
-                    activeHtml += `
-                    <div class="card">
-                        <div class="user-row">
-                            <div class="avatar" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);">${userInitial}</div>
-                            <div class="user-info">
-                                <h2>${data.visitor || 'Active User'}</h2>
-                                <span>Session: ${docSnap.id.substring(0,8)}...</span>
-                            </div>
-                        </div>
-                        <div class="info-box">
-                            <div class="info-title">Last Check-in / IP Environment</div>
-                            <div class="info-value">${data.ipAddress || 'Protected System Node'}</div>
-                        </div>
-                        <div class="info-box">
-                            <div class="info-title">Platform OS Info</div>
-                            <div class="info-value">${data.userAgent || 'Web Browser Interface'}</div>
-                        </div>
-                        <div class="button-group">
-                            <button class="btn deny" onclick="forceLogout('${docSnap.id}')">FORCE LOGOUT</button>
+                activeHtml += `
+                <div class="card">
+                    <div class="user-row">
+                        <div class="avatar" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);">${userInitial}</div>
+                        <div class="user-info">
+                            <h2>${data.visitor || 'Active User'}</h2>
+                            <span>Session: ${docSnap.id.substring(0,8)}...</span>
                         </div>
                     </div>
-                    `;
-                });
+                    <div class="info-box">
+                        <div class="info-title">Last Check-in / IP Environment</div>
+                        <div class="info-value">${data.ipAddress || 'Protected System Node'}</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-title">Platform OS Info</div>
+                        <div class="info-value">${data.userAgent || 'Web Browser Interface'}</div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn deny" onclick="forceLogout('${docSnap.id}')">FORCE LOGOUT</button>
+                    </div>
+                </div>
+                `;
+            });
 
-                document.getElementById('active-count').innerText = activeCount;
-                if (activeHtml === "") {
-                    activeSessionsDiv.innerHTML = `<div class="empty">No active administrative sessions found.</div>`;
-                } else {
-                    activeSessionsDiv.innerHTML = activeHtml;
-                }
-            } catch(err) {
-                console.error("LOAD SESSIONS ERROR:", err);
+            document.getElementById('active-count').innerText = activeCount;
+            if (activeHtml === "") {
+                activeSessionsDiv.innerHTML = `<div class="empty">No active administrative sessions found.</div>`;
+            } else {
+                activeSessionsDiv.innerHTML = activeHtml;
             }
-        }
+        }, (err) => {
+            console.error("LIVE SESSIONS MONITOR ERROR:", err);
+        });
 
         async function clearStaleSessions() {
             if (!confirm("This will physically delete all inactive, stale (older than 2 hours), or force-logged-out sessions from Firestore. Continue?")) return;
@@ -567,7 +588,6 @@
                     }
                 }
                 alert(`Successfully purged ${count} legacy/stale sessions from the database.`);
-                loadDashboardData();
             } catch (err) {
                 console.error("Purge Error:", err);
                 alert("Failed to purge sessions: " + err.message);
@@ -584,7 +604,6 @@
                     count++;
                 }
                 alert(`Successfully wiped all ${count} sessions from the database.`);
-                loadDashboardData();
             } catch (err) {
                 console.error("Wipe Error:", err);
                 alert("Failed to wipe sessions: " + err.message);
@@ -593,11 +612,30 @@
 
         window.clearStaleSessions = clearStaleSessions;
         window.wipeAllSessions = wipeAllSessions;
-        window.loadDashboardData = loadDashboardData;
 
-        // Run Operations Layout
-        loadDashboardData();
-        setInterval(() => { loadDashboardData(); }, 2000);
+        // ==========================================================================
+        // WINDOW CLOSE DISCONNECT HANDLING LOCK (KEEPALIVE TRICK)
+        // ==========================================================================
+        window.addEventListener("pagehide", () => {
+            if (!window.currentAdminSessionId) return;
+
+            // Target the raw Firebase Firestore REST API Endpoint directly
+            const restUrl = `https://firestore.googleapis.com/v1/projects/online-vault-shine-26/databases/(default)/documents/activeSessions/${window.currentAdminSessionId}?updateMask.fieldPaths=active`;
+            
+            const rawData = JSON.stringify({
+                fields: {
+                    active: { booleanValue: false }
+                }
+            });
+
+            // keepalive tells the browser: "Keep this packet alive even if the tab is completely closed right now"
+            fetch(restUrl, {
+                method: 'PATCH',
+                body: rawData,
+                headers: { 'Content-Type': 'application/json' },
+                keepalive: true 
+            });
+        });
     </script>
 
     <script>
