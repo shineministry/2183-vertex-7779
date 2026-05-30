@@ -595,85 +595,106 @@ button{
 /* MAIN NAV */
 
 .passport-main-nav{
-
     display:flex;
-
     justify-content:space-between;
-
     align-items:center;
-
+    padding:8px 16px;
     gap:10px;
-
-    flex-wrap:nowrap;
-
-    padding:8px 14px;
-
-    overflow:hidden;
-
+    min-height:50px;
 }
 
 .nav-brand{
-
-    display:flex;
-
-    flex-direction:column;
-
-    justify-content:center;
-
-    flex:0 0 auto;
-
+    flex:1;
     min-width:0;
-
-    max-width:140px;
-
 }
 
 .brand-title{
-
-    font-size:14px;
-
+    font-size:16px;
     font-weight:800;
-
     color:#1d4ed8;
-
     letter-spacing:.3px;
-
     line-height:1.2;
-
     white-space:nowrap;
-
     overflow:hidden;
-
     text-overflow:ellipsis;
-
 }
 
-.nav-auth{
-
+/* DESKTOP NAV BUTTONS */
+.nav-auth-desktop{
     display:flex;
-
     align-items:center;
-
-    gap:6px;
-
+    gap:8px;
     flex-wrap:nowrap;
-
-    overflow-x:auto;
-
-    overflow-y:hidden;
-
-    scrollbar-width:none;
-
-    flex:1;
-
-    min-width:0;
-
 }
 
-.nav-auth::-webkit-scrollbar{
-
+/* MOBILE ICON BUTTONS — hidden by default */
+.nav-auth-mobile{
     display:none;
+    align-items:center;
+    gap:6px;
+    flex-shrink:0;
+}
 
+.nav-icon-btn{
+    border:none;
+    border-radius:10px;
+    width:38px;
+    height:38px;
+    font-size:18px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    transition:.2s;
+}
+
+.nav-emergency-btn{
+    background:#fef2f2;
+    color:#dc2626;
+}
+
+.nav-logout-btn{
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.nav-menu-btn{
+    background:#eff6ff;
+    color:#2563eb;
+    font-size:20px;
+}
+
+/* MOBILE DROPDOWN */
+.mobile-nav-menu{
+    display:none;
+    flex-direction:column;
+    background:white;
+    border-top:1px solid #e2e8f0;
+    padding:8px 12px;
+}
+
+.mobile-nav-menu.open{
+    display:flex;
+}
+
+.mobile-nav-menu button{
+    border:none;
+    background:none;
+    text-align:left;
+    padding:12px 10px;
+    font-size:14px;
+    font-weight:600;
+    color:#0f172a;
+    cursor:pointer;
+    border-radius:10px;
+    transition:.15s;
+    width:100%;
+}
+
+.mobile-nav-menu button:hover{
+    background:#eff6ff;
+    color:#2563eb;
 }
 
 /* NAV BUTTONS */
@@ -685,9 +706,9 @@ button{
 
     border-radius:10px;
 
-    padding:7px 10px;
+    padding:8px 14px;
 
-    font-size:10px;
+    font-size:11px;
 
     font-weight:700;
 
@@ -1127,80 +1148,44 @@ button{
    MOBILE
 ========================= */
 
-@media screen and (min-width:900px){
-    .nav-brand{
-        max-width:260px;
-    }
-    .brand-title{
-        font-size:17px;
-    }
-    .btn-outline,
-    .btn-solid,
-    .btn-logout{
-        padding:8px 14px;
-        font-size:11px;
-    }
+@media screen and (min-width:769px){
+    .nav-auth-mobile{ display:none !important; }
+    .nav-auth-desktop{ display:flex !important; }
+    .brand-title{ font-size:17px; }
 }
 
 @media screen and (max-width:768px){
 
    .passport-top-utility{
+        padding:5px 10px;
+    }
 
-padding:6px 10px;
+    #passport-datetime{
+        font-size:10px;
+    }
 
-}
+    .e2e-badge{
+        font-size:9px;
+        padding:3px 7px;
+    }
 
-#passport-datetime{
+    /* HIDE desktop buttons, SHOW mobile icons */
+    .nav-auth-desktop{
+        display:none !important;
+    }
 
-font-size:11px;
+    .nav-auth-mobile{
+        display:flex !important;
+    }
 
-}
+    .brand-title{
+        font-size:13px;
+    }
 
-.e2e-badge{
-
-font-size:9px;
-
-padding:4px 8px;
-
-}
-
-.passport-main-nav{
-
-padding:6px 10px;
-
-gap:6px;
-
-}
-
-.nav-brand{
-
-max-width:110px;
-
-}
-
-.brand-title{
-
-font-size:12px;
-
-}
-
-.nav-auth{
-
-gap:5px;
-
-}
-
-.nav-auth button{
-
-flex-shrink:0;
-
-padding:6px 8px;
-
-font-size:9px;
-
-min-width:auto;
-
-}
+    .passport-main-nav{
+        padding:6px 12px;
+        min-height:46px;
+    }
 
 .btn-outline,
 .btn-solid,
@@ -2601,38 +2586,34 @@ style="display:none;">
 
     <div class="passport-main-nav">
 
-        <!-- LEFT -->
-
+        <!-- LEFT: BRAND -->
         <div class="nav-brand">
-
-            <div class="brand-title">
-                FORTRESS ONLINE VAULT
-            </div>
-
+            <div class="brand-title">FORTRESS ONLINE VAULT</div>
         </div>
 
-        <!-- RIGHT BUTTONS -->
-
-        <div class="nav-auth">
-
+        <!-- RIGHT: DESKTOP BUTTONS (hidden on mobile) -->
+        <div class="nav-auth nav-auth-desktop">
             <button class="btn-outline" onclick="showPinned()">⭐ FAVOURITES</button>
-
             <button class="btn-outline" onclick="startCompareMode()" id="compareNavBtn">⚖️ COMPARE</button>
-
-            <button class="btn-outline" onclick="openLogs()">
-                ACCESS LOG
-            </button>
-
-            <button class="btn-solid" onclick="openEmergencyContact()">
-                EMERGENCY CONTACT
-            </button>
-
-            <button class="btn-logout" onclick="logoutVault('Logged out successfully.')">
-                LOGOUT
-            </button>
-
+            <button class="btn-outline" onclick="openLogs()">ACCESS LOG</button>
+            <button class="btn-solid" onclick="openEmergencyContact()">EMERGENCY CONTACT</button>
+            <button class="btn-logout" onclick="logoutVault('Logged out successfully.')">LOGOUT</button>
         </div>
 
+        <!-- RIGHT: MOBILE BUTTONS (hidden on desktop) -->
+        <div class="nav-auth-mobile">
+            <button class="nav-icon-btn nav-emergency-btn" onclick="openEmergencyContact()" title="Emergency Contact">🆘</button>
+            <button class="nav-icon-btn nav-logout-btn" onclick="logoutVault('Logged out successfully.')" title="Logout">🔓</button>
+            <button class="nav-icon-btn nav-menu-btn" onclick="toggleMobileMenu()" title="More options" id="mobileMenuBtn">☰</button>
+        </div>
+
+    </div>
+
+    <!-- MOBILE DROPDOWN MENU -->
+    <div id="mobile-nav-menu" class="mobile-nav-menu">
+        <button onclick="showPinned();toggleMobileMenu()">⭐ Favourites</button>
+        <button onclick="startCompareMode();toggleMobileMenu()" id="compareNavBtn">⚖️ Compare</button>
+        <button onclick="openLogs();toggleMobileMenu()">📋 Access Log</button>
     </div>
 
 </div>
@@ -3088,6 +3069,59 @@ async function showStep2() {
         return;
     }
 
+    // Show loading state on button
+    const loginBtn = document.querySelector('#step1 .btn-primary');
+    const originalBtnText = loginBtn ? loginBtn.textContent : '';
+    if (loginBtn) {
+        loginBtn.textContent = '🔐 Connecting...';
+        loginBtn.disabled = true;
+        loginBtn.style.opacity = '0.7';
+    }
+
+    const restoreLoginBtn = () => {
+        if (loginBtn) {
+            loginBtn.textContent = originalBtnText;
+            loginBtn.disabled = false;
+            loginBtn.style.opacity = '1';
+        }
+    };
+
+    const showLoginError = (title, detail) => {
+        const existing = document.getElementById('login-error-box');
+        if (existing) existing.remove();
+        const box = document.createElement('div');
+        box.id = 'login-error-box';
+        box.style.cssText = `
+            background:#fef2f2;
+            border:1px solid #fca5a5;
+            border-radius:14px;
+            padding:16px 18px;
+            margin-top:12px;
+            text-align:left;
+            animation:fadeInUp .3s ease;
+        `;
+        box.innerHTML = `
+            <div style="font-weight:800;color:#dc2626;font-size:14px;margin-bottom:6px;">⚠️ ${title}</div>
+            <div style="font-size:12.5px;color:#7f1d1d;line-height:1.6;">${detail}</div>
+            <button onclick="this.parentElement.remove()" style="
+                margin-top:10px;border:none;background:#dc2626;color:white;
+                border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">
+                Dismiss
+            </button>
+        `;
+        const card = document.querySelector('#step1 .step-card');
+        if (card) card.appendChild(box);
+        else alert(title + ': ' + detail);
+    };
+
+    // Fetch with timeout helper
+    const fetchWithTimeout = (url, options, ms = 12000) => {
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), ms);
+        return fetch(url, { ...options, signal: controller.signal })
+            .finally(() => clearTimeout(tid));
+    };
+
     try {
 
         // store password in memory only
@@ -3099,32 +3133,46 @@ async function showStep2() {
                 pass
             );
 
-        const res =
-            await fetch(
+        let res;
+        try {
+            res = await fetchWithTimeout(
                 "https://backend.shinumaths989.workers.dev/get-secret",
                 {
                     method: "POST",
                     headers: {
-                        "Content-Type":
-                            "application/json"
+                        "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({
-                        hash
-                    })
-                }
+                    body: JSON.stringify({ hash })
+                },
+                12000
             );
+        } catch (fetchErr) {
+            restoreLoginBtn();
+            if (fetchErr.name === 'AbortError') {
+                showLoginError(
+                    'Connection Timed Out',
+                    'The secure server took too long to respond. Check your internet connection and try again.'
+                );
+            } else if (!navigator.onLine) {
+                showLoginError(
+                    'No Internet Connection',
+                    'Your device appears to be offline. Please connect to Wi-Fi or mobile data and try again.'
+                );
+            } else {
+                showLoginError(
+                    'Cannot Reach Secure Server',
+                    'Your network may be blocking the connection. Try switching between Wi-Fi and mobile data, or disable a VPN if active.'
+                );
+            }
+            return;
+        }
 
         if (res.status >= 500) {
-            console.error(
-                "Backend unavailable during login:",
-                res.status,
-                await res.text().catch(() => "")
+            restoreLoginBtn();
+            showLoginError(
+                'Server Temporarily Unavailable',
+                'The secure backend returned an error (HTTP ' + res.status + '). Please wait a moment and try again.'
             );
-
-            alert(
-                "Secure backend is temporarily unavailable. Please try again after a moment."
-            );
-
             return;
         }
 
@@ -3139,19 +3187,25 @@ async function showStep2() {
                 "text/html"
             )
         ) {
-            throw new Error(
-                "Origin Access Refused: Vault Firewall actively dropped connection."
+            restoreLoginBtn();
+            showLoginError(
+                'Access Blocked by Firewall',
+                'The vault firewall rejected this connection. This may be due to your network or location.'
             );
+            return;
         }
 
         let result = {};
-try {
-    result = await res.json();
-} catch {
-    result = {};
-    alert("Server is offline or unreachable. Please try again in a moment.");
-    return;
-}
+        try {
+            result = await res.json();
+        } catch {
+            restoreLoginBtn();
+            showLoginError(
+                'Invalid Server Response',
+                'The server returned an unexpected response. Please try again.'
+            );
+            return;
+        }
 
         // failed login
         if (
@@ -3160,6 +3214,7 @@ try {
             !result.authorized
         ) {
 
+            restoreLoginBtn();
             failedAttempts++;
 
             if (
@@ -3176,17 +3231,16 @@ try {
 
                 failedAttempts = 0;
 
-                alert(
-                    "Too many failed attempts.\nVault locked for 5 minutes."
+                showLoginError(
+                    'Vault Locked',
+                    'Too many failed attempts. The vault is locked for 5 minutes for security.'
                 );
 
             } else {
 
-                alert(
-                    `Wrong Access Key.\nAttempts left: ${
-                        5 -
-                        failedAttempts
-                    }`
+                showLoginError(
+                    'Wrong Access Key',
+                    `Incorrect password. You have ${5 - failedAttempts} attempt${5 - failedAttempts === 1 ? '' : 's'} remaining.`
                 );
             }
 
@@ -3194,6 +3248,12 @@ try {
         }
 
         // SUCCESS LOGIN
+        if (loginBtn) {
+            loginBtn.textContent = '✓ Authenticated';
+            loginBtn.style.background = 'linear-gradient(135deg,#16a34a,#15803d)';
+            loginBtn.style.opacity = '1';
+        }
+
         sessionStorage.setItem(
             "vaultSessionToken",
             result.sessionToken
@@ -3274,11 +3334,11 @@ masterPassword = window.masterPassword;
 
     } catch (e) {
 
+        restoreLoginBtn();
         console.error(e);
-
-        alert(
-            e.message ||
-            "Could not connect to secure backend."
+        showLoginError(
+            'Connection Error',
+            e.message || 'Could not connect to the secure backend. Please check your internet and try again.'
         );
     }
 }
@@ -4813,21 +4873,29 @@ zoomResetBtn.innerText = "⟳ Fit";
 const downloadBtn = document.createElement('button');
 downloadBtn.innerText = "⬇ Download";
 
-// AUTO DEVICE FIT ZOOM
+// ─── DEVICE DETECTION ───────────────────────────────────────
+// PC/Laptop: non-touch device AND wide screen
+const isDesktop = (
+    !('ontouchstart' in window) &&
+    !navigator.maxTouchPoints &&
+    window.innerWidth >= 1024
+);
+
+// ─── ZOOM STATE (desktop only) ───────────────────────────────
 let currentZoom = getInitialZoom();
 
 function getInitialZoom() {
+    if (!isDesktop) return 1.0; // mobile always fits full width
     const screenWidth = window.innerWidth;
-    if (screenWidth <= 480) return 0.9;
-    if (screenWidth <= 768) return 1.0;
-    return 0.9;
+    if (screenWidth <= 1280) return 0.9;
+    return 1.0;
 }
 
-// Zoom works on ALL devices — no mobile lock
 function updateZoomButtonUI() {
+    if (!isDesktop) return;
     zoomLabel.innerText = Math.round(currentZoom * 100) + "%";
-    zoomInBtn.disabled  = currentZoom >= 10.0;
-    zoomOutBtn.disabled = currentZoom <= 0.1;
+    zoomInBtn.disabled   = currentZoom >= 10.0;
+    zoomOutBtn.disabled  = currentZoom <= 0.1;
     zoomInBtn.style.opacity  = currentZoom >= 10.0 ? "0.3" : "1";
     zoomOutBtn.style.opacity = currentZoom <= 0.1  ? "0.3" : "1";
     zoomInBtn.style.cursor   = currentZoom >= 10.0 ? "not-allowed" : "pointer";
@@ -4835,7 +4903,7 @@ function updateZoomButtonUI() {
 }
 
 zoomInBtn.onclick = async () => {
-    if (currentZoom >= 10.0) return;
+    if (!isDesktop || currentZoom >= 10.0) return;
     const savedPage = getCurrentVisiblePage();
     currentZoom = +(currentZoom + 0.25).toFixed(2);
     updateZoomButtonUI();
@@ -4844,7 +4912,7 @@ zoomInBtn.onclick = async () => {
 };
 
 zoomOutBtn.onclick = async () => {
-    if (currentZoom <= 0.1) return;
+    if (!isDesktop || currentZoom <= 0.1) return;
     const savedPage = getCurrentVisiblePage();
     currentZoom = +(currentZoom - 0.25).toFixed(2);
     updateZoomButtonUI();
@@ -4853,6 +4921,7 @@ zoomOutBtn.onclick = async () => {
 };
 
 zoomResetBtn.onclick = async () => {
+    if (!isDesktop) return;
     const savedPage = getCurrentVisiblePage();
     currentZoom = getInitialZoom();
     updateZoomButtonUI();
@@ -4860,7 +4929,7 @@ zoomResetBtn.onclick = async () => {
     scrollToPage(savedPage);
 };
 
-// BUTTON STYLING
+// ─── BUTTON STYLING ──────────────────────────────────────────
 [zoomOutBtn, zoomInBtn, downloadBtn].forEach(btn => {
     btn.style.padding = "10px 16px";
     btn.style.border = "none";
@@ -4876,10 +4945,17 @@ zoomResetBtn.onclick = async () => {
 zoomResetBtn.style.cssText = "padding:10px 16px;border:none;border-radius:12px;cursor:pointer;font-weight:700;background:#475569;color:white;font-size:13px;touch-action:manipulation;min-height:42px;";
 downloadBtn.style.background = "#059669";
 
-// Run UI check immediately
+// ─── HIDE ZOOM CONTROLS ON MOBILE/TABLET ─────────────────────
+if (!isDesktop) {
+    zoomOutBtn.style.display  = "none";
+    zoomInBtn.style.display   = "none";
+    zoomResetBtn.style.display = "none";
+    zoomLabel.style.display   = "none";
+}
+
 updateZoomButtonUI();
 
-// ASSEMBLE TOOLBAR
+// ─── ASSEMBLE TOOLBAR ────────────────────────────────────────
 toolbar.appendChild(zoomOutBtn);
 toolbar.appendChild(zoomLabel);
 toolbar.appendChild(zoomInBtn);
@@ -4916,11 +4992,12 @@ function scrollToPage(pageNum) {
     });
 }
 
-// Pinch-to-zoom support (smooth for powerful devices)
+// Pinch-to-zoom support — desktop only (mobile uses native browser pinch)
 let pinchStartDist = null;
 let pinchStartZoom = null;
 let pinchSavedPage = 1;
 
+if (isDesktop) {
 container.addEventListener('touchstart', (e) => {
     if (e.touches.length === 2) {
         pinchStartDist = Math.hypot(
@@ -4968,6 +5045,8 @@ container.addEventListener('touchend', async (e) => {
         pinchStartZoom = null;
     }
 }, { passive: true });
+
+} // end if (isDesktop) pinch block
 
 async function renderAllPages() {
 
@@ -5032,19 +5111,27 @@ sidebar.appendChild(thumbWrap);
         }
 
         // =========================
-        // FULL PAGE VIEW — zoom applied correctly
+        // FULL PAGE VIEW — device-aware rendering
         // =========================
 
-        // Base: fit page to container width × currentZoom
-        // container.clientWidth excludes the sidebar since it's a sibling
         const containerWidth = Math.max(container.clientWidth - 40, 300);
         const naturalViewport = page.getViewport({ scale: 1 });
         const fitScale = containerWidth / naturalViewport.width;
-        const finalScale = fitScale * currentZoom;
+
+        let finalScale;
+        if (isDesktop) {
+            // Desktop: respect zoom level
+            finalScale = fitScale * currentZoom;
+        } else {
+            // Mobile/tablet: render at physical pixel density for maximum sharpness
+            // devicePixelRatio = 2 on Retina/AMOLED, 3 on high-end phones
+            const dpr = Math.min(window.devicePixelRatio || 1, 3);
+            finalScale = fitScale * dpr;
+        }
 
         const viewport = page.getViewport({ scale: finalScale });
 
-        // Card wrapper — width:fit-content lets it grow beyond container when zoomed in
+        // Card wrapper
         const pageWrap = document.createElement('div');
         pageWrap.id = 'page-' + pageNum;
         pageWrap.style.cssText = `
@@ -5056,17 +5143,32 @@ sidebar.appendChild(thumbWrap);
             padding:10px;
             width:fit-content;
             min-width:0;
+            max-width:100%;
         `;
 
         const canvas  = document.createElement('canvas');
         const context = canvas.getContext('2d');
 
-        // Pixel dimensions = actual render size — never override with CSS width/height
-        // (overriding with width:100% was the zoom bug — it collapsed canvas visually)
-        canvas.width  = Math.floor(viewport.width);
-        canvas.height = Math.floor(viewport.height);
-        canvas.style.display      = 'block';
-        canvas.style.borderRadius = '10px';
+        if (isDesktop) {
+            // Desktop: canvas pixel size = render size
+            canvas.width  = Math.floor(viewport.width);
+            canvas.height = Math.floor(viewport.height);
+            canvas.style.display      = 'block';
+            canvas.style.borderRadius = '10px';
+        } else {
+            // Mobile: canvas is rendered at high-DPI but CSS-scaled down to fit screen
+            // This gives crisp text even on small screens
+            const dpr = Math.min(window.devicePixelRatio || 1, 3);
+            const displayWidth  = Math.floor(containerWidth);
+            const displayHeight = Math.floor(containerWidth / naturalViewport.width * naturalViewport.height);
+            canvas.width  = Math.floor(viewport.width);
+            canvas.height = Math.floor(viewport.height);
+            canvas.style.display      = 'block';
+            canvas.style.borderRadius = '10px';
+            canvas.style.width        = displayWidth  + 'px';
+            canvas.style.height       = displayHeight + 'px';
+            canvas.style.maxWidth     = '100%';
+        }
 
         pageWrap.appendChild(canvas);
         pageWrapContainer.appendChild(pageWrap);
@@ -8123,6 +8225,23 @@ document.addEventListener('keydown', (e) => {
 // Close modal on backdrop click
 document.getElementById('advSettingsModal').addEventListener('click', (e) => {
     if(e.target === document.getElementById('advSettingsModal')) closeAdvSettings();
+});
+
+/* =========================
+   MOBILE NAV MENU
+========================= */
+function toggleMobileMenu(){
+    const menu = document.getElementById('mobile-nav-menu');
+    menu.classList.toggle('open');
+}
+
+// Close mobile menu when tapping outside
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('mobile-nav-menu');
+    const btn   = document.getElementById('mobileMenuBtn');
+    if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.classList.remove('open');
+    }
 });
 
    // Sidebar and file grid are populated by initVault() after login.
