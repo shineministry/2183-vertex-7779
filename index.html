@@ -602,11 +602,13 @@ button{
 
     align-items:center;
 
-    gap:14px;
+    gap:10px;
 
-    flex-wrap:wrap;
+    flex-wrap:nowrap;
 
-    padding:10px 18px;
+    padding:8px 14px;
+
+    overflow:hidden;
 
 }
 
@@ -618,15 +620,17 @@ button{
 
     justify-content:center;
 
-    flex:1;
+    flex:0 0 auto;
 
-    min-width:220px;
+    min-width:0;
+
+    max-width:140px;
 
 }
 
 .brand-title{
 
-    font-size:18px;
+    font-size:14px;
 
     font-weight:800;
 
@@ -636,6 +640,12 @@ button{
 
     line-height:1.2;
 
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
 }
 
 .nav-auth{
@@ -644,9 +654,25 @@ button{
 
     align-items:center;
 
-    gap:12px;
+    gap:6px;
 
-    flex-wrap:wrap;
+    flex-wrap:nowrap;
+
+    overflow-x:auto;
+
+    overflow-y:hidden;
+
+    scrollbar-width:none;
+
+    flex:1;
+
+    min-width:0;
+
+}
+
+.nav-auth::-webkit-scrollbar{
+
+    display:none;
 
 }
 
@@ -659,9 +685,9 @@ button{
 
     border-radius:10px;
 
-    padding:8px 14px;
+    padding:7px 10px;
 
-    font-size:11px;
+    font-size:10px;
 
     font-weight:700;
 
@@ -674,6 +700,8 @@ button{
         box-shadow .25s ease;
 
     white-space:nowrap;
+
+    flex-shrink:0;
 
 }
 
@@ -704,9 +732,9 @@ button{
 
     border-radius:10px;
 
-    padding:8px 14px;
+    padding:7px 10px;
 
-    font-size:11px;
+    font-size:10px;
 
     font-weight:700;
 
@@ -715,6 +743,8 @@ button{
     cursor:pointer;
 
     white-space:nowrap;
+
+    flex-shrink:0;
 
     background:
         linear-gradient(
@@ -1093,237 +1123,238 @@ button{
 
 }
 
-
 /* =========================
-   MOBILE NAV FIX
+   MOBILE
 ========================= */
 
-@media screen and (max-width:768px){
-
-    /* Top utility bar */
-    .passport-top-utility{
-        padding:6px 10px;
-        min-height:42px;
-        display:flex;
-        align-items:center;
-    }
-
-    #passport-datetime{
-        font-size:10px;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-    }
-
-    .e2e-badge{
-        font-size:8px;
-        padding:3px 7px;
-        white-space:nowrap;
-    }
-
-    /* Main navbar */
-    .passport-navbar{
-        flex-shrink:0;
-        overflow:hidden;
-    }
-
-    .passport-main-nav{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        flex-wrap:nowrap;
-        gap:6px;
-        padding:8px 10px;
-        min-height:54px;
-    }
-
-    /* Brand */
+@media screen and (min-width:900px){
     .nav-brand{
-        flex:0 0 auto;
-        min-width:auto;
-        max-width:110px;
+        max-width:260px;
     }
-
     .brand-title{
-        font-size:11px;
-        line-height:1.15;
-        font-weight:800;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
+        font-size:17px;
     }
-
-    /* Buttons area */
-    .nav-auth{
-        flex:1;
-        display:flex;
-        align-items:center;
-        gap:6px;
-        overflow-x:auto;
-        overflow-y:hidden;
-        scrollbar-width:none;
-        -webkit-overflow-scrolling:touch;
-        padding-bottom:2px;
-    }
-
-    .nav-auth::-webkit-scrollbar{
-        display:none;
-    }
-
-    /* Small buttons */
-    .nav-auth button,
     .btn-outline,
     .btn-solid,
     .btn-logout{
-        flex-shrink:0;
-        padding:6px 10px;
-        font-size:9px;
-        border-radius:9px;
-        min-height:34px;
-        white-space:nowrap;
+        padding:8px 14px;
+        font-size:11px;
+    }
+}
+
+@media screen and (max-width:768px){
+
+   .passport-top-utility{
+
+padding:6px 10px;
+
+}
+
+#passport-datetime{
+
+font-size:11px;
+
+}
+
+.e2e-badge{
+
+font-size:9px;
+
+padding:4px 8px;
+
+}
+
+.passport-main-nav{
+
+padding:6px 10px;
+
+gap:6px;
+
+}
+
+.nav-brand{
+
+max-width:110px;
+
+}
+
+.brand-title{
+
+font-size:12px;
+
+}
+
+.nav-auth{
+
+gap:5px;
+
+}
+
+.nav-auth button{
+
+flex-shrink:0;
+
+padding:6px 8px;
+
+font-size:9px;
+
+min-width:auto;
+
+}
+
+.btn-outline,
+.btn-solid,
+.btn-logout{
+
+width:auto;
+
+}
+
+    /* Hide the left sidebar thumbnail container on mobile/tablet screens */
+    #pdf-sidebar {
+        display: none !important;
     }
 
-    /* Sidebar becomes top horizontal menu */
+    .overlay{
+
+        align-items:flex-start;
+
+    }
+   
+    .step-card{
+
+        padding:24px;
+
+        border-radius:22px;
+
+        margin-top:20px;
+        margin-bottom:20px;
+
+    }
+
+    .passport-top-utility{
+
+        justify-content:center;
+
+        text-align:center;
+
+        padding:10px;
+
+    }
+
+    .brand-title{
+
+        font-size:16px;
+        text-align:center;
+
+    }
+
     .main-container{
+
         flex-direction:column;
-        overflow:hidden;
+
     }
 
     .sidebar{
+
         width:100%;
-        padding:10px;
+
         overflow-x:auto;
-        overflow-y:hidden;
+
         border-right:none;
-        border-bottom:1px solid var(--border);
-        white-space:nowrap;
+
+        border-bottom:
+            1px solid var(--border);
+
     }
 
-    /* Member dropdown smaller */
-    #member-select{
-        height:42px !important;
-        font-size:12px !important;
-        padding:8px 12px !important;
-    }
-
-    #share-gear{
-        width:42px !important;
-        height:42px !important;
-        font-size:16px !important;
-        flex-shrink:0;
-    }
-
-    /* Category nav horizontal */
     #cat-list{
-        display:flex;
-        gap:8px;
-        flex-wrap:nowrap;
-        overflow-x:auto;
-        scrollbar-width:none;
-        padding-bottom:4px;
-    }
 
-    #cat-list::-webkit-scrollbar{
-        display:none;
+        display:flex;
+
+        gap:10px;
+
     }
 
     #cat-list li{
+
         white-space:nowrap;
+
         margin-bottom:0;
-        padding:10px 14px;
-        font-size:13px;
-        border-radius:12px;
-        flex-shrink:0;
+
     }
 
-    /* Content area */
     .content-view{
-        padding:14px;
-        overflow-y:auto;
+
+        padding:16px;
+
     }
 
-    /* Grid smaller */
     .file-grid{
-        grid-template-columns:repeat(2,1fr);
-        gap:12px;
+
+        grid-template-columns:
+            repeat(2,1fr);
+
+        gap:14px;
+
     }
 
-    /* PDF sidebar hidden */
-    #pdf-sidebar{
-        display:none !important;
-    }
-
-    /* Modals */
     .modal-content{
+
         width:100%;
+
         height:100%;
+
         margin:0;
+
         border-radius:0;
+
     }
 
     .modal-content-small{
+
         width:95%;
-        margin:30px auto;
+
+        margin:40px auto;
+
     }
 
     #pdf-render-container{
-        padding:12px;
+
+        padding:15px;
+
     }
 
-    /* Compare modal */
+    /* Compare modal: stack panes vertically on mobile */
     .compare-body{
         flex-direction:column;
     }
-
     .compare-pane{
         border-right:none;
         border-bottom:2px solid var(--border);
         min-height:40vh;
     }
-
     .compare-pane:last-child{
         border-bottom:none;
     }
 
+    /* Compare bar: wrap on mobile */
     #compare-bar{
-        width:92%;
-        bottom:10px;
         flex-wrap:wrap;
-        justify-content:center;
-        text-align:center;
+        bottom:12px;
+        width:90%;
         white-space:normal;
+        text-align:center;
+        justify-content:center;
     }
 
+    /* Share modal: full width on mobile */
     .share-modal-inner{
+        margin:20px auto;
         width:95%;
-        margin:18px auto;
     }
+
 }
-
-/* Extra small phones */
-@media screen and (max-width:480px){
-
-    .brand-title{
-        font-size:10px;
-    }
-
-    .nav-auth button,
-    .btn-outline,
-    .btn-solid,
-    .btn-logout{
-        font-size:8px;
-        padding:5px 8px;
-        min-height:32px;
-    }
-
-    .file-grid{
-        grid-template-columns:1fr;
-    }
-
-    #pdf-viewer-layout{
-        flex-direction:column;
-    }
-           }
 
 /* SMALL MOBILE */
 
@@ -1461,6 +1492,12 @@ button{
     flex-direction:column;
 
     align-items:center;
+
+    scroll-behavior:smooth;
+
+    -webkit-overflow-scrolling:touch;
+
+    overscroll-behavior:contain;
 
 }
 
@@ -4799,22 +4836,28 @@ function updateZoomButtonUI() {
 
 zoomInBtn.onclick = async () => {
     if (currentZoom >= 10.0) return;
+    const savedPage = getCurrentVisiblePage();
     currentZoom = +(currentZoom + 0.25).toFixed(2);
     updateZoomButtonUI();
     await renderAllPages();
+    scrollToPage(savedPage);
 };
 
 zoomOutBtn.onclick = async () => {
     if (currentZoom <= 0.1) return;
+    const savedPage = getCurrentVisiblePage();
     currentZoom = +(currentZoom - 0.25).toFixed(2);
     updateZoomButtonUI();
     await renderAllPages();
+    scrollToPage(savedPage);
 };
 
 zoomResetBtn.onclick = async () => {
+    const savedPage = getCurrentVisiblePage();
     currentZoom = getInitialZoom();
     updateZoomButtonUI();
     await renderAllPages();
+    scrollToPage(savedPage);
 };
 
 // BUTTON STYLING
@@ -4847,6 +4890,84 @@ container.appendChild(toolbar);
 // =========================
 // RE-RENDER CANVAS PIPELINE
 // =========================
+
+// Helper: get the page number currently most visible in the container
+function getCurrentVisiblePage() {
+    const scrollTop = container.scrollTop;
+    // toolbar height offset
+    const toolbarH = toolbar.offsetHeight || 52;
+    for (let p = 1; p <= pdf.numPages; p++) {
+        const el = document.getElementById('page-' + p);
+        if (!el) continue;
+        const elTop = el.offsetTop - toolbarH;
+        const elBottom = elTop + el.offsetHeight;
+        if (elBottom > scrollTop) return p;
+    }
+    return 1;
+}
+
+// Helper: scroll so that page N is at the top of the view
+function scrollToPage(pageNum) {
+    requestAnimationFrame(() => {
+        const el = document.getElementById('page-' + pageNum);
+        if (!el) return;
+        const toolbarH = toolbar.offsetHeight || 52;
+        container.scrollTop = el.offsetTop - toolbarH - 10;
+    });
+}
+
+// Pinch-to-zoom support (smooth for powerful devices)
+let pinchStartDist = null;
+let pinchStartZoom = null;
+let pinchSavedPage = 1;
+
+container.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+        pinchStartDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+        pinchStartZoom = currentZoom;
+        pinchSavedPage = getCurrentVisiblePage();
+        e.preventDefault();
+    }
+}, { passive: false });
+
+container.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2 && pinchStartDist !== null) {
+        const dist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+        const ratio = dist / pinchStartDist;
+        const newZoom = Math.min(10, Math.max(0.3, +(pinchStartZoom * ratio).toFixed(2)));
+        // Apply CSS-only visual scale during pinch (no re-render mid-gesture)
+        const wrapper = document.getElementById('pdf-canvas-wrapper');
+        if (wrapper) {
+            wrapper.style.transformOrigin = 'top center';
+            wrapper.style.transform = `scale(${newZoom / pinchStartZoom})`;
+            wrapper.style.transition = 'transform 0.05s ease-out';
+        }
+        currentZoom = newZoom;
+        updateZoomButtonUI();
+        e.preventDefault();
+    }
+}, { passive: false });
+
+container.addEventListener('touchend', async (e) => {
+    if (pinchStartDist !== null && e.touches.length < 2) {
+        // Reset visual transform and do a real render at the new zoom
+        const wrapper = document.getElementById('pdf-canvas-wrapper');
+        if (wrapper) {
+            wrapper.style.transform = '';
+            wrapper.style.transition = '';
+        }
+        pinchStartDist = null;
+        await renderAllPages();
+        scrollToPage(pinchSavedPage);
+        pinchStartZoom = null;
+    }
+}, { passive: true });
 
 async function renderAllPages() {
 
@@ -4964,7 +5085,7 @@ sidebar.appendChild(thumbWrap);
 await renderAllPages();
 
 // Second render after modal layout settles (so container.clientWidth is accurate)
-setTimeout(async () => { await renderAllPages(); }, 150);
+setTimeout(async () => { await renderAllPages(); scrollToPage(1); }, 150);
 
 // =========================
 // DOWNLOAD SECURELY
