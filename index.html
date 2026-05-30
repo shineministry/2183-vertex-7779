@@ -1093,259 +1093,237 @@ button{
 
 }
 
+
 /* =========================
-   MOBILE
+   MOBILE NAV FIX
 ========================= */
 
 @media screen and (max-width:768px){
 
-   .passport-top-utility{
-
-padding:6px 10px;
-
-}
-
-#passport-datetime{
-
-font-size:11px;
-
-}
-
-.e2e-badge{
-
-font-size:9px;
-
-padding:4px 8px;
-
-}
-
-.passport-main-nav{
-
-padding:8px 12px;
-
-flex-direction:row;
-
-align-items:center;
-
-justify-content:space-between;
-
-flex-wrap:nowrap;
-
-gap:8px;
-
-}
-
-.nav-brand{
-
-min-width:0;
-
-flex:1;
-
-}
-
-.brand-title{
-
-font-size:13px;
-
-line-height:1.15;
-
-white-space:nowrap;
-
-overflow:hidden;
-
-text-overflow:ellipsis;
-
-}
-
-.nav-auth{
-
-display:flex;
-
-width:auto;
-
-gap:6px;
-
-overflow-x:auto;
-
-overflow-y:hidden;
-
-flex-wrap:nowrap;
-
-scrollbar-width:none;
-
-}
-
-.nav-auth::-webkit-scrollbar{
-
-display:none;
-
-}
-
-.nav-auth button{
-
-flex-shrink:0;
-
-padding:7px 10px;
-
-font-size:9px;
-
-min-width:auto;
-
-}
-
-.btn-outline,
-.btn-solid,
-.btn-logout{
-
-width:auto;
-
-}
-
-    /* Hide the left sidebar thumbnail container on mobile/tablet screens */
-    #pdf-sidebar {
-        display: none !important;
-    }
-
-    .overlay{
-
-        align-items:flex-start;
-
-    }
-   
-    .step-card{
-
-        padding:24px;
-
-        border-radius:22px;
-
-        margin-top:20px;
-        margin-bottom:20px;
-
-    }
-
+    /* Top utility bar */
     .passport-top-utility{
+        padding:6px 10px;
+        min-height:42px;
+        display:flex;
+        align-items:center;
+    }
 
-        justify-content:center;
+    #passport-datetime{
+        font-size:10px;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
 
-        text-align:center;
+    .e2e-badge{
+        font-size:8px;
+        padding:3px 7px;
+        white-space:nowrap;
+    }
 
-        padding:10px;
+    /* Main navbar */
+    .passport-navbar{
+        flex-shrink:0;
+        overflow:hidden;
+    }
 
+    .passport-main-nav{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        flex-wrap:nowrap;
+        gap:6px;
+        padding:8px 10px;
+        min-height:54px;
+    }
+
+    /* Brand */
+    .nav-brand{
+        flex:0 0 auto;
+        min-width:auto;
+        max-width:110px;
     }
 
     .brand-title{
-
-        font-size:16px;
-        text-align:center;
-
+        font-size:11px;
+        line-height:1.15;
+        font-weight:800;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
     }
 
+    /* Buttons area */
+    .nav-auth{
+        flex:1;
+        display:flex;
+        align-items:center;
+        gap:6px;
+        overflow-x:auto;
+        overflow-y:hidden;
+        scrollbar-width:none;
+        -webkit-overflow-scrolling:touch;
+        padding-bottom:2px;
+    }
+
+    .nav-auth::-webkit-scrollbar{
+        display:none;
+    }
+
+    /* Small buttons */
+    .nav-auth button,
+    .btn-outline,
+    .btn-solid,
+    .btn-logout{
+        flex-shrink:0;
+        padding:6px 10px;
+        font-size:9px;
+        border-radius:9px;
+        min-height:34px;
+        white-space:nowrap;
+    }
+
+    /* Sidebar becomes top horizontal menu */
     .main-container{
-
         flex-direction:column;
-
+        overflow:hidden;
     }
 
     .sidebar{
-
         width:100%;
-
+        padding:10px;
         overflow-x:auto;
-
+        overflow-y:hidden;
         border-right:none;
-
-        border-bottom:
-            1px solid var(--border);
-
+        border-bottom:1px solid var(--border);
+        white-space:nowrap;
     }
 
+    /* Member dropdown smaller */
+    #member-select{
+        height:42px !important;
+        font-size:12px !important;
+        padding:8px 12px !important;
+    }
+
+    #share-gear{
+        width:42px !important;
+        height:42px !important;
+        font-size:16px !important;
+        flex-shrink:0;
+    }
+
+    /* Category nav horizontal */
     #cat-list{
-
         display:flex;
+        gap:8px;
+        flex-wrap:nowrap;
+        overflow-x:auto;
+        scrollbar-width:none;
+        padding-bottom:4px;
+    }
 
-        gap:10px;
-
+    #cat-list::-webkit-scrollbar{
+        display:none;
     }
 
     #cat-list li{
-
         white-space:nowrap;
-
         margin-bottom:0;
-
+        padding:10px 14px;
+        font-size:13px;
+        border-radius:12px;
+        flex-shrink:0;
     }
 
+    /* Content area */
     .content-view{
-
-        padding:16px;
-
+        padding:14px;
+        overflow-y:auto;
     }
 
+    /* Grid smaller */
     .file-grid{
-
-        grid-template-columns:
-            repeat(2,1fr);
-
-        gap:14px;
-
+        grid-template-columns:repeat(2,1fr);
+        gap:12px;
     }
 
+    /* PDF sidebar hidden */
+    #pdf-sidebar{
+        display:none !important;
+    }
+
+    /* Modals */
     .modal-content{
-
         width:100%;
-
         height:100%;
-
         margin:0;
-
         border-radius:0;
-
     }
 
     .modal-content-small{
-
         width:95%;
-
-        margin:40px auto;
-
+        margin:30px auto;
     }
 
     #pdf-render-container{
-
-        padding:15px;
-
+        padding:12px;
     }
 
-    /* Compare modal: stack panes vertically on mobile */
+    /* Compare modal */
     .compare-body{
         flex-direction:column;
     }
+
     .compare-pane{
         border-right:none;
         border-bottom:2px solid var(--border);
         min-height:40vh;
     }
+
     .compare-pane:last-child{
         border-bottom:none;
     }
 
-    /* Compare bar: wrap on mobile */
     #compare-bar{
+        width:92%;
+        bottom:10px;
         flex-wrap:wrap;
-        bottom:12px;
-        width:90%;
-        white-space:normal;
-        text-align:center;
         justify-content:center;
+        text-align:center;
+        white-space:normal;
     }
 
-    /* Share modal: full width on mobile */
     .share-modal-inner{
-        margin:20px auto;
         width:95%;
+        margin:18px auto;
+    }
+}
+
+/* Extra small phones */
+@media screen and (max-width:480px){
+
+    .brand-title{
+        font-size:10px;
     }
 
-}
+    .nav-auth button,
+    .btn-outline,
+    .btn-solid,
+    .btn-logout{
+        font-size:8px;
+        padding:5px 8px;
+        min-height:32px;
+    }
+
+    .file-grid{
+        grid-template-columns:1fr;
+    }
+
+    #pdf-viewer-layout{
+        flex-direction:column;
+    }
+           }
 
 /* SMALL MOBILE */
 
