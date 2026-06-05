@@ -5,6 +5,142 @@
    navbar. No additional JS needed.)
 ========================= */
 
+// ============ PASSWORD MANAGER ============
+const WORKER_URL = 'https://backend.shinumaths989.workers.dev'; // your worker URL
+
+// NOTE: If renderPMList is declared in another file, you can safely remove this stub.
+if (typeof renderPMList !== 'function') {
+  var renderPMList = function() { console.warn("renderPMList() is not implemented yet."); };
+}
+
+function openPasswordManager() {
+  document.getElementById('passwordManagerModal').style.display = 'flex';
+  renderPMList();
+}
+function closePasswordManager() {
+  document.getElementById('passwordManagerModal').style.display = 'none';
+}
+
+function togglePMPassword(buttonElement, inputId) {
+  const passwordInput = document.getElementById(inputId);
+  if (!passwordInput) return;
+
+  if (passwordInput.type === 'password') {
+    passwordInput.type = 'text';
+    buttonElement.textContent = 'Hide';
+  } else {
+    passwordInput.type = 'password';
+    buttonElement.textContent = 'Show';
+  }
+}
+
+async function getAuthHeaders() {
+  // Check every token key variant your vault system might be assigning
+  const token = sessionStorage.getItem('vaultSessionToken') || 
+                sessionStorage.getItem('vaultSession') || 
+                sessionStorage.getItem('sessionToken') || 
+                localStorage.getItem('sessionToken') || '';
+                
+  return { 
+    'Content-Type': 'application/json', 
+    'Authorization': `Bearer ${token}` 
+  };
+}
+
+async function loadPMEntries() {
+  const res = await fetch(`${WORKER_URL}/passwords`, { headers: await getAuthHeaders() });
+  const data = await res.json();
+  return data.entries || [];
+}
+
+async function savePMEntry() {
+  const site = document.getElementById('pm-site').value.trim();
+  const username = document.getElementById('pm-username').value.trim();
+  const password = document.getElementById('pm-password').value.trim();
+  const notes = document.getElementById('pm-notes').value.trim();
+  if (!site || !password) { alert('Site and password are required.'); return; }
+
+  await fetch(`${WORKER_URL}/passwords`, {
+    method: 'POST',
+    headers: await getAuthHeaders(),
+    body: JSON.stringify({ site, username, password, notes })
+  });
+  document.getElementById('pm-site').value = '';
+  document.getElementById('pm-username').value = '';
+  document.getElementById('pm-password').value = '';
+  document.getElementById('pm-notes').value = '';
+  renderPMList();
+}
+
+async function copyPMPassword(id) {
+  const res = await fetch(`${WORKER_URL}/passwords/get-password`, {
+    method: 'POST',
+    headers: await getAuthHeaders(),
+    body: JSON.stringify({ id })
+  });
+  const data = await res.json();
+  if (data.password) {
+    navigator.clipboard.writeText(data.password);
+    alert('✅ Password copied!');
+  }
+}
+
+async function renderPMList() {
+  const container = document.getElementById('pm-entries-container'); 
+  if (!container) {
+    console.warn("Target element 'pm-entries-container' not found in HTML.");
+    return;
+  }
+
+  container.innerHTML = '<div style="text-align:center; padding:12px; color:#64748b;">⏳ Fetching credentials...</div>';
+  
+  try {
+    const entries = await loadPMEntries();
+    container.innerHTML = '';
+
+    if (!entries || entries.length === 0) {
+      container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:16px;">No saved passwords found.</div>';
+      return;
+    }
+
+    entries.forEach(entry => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding:10px 0; gap:10px;';
+      
+      row.innerHTML = `
+        <div style="flex-grow:1; min-width:0;">
+          <strong style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHTML(entry.site)}</strong>
+          <span style="font-size:12px; color:#64748b; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHTML(entry.username || 'No username')}</span>
+        </div>
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button onclick="copyPMPassword('${entry.id}')" style="padding:6px 10px; border-radius:6px; border:1px solid #cbd5e1; background:#fff; cursor:pointer;">📋 Copy</button>
+          <button onclick="deletePMEntry('${entry.id}')" style="padding:6px 10px; border-radius:6px; border:none; background:#fee2e2; color:#ef4444; cursor:pointer;">🗑️ Delete</button>
+        </div>
+      `;
+      container.appendChild(row);
+    });
+  } catch (err) {
+    console.error("Failed to render password vault:", err);
+    container.innerHTML = '<div style="text-align:center; color:#ef4444; padding:12px;">❌ Error loading vault list.</div>';
+  }
+}
+
+// XSS Sanitizer Helper
+function escapeHTML(str) {
+  if (!str) return '';
+  return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+}
+
+async function deletePMEntry(id) {
+  if (!confirm('Delete this entry?')) return;
+  await fetch(`${WORKER_URL}/passwords/delete`, {
+    method: 'POST',
+    headers: await getAuthHeaders(),
+    body: JSON.stringify({ id })
+  });
+  renderPMList();
+}
+
 /* =========================
    FEATURE 2: HOVER QUICK PREVIEW
 ========================= */
@@ -496,7 +632,7 @@ function renderPinnedSection(){
             savePinned();
             renderPinnedSection();
             // Re-render current category to update pin button states
-            if(currentCategory && allFilesData[currentCategory]){
+            if(typeof currentCategory !== 'undefined' && typeof allFilesData !== 'undefined' && allFilesData[currentCategory]){
                 renderFiles(allFilesData[currentCategory], currentCategory);
             }
         };
@@ -652,88 +788,48 @@ async function renderComparePane(side, file){
 
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
 
-    const page =
-    await pdf.getPage(pageNum);
+            const page = await pdf.getPage(pageNum);
 
-    // Get parent width
-    const containerWidth =
-    contentEl.clientWidth - 30;
+            // Get parent width
+            const containerWidth = contentEl.clientWidth - 30;
 
-    // Original PDF size
-    const originalViewport =
-    page.getViewport({
-        scale: 1
-    });
+            // Original PDF size
+            const originalViewport = page.getViewport({ scale: 1 });
 
-    // Auto fit scale
-    const fitScale =
-    containerWidth /
-    originalViewport.width;
+            // Auto fit scale
+            const fitScale = containerWidth / originalViewport.width;
 
-    // Apply user zoom INSIDE viewer only
-    const safeScale =
-Math.max(
-    fitScale,
-    0.8
-);
+            // Apply user zoom INSIDE viewer only
+            const safeScale = Math.max(fitScale, 0.8);
 
-const viewport =
-page.getViewport({
-    scale: safeScale
-});
+            const viewport = page.getViewport({ scale: safeScale });
 
-    // Create canvas
-    const canvas =
-    document.createElement(
-        'canvas'
-    );
+            // Create canvas
+            const canvas = document.createElement('canvas');
 
-    canvas.className =
-    'pdf-page';
+            canvas.className = 'pdf-page';
 
-    // Responsive styling
-    canvas.style.display =
-    "block";
+            // Responsive styling
+            canvas.style.display = "block";
+            canvas.style.margin = "0 auto 14px auto";
+            canvas.style.width = "100%";
+            canvas.style.maxWidth = "100%";
+            canvas.style.height = "auto";
+            canvas.style.borderRadius = "12px";
+            canvas.style.boxShadow = "0 4px 18 rgba(0,0,0,.12)";
 
-    canvas.style.margin =
-    "0 auto 14px auto";
+            // Render
+            const context = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
 
-    canvas.style.width =
-    "100%";
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
 
-    canvas.style.maxWidth =
-    "100%";
-
-    canvas.style.height =
-    "auto";
-
-    canvas.style.borderRadius =
-    "12px";
-
-    canvas.style.boxShadow =
-    "0 4px 18px rgba(0,0,0,.12)";
-
-    // Render
-    const context =
-    canvas.getContext('2d');
-
-    canvas.width =
-    viewport.width;
-
-    canvas.height =
-    viewport.height;
-
-    await page.render({
-        canvasContext:
-        context,
-        viewport:
-        viewport
-    }).promise;
-
-    contentEl.appendChild(
-    canvas
-);
-}
+            contentEl.appendChild(canvas);
+        }
 
     } catch (err) {
         console.error(err);
@@ -752,6 +848,7 @@ function pickCompareDoc(side){
 ========================= */
 
 async function checkDocExpiryReminders(){
+    if (typeof allFilesData === 'undefined') return;
     const allFiles = [];
     Object.values(allFilesData).forEach(cat=>{
         if(Array.isArray(cat)) cat.forEach(f=>{ if(f.expiry) allFiles.push(f); });
