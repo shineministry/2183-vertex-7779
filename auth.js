@@ -15,7 +15,7 @@ let currentDecryptedPdf = null;
 let sessionStartTime = null;
 
    let sessionId = crypto.randomUUID();
-let allFilesData = {};
+window.allFilesData = {};
 let currentCategory = "";
    
    async function sha256Bytes(text){
@@ -250,6 +250,1019 @@ function updateClock(){
 
 }
 
+/* ========================= EXTRACT PDF TEXT ========================= */
+async function searchAI() {
+
+  try {
+
+    const query =
+      document
+      .getElementById(
+        "unified-search"
+      )
+      .value
+      .trim()
+      .toLowerCase();
+
+    if (!query) {
+      alert("Type search");
+      return;
+    }
+
+    const token =
+      localStorage.getItem(
+        "sessionToken"
+      );
+
+    const res =
+      await fetch(
+        "https://backend.shinumaths989.workers.dev/ai-search",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+            "application/json",
+
+            "Authorization":
+            `Bearer ${token}`
+          },
+
+          body: JSON.stringify({
+  question: query
+})
+        }
+      );
+
+    const data =
+      await res.json();
+
+    console.log(data);
+
+    if (
+      !data.results ||
+      data.results.length === 0
+    ) {
+      alert(
+        "No matching document found"
+      );
+      return;
+    }
+
+    alert(
+      "Found in: " +
+      data.results
+      .map(x => x.fileName)
+      .join(", ")
+    );
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert(
+      "AI Search Failed"
+    );
+  }
+}
+
+async function extractPDFText(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  let fullText = "";
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    console.log(`extractPDFText: processing page ${i}/${pdf.numPages}`);
+
+    // ── PASS 1: Native text layer ──────────────────────────────────────────
+    // Works for digital/born-digital PDFs (bank statements, certificates, etc.)
+    let layerText = "";
+    try {
+      const content = await page.getTextContent();
+      layerText = content.items
+        .map(item => item.str)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+    } catch (e) {
+      console.warn(`extractPDFText: text layer failed page ${i}:`, e);
+    }
+
+    if (layerText.length > 50) {
+      // Rich native text — use it directly
+      console.log(`extractPDFText: page ${i} native text (${layerText.length} chars)`);
+      fullText += layerText + "\n";
+      continue; // no need to OCR this page
+    }
+
+    // ── PASS 2: OCR (scanned / image-based pages) ──────────────────────────
+    // Covers passports, ID cards, certificates, handwritten docs, scanned PDFs
+    try {
+      const baseViewport = page.getViewport({ scale: 1.0 });
+
+      // Scale up to at least 2480px wide (A4 at 300 DPI) for maximum OCR accuracy
+      const TARGET_WIDTH = 2480;
+      const scaleNeeded  = Math.max(
+        3.0,                              // minimum 3× always
+        TARGET_WIDTH / baseViewport.width // or whatever gets us to 300 DPI equivalent
+      );
+
+      const viewport = page.getViewport({ scale: scaleNeeded });
+      const canvas   = document.createElement("canvas");
+      canvas.width   = Math.ceil(viewport.width);
+      canvas.height  = Math.ceil(viewport.height);
+
+      console.log(`extractPDFText: page ${i} OCR canvas = ${canvas.width}×${canvas.height}px (scale ${scaleNeeded.toFixed(2)}×)`);
+
+      // Render PDF page onto canvas
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";           // white background (helps OCR on transparent pages)
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: ctx, viewport }).promise;
+
+      // Hard guard — Tesseract requires at least 3px width
+      if (canvas.width < 10 || canvas.height < 10) {
+        console.warn(`extractPDFText: page ${i} canvas too small — skipping OCR`);
+        continue;
+      }
+
+      // ── Contrast enhancement pass (greyscale + contrast boost) ────────
+      // Improves recognition on faded stamps, light ink, MRZ zones
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imgData.data;
+      for (let p = 0; p < d.length; p += 4) {
+        // Convert to greyscale
+        const grey = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
+        // Apply contrast stretch (push towards black/white)
+        const enhanced = grey < 128
+          ? Math.max(0,   grey * 0.75)        // darken dark pixels
+          : Math.min(255, 128 + (grey - 128) * 1.4); // brighten light pixels
+        d[p] = d[p + 1] = d[p + 2] = enhanced;
+        d[p + 3] = 255; // fully opaque
+      }
+      ctx.putImageData(imgData, 0, 0);
+
+      // ── Run Tesseract with optimal settings ───────────────────────────
+      const { data: { text } } = await Tesseract.recognize(canvas, "eng", {
+        logger: () => {},
+        tessedit_pageseg_mode:        "6",   // uniform block — scan everything
+        tessedit_ocr_engine_mode:     "1",   // LSTM neural net only (most accurate)
+        preserve_interword_spaces:    "1",   // keep spacing (important for MRZ)
+        tessedit_char_whitelist:      "",    // no whitelist — recognize all characters
+        min_characters_to_try:        "1",   // never skip short lines
+      });
+
+      const ocrText = (text || "").replace(/\s+/g, " ").trim();
+      console.log(`extractPDFText: page ${i} OCR extracted ${ocrText.length} chars`);
+
+      // If OCR returned nothing useful AND native layer had something (even thin), use native
+      if (ocrText.length < 10 && layerText.length > 0) {
+        console.warn(`extractPDFText: page ${i} OCR thin — falling back to native layer`);
+        fullText += layerText + "\n";
+      } else {
+        fullText += ocrText + "\n";
+      }
+
+    } catch (ocrErr) {
+      console.warn(`extractPDFText: OCR failed page ${i}:`, ocrErr);
+      // Last resort: if native layer had anything at all, save it
+      if (layerText.length > 0) {
+        fullText += layerText + "\n";
+      }
+    }
+  }
+
+  return fullText;
+}
+
+/* ===== GEMINI AI CHAT ===== */
+
+// ════════════════════════════════════════════
+//  TOTP FRONTEND LOGIC
+// ════════════════════════════════════════════
+
+let _totpHash = null;        // holds password hash from step3
+let _totpTimerInterval = null;
+
+// ── Called from onCaptchaSuccess (your existing auth flow) ──
+// Replace your existing successful login call with this:
+// Instead of directly calling /get-secret, call startTOTPStep(hash)
+
+function startTOTPStep(hash) {
+  _totpHash = hash;
+  showStepTOTP();
+  startTOTPCountdown();
+  focusFirstDigit();
+}
+
+function showStepTOTP() {
+  document.getElementById("step1").style.display       = "none";
+  document.getElementById("step2").style.display       = "none";
+  document.getElementById("step3").style.display       = "none";
+  document.getElementById("step-totp").style.display   = "flex";
+  clearTOTPBoxes();
+  hideTOTPError();
+}
+
+function showStep1() {
+  document.getElementById("step-totp").style.display = "none";
+  document.getElementById("step1").style.display     = "flex";
+  stopTOTPCountdown();
+}
+
+// ── Digit box auto-advance + backspace ──────
+document.addEventListener("DOMContentLoaded", () => {
+  const digits = document.querySelectorAll(".totp-digit");
+
+  digits.forEach((box, i) => {
+    box.addEventListener("input", () => {
+      // only keep numbers
+      box.value = box.value.replace(/\D/g, "").slice(-1);
+      if (box.value && i < digits.length - 1) {
+        digits[i + 1].focus();
+      }
+      // auto-submit when last digit filled
+      if (i === digits.length - 1 && box.value) {
+        setTimeout(submitTOTP, 120);
+      }
+    });
+
+    box.addEventListener("keydown", (e) => {
+      if (e.key === "Backspace" && !box.value && i > 0) {
+        digits[i - 1].focus();
+        digits[i - 1].value = "";
+      }
+    });
+
+    // allow paste of full 6-digit code
+    box.addEventListener("paste", (e) => {
+      e.preventDefault();
+      const pasted = (e.clipboardData || window.clipboardData)
+        .getData("text").replace(/\D/g, "").slice(0, 6);
+      digits.forEach((d, j) => { d.value = pasted[j] || ""; });
+      if (pasted.length === 6) setTimeout(submitTOTP, 120);
+    });
+  });
+});
+
+function focusFirstDigit() {
+  setTimeout(() => {
+    const first = document.querySelector(".totp-digit");
+    if (first) first.focus();
+  }, 200);
+}
+
+function clearTOTPBoxes() {
+  document.querySelectorAll(".totp-digit").forEach(d => {
+    d.value = "";
+    d.classList.remove("error");
+  });
+}
+
+function getTOTPCode() {
+  return [...document.querySelectorAll(".totp-digit")]
+    .map(d => d.value).join("");
+}
+
+// ── Countdown ring (30s TOTP window) ────────
+function startTOTPCountdown() {
+  stopTOTPCountdown();
+
+  function tick() {
+    const sec = 30 - (Math.floor(Date.now() / 1000) % 30);
+    const ring = document.getElementById("totp-ring");
+    const label = document.getElementById("totp-timer-label");
+    if (!ring) return;
+
+    const pct = sec / 30;
+    ring.setAttribute("stroke-dashoffset", (125.6 * (1 - pct)).toString());
+    ring.setAttribute("stroke", sec <= 5 ? "#f87171" : "var(--accent,#6ee7f7)");
+    if (label) label.textContent = sec + "s";
+  }
+
+  tick();
+  _totpTimerInterval = setInterval(tick, 1000);
+}
+
+function stopTOTPCountdown() {
+  if (_totpTimerInterval) {
+    clearInterval(_totpTimerInterval);
+    _totpTimerInterval = null;
+  }
+}
+
+// ── Show / hide error ────────────────────────
+function showTOTPError(msg) {
+  const el = document.getElementById("totp-error");
+  if (el) { el.textContent = msg; el.style.display = "block"; }
+  document.querySelectorAll(".totp-digit").forEach(d => d.classList.add("error"));
+  setTimeout(() => {
+    document.querySelectorAll(".totp-digit").forEach(d => d.classList.remove("error"));
+  }, 600);
+}
+
+function hideTOTPError() {
+  const el = document.getElementById("totp-error");
+  if (el) el.style.display = "none";
+}
+
+// ── Submit TOTP to backend ───────────────────
+async function submitTOTP() {
+  const code = getTOTPCode();
+
+  if (code.length !== 6) {
+    showTOTPError("Please enter all 6 digits.");
+    return;
+  }
+
+  hideTOTPError();
+
+  // Show loading state
+  const btn = document.querySelector("#step-totp .btn-primary");
+  if (btn) { btn.textContent = "Verifying..."; btn.disabled = true; }
+
+  try {
+    const BACKEND = window.BACKEND_URL || "https://backend.shinumaths989.workers.dev"; // ← update this
+
+    const res = await fetch(`${BACKEND}/verify-totp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, hash: _totpHash })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+    stopTOTPCountdown();
+
+    // ── Apply session data from the verified response ──────────────────
+    const result = data;
+    const pass   = window._pendingAuthPass;
+
+    sessionStorage.setItem("vaultSessionToken", result.sessionToken);
+    sessionStorage.setItem("vaultSession",       result.sessionToken);
+
+    resetInactivityTimer();
+
+    window.masterPassword = result.secret ? String(result.secret) : String(pass || "");
+    if (result.secret) sessionStorage.setItem("vault_session_secret", result.secret);
+
+    window.VAULT_MODE = result.mode;
+    sessionStorage.setItem("vaultMode", result.mode);
+
+    if (window.VAULT_MODE !== "ADMIN") {
+        const shareGear = document.getElementById("share-gear");
+        if (shareGear) shareGear.style.display = "none";
+    }
+
+    masterPassword = window.masterPassword;
+    sessionStartTime = new Date();
+
+    // ── Hide TOTP, show step2 (Legal Declaration) ──────────────────────
+    document.getElementById("step-totp").style.display = "none";
+    const step2 = document.getElementById("step2");
+    if (step2) { step2.style.display = "flex"; step2.style.opacity = "1"; }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Clean up temp storage
+    window._pendingAuthResult = null;
+    window._pendingAuthPass   = null;
+    window._pendingAuthHash   = null;
+
+    } else {
+      showTOTPError(data.error || "Invalid code. Try again.");
+      if (btn) { btn.textContent = "VERIFY CODE"; btn.disabled = false; }
+      clearTOTPBoxes();
+      focusFirstDigit();
+    }
+
+  } catch (err) {
+    console.error("TOTP verify error:", err);
+    showTOTPError("Verification failed. Please try again.");
+    if (btn) { btn.textContent = "VERIFY CODE"; btn.disabled = false; }
+  }
+}
+
+/* ==========================================================
+   PRODUCTION MERGED ENGINE: AI BACKGROUND INDEXING PIPELINE
+========================================================== */
+async function runAIIndexingOnLogin() {
+    console.log("runAIIndexingOnLogin() CALLED");
+
+    // Extract authorization payload tokens
+    const token = sessionStorage.getItem("vaultSessionToken") ||
+                  sessionStorage.getItem("vaultSession") || "";
+    if (!token) {
+        console.warn("AI Index: Halt. Operational authorization token is missing.");
+        return;
+    }
+
+    // ── 1. CHECK ENGINE GLOBAL STATUS ────────────────────────────────────
+    try {
+        const checkRes = await fetch('https://backend.shinumaths989.workers.dev/ai-index-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const checkData = await checkRes.json();
+        
+        // Fast path check bypass parameter
+        if (false && checkData.indexed) {
+            console.log('✦ Vault AI: Already indexed. Fast answers ready.');
+            updateAIBtn('ready');
+            return;
+        }
+        console.log("FORCING RE-INDEX SCRIPT RUN");
+    } catch(e) {
+        console.log('✦ Index check failed, proceeding to index extraction layer.', e);
+    }
+
+    console.log('✦ Vault AI: Scanning and compiling repository documents...');
+    updateAIBtn('indexing', '✦ Indexing...');
+
+    // ── 2. DYNAMIC MEMORY SYNCHRONIZATION LOOP ───────────────────────────
+    let waited = 0;
+    while ((!window.allFilesData || !Object.keys(window.allFilesData).length) && waited < 30000) {
+        console.log("Waiting for files storage layer to materialize...", waited, window.allFilesData);
+        await new Promise(r => setTimeout(r, 500));
+        waited += 500;
+    }
+
+    console.log("Files map ready status:", window.allFilesData);
+
+    // Parse files dictionary map into a sequential array schema
+    let allFiles = [];
+    try {
+        for (const items of Object.values(window.allFilesData || {})) {
+            if (Array.isArray(items)) {
+                allFiles.push(...items);
+            }
+        }
+    } catch(e) { 
+        console.warn('allFilesData matrix storage parse error', e); 
+    }
+
+    // Fallback: If local memory structure is completely blank, query server directly
+    if (!allFiles.length) {
+        console.log("AI Index: Local payload trace empty. Polling server backend manifest instead...");
+        try {
+            const res = await fetch("https://backend.shinumaths989.workers.dev/files.json", {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const data = await res.json();
+            for (const items of Object.values(data)) {
+                if (Array.isArray(items)) allFiles.push(...items);
+            }
+        } catch (e) {
+            console.error("AI Index: Critical exit. Unable to gather file lists registry.", e);
+            updateAIBtn('ready');
+            return;
+        }
+    }
+
+    // Filter pipeline tracking: Strict evaluation targeting document files (.pdf, .enc)
+    const pdfFiles = allFiles.filter(f => {
+        const pathStr = (f.file || f.name || f.fileName || f.path || "").toLowerCase();
+        return pathStr.endsWith(".pdf") || pathStr.endsWith(".enc");
+    });
+
+    if (!pdfFiles.length) {
+        console.log('✦ No compatible PDF documents found to index inside vault.');
+        updateAIBtn('ready');
+        return;
+    }
+
+    console.log(`AI Index: ${pdfFiles.length} candidate documents discovered. Validating chunk status logs...`);
+
+    // ── 3. QUERY PERSISTENCE STATUS FOR SKIPPING COMPLETED DOCS ─────────
+    let alreadyIndexed = new Set();
+    try {
+        const progressRes = await fetch('https://backend.shinumaths989.workers.dev/ai-chunk-status-all', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({})
+        });
+        const progressData = await progressRes.json();
+        
+        // Map target names from both potential status attributes (indexed / files)
+        const completedList = progressData.indexed || progressData.files || [];
+        completedList.forEach(name => alreadyIndexed.add(name));
+        
+        console.log(`AI Index: ${alreadyIndexed.size} document structures verified in Firestore.`);
+    } catch(e) {
+        console.warn('AI Index: Progress checkpoint trace failed — Processing full array index scope.', e);
+    }
+
+    let doneCount = alreadyIndexed.size;
+
+    // ── 4. RESUME CORE INDEX EXTRACTION & CHUNKING LOOP ──────────────────
+    for (const fileEntry of pdfFiles) {
+        const filePath = fileEntry.file || fileEntry.path || fileEntry.fileName || "";
+        const fileName = fileEntry.name || fileEntry.filename || filePath.split("/").pop() || "Unnamed Document";
+
+        // Skip processed items immediately
+        if (alreadyIndexed.has(fileName)) {
+            console.log(`✦ Skipping processed index file: ${fileName}`);
+            continue;
+        }
+
+        console.log(`✦ Resuming Index pipeline processing: ${fileName}`);
+        updateAIBtn('indexing', `✦ ${doneCount}/${pdfFiles.length}`);
+
+        try {
+            // Step A: Download stream buffer from storage vault
+            const dlRes = await fetch(
+                `https://backend.shinumaths989.workers.dev/docs/${filePath}`,
+                { headers: { "Authorization": `Bearer ${token}` } }
+            );
+            if (!dlRes.ok) {
+                console.warn(`AI Index: Extraction dispatch failed for "${fileName}" (HTTP ${dlRes.status})`);
+                continue;
+            }
+
+            const encryptedBuffer = await dlRes.arrayBuffer();
+
+            // Step B: Cryptographic layer decryption
+            let decryptedBuffer;
+            try {
+                // Tries localized decryption utility first, switches to global window reference fallback
+                if (typeof decryptVaultFile === 'function') {
+                    decryptedBuffer = await decryptVaultFile(encryptedBuffer);
+                } else if (typeof indexAI === 'function') {
+                    // Fallback redirect hook if alternate helper wrapper indexAI architecture operates execution
+                    await indexAI(fileEntry.url || filePath, fileName);
+                    doneCount++;
+                    continue; 
+                } else {
+                    throw new Error("Missing decryption library mapping runtime components.");
+                }
+            } catch (decruptErr) {
+                console.warn(`AI Index: Decryption failed for target "${fileName}" — Skipping node loop.`, decruptErr);
+                continue;
+            }
+
+            // Step C: Content string conversion extraction (with OCR mechanics)
+            const fullText = await extractFullPDFText(decryptedBuffer);
+            if (!fullText || fullText.length < 50) {
+                console.warn(`AI Index: Document element "${fileName}" evaluated as zero length raw string content. Skipping...`);
+                continue;
+            }
+
+            console.log(`AI Index: Document string parse complete "${fileName}" — (${fullText.length} characters parsed)`);
+
+            // Step D: Calculate mathematical content overlaps mapping (800 window size / 100 char overlap)
+            const CHUNK_SIZE = 800;
+            const OVERLAP    = 100;
+            const chunks = [];
+            for (let i = 0; i < fullText.length; i += (CHUNK_SIZE - OVERLAP)) {
+                chunks.push(fullText.slice(i, i + CHUNK_SIZE));
+                if (i + CHUNK_SIZE >= fullText.length) break;
+            }
+
+            console.log(`AI Index: Array split processing completed. Transferring ${chunks.length} blocks to matrix database...`);
+
+            // Step E: Stream individual index segments to Cloudflare vector worker
+            let uploadedChunksCount = 0;
+            for (let i = 0; i < chunks.length; i++) {
+                try {
+                    const chunkRes = await fetch("https://backend.shinumaths989.workers.dev/ai-index", {
+                        method: "POST",
+                        headers: { 
+                            "Content-Type": "application/json", 
+                            "Authorization": `Bearer ${token}` 
+                        },
+                        body: JSON.stringify({
+                            fileName:     `${fileName} [chunk ${i + 1}/${chunks.length}]`,
+                            baseFileName: fileName,
+                            chunkText:    chunks[i],
+                            chunkIndex:   i,
+                            totalChunks:  chunks.length
+                        })
+                    });
+                    if (chunkRes.ok) uploadedChunksCount++;
+                } catch (chunkErr) {
+                    console.warn(`AI Index: Serialization delivery failure on segment chunk index block: ${i + 1}`, chunkErr);
+                }
+
+                // Internal Throttling Layer: Every 10 iterations pause loop for 300ms to preserve thread execution capacity
+                if (i % 10 === 9) {
+                    await new Promise(r => setTimeout(r, 300));
+                }
+            }
+
+            console.log(`AI Index: Storage save loop verified "${fileName}" — ${uploadedChunksCount}/${chunks.length} matrix slices updated.`);
+
+            // Step F: Fire sync event payload tracking completion milestone status to persistence records
+            await fetch('https://backend.shinumaths989.workers.dev/ai-file-indexed', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ fileName: fileName })
+            });
+
+            doneCount++;
+            updateAIBtn('indexing', `✦ ${doneCount}/${pdfFiles.length}`);
+
+        } catch (innerLoopErr) {
+            console.error(`AI Index: Operational failure encountered handling item payload reference context: "${fileName}"`, innerLoopErr);
+        }
+    }
+
+    // ── 5. FINALIZATION STATE WRITEOUT AND REGISTRATION ──────────────────
+    try {
+        await fetch('https://backend.shinumaths989.workers.dev/ai-index-status', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ indexed: true })
+        });
+    } catch(statusUpdateErr) {
+        console.warn("AI Index: Global status bit update error.", statusUpdateErr);
+    }
+
+    updateAIBtn('ready');
+    console.log('✦ Vault AI: All repository structures completely mapped. System execution thread finished!');
+}
+
+async function decryptVaultFile(arrayBuffer) {
+  // Read settings length (first 4 bytes)
+  const settingsLength = new Uint32Array(arrayBuffer.slice(0, 4))[0];
+
+  // Read settings JSON
+  const settingsBytes = arrayBuffer.slice(4, 4 + settingsLength);
+  const settings = JSON.parse(new TextDecoder().decode(settingsBytes));
+
+  // Read salt (16 bytes) and IV (12 bytes)
+  const saltStart = 4 + settingsLength;
+  const salt = arrayBuffer.slice(saltStart, saltStart + 16);
+  const ivStart = saltStart + 16;
+  const iv = arrayBuffer.slice(ivStart, ivStart + 12);
+  const encryptedData = arrayBuffer.slice(ivStart + 12);
+
+  // Hash master password (same as sha256Bytes used in the viewer)
+  const passwordHash = await sha256Bytes(window.masterPassword);
+
+  // Import key material
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", passwordHash, "PBKDF2", false, ["deriveKey"]
+  );
+
+  // Derive AES-GCM key
+  const key = await crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: new Uint8Array(salt),
+      iterations: settings.iterations,
+      hash: settings.hash
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["decrypt"]
+  );
+
+  // Decrypt and return
+  return await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: new Uint8Array(iv) },
+    key,
+    encryptedData
+  );
+}
+
+// After successfully deleting the file from storage, also remove its chunks:
+async function deleteFileChunks(fileName) {
+  const token = sessionStorage.getItem('vaultSessionToken') ||
+                sessionStorage.getItem('vaultSession') ||
+                localStorage.getItem('sessionToken') || '';
+  try {
+    await fetch('https://backend.shinumaths989.workers.dev/ai-chunk-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ fileName })
+    });
+    console.log(`✦ Chunks deleted for: ${fileName}`);
+  } catch (e) {
+    console.warn('Failed to delete chunks:', e);
+  }
+       }
+
+async function indexAI(fileUrl, fileName) {
+  const token = sessionStorage.getItem('vaultSessionToken') ||
+                sessionStorage.getItem('vaultSession') ||
+                localStorage.getItem('sessionToken') || '';
+
+  // ── Check if this file's chunks already exist ──
+  try {
+    const checkRes = await fetch(
+      'https://backend.shinumaths989.workers.dev/ai-chunk-status',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ fileName })  // checks by baseFileName
+      }
+    );
+    const checkData = await checkRes.json();
+    if (checkData.exists) {
+      console.log(`✦ "${fileName}" already in Firestore — skipping.`);
+      return;
+    }
+  } catch (e) {
+    console.warn('Chunk status check failed, will re-index:', e);
+  }
+
+  // ── Fetch and decrypt the file ─────────────────
+  const response = await fetch(fileUrl, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  const encryptedBuffer = await response.arrayBuffer();
+
+  let decryptedBuffer;
+  try {
+    decryptedBuffer = await decryptVaultFile(encryptedBuffer);
+  } catch (e) {
+    console.warn(`✦ Could not decrypt "${fileName}" — skipping.`, e);
+    return;
+  }
+
+  // ── Extract text ───────────────────────────────
+  const file = new File([decryptedBuffer], fileName, { type: 'application/pdf' });
+  const fullText = await extractPDFText(file);
+
+  if (!fullText || fullText.trim().length < 20) {
+    console.warn(`✦ No text extracted from "${fileName}" — may be a scanned image.`);
+    // Still save a placeholder so AI knows the file exists
+    await fetch('https://backend.shinumaths989.workers.dev/ai-index', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        fileName:     `${fileName} (chunk 1/1)`,
+        baseFileName: fileName,               // ← key field
+        chunkText:    `Document: ${fileName}\nNote: This document appears to be a scanned image. Text could not be extracted automatically. Please check this document manually.`,
+        chunkIndex:   0,
+        totalChunks:  1
+      })
+    });
+    return;
+  }
+
+  // ── Split into chunks WITH overlap ────────────
+  const CHUNK_SIZE    = 600;   // smaller = more precise
+  const CHUNK_OVERLAP = 150;   // overlap keeps dates/names from being cut
+  const chunks        = [];
+  let start           = 0;
+
+  while (start < fullText.length) {
+    const end   = Math.min(start + CHUNK_SIZE, fullText.length);
+    const chunk = fullText.slice(start, end).trim();
+
+    if (chunk.length > 30) {        // skip near-empty chunks
+      chunks.push(chunk);
+    }
+
+    if (end === fullText.length) break;
+    start += CHUNK_SIZE - CHUNK_OVERLAP;
+  }
+
+  console.log(`✦ "${fileName}" → ${chunks.length} chunks to index`);
+
+  // ── Send each chunk to backend ─────────────────
+  for (let i = 0; i < chunks.length; i++) {
+    try {
+      const res = await fetch(
+        'https://backend.shinumaths989.workers.dev/ai-index',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            fileName:     `${fileName} (chunk ${i + 1}/${chunks.length})`,
+            baseFileName: fileName,       // ← used for chunk-status checks
+            chunkText:    chunks[i],
+            chunkIndex:   i,              // ← used for ordering
+            totalChunks:  chunks.length   // ← used for progress
+          })
+        }
+      );
+
+      const data = await res.json();
+      console.log(`✦ chunk ${i + 1}/${chunks.length} → ${data.success ? '✅' : '❌ ' + data.error}`);
+
+    } catch (e) {
+      console.warn(`✦ chunk ${i + 1} failed:`, e);
+    }
+  }
+
+  console.log(`✦ "${fileName}" fully indexed (${chunks.length} chunks).`);
+}
+
+function updateAIBtn(state, label) {
+  const btn = document.getElementById('ai-chat-btn');
+  if (!btn) return;
+  if (state === 'ready') {
+    btn.textContent = '✦ AI';
+    btn.style.background = 'linear-gradient(135deg,#4285f4,#9b5de5,#f72585)';
+    btn.style.animation = 'none';
+  } else {
+    btn.textContent = label || '✦ AI';
+    btn.style.background = 'linear-gradient(135deg,#f59e0b,#d97706)';
+    btn.style.animation = 'aiPulse 1.5s infinite';
+  }
+}
+
+let aiChatHistory = [];
+
+function openAIChat() {
+  document.getElementById('ai-chat-overlay').classList.add('open');
+  aiChatHistory = []; // fresh session each open
+  setTimeout(() => document.getElementById('ai-input').focus(), 450);
+}
+
+function closeAIChat() {
+  document.getElementById('ai-chat-overlay').classList.remove('open');
+}
+
+function chipAsk(q) {
+  document.getElementById('ai-input').value = q;
+  sendAIMessage();
+}
+
+function addSpeakButton(messageElement) {
+    const btn = document.createElement("button");
+    btn.textContent = "🔊 Listen";
+    btn.style.cssText = `
+        margin-top: 8px;
+        background: none;
+        border: 1px solid var(--accent, #6ee7f7);
+        color: var(--accent, #6ee7f7);
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 11px;
+        cursor: pointer;
+        display: block;
+    `;
+    btn.onclick = () => {
+        const text = messageElement.innerText.replace(/\*\*/g, "");
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "en-IN";
+        utterance.rate = 0.95;
+        utterance.pitch = 1;
+        if (speechSynthesis.speaking) {
+            speechSynthesis.cancel();
+            btn.textContent = "🔊 Listen";
+            return;
+        }
+        utterance.onstart = () => btn.textContent = "⏹ Stop";
+        utterance.onend = () => btn.textContent = "🔊 Listen";
+        speechSynthesis.speak(utterance);
+    };
+    messageElement.parentElement.appendChild(btn);
+}
+
+async function sendAIMessage() {
+  const input = document.getElementById('ai-input');
+  const question = input.value.trim();
+  if (!question) return;
+  input.value = '';
+
+  // Hide welcome screen on first message
+  const welcome = document.getElementById('ai-welcome');
+  if (welcome) welcome.remove();
+
+  appendUserBubble(question);
+  aiChatHistory.push({ role: 'user', parts: [{ text: question }] });
+
+  showAITyping(true);
+   
+  try {
+    const token = sessionStorage.getItem('vaultSessionToken') ||
+                  sessionStorage.getItem('vaultSession') ||
+                  localStorage.getItem('sessionToken') || '';
+
+    const res = await fetch('https://backend.shinumaths989.workers.dev/ai-search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ question })
+    });
+
+     const data = await res.json();
+
+    showAITyping(false);
+
+    if (data.success && data.reply) {
+      // Create the AI bubble and animate words into it
+      const msgs = document.getElementById('ai-messages');
+      const wrap = document.createElement('div');
+      wrap.className = 'ai-msg-ai-wrap';
+      wrap.innerHTML = `<div class="ai-gem-avatar">✦</div><div class="ai-msg-ai" id="ai-reply-target-${Date.now()}"></div>`;
+      msgs.appendChild(wrap);
+      msgs.scrollTop = msgs.scrollHeight;
+
+      const replyTarget = wrap.querySelector('[id^="ai-reply-target-"]');
+
+      // Pre-process markdown so bold and line breaks render as HTML
+      const rawReply = data.reply
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // bold
+        .replace(/\n\n/g, '<br><br>')                       // paragraph breaks
+        .replace(/\n/g, '<br>');                            // single line breaks
+
+      // Split text into words while preserving whitespace
+      const words = rawReply.split(/(\s+)/);
+      let wordIndex = 0;
+
+      function printWordByWord() {
+        if (wordIndex < words.length) {
+          const span = document.createElement("span");
+          span.innerHTML = words[wordIndex]; // innerHTML so HTML tags render
+
+          // Hardware-accelerated fade-in per word
+          span.style.opacity = "0";
+          span.style.filter = "blur(3px)";
+          span.style.transition = "opacity 0.2s ease-out, filter 0.2s ease-out";
+          span.style.display = "inline-block";
+          span.style.whiteSpace = "pre-wrap";
+
+          replyTarget.appendChild(span);
+
+          requestAnimationFrame(() => {
+            span.style.opacity = "1";
+            span.style.filter = "blur(0px)";
+          });
+
+          wordIndex++;
+          msgs.scrollTop = msgs.scrollHeight;
+          setTimeout(printWordByWord, 25);
+        } else {
+          // Animation complete — add the 🔊 Listen button
+          addSpeakButton(replyTarget);
+        }
+      }
+
+      printWordByWord();
+
+    } else {
+      appendAIBubble(data.error || "An error occurred fetching detailed vault profiles.");
+    }
+
+  } catch (e) {
+
+    console.error(e);
+    showAITyping(false);
+    appendAIBubble("An error occurred fetching detailed vault profiles.");
+
+  }
+
+}
+
+function appendUserBubble(text) {
+  const msgs = document.getElementById('ai-messages');
+  const div = document.createElement('div');
+  div.className = 'ai-msg-user';
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function appendAIBubble(text) {
+  const msgs = document.getElementById('ai-messages');
+  const wrap = document.createElement('div');
+  wrap.className = 'ai-msg-ai-wrap';
+  wrap.innerHTML = `
+    <div class="ai-gem-avatar">✦</div>
+    <div class="ai-msg-ai">${text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</div>
+  `;
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showAITyping(show) {
+  document.getElementById('ai-typing').style.display = show ? 'block' : 'none';
+  document.getElementById('ai-send-btn').disabled = show;
+  const msgs = document.getElementById('ai-messages');
+  msgs.scrollTop = msgs.scrollHeight;
+         }
+
 /* ========================= STEP 1 ========================= */
 async function hashPassword(password) {
   const normalized = password
@@ -266,64 +1279,36 @@ async function hashPassword(password) {
     .join("");
 }
    
+/* ==========================================================
+   FIXED STEP 1 AUTHENTICATION GATEWAY WITH CARD TARGETS
+========================================================== */
 async function showStep2() {
 
-   clearTimeout(
-    inactivityTimer
-);
+    clearTimeout(inactivityTimer);
 
     const now = Date.now();
 
     if (now < lockUntil) {
-        const remaining =
-            Math.ceil(
-                (lockUntil - now) / 1000
-            );
-
-        alert(
-            `Too many wrong attempts.\nTry again in ${remaining} seconds.`
-        );
-
+        const remaining = Math.ceil((lockUntil - now) / 1000);
+        alert(`Too many wrong attempts.\nTry again in ${remaining} seconds.`);
         return;
     }
 
-    const visitorName =
-        document
-        .getElementById(
-            "user-name"
-        )
-        .value.trim();
+    // Capture responsive field values
+    const visitorName = document.getElementById("user-name").value.trim();
+    const pass = document.getElementById("vault-pass").value.trim();
+    const purpose = document.getElementById("user-purpose").value.trim();
 
-    const pass =
-        document
-        .getElementById(
-            "vault-pass"
-        )
-        .value.trim();
-
-    const purpose =
-        document
-        .getElementById(
-            "user-purpose"
-        )
-        .value.trim();
-
-    if (
-        !visitorName ||
-        !purpose ||
-        !pass
-    ) {
-        alert(
-            "Full Name, Purpose, and Password are required."
-        );
+    if (!visitorName || !purpose || !pass) {
+        alert("Username, Access Context, and Access Matrix Pin are required.");
         return;
     }
 
-    // Show loading state on button
-    const loginBtn = document.querySelector('#step1 .btn-primary');
+    // Acquire primary action node buttons
+    const loginBtn = document.getElementById('submitBtn');
     const originalBtnText = loginBtn ? loginBtn.textContent : '';
     if (loginBtn) {
-        loginBtn.textContent = '🔐 Connecting...';
+        loginBtn.textContent = '🔐 Connecting Secure Server...';
         loginBtn.disabled = true;
         loginBtn.style.opacity = '0.7';
     }
@@ -342,29 +1327,30 @@ async function showStep2() {
         const box = document.createElement('div');
         box.id = 'login-error-box';
         box.style.cssText = `
-            background:#fef2f2;
-            border:1px solid #fca5a5;
-            border-radius:14px;
-            padding:16px 18px;
-            margin-top:12px;
-            text-align:left;
-            animation:fadeInUp .3s ease;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 16px;
+            text-align: left;
+            animation: fadeInUp .3s ease;
         `;
         box.innerHTML = `
-            <div style="font-weight:800;color:#dc2626;font-size:14px;margin-bottom:6px;">⚠️ ${title}</div>
-            <div style="font-size:12.5px;color:#7f1d1d;line-height:1.6;">${detail}</div>
+            <div style="font-weight:800;color:var(--danger);font-size:13px;margin-bottom:4px;">⚠️ ${title}</div>
+            <div style="font-size:12px;color:#fff;line-height:1.5;">${detail}</div>
             <button onclick="this.parentElement.remove()" style="
-                margin-top:10px;border:none;background:#dc2626;color:white;
-                border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">
+                margin-top:10px;border:none;background:var(--danger);color:white;
+                border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;">
                 Dismiss
             </button>
         `;
-        const card = document.querySelector('#step1 .step-card');
+        
+        // CORRECTION: Target .login-wrapper container instead of obsolete .step-card
+        const card = document.querySelector('#step1 .login-wrapper');
         if (card) card.appendChild(box);
         else alert(title + ': ' + detail);
     };
 
-    // Fetch with timeout helper
     const fetchWithTimeout = (url, options, ms = 12000) => {
         const controller = new AbortController();
         const tid = setTimeout(() => controller.abort(), ms);
@@ -373,15 +1359,8 @@ async function showStep2() {
     };
 
     try {
-
-        // store password in memory only
         masterPassword = pass;
-
-        // hash password
-        const hash =
-            await hashPassword(
-                pass
-            );
+        const hash = await hashPassword(pass);
 
         let res;
         try {
@@ -389,9 +1368,7 @@ async function showStep2() {
                 "https://backend.shinumaths989.workers.dev/get-secret",
                 {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ hash })
                 },
                 12000
@@ -399,200 +1376,130 @@ async function showStep2() {
         } catch (fetchErr) {
             restoreLoginBtn();
             if (fetchErr.name === 'AbortError') {
-                showLoginError(
-                    'Connection Timed Out',
-                    'The secure server took too long to respond. Check your internet connection and try again.'
-                );
+                showLoginError('Connection Timed Out', 'The secure server took too long to respond.');
             } else if (!navigator.onLine) {
-                showLoginError(
-                    'No Internet Connection',
-                    'Your device appears to be offline. Please connect to Wi-Fi or mobile data and try again.'
-                );
+                showLoginError('Offline', 'Your device appears to be offline.');
             } else {
-                showLoginError(
-                    'Cannot Reach Secure Server',
-                    'Your network may be blocking the connection. Try switching between Wi-Fi and mobile data, or disable a VPN if active.'
-                );
+                showLoginError('Server Unreachable', 'Your network may be blocking connection points.');
             }
             return;
         }
 
         if (res.status >= 500) {
             restoreLoginBtn();
-            showLoginError(
-                'Server Temporarily Unavailable',
-                'The secure backend returned an error (HTTP ' + res.status + '). Please wait a moment and try again.'
-            );
+            showLoginError('Server Error', 'Secure node returned an error state (HTTP ' + res.status + ').');
             return;
         }
 
-        const contentType =
-            res.headers.get(
-                "content-type"
-            ) || "";
-
-        if (
-            !res.ok &&
-            contentType.includes(
-                "text/html"
-            )
-        ) {
+        if (!res.ok && (res.headers.get("content-type") || "").includes("text/html")) {
             restoreLoginBtn();
-            showLoginError(
-                'Access Blocked by Firewall',
-                'The vault firewall rejected this connection. This may be due to your network or location.'
-            );
+            showLoginError('Access Blocked', 'The vault firewall rejected this identity node link.');
             return;
         }
 
         let result = {};
-        try {
-            result = await res.json();
-        } catch {
+        try { result = await res.json(); } catch {
             restoreLoginBtn();
-            showLoginError(
-                'Invalid Server Response',
-                'The server returned an unexpected response. Please try again.'
-            );
+            showLoginError('Response Fault', 'The server returned an unreadable payload pattern.');
             return;
         }
 
-        // failed login
-        if (
-            !res.ok ||
-            !result.success ||
-            !result.authorized
-        ) {
-
+        if (!res.ok || !result.success || !result.authorized) {
             restoreLoginBtn();
             failedAttempts++;
 
-            if (
-                failedAttempts >= 5
-            ) {
-
-                sendSecurityAlert(
-                    "Multiple failed password attempts"
-                );
-
-                lockUntil =
-                    Date.now() +
-                    300000;
-
+            if (failedAttempts >= 5) {
+                sendSecurityAlert("Multiple failed password attempts");
+                lockUntil = Date.now() + 300000;
                 failedAttempts = 0;
-
-                showLoginError(
-                    'Vault Locked',
-                    'Too many failed attempts. The vault is locked for 5 minutes for security.'
-                );
-
+                showLoginError('Vault Locked', 'Too many unauthorized access requests. Security freeze for 5 minutes.');
             } else {
-
-                showLoginError(
-                    'Wrong Access Key',
-                    `Incorrect password. You have ${5 - failedAttempts} attempt${5 - failedAttempts === 1 ? '' : 's'} remaining.`
-                );
+                showLoginError('Authentication Failure', `Incorrect access token matrix sequence. ${5 - failedAttempts} attempts remain.`);
             }
-
             return;
         }
 
-        // SUCCESS LOGIN
+        // AUTHORIZED — stash result and proceed
         if (loginBtn) {
-            loginBtn.textContent = '✓ Authenticated';
-            loginBtn.style.background = 'linear-gradient(135deg,#16a34a,#15803d)';
+            loginBtn.textContent = '✓ Identity Verified';
+            loginBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
             loginBtn.style.opacity = '1';
         }
 
-        sessionStorage.setItem(
-            "vaultSessionToken",
-            result.sessionToken
-        );
-
-        sessionStorage.setItem(
-    "vaultSession",
-    result.sessionToken
-);
-
-// START 2-MINUTE TIMER
-resetInactivityTimer();
-
-// Use the master encryption password returned by the backend (not the user's
-// login password) — all files are encrypted with the admin master password,
-// so every mode needs it to decrypt, regardless of which key they logged in with.
-window.masterPassword =
-    result.secret
-    ? String(result.secret)
-    : String(pass);
-
-// Also persist so passkey / session-restore path can find it
-if(result.secret){
-    sessionStorage.setItem("vault_session_secret", result.secret);
-}
-
-   window.VAULT_MODE=
-result.mode;
-
-   sessionStorage.setItem("vaultMode", result.mode);
-
-       if(
-
-window.VAULT_MODE
-!=="ADMIN"
-
-){
-
-document
-.getElementById(
-"share-gear"
-)
-.style.display=
-"none";
-
-}
-
-masterPassword = window.masterPassword;
-
         failedAttempts = 0;
 
-        sessionStartTime =
-            new Date();
+        // Stash auth data — applied fully only after TOTP passes (or immediately if OTP skipped)
+        window._pendingAuthResult = result;
+        window._pendingAuthPass   = pass;
+        window._pendingAuthHash   = await hashPassword(pass);
 
-        const step1 =
-            document.getElementById(
-                "step1"
-            );
+        const otpRequested = document.getElementById("req-otp") && document.getElementById("req-otp").checked;
 
-        step1.style.pointerEvents =
-            "none";
+        const step1 = document.getElementById("step1");
 
-        step1.classList.add(
-            "slide-up-exit"
-        );
+        if (otpRequested) {
+            // Route to TOTP step — session applied only after TOTP verification
+            if (step1) {
+                step1.style.pointerEvents = "none";
+                step1.style.opacity = "0";
+                step1.style.transition = "opacity 0.3s ease";
+                setTimeout(() => {
+                    step1.style.display = "none";
+                    startTOTPStep(window._pendingAuthHash);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 300);
+            } else {
+                startTOTPStep(window._pendingAuthHash);
+            }
+        } else {
+            // Skip TOTP — apply session immediately and go to Step 2 (Declaration)
+            sessionStorage.setItem("vaultSessionToken", result.sessionToken);
+            sessionStorage.setItem("vaultSession",       result.sessionToken);
 
-        setTimeout(() => {
+            resetInactivityTimer();
 
-            step1.style.display =
-                "none";
+            window.masterPassword = result.secret ? String(result.secret) : String(pass || "");
+            if (result.secret) sessionStorage.setItem("vault_session_secret", result.secret);
 
-            document.getElementById(
-                "step2"
-            ).style.display =
-                "flex";
+            window.VAULT_MODE = result.mode;
+            sessionStorage.setItem("vaultMode", result.mode);
 
-        }, 700);
+            if (window.VAULT_MODE !== "ADMIN") {
+                const shareGear = document.getElementById("share-gear");
+                if (shareGear) shareGear.style.display = "none";
+            }
+
+            masterPassword = window.masterPassword;
+            sessionStartTime = new Date();
+
+            // Clean up temp storage
+            window._pendingAuthResult = null;
+            window._pendingAuthPass   = null;
+            window._pendingAuthHash   = null;
+
+            // Transition to Step 2 (Legal Declaration)
+            if (step1) {
+                step1.style.pointerEvents = "none";
+                step1.style.opacity = "0";
+                step1.style.transition = "opacity 0.3s ease";
+                setTimeout(() => {
+                    step1.style.display = "none";
+                    const step2 = document.getElementById("step2");
+                    if (step2) { step2.style.display = "flex"; step2.style.opacity = "1"; }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 300);
+            } else {
+                const step2 = document.getElementById("step2");
+                if (step2) { step2.style.display = "flex"; step2.style.opacity = "1"; }
+            }
+        }
 
     } catch (e) {
-
         restoreLoginBtn();
         console.error(e);
-        showLoginError(
-            'Connection Error',
-            e.message || 'Could not connect to the secure backend. Please check your internet and try again.'
-        );
+        showLoginError('Connection Error', e.message || 'Fatal data stream pipeline disruption.');
     }
 }
-
 /* =========================
    STEP 2
 ========================= */
@@ -703,11 +1610,34 @@ dash.classList.add(
 });
 
             initVault().then(() => {
-                vaultPostInit();
-            }).catch(err => {
-                console.error("initVault failed:", err);
-                vaultPostInit(); // still run post-init even on error
-            });
+
+    console.log(
+      "INIT VAULT DONE"
+    );
+
+    vaultPostInit();
+
+    console.log(
+      "STARTING AI INDEXING"
+    );
+
+    runAIIndexingOnLogin();
+
+}).catch(err => {
+
+    console.error(
+      "initVault failed:",
+      err
+    );
+
+    vaultPostInit();
+
+    console.log(
+      "STARTING AI INDEXING FROM CATCH"
+    );
+
+    runAIIndexingOnLogin();
+});
 
             startSessionTimer();
 
@@ -965,4 +1895,107 @@ dash.classList.add(
 
     }, 15000);
 
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  AI INDEXING — Full PDF → chunks → Firestore (global, forever)
+// ═══════════════════════════════════════════════════════════════════════
+
+async function extractFullPDFText(arrayBuffer) {
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let fullText = "";
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    console.log(`extractFullPDFText: processing page ${i}/${pdf.numPages}`);
+
+    // ── PASS 1: Native text layer ──────────────────────────────────────────
+    let layerText = "";
+    try {
+      const content = await page.getTextContent();
+      layerText = content.items
+        .map(item => item.str)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+    } catch (e) {
+      console.warn(`extractFullPDFText: text layer failed page ${i}:`, e);
+    }
+
+    if (layerText.length > 50) {
+      console.log(`extractFullPDFText: page ${i} native text (${layerText.length} chars)`);
+      fullText += layerText + "\n";
+      continue;
+    }
+
+    // ── PASS 2: OCR (scanned / image-based pages) ──────────────────────────
+    try {
+      const baseViewport = page.getViewport({ scale: 1.0 });
+
+      // Scale to ~300 DPI equivalent (2480px wide for A4) for maximum accuracy
+      const TARGET_WIDTH = 2480;
+      const scaleNeeded  = Math.max(
+        3.0,
+        TARGET_WIDTH / baseViewport.width
+      );
+
+      const viewport = page.getViewport({ scale: scaleNeeded });
+      const canvas   = document.createElement("canvas");
+      canvas.width   = Math.ceil(viewport.width);
+      canvas.height  = Math.ceil(viewport.height);
+
+      console.log(`extractFullPDFText: page ${i} OCR canvas = ${canvas.width}×${canvas.height}px (scale ${scaleNeeded.toFixed(2)}×)`);
+
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: ctx, viewport }).promise;
+
+      if (canvas.width < 10 || canvas.height < 10) {
+        console.warn(`extractFullPDFText: page ${i} canvas too small — skipping`);
+        continue;
+      }
+
+      // ── Contrast enhancement (greyscale + contrast boost) ─────────────
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imgData.data;
+      for (let p = 0; p < d.length; p += 4) {
+        const grey = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
+        const enhanced = grey < 128
+          ? Math.max(0,   grey * 0.75)
+          : Math.min(255, 128 + (grey - 128) * 1.4);
+        d[p] = d[p + 1] = d[p + 2] = enhanced;
+        d[p + 3] = 255;
+      }
+      ctx.putImageData(imgData, 0, 0);
+
+      // ── Tesseract with strict settings ────────────────────────────────
+      const { data: { text } } = await Tesseract.recognize(canvas, "eng", {
+        logger: () => {},
+        tessedit_pageseg_mode:     "6",
+        tessedit_ocr_engine_mode:  "1",
+        preserve_interword_spaces: "1",
+        tessedit_char_whitelist:   "",
+        min_characters_to_try:     "1",
+      });
+
+      const ocrText = (text || "").replace(/\s+/g, " ").trim();
+      console.log(`extractFullPDFText: page ${i} OCR extracted ${ocrText.length} chars`);
+
+      if (ocrText.length < 10 && layerText.length > 0) {
+        console.warn(`extractFullPDFText: page ${i} OCR thin — using native layer fallback`);
+        fullText += layerText + "\n";
+      } else {
+        fullText += ocrText + "\n";
+      }
+
+    } catch (ocrErr) {
+      console.warn(`extractFullPDFText: OCR failed page ${i}:`, ocrErr);
+      if (layerText.length > 0) {
+        fullText += layerText + "\n";
+      }
+    }
+  }
+
+  return fullText.trim();
 }
