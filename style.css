@@ -2119,3 +2119,35 @@ button{
     .adv-content { padding:18px 16px; }
     .adv-box { width:98%; height:92vh; }
 }
+
+/* ── TOTP digit boxes ───────────────────── */
+.totp-digit {
+  width: 44px;
+  height: 56px;
+  border: 2px solid #334155;
+  border-radius: 12px;
+  background: #0f172a;
+  color: white;
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+  caret-color: var(--accent, #6ee7f7);
+  transition: border-color .2s, box-shadow .2s;
+  font-family: monospace;
+}
+.totp-digit:focus {
+  border-color: var(--accent, #6ee7f7);
+  box-shadow: 0 0 0 3px rgba(110,231,247,0.15);
+}
+.totp-digit.error {
+  border-color: #f87171;
+  animation: shake .4s ease;
+}
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-5px)}
+  40%{transform:translateX(5px)}
+  60%{transform:translateX(-4px)}
+  80%{transform:translateX(4px)}
+}
