@@ -2378,5 +2378,20 @@ Scan QR to open secure link
     </div>
   </div>
 </div>
+   <script>
+      function openPasswordManager() {
+    const modal = document.getElementById('passwordManagerModal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
+}
+
+function closePasswordManager() {
+    const modal = document.getElementById('passwordManagerModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+   </script>
 </body>
 </html>
