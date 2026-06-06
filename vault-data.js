@@ -91,23 +91,38 @@ try {
                     if (existing && existing.data) continue; // already have it
                 } catch (_) { /* store may not exist yet, continue */ }
 
-                // Fetch and cache the encrypted bytes
-                try {
-                    const fileRes = await fetch(
-                        "https://backend.shinumaths989.workers.dev/" + path,
-                        { headers: { "Authorization": "Bearer " + sessionToken } }
-                    );
-                    if (!fileRes.ok) continue; // skip failed files silently
-
-                    const buffer = await fileRes.arrayBuffer();
-
-                    const writeTx = db.transaction("secureFiles", "readwrite");
-                    writeTx.objectStore("secureFiles").put({ path, data: buffer });
-                    cached++;
-                } catch (fetchErr) {
-                    // Network error on individual file — skip, don't break loop
-                    console.warn("Pre-cache skipped:", fileName, fetchErr.message);
+                // Fetch and cache the encrypted bytes (with 1 retry after delay)
+                let fileRes = null;
+                for (let attempt = 0; attempt < 2; attempt++) {
+                    try {
+                        if (attempt > 0) {
+                            // Wait 2s before retry — gives Worker time to settle
+                            await new Promise(r => setTimeout(r, 2000));
+                        }
+                        fileRes = await fetch(
+                            "https://backend.shinumaths989.workers.dev/" + path,
+                            {
+                                headers: { "Authorization": "Bearer " + sessionToken },
+                                mode: "cors",
+                                cache: "no-store"
+                            }
+                        );
+                        if (fileRes.ok) break; // success — exit retry loop
+                        fileRes = null;
+                    } catch (fetchErr) {
+                        if (attempt === 1) {
+                            console.warn("Pre-cache skipped:", fileName, fetchErr.message);
+                        }
+                        fileRes = null;
+                    }
                 }
+
+                if (!fileRes || !fileRes.ok) continue;
+
+                const buffer = await fileRes.arrayBuffer();
+                const writeTx = db.transaction("secureFiles", "readwrite");
+                writeTx.objectStore("secureFiles").put({ path, data: buffer });
+                cached++;
             }
 
             if (cached > 0) {
