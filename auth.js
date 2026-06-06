@@ -17,7 +17,7 @@ let sessionStartTime = null;
    let sessionId = crypto.randomUUID();
 window.allFilesData = {};
 let currentCategory = "";
-   
+
    async function sha256Bytes(text){
 
     const enc =
