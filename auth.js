@@ -620,6 +620,9 @@ async function submitTOTP() {
     masterPassword = window.masterPassword;
     sessionStartTime = new Date();
 
+    // Sync all member password hashes for offline login
+    if (typeof syncOfflineAuth === 'function') syncOfflineAuth();
+
     // ── Hide TOTP, show step2 (Legal Declaration) ──────────────────────
     document.getElementById("step-totp").style.display = "none";
     const step2 = document.getElementById("step2");
@@ -1362,6 +1365,55 @@ async function showStep2() {
         masterPassword = pass;
         const hash = await hashPassword(pass);
 
+        // =================================
+        // OFFLINE LOGIN
+        // =================================
+        if (!navigator.onLine) {
+          // Determine memberId: use the member-select dropdown if present (ADMIN mode),
+          // otherwise fall back to 'main' (single-user mode).
+          const memberSel = document.getElementById('member-select');
+          const memberId  = (memberSel && memberSel.value) ? memberSel.value : 'main';
+
+          const ok = await offlineLogin(memberId, pass);
+          if (!ok) {
+            restoreLoginBtn();
+            return;
+          }
+
+          // Load cached file list
+          const cachedMeta = await idbGetVaultMeta();
+          if (!cachedMeta) {
+            restoreLoginBtn();
+            showLoginError('No Offline Cache', 'No offline files cached yet. Please log in online at least once first.');
+            return;
+          }
+          window.allFilesData = cachedMeta;
+
+          // Open dashboard directly
+          if (loginBtn) { loginBtn.textContent = '✓ Offline Mode'; loginBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)'; loginBtn.style.opacity = '1'; }
+
+          const step1 = document.getElementById('step1');
+          const openDashboard = () => {
+            step1.style.display = 'none';
+            // Skip declaration/captcha steps — go straight to dashboard
+            const dash = document.getElementById('vault-dashboard');
+            if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
+            vaultPostInit();
+            alert('✅ Offline vault unlocked');
+          };
+          if (step1) {
+            step1.style.opacity = '0';
+            step1.style.transition = 'opacity 0.3s ease';
+            setTimeout(openDashboard, 300);
+          } else {
+            openDashboard();
+          }
+          return;
+        }
+        // =================================
+        // END OFFLINE LOGIN
+        // =================================
+
         let res;
         try {
             res = await fetchWithTimeout(
@@ -1471,6 +1523,9 @@ async function showStep2() {
 
             masterPassword = window.masterPassword;
             sessionStartTime = new Date();
+
+            // Sync all member password hashes for offline login
+            if (typeof syncOfflineAuth === 'function') syncOfflineAuth();
 
             // Clean up temp storage
             window._pendingAuthResult = null;
