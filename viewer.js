@@ -24,50 +24,50 @@ async function openSecureFile(
 path,
 displayName){
 
-    if(!window.masterPassword){
-
- const savedSecret =
- sessionStorage.getItem(
- "vault_session_secret"
- );
-
- if(savedSecret){
-
-  window.masterPassword =
-  savedSecret;
-
- } else {
-
-  alert(
-  "Session not unlocked. Please log in again."
-  );
-
-  return;
- }
-}
+    // Restore masterPassword from sessionStorage OR localStorage (offline fallback)
+    if (!window.masterPassword) {
+        const savedSecret =
+            sessionStorage.getItem("vault_session_secret") ||
+            localStorage.getItem("vault_session_secret_offline");
+        if (savedSecret) {
+            window.masterPassword = savedSecret;
+        } else {
+            alert("Session not unlocked. Please log in again.");
+            return;
+        }
+    }
 
     try {
+    // Restore session token from sessionStorage OR localStorage (offline fallback)
     const vaultSessionToken =
         sessionStorage.getItem("vaultSessionToken") ||
-        sessionStorage.getItem("vaultSession");
+        sessionStorage.getItem("vaultSession") ||
+        localStorage.getItem("vaultSessionToken_offline");
 
     if (!vaultSessionToken) {
         throw new Error("Missing vault session token. Please log in again.");
     }
 
+    // Persist credentials to localStorage so offline mode can read them
+    // (sessionStorage is cleared when the tab/browser closes)
+    try {
+        localStorage.setItem("vaultSessionToken_offline", vaultSessionToken);
+        if (window.masterPassword) {
+            localStorage.setItem("vault_session_secret_offline", window.masterPassword);
+        }
+    } catch (_) { /* localStorage may be unavailable in some private modes */ }
+
     // =========================
-    // FETCH: ONLINE → backend, OFFLINE → IndexedDB
+    // FETCH: try backend first, fall back to IndexedDB cache
+    // (navigator.onLine is unreliable -- we try the network and catch failures)
     // =========================
 
     let buffer;
 
-    if (navigator.onLine) {
-
-        // ONLINE MODE
+    try {
+        // ATTEMPT NETWORK FETCH
         const res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
-            headers: {
-                "Authorization": "Bearer " + vaultSessionToken
-            }
+            headers: { "Authorization": "Bearer " + vaultSessionToken }
         });
 
         // GUARD: catch backend error responses before treating as binary
@@ -87,43 +87,44 @@ displayName){
 
         buffer = await res.arrayBuffer();
 
-        // SAVE ENCRYPTED COPY TO INDEXEDDB FOR OFFLINE USE
+        // SAVE TO INDEXEDDB for next offline session
         try {
-            const db  = await openVaultDB();
-            const tx  = db.transaction("secureFiles", "readwrite");
-            tx.objectStore("secureFiles").put({
-                path: path,
-                data: buffer.slice(0) // slice so the original isn't detached
-            });
+            const db = await openVaultDB();
+            const tx = db.transaction("secureFiles", "readwrite");
+            tx.objectStore("secureFiles").put({ path: path, data: buffer.slice(0) });
         } catch (cacheErr) {
             console.warn("Offline cache write failed:", cacheErr);
         }
 
-    } else {
+    } catch (fetchErr) {
 
-        // OFFLINE MODE — serve from IndexedDB
+        // NETWORK FAILED -- try IndexedDB cache
+        console.log("Network unavailable, trying local cache...");
+
+        let saved = null;
         try {
-            const db    = await openVaultDB();
-            const tx    = db.transaction("secureFiles", "readonly");
-            const saved = await new Promise((resolve, reject) => {
+            const db = await openVaultDB();
+            const tx = db.transaction("secureFiles", "readonly");
+            saved = await new Promise((resolve, reject) => {
                 const req = tx.objectStore("secureFiles").get(path);
                 req.onsuccess = () => resolve(req.result);
                 req.onerror   = () => reject(req.error);
             });
-
-            if (!saved || !saved.data) {
-                alert("You are offline and this file has not been cached yet.\nPlease open it once while online to enable offline access.");
-                return;
-            }
-
-            buffer = saved.data;
-
         } catch (dbErr) {
             console.error("IndexedDB read failed:", dbErr);
-            alert("You are offline and the local cache could not be read.");
+        }
+
+        if (!saved || !saved.data) {
+            // Only re-throw real server errors, not network failures
+            if (fetchErr.message && !fetchErr.message.toLowerCase().includes('fetch')) {
+                throw fetchErr;
+            }
+            alert("You are offline and this file has not been cached yet.\nPlease open it once while online to enable offline access.");
             return;
         }
 
+        buffer = saved.data;
+        console.log("Loaded from local cache.");
     }
 
         // SETTINGS LENGTH
