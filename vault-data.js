@@ -56,6 +56,9 @@ try {
 
     allFilesData = data;
 
+    // Cache file list for offline dashboard
+    if (typeof idbSetVaultMeta === 'function') idbSetVaultMeta(data);
+
     // =========================
     // PRE-CACHE ENCRYPTED FILES
     // =========================
