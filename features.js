@@ -761,37 +761,40 @@ async function getOfflineAuth(memberId) {
 }
 
 /**
- * Sync ALL vault member password hashes from backend in one call.
- * Called after every successful online login so any member can log in offline.
- * Backend endpoint GET /vault-passwords must return:
- *   { members: [{ member: "MEM1", passwordHash: "abc..." }, ...] }
- * (backend sends pre-hashed values — never plaintext passwords)
+ * Sync ALL vault member password hashes from backend into IndexedDB.
+ * Called after every successful online login.
+ * Requires /vault-auth-hashes endpoint on the worker (see worker code below).
+ * Backend returns: { members: [{ member: "MEM1", passwordHash: "abc...", mode: "MEMBER" }, ...] }
+ * Hashes are pre-computed SHA-256 on the worker — plaintext passwords never leave the worker.
  */
 async function syncOfflineAuth() {
   if (!navigator.onLine) return;
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch(`${WORKER_URL}/vault-passwords`, { headers });
+    const res = await fetch(`${WORKER_URL}/vault-auth-hashes`, { headers });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const members = data.members || [];
+    if (!members.length) { console.warn('[Offline Auth] No members returned'); return; }
+
     const db = await openIDB();
-    const tx = db.transaction('vault_auth', 'readwrite');
-    const store = tx.objectStore('vault_auth');
-    store.clear();
-    for (const m of members) {
-      // Backend should send passwordHash (pre-hashed). If it sends password
-      // (plaintext), hash it here; but prefer the hash-only approach.
-      const passwordHash = m.passwordHash || await window.sha256(m.password || '');
-      store.put({
-        id: m.member,
-        trusted: true,
-        passwordHash,
-        mode: m.mode || 'MEMBER',
-        savedAt: Date.now()
-      });
-    }
-    console.log('[Offline Auth] Synced:', members.length, 'members');
+    await new Promise((resolve, reject) => {
+      const tx    = db.transaction('vault_auth', 'readwrite');
+      const store = tx.objectStore('vault_auth');
+      store.clear();
+      for (const m of members) {
+        store.put({
+          id:           m.member,
+          trusted:      true,
+          passwordHash: m.passwordHash,
+          mode:         m.mode || 'MEMBER',
+          savedAt:      Date.now()
+        });
+      }
+      tx.oncomplete = resolve;
+      tx.onerror    = e => reject(e.target.error);
+    });
+    console.log('[Offline Auth] Synced', members.length, 'members into IndexedDB');
   } catch (err) {
     console.warn('[Offline Auth] Sync failed (non-fatal):', err);
   }
