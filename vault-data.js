@@ -56,6 +56,71 @@ try {
 
     allFilesData = data;
 
+    // =========================
+    // PRE-CACHE ENCRYPTED FILES
+    // =========================
+    // Run in background — does NOT block the UI from loading.
+    // Silently downloads every encrypted PDF into IndexedDB so
+    // they are available when the user goes offline.
+    (async () => {
+        try {
+            const db = await openVaultDB();
+
+            // Collect every unique file path across all categories
+            const allFiles = [];
+            Object.values(data).forEach(files => {
+                if (Array.isArray(files)) {
+                    files.forEach(f => {
+                        if (f.file) allFiles.push(f.file);
+                    });
+                }
+            });
+
+            let cached = 0;
+            for (const fileName of allFiles) {
+                const path = "docs/" + fileName;
+
+                // Skip if already cached
+                try {
+                    const tx      = db.transaction("secureFiles", "readonly");
+                    const existing = await new Promise((res, rej) => {
+                        const req = tx.objectStore("secureFiles").get(path);
+                        req.onsuccess = () => res(req.result);
+                        req.onerror   = () => rej(req.error);
+                    });
+                    if (existing && existing.data) continue; // already have it
+                } catch (_) { /* store may not exist yet, continue */ }
+
+                // Fetch and cache the encrypted bytes
+                try {
+                    const fileRes = await fetch(
+                        "https://backend.shinumaths989.workers.dev/" + path,
+                        { headers: { "Authorization": "Bearer " + sessionToken } }
+                    );
+                    if (!fileRes.ok) continue; // skip failed files silently
+
+                    const buffer = await fileRes.arrayBuffer();
+
+                    const writeTx = db.transaction("secureFiles", "readwrite");
+                    writeTx.objectStore("secureFiles").put({ path, data: buffer });
+                    cached++;
+                } catch (fetchErr) {
+                    // Network error on individual file — skip, don't break loop
+                    console.warn("Pre-cache skipped:", fileName, fetchErr.message);
+                }
+            }
+
+            if (cached > 0) {
+                console.log(`[Offline cache] ${cached} file(s) cached for offline use.`);
+            } else {
+                console.log("[Offline cache] All files already cached.");
+            }
+
+        } catch (dbErr) {
+            console.warn("[Offline cache] Pre-cache failed:", dbErr);
+        }
+    })();
+
     const list = document.getElementById('cat-list');
     list.innerHTML = "";
 
