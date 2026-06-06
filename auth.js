@@ -1366,50 +1366,9 @@ async function showStep2() {
         const hash = await hashPassword(pass);
 
         // =================================
-        // OFFLINE LOGIN
-        // =================================
-        if (!navigator.onLine) {
-          // Determine memberId: use the member-select dropdown if present (ADMIN mode),
-          // otherwise fall back to 'main' (single-user mode).
-          const memberSel = document.getElementById('member-select');
-          const memberId  = (memberSel && memberSel.value) ? memberSel.value : 'main';
-
-          const ok = await offlineLogin(memberId, pass);
-          if (!ok) {
-            restoreLoginBtn();
-            return;
-          }
-
-          // Load cached file list
-          const cachedMeta = await idbGetVaultMeta();
-          if (!cachedMeta) {
-            restoreLoginBtn();
-            showLoginError('No Offline Cache', 'No offline files cached yet. Please log in online at least once first.');
-            return;
-          }
-          window.allFilesData = cachedMeta;
-
-          // Open dashboard directly
-          if (loginBtn) { loginBtn.textContent = '✓ Offline Mode'; loginBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)'; loginBtn.style.opacity = '1'; }
-
-          const step1 = document.getElementById('step1');
-          const openDashboard = () => {
-            step1.style.display = 'none';
-            // Skip declaration/captcha steps — go straight to dashboard
-            const dash = document.getElementById('vault-dashboard');
-            if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
-            vaultPostInit();
-            alert('✅ Offline vault unlocked');
-          };
-          if (step1) {
-            step1.style.opacity = '0';
-            step1.style.transition = 'opacity 0.3s ease';
-            setTimeout(openDashboard, 300);
-          } else {
-            openDashboard();
-          }
-          return;
-        }
+        // OFFLINE LOGIN — navigator.onLine is unreliable so we always
+        // attempt the network first and fall back on failure (handled
+        // in the fetchErr catch block below). Skip the hard onLine gate.
         // =================================
         // END OFFLINE LOGIN
         // =================================
@@ -1426,11 +1385,38 @@ async function showStep2() {
                 12000
             );
         } catch (fetchErr) {
+            // Network failed — try offline login with cached credentials
+            if (typeof offlineLogin === 'function') {
+                const memberSel = document.getElementById('member-select');
+                const memberId  = (memberSel && memberSel.value) ? memberSel.value : 'main';
+                const ok = await offlineLogin(memberId, pass);
+                if (ok) {
+                    const cachedMeta = await idbGetVaultMeta();
+                    if (!cachedMeta) {
+                        restoreLoginBtn();
+                        showLoginError('No Offline Cache', 'No offline files cached yet. Please log in online at least once first.');
+                        return;
+                    }
+                    window.allFilesData = cachedMeta;
+                    if (loginBtn) { loginBtn.textContent = '✓ Offline Mode'; loginBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)'; loginBtn.style.opacity = '1'; }
+                    const step1 = document.getElementById('step1');
+                    const openDashboard = () => {
+                        step1.style.display = 'none';
+                        const dash = document.getElementById('vault-dashboard');
+                        if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
+                        vaultPostInit();
+                        alert('✅ Offline vault unlocked');
+                    };
+                    if (step1) { step1.style.opacity = '0'; step1.style.transition = 'opacity 0.3s ease'; setTimeout(openDashboard, 300); }
+                    else openDashboard();
+                    return;
+                }
+                restoreLoginBtn();
+                return;
+            }
             restoreLoginBtn();
             if (fetchErr.name === 'AbortError') {
                 showLoginError('Connection Timed Out', 'The secure server took too long to respond.');
-            } else if (!navigator.onLine) {
-                showLoginError('Offline', 'Your device appears to be offline.');
             } else {
                 showLoginError('Server Unreachable', 'Your network may be blocking connection points.');
             }
