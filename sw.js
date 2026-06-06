@@ -29,6 +29,7 @@ const PRECACHE_URLS = [
   "/index.html",
   "/favicon.png",
   "/auth.js",
+  "/offline-auth.js",
   "/profile.png",
   "/features.js",
   "/ProfileSt.png",
