@@ -24,11 +24,9 @@ async function openSecureFile(
 path,
 displayName){
 
-    // Restore masterPassword from sessionStorage OR localStorage (offline fallback)
+    // Restore masterPassword from sessionStorage (set by auth.js on login)
     if (!window.masterPassword) {
-        const savedSecret =
-            sessionStorage.getItem("vault_session_secret") ||
-            localStorage.getItem("vault_session_secret_offline");
+        const savedSecret = sessionStorage.getItem("vault_session_secret");
         if (savedSecret) {
             window.masterPassword = savedSecret;
         } else {
@@ -38,24 +36,13 @@ displayName){
     }
 
     try {
-    // Restore session token from sessionStorage OR localStorage (offline fallback)
     const vaultSessionToken =
         sessionStorage.getItem("vaultSessionToken") ||
-        sessionStorage.getItem("vaultSession") ||
-        localStorage.getItem("vaultSessionToken_offline");
+        sessionStorage.getItem("vaultSession");
 
     if (!vaultSessionToken) {
         throw new Error("Missing vault session token. Please log in again.");
     }
-
-    // Persist credentials to localStorage so offline mode can read them
-    // (sessionStorage is cleared when the tab/browser closes)
-    try {
-        localStorage.setItem("vaultSessionToken_offline", vaultSessionToken);
-        if (window.masterPassword) {
-            localStorage.setItem("vault_session_secret_offline", window.masterPassword);
-        }
-    } catch (_) { /* localStorage may be unavailable in some private modes */ }
 
     // =========================
     // FETCH: try backend first, fall back to IndexedDB cache
@@ -262,15 +249,9 @@ currentDecryptedPdf = decrypted.slice(0);
 
 const pdfjsLib = window.pdfjsLib;
 
-// Use CDN worker when online; fall back to fake worker (in-thread) when offline.
-// The fake worker is slower but fully functional — all pages still render.
-if (navigator.onLine) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-} else {
-    // Disable external worker — pdf.js falls back to running in the main thread
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
-}
+// Empty string = pdf.js runs in main thread (fake worker mode).
+// This works both online and offline — avoids CDN fetch failures when offline.
+pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 
 // LOAD PDF
 
