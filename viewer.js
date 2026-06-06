@@ -249,9 +249,11 @@ currentDecryptedPdf = decrypted.slice(0);
 
 const pdfjsLib = window.pdfjsLib;
 
-// Empty string = pdf.js runs in main thread (fake worker mode).
-// This works both online and offline — avoids CDN fetch failures when offline.
-pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+// Point to locally hosted worker — must be in your site root.
+// Download from: https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js
+// and save as pdf.worker.min.js next to your HTML file.
+// The local file is also added to your service worker cache so it works offline.
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
 
 // LOAD PDF
 
