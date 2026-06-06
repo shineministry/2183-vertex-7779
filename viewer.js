@@ -1,4 +1,22 @@
 /* =========================
+   INDEXED DB HELPER
+========================= */
+
+function openVaultDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open("ShineVaultFiles", 1);
+        request.onupgradeneeded = event => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains("secureFiles")) {
+                db.createObjectStore("secureFiles", { keyPath: "path" });
+            }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror  = () => reject(request.error);
+    });
+}
+
+/* =========================
    OPEN FILE
 ========================= */
 
@@ -37,29 +55,76 @@ displayName){
         throw new Error("Missing vault session token. Please log in again.");
     }
 
-    const res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
-        headers: {
-            "Authorization": "Bearer " + vaultSessionToken
-        }
-    });
+    // =========================
+    // FETCH: ONLINE → backend, OFFLINE → IndexedDB
+    // =========================
+
+    let buffer;
+
+    if (navigator.onLine) {
+
+        // ONLINE MODE
+        const res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
+            headers: {
+                "Authorization": "Bearer " + vaultSessionToken
+            }
+        });
 
         // GUARD: catch backend error responses before treating as binary
-        if(!res.ok){
+        if (!res.ok) {
             const ct = res.headers.get('content-type') || '';
-            if(ct.includes('application/json')){
+            if (ct.includes('application/json')) {
                 const errBody = await res.json();
                 throw new Error(errBody.message || `Server error: HTTP ${res.status}`);
             }
             throw new Error(`Server error: HTTP ${res.status}`);
         }
         const ct = res.headers.get('content-type') || '';
-        if(ct.includes('application/json')){
+        if (ct.includes('application/json')) {
             const errBody = await res.json();
             throw new Error(errBody.message || 'Backend returned JSON instead of encrypted file.');
         }
 
-        const buffer =
-        await res.arrayBuffer();
+        buffer = await res.arrayBuffer();
+
+        // SAVE ENCRYPTED COPY TO INDEXEDDB FOR OFFLINE USE
+        try {
+            const db  = await openVaultDB();
+            const tx  = db.transaction("secureFiles", "readwrite");
+            tx.objectStore("secureFiles").put({
+                path: path,
+                data: buffer.slice(0) // slice so the original isn't detached
+            });
+        } catch (cacheErr) {
+            console.warn("Offline cache write failed:", cacheErr);
+        }
+
+    } else {
+
+        // OFFLINE MODE — serve from IndexedDB
+        try {
+            const db    = await openVaultDB();
+            const tx    = db.transaction("secureFiles", "readonly");
+            const saved = await new Promise((resolve, reject) => {
+                const req = tx.objectStore("secureFiles").get(path);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror   = () => reject(req.error);
+            });
+
+            if (!saved || !saved.data) {
+                alert("You are offline and this file has not been cached yet.\nPlease open it once while online to enable offline access.");
+                return;
+            }
+
+            buffer = saved.data;
+
+        } catch (dbErr) {
+            console.error("IndexedDB read failed:", dbErr);
+            alert("You are offline and the local cache could not be read.");
+            return;
+        }
+
+    }
 
         // SETTINGS LENGTH
 
@@ -711,9 +776,11 @@ displayName;
 
     console.error(e);
 
-    alert(
-        "Access Denied: Could not decrypt file."
-    );
+    if (e instanceof TypeError && e.message === 'Failed to fetch') {
+        alert("You are offline and this file has not been cached yet.\nPlease open it once while online to enable offline access.");
+    } else {
+        alert("Access Denied: Could not decrypt file.");
+    }
 
 }
 
