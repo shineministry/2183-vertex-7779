@@ -19,7 +19,7 @@
  *  network fetch — no stale authenticated shell is served.
  */
 
-const CACHE = "online-vault-v3";   // bump this string to force a full cache refresh
+const CACHE = "online-vault-v4";   // bump this string to force a full cache refresh
 
 const BACKEND_HOST = "backend.shinumaths989.workers.dev";
 
@@ -115,15 +115,11 @@ self.addEventListener("fetch", function(event) {
     // /docs/* offline fallback: return a detectable 503 so the page's
     // fetchVaultDocWithOfflineFallback() can read from IndexedDB instead.
     if (url.pathname.startsWith("/docs/")) {
-      event.respondWith(
-        fetch(request).catch(function() {
-          return new Response(
-            JSON.stringify({ offline: true, message: "Offline — reading from local cache" }),
-            { status: 503, headers: { "Content-Type": "application/json" } }
-          );
-        })
-      );
-      return;
+      // Let the fetch fail naturally when offline.
+      // viewer.js catches the TypeError and reads from IndexedDB.
+      // The old 503 JSON response was being thrown as an Error by
+      // viewer.js, bypassing the IndexedDB fallback entirely.
+      return; // passthrough — no SW interception
     }
     // All other backend calls: pure network passthrough
     return;
