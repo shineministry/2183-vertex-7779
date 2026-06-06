@@ -651,7 +651,34 @@ async function submitTOTP() {
     sessionStartTime = new Date();
 
     // Sync all member password hashes for offline login
-    if (typeof syncOfflineAuth === 'function') syncOfflineAuth();
+ // Sync offline login data BEFORE continuing
+try {
+
+    if (typeof syncOfflineAuth === 'function') {
+
+        console.log(
+            "[Vault] Syncing offline auth..."
+        );
+
+        await syncOfflineAuth();
+
+        console.log(
+            "[Vault] Offline auth synced."
+        );
+
+        localStorage.setItem(
+            "vaultOfflineReady",
+            "true"
+        );
+    }
+
+} catch(e) {
+
+    console.error(
+        "[Vault] Offline sync failed:",
+        e
+    );
+}
 
     // ── Hide TOTP, show step2 (Legal Declaration) ──────────────────────
     document.getElementById("step-totp").style.display = "none";
