@@ -261,8 +261,15 @@ currentDecryptedPdf = decrypted.slice(0);
 
 const pdfjsLib = window.pdfjsLib;
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+// Use CDN worker when online; fall back to fake worker (in-thread) when offline.
+// The fake worker is slower but fully functional — all pages still render.
+if (navigator.onLine) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+} else {
+    // Disable external worker — pdf.js falls back to running in the main thread
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+}
 
 // LOAD PDF
 
