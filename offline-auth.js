@@ -9,7 +9,7 @@
    ============================================================= */
 
 const _OIDB_NAME    = 'ShineVaultOffline';
-const _OIDB_VERSION = 1;
+const _OIDB_VERSION = 2;  // bumped — forces onupgradeneeded on devices with broken empty v1 DB
 
 // ── Known member IDs (must match auth.js MEMBER_IDS list) ────
 const _MEMBER_IDS = ['main', 'shineil', 'brother', 'father', 'mother'];
