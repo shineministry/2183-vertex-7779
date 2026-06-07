@@ -954,11 +954,37 @@ min-width:220px;
     </div>
 </div>
    
+<script>
+(function () {
+    const FIX_VERSION = '20260607-offlinefix3';
+    window.SHINE_OFFLINE_FIX_VERSION = FIX_VERSION;
+
+    if ('caches' in window && localStorage.getItem('shine_offline_fix_cache') !== FIX_VERSION) {
+        caches.keys().then(keys => Promise.all(
+            keys
+                .filter(key => /^online-vault-v/i.test(key) && key !== 'online-vault-v6')
+                .map(key => caches.delete(key))
+        )).finally(() => {
+            localStorage.setItem('shine_offline_fix_cache', FIX_VERSION);
+        });
+    }
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js?v=' + FIX_VERSION, { updateViaCache: 'none' })
+            .then(reg => {
+                reg.update();
+                if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            })
+            .catch(err => console.warn('[OfflineFix] service worker update failed:', err));
+    }
+})();
+</script>
+
 <script src="sha256.js"></script> 
 
-<script src="offline-auth.js?v=20260607-offlinefix2"></script>
+<script src="offline-auth.js?v=20260607-offlinefix3"></script>
    
-<script src="auth.js?v=20260607-offlinefix2"></script>
+<script src="auth.js?v=20260607-offlinefix3"></script>
    
 <script src="session.js"></script>
 
