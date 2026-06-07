@@ -17,7 +17,7 @@ let sessionStartTime = null;
    let sessionId = crypto.randomUUID();
 window.allFilesData = {};
 let currentCategory = "";
-
+   
    async function sha256Bytes(text){
 
     const enc =
@@ -173,12 +173,6 @@ function logoutVault( reason = "Logged out." ) {
     // Wipe session storage entirely
     sessionStorage.clear();
 
-    // Clear localStorage session keys so a new tab can't auto-restore a logged-out session
-    localStorage.removeItem('vault_session_secret_tab');
-    localStorage.removeItem('vaultSessionToken_tab');
-    localStorage.removeItem('vault_session_secret_offline');
-    localStorage.removeItem('vaultSessionToken_offline');
-
     // Clear memory string values
     window.masterPassword = null;
     masterPassword = "";
@@ -239,29 +233,11 @@ function resetInactivityTimer() {
 ========================= */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Restore session if already authenticated — works across new tabs
-    // sessionStorage is tab-scoped (lost on close), so fall back to localStorage
-    const savedSecret = sessionStorage.getItem("vault_session_secret")
-                     || localStorage.getItem("vault_session_secret_tab");
-    const savedToken  = sessionStorage.getItem("vaultSessionToken")
-                     || sessionStorage.getItem("vaultSession")
-                     || localStorage.getItem("vaultSessionToken_tab");
-    const savedMode   = sessionStorage.getItem("vaultMode")
-                     || localStorage.getItem("vaultMode") || "";
-
+    // Automatically retrieve the master password if the user is already authenticated
+    const savedSecret = sessionStorage.getItem("vault_session_secret");
     if (savedSecret) {
-        masterPassword        = savedSecret;
+        masterPassword = savedSecret;
         window.masterPassword = savedSecret;
-        // Re-populate sessionStorage so the rest of the app finds it normally
-        sessionStorage.setItem("vault_session_secret", savedSecret);
-        if (savedToken) {
-            sessionStorage.setItem("vaultSessionToken", savedToken);
-            sessionStorage.setItem("vaultSession",      savedToken);
-        }
-        if (savedMode) {
-            sessionStorage.setItem("vaultMode", savedMode);
-            window.VAULT_MODE = savedMode;
-        }
     }
 
     updateClock();
@@ -627,20 +603,14 @@ async function submitTOTP() {
 
     sessionStorage.setItem("vaultSessionToken", result.sessionToken);
     sessionStorage.setItem("vaultSession",       result.sessionToken);
-    // Write to localStorage so a new tab can restore the session without re-login
-    localStorage.setItem("vaultSessionToken_tab",    result.sessionToken);
 
     resetInactivityTimer();
 
     window.masterPassword = result.secret ? String(result.secret) : String(pass || "");
-    if (result.secret) {
-        sessionStorage.setItem("vault_session_secret", result.secret);
-        localStorage.setItem("vault_session_secret_tab", result.secret);   // new-tab restore
-    }
+    if (result.secret) sessionStorage.setItem("vault_session_secret", result.secret);
 
     window.VAULT_MODE = result.mode;
     sessionStorage.setItem("vaultMode", result.mode);
-    localStorage.setItem("vaultMode", result.mode);   // persists across reloads for offline use
 
     if (window.VAULT_MODE !== "ADMIN") {
         const shareGear = document.getElementById("share-gear");
@@ -651,34 +621,7 @@ async function submitTOTP() {
     sessionStartTime = new Date();
 
     // Sync all member password hashes for offline login
- // Sync offline login data BEFORE continuing
-try {
-
-    if (typeof syncOfflineAuth === 'function') {
-
-        console.log(
-            "[Vault] Syncing offline auth..."
-        );
-
-        await syncOfflineAuth();
-
-        console.log(
-            "[Vault] Offline auth synced."
-        );
-
-        localStorage.setItem(
-            "vaultOfflineReady",
-            "true"
-        );
-    }
-
-} catch(e) {
-
-    console.error(
-        "[Vault] Offline sync failed:",
-        e
-    );
-}
+    if (typeof syncOfflineAuth === 'function') await syncOfflineAuth();
 
     // ── Hide TOTP, show step2 (Legal Declaration) ──────────────────────
     document.getElementById("step-totp").style.display = "none";
@@ -1442,123 +1385,43 @@ async function showStep2() {
                 12000
             );
         } catch (fetchErr) {
-            // ─────────────────────────────────────────────────────────────
-            // OFFLINE LOGIN — network failed, try cached credentials
-            // ─────────────────────────────────────────────────────────────
+            // Network failed — try offline login with cached credentials
             if (typeof offlineLogin === 'function') {
-
-                // member-select lives in the dashboard sidebar and is null
-                // at login time, so we must NOT rely on it here.
-                // Instead, try every known member ID until one matches the
-                // typed password. offlineLogin(id, pass) returns the stored
-                // secret string on success, or null/false on mismatch.
-                const MEMBER_IDS = ['main', 'shineil', 'brother', 'father', 'mother'];
-
-                let offlineSecret = null;
-                let matchedMember = null;
-
-                for (const mid of MEMBER_IDS) {
-                    const result = await offlineLogin(mid, pass);
-                    if (result) {
-                        // offlineLogin may return true (bool) or the secret string
-                        offlineSecret = (typeof result === 'string') ? result : pass;
-                        matchedMember = mid;
-                        break;
-                    }
+                const memberSel = document.getElementById('member-select');
+                const selectedMemberId  = (memberSel && memberSel.value) ? memberSel.value : 'main';
+                const offlineMemberIds = ['main', 'shineil', 'brother', 'father', 'mother'];
+                const candidates = (selectedMemberId && selectedMemberId !== 'all')
+                    ? [selectedMemberId, ...offlineMemberIds.filter(id => id !== selectedMemberId)]
+                    : offlineMemberIds;
+                let ok = false;
+                for (const memberId of candidates) {
+                    ok = await offlineLogin(memberId, pass);
+                    if (ok) break;
                 }
-
-                if (!offlineSecret) {
-                    // None of the stored hashes matched → wrong password
-                    restoreLoginBtn();
-                    failedAttempts++;
-                    if (failedAttempts >= 5) {
-                        lockUntil = Date.now() + 300000;
-                        failedAttempts = 0;
-                        showLoginError('Vault Locked', 'Too many incorrect attempts. Security freeze for 5 minutes.');
-                    } else {
-                        showLoginError('Offline Auth Failed', `Password not recognised in offline cache. ${5 - failedAttempts} attempts remain.`);
+                if (ok) {
+                    const cachedMeta = await idbGetVaultMeta();
+                    if (!cachedMeta) {
+                        restoreLoginBtn();
+                        showLoginError('No Offline Cache', 'No offline files cached yet. Please log in online at least once first.');
+                        return;
                     }
+                    window.allFilesData = cachedMeta;
+                    if (loginBtn) { loginBtn.textContent = '✓ Offline Mode'; loginBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)'; loginBtn.style.opacity = '1'; }
+                    const step1 = document.getElementById('step1');
+                    const openDashboard = () => {
+                        step1.style.display = 'none';
+                        const dash = document.getElementById('vault-dashboard');
+                        if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
+                        vaultPostInit();
+                        alert('✅ Offline vault unlocked');
+                    };
+                    if (step1) { step1.style.opacity = '0'; step1.style.transition = 'opacity 0.3s ease'; setTimeout(openDashboard, 300); }
+                    else openDashboard();
                     return;
                 }
-
-                // ── Password matched — load cached vault metadata ──────────
-                const cachedMeta = await idbGetVaultMeta();
-                if (!cachedMeta) {
-                    restoreLoginBtn();
-                    showLoginError('No Offline Cache', 'No offline files cached yet. Please log in online at least once first.');
-                    return;
-                }
-
-                // ── Apply session state (mirrors online login path) ────────
-                window.masterPassword  = offlineSecret;
-                masterPassword         = offlineSecret;
-                window.allFilesData    = cachedMeta;
-                sessionStartTime       = new Date();
-
-                // Use stored mode, default to MEMBER when not cached
-                const storedMode = sessionStorage.getItem('vaultMode') ||
-                                   localStorage.getItem('vaultMode') || 'MEMBER';
-                window.VAULT_MODE = storedMode;
-                sessionStorage.setItem('vaultMode', storedMode);
-
-                // Hide ADMIN-only UI when not ADMIN
-                if (window.VAULT_MODE !== 'ADMIN') {
-                    const shareGear = document.getElementById('share-gear');
-                    if (shareGear) shareGear.style.display = 'none';
-                }
-
-                // Store secret for intra-session use
-                sessionStorage.setItem('vault_session_secret', offlineSecret);
-
-                // No real token in offline mode — use a placeholder so any
-                // token-presence checks pass (backend calls will fail gracefully)
-                sessionStorage.setItem('vaultSessionToken', 'OFFLINE');
-                sessionStorage.setItem('vaultSession',      'OFFLINE');
-
-                // Start activity/inactivity timers
-                resetInactivityTimer();
-
-                // Show offline indicator banner
-                const banner = document.getElementById('offline-banner');
-                if (banner) banner.style.display = 'block';
-
-                // ── Transition UI to dashboard ─────────────────────────────
-                if (loginBtn) {
-                    loginBtn.textContent = '✓ Offline Mode';
-                    loginBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
-                    loginBtn.style.opacity = '1';
-                }
-
-                const step1 = document.getElementById('step1');
-
-                const openDashboard = async () => {
-                    if (step1) step1.style.display = 'none';
-                    const dash = document.getElementById('vault-dashboard');
-                    if (dash) {
-                        dash.style.display = 'flex';
-                        dash.classList.add('dashboard-enter');
-                    }
-                    // initVault populates the file list; fall back to vaultPostInit if unavailable
-                    if (typeof initVault === 'function') {
-                        try { await initVault(); } catch (e) { console.warn('[Offline] initVault error:', e); }
-                    }
-                    vaultPostInit();
-                    startSessionTimer();
-                    startInactivityMonitor();
-                    alert('✅ Offline vault unlocked — running in read-only mode');
-                };
-
-                if (step1) {
-                    step1.style.opacity = '0';
-                    step1.style.transition = 'opacity 0.3s ease';
-                    setTimeout(openDashboard, 300);
-                } else {
-                    openDashboard();
-                }
+                restoreLoginBtn();
                 return;
             }
-
-            // offlineLogin not available at all
             restoreLoginBtn();
             if (fetchErr.name === 'AbortError') {
                 showLoginError('Connection Timed Out', 'The secure server took too long to respond.');
@@ -1638,19 +1501,14 @@ async function showStep2() {
             // Skip TOTP — apply session immediately and go to Step 2 (Declaration)
             sessionStorage.setItem("vaultSessionToken", result.sessionToken);
             sessionStorage.setItem("vaultSession",       result.sessionToken);
-            localStorage.setItem("vaultSessionToken_tab", result.sessionToken);  // new-tab restore
 
             resetInactivityTimer();
 
             window.masterPassword = result.secret ? String(result.secret) : String(pass || "");
-            if (result.secret) {
-                sessionStorage.setItem("vault_session_secret", result.secret);
-                localStorage.setItem("vault_session_secret_tab", result.secret);  // new-tab restore
-            }
+            if (result.secret) sessionStorage.setItem("vault_session_secret", result.secret);
 
             window.VAULT_MODE = result.mode;
             sessionStorage.setItem("vaultMode", result.mode);
-            localStorage.setItem("vaultMode", result.mode);   // persists for offline use
 
             if (window.VAULT_MODE !== "ADMIN") {
                 const shareGear = document.getElementById("share-gear");
@@ -1661,7 +1519,7 @@ async function showStep2() {
             sessionStartTime = new Date();
 
             // Sync all member password hashes for offline login
-            if (typeof syncOfflineAuth === 'function') syncOfflineAuth();
+            if (typeof syncOfflineAuth === 'function') await syncOfflineAuth();
 
             // Clean up temp storage
             window._pendingAuthResult = null;
