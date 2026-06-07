@@ -10,6 +10,7 @@
 
 const _OIDB_NAME    = 'ShineVaultOffline';
 const _OIDB_VERSION = 2;  // bumped — forces onupgradeneeded on devices with broken empty v1 DB
+window.SHINE_OFFLINE_AUTH_VERSION = '20260607-offlinefix3';
 
 // ── Known member IDs (must match auth.js MEMBER_IDS list) ────
 const _MEMBER_IDS = ['main', 'shineil', 'brother', 'father', 'mother'];
