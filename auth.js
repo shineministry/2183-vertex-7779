@@ -1386,38 +1386,90 @@ async function showStep2() {
                 12000
             );
         } catch (fetchErr) {
-            // Network failed — try offline login with cached credentials
-            if (typeof offlineLogin === 'function') {
-                // Simple: one call, offlineLogin reads the username from the form itself
-                const ok = await offlineLogin(null, pass);
-                if (ok) {
-                    const cachedMeta = await idbGetVaultMeta();
-                    if (cachedMeta) {
-                        window.allFilesData = cachedMeta;
-                    } else {
-                        console.warn('[OfflineAuth] No cached file list — dashboard will open empty.');
-                    }
-                    if (loginBtn) { loginBtn.textContent = '✓ Offline Mode'; loginBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)'; loginBtn.style.opacity = '1'; }
-                    const step1 = document.getElementById('step1');
-                    const openDashboard = () => {
-                        step1.style.display = 'none';
-                        const dash = document.getElementById('vault-dashboard');
-                        if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
-                        vaultPostInit();
-                        alert('✅ Offline vault unlocked');
-                    };
-                    if (step1) { step1.style.opacity = '0'; step1.style.transition = 'opacity 0.3s ease'; setTimeout(openDashboard, 300); }
-                    else openDashboard();
-                    return;
-                }
+            // ── OFFLINE PATH ─────────────────────────────────────────────
+            // Network failed (ERR_INTERNET_DISCONNECTED, AbortError, etc.)
+            // Try to authenticate locally using cached credentials.
+
+            if (typeof offlineLogin !== 'function') {
                 restoreLoginBtn();
+                showLoginError('Offline Module Missing', 'offline-auth.js did not load correctly. Hard-refresh (Ctrl+Shift+R) and try again.');
                 return;
             }
+
+            // Update button text so the user knows we are trying offline
+            if (loginBtn) {
+                loginBtn.textContent = '🔒 Checking offline cache...';
+                loginBtn.disabled = true;
+                loginBtn.style.opacity = '0.7';
+            }
+
+            let offlineSecret = false;
+            try {
+                offlineSecret = await offlineLogin(null, pass);
+            } catch (offlineErr) {
+                console.error('[Auth] offlineLogin threw:', offlineErr);
+            }
+
+            if (offlineSecret) {
+                // Offline auth succeeded — load cached file list
+                let cachedMeta = null;
+                try {
+                    if (typeof idbGetVaultMeta === 'function') {
+                        cachedMeta = await idbGetVaultMeta();
+                    }
+                } catch (metaErr) {
+                    console.warn('[Auth] idbGetVaultMeta failed:', metaErr);
+                }
+
+                if (cachedMeta) {
+                    window.allFilesData = cachedMeta;
+                } else {
+                    console.warn('[Auth] No cached file list in vault_meta — dashboard opens empty.');
+                }
+
+                if (loginBtn) {
+                    loginBtn.textContent = '✓ Offline Mode';
+                    loginBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+                    loginBtn.style.opacity = '1';
+                }
+
+                const step1 = document.getElementById('step1');
+                const openDashboard = () => {
+                    step1.style.display = 'none';
+                    const dash = document.getElementById('vault-dashboard');
+                    if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
+                    vaultPostInit();
+                    alert('✅ Offline vault unlocked' + (cachedMeta ? '' : '\n\n⚠️ File list not cached yet — some documents may not appear.'));
+                };
+
+                if (step1) {
+                    step1.style.opacity = '0';
+                    step1.style.transition = 'opacity 0.3s ease';
+                    setTimeout(openDashboard, 300);
+                } else {
+                    openDashboard();
+                }
+                return;
+            }
+
+            // Offline auth also failed — give a clear, actionable error
             restoreLoginBtn();
-            if (fetchErr.name === 'AbortError') {
-                showLoginError('Connection Timed Out', 'The secure server took too long to respond.');
+
+            // Check whether this device has EVER been synced online
+            const everSynced = typeof hasOfflineCredentials === 'function'
+                ? await hasOfflineCredentials()
+                : (localStorage.getItem('vault_offline_synced') === '1');
+
+            if (!everSynced) {
+                showLoginError(
+                    'First Online Login Required',
+                    'This device has no offline credentials yet. Connect to the internet and log in once to enable offline access.'
+                );
             } else {
-                showLoginError('Server Unreachable', 'Your network may be blocking connection points.');
+                showLoginError(
+                    'Offline Login Failed',
+                    'Wrong password, or your offline credentials have expired. Connect to the internet and log in once to refresh them.'
+                );
             }
             return;
         }
