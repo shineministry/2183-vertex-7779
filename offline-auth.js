@@ -11,7 +11,7 @@
      • idbGetVaultMeta()         — returns cached file list (delegates to features.js)
    ============================================================= */
 
-window.SHINE_OFFLINE_AUTH_VERSION = '20260607-simple-v3';
+window.SHINE_OFFLINE_AUTH_VERSION = '20260607-offlinefix4';
 
 // ── Same DB as features.js ────────────────────────────────────
 const _AUTH_DB_NAME    = 'vaultOfflineDB';
