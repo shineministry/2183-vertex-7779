@@ -1392,12 +1392,11 @@ async function showStep2() {
                 const ok = await offlineLogin(null, pass);
                 if (ok) {
                     const cachedMeta = await idbGetVaultMeta();
-                    if (!cachedMeta) {
-                        restoreLoginBtn();
-                        showLoginError('No Offline Cache', 'No offline files cached yet. Please log in online at least once first.');
-                        return;
+                    if (cachedMeta) {
+                        window.allFilesData = cachedMeta;
+                    } else {
+                        console.warn('[OfflineAuth] No cached file list — dashboard will open empty.');
                     }
-                    window.allFilesData = cachedMeta;
                     if (loginBtn) { loginBtn.textContent = '✓ Offline Mode'; loginBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)'; loginBtn.style.opacity = '1'; }
                     const step1 = document.getElementById('step1');
                     const openDashboard = () => {
