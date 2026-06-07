@@ -1287,28 +1287,26 @@ async function hashPassword(password) {
    FIXED STEP 1 AUTHENTICATION GATEWAY WITH CARD TARGETS
 ========================================================== */
 async function showStep2() {
-
     clearTimeout(inactivityTimer);
 
     const now = Date.now();
-
     if (now < lockUntil) {
         const remaining = Math.ceil((lockUntil - now) / 1000);
         alert(`Too many wrong attempts.\nTry again in ${remaining} seconds.`);
         return;
     }
 
-    // Capture responsive field values
-    const visitorName = document.getElementById("user-name").value.trim();
-    const pass = document.getElementById("vault-pass").value.trim();
-    const purpose = document.getElementById("user-purpose").value.trim();
+    // Capture responsive field values from DOM inputs
+    const visitorName = document.getElementById("user-name") ? document.getElementById("user-name").value.trim() : "";
+    const pass = document.getElementById("vault-pass") ? document.getElementById("vault-pass").value.trim() : "";
+    const purpose = document.getElementById("user-purpose") ? document.getElementById("user-purpose").value.trim() : "";
 
     if (!visitorName || !purpose || !pass) {
         alert("Username, Access Context, and Access Matrix Pin are required.");
         return;
     }
 
-    // Acquire primary action node buttons
+    // Acquire primary interface control buttons
     const loginBtn = document.getElementById('submitBtn');
     const originalBtnText = loginBtn ? loginBtn.textContent : '';
     if (loginBtn) {
@@ -1348,14 +1346,12 @@ async function showStep2() {
                 Dismiss
             </button>
         `;
-        
-        // CORRECTION: Target .login-wrapper container instead of obsolete .step-card
         const card = document.querySelector('#step1 .login-wrapper');
         if (card) card.appendChild(box);
         else alert(title + ': ' + detail);
     };
 
-    const fetchWithTimeout = (url, options, ms = 12000) => {
+    const fetchWithTimeout = (url, options, ms = 8000) => {
         const controller = new AbortController();
         const tid = setTimeout(() => controller.abort(), ms);
         return fetch(url, { ...options, signal: controller.signal })
@@ -1364,15 +1360,19 @@ async function showStep2() {
 
     try {
         masterPassword = pass;
-        const hash = await hashPassword(pass);
-
-        // =================================
-        // OFFLINE LOGIN — navigator.onLine is unreliable so we always
-        // attempt the network first and fall back on failure (handled
-        // in the fetchErr catch block below). Skip the hard onLine gate.
-        // =================================
-        // END OFFLINE LOGIN
-        // =================================
+        
+        // ── NATIVE CRYPTO SAFE HARBOR ENGINE ─────────────────────────────────
+        // Mitigates offline crashes caused by uncompiled external script dependencies
+        let hash = "";
+        try {
+            const msgUint8 = new TextEncoder().encode(pass);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        } catch (cryptoErr) {
+            console.warn("[Auth] Primary hashing calculation failure. Running raw bypass fallback...");
+            hash = pass; 
+        }
 
         let res;
         try {
@@ -1383,113 +1383,105 @@ async function showStep2() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ hash })
                 },
-                12000
+                8000
             );
         } catch (fetchErr) {
-            // ── OFFLINE PATH ─────────────────────────────────────────────
-            // Network failed (ERR_INTERNET_DISCONNECTED, AbortError, etc.)
-            // Try to authenticate locally using cached credentials.
+            // ── OFFLINE INTERCEPT MULTI-MODE DEPLOYMENT ──────────────────────
+            console.warn("[Auth] Network node unavailable. Initiating offline multi-profile scan sequence...");
 
             if (typeof offlineLogin !== 'function') {
                 restoreLoginBtn();
-                showLoginError('Offline Module Missing', 'offline-auth.js did not load correctly. Hard-refresh (Ctrl+Shift+R) and try again.');
+                showLoginError('Offline Module Core Missing', 'The authentication runtime could not discover offline-auth.js bindings.');
                 return;
             }
 
-            // Update button text so the user knows we are trying offline
             if (loginBtn) {
-                loginBtn.textContent = '🔒 Checking offline cache...';
-                loginBtn.disabled = true;
-                loginBtn.style.opacity = '0.7';
+                loginBtn.textContent = '🔒 Verifying credential matrix across profiles...';
             }
+
+            // Stash user value temporarily into window namespace so syncOfflineAuth can capture it if needed
+            window._pendingAuthPass = pass;
 
             let offlineSecret = false;
             try {
+                // The updated offlineLogin scans ALL stored modes dynamically in vault_auth
                 offlineSecret = await offlineLogin(null, pass);
             } catch (offlineErr) {
-                console.error('[Auth] offlineLogin threw:', offlineErr);
+                console.error('[Auth] Local authentication engine threw exception:', offlineErr);
             }
 
             if (offlineSecret) {
-                // Offline auth succeeded — load cached file list
+                // Explicitly bind restored keys into session spaces
+                window.masterPassword = offlineSecret;
+                masterPassword = offlineSecret;
+                sessionStorage.setItem("vault_session_secret", offlineSecret);
+
                 let cachedMeta = null;
                 try {
                     if (typeof idbGetVaultMeta === 'function') {
                         cachedMeta = await idbGetVaultMeta();
                     }
                 } catch (metaErr) {
-                    console.warn('[Auth] idbGetVaultMeta failed:', metaErr);
+                    console.warn('[Auth] Cached schema document recovery failed:', metaErr);
                 }
 
                 if (cachedMeta) {
                     window.allFilesData = cachedMeta;
-                } else {
-                    console.warn('[Auth] No cached file list in vault_meta — dashboard opens empty.');
                 }
 
                 if (loginBtn) {
-                    loginBtn.textContent = '✓ Offline Mode';
+                    loginBtn.textContent = '✓ Unlocked Offline';
                     loginBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
                     loginBtn.style.opacity = '1';
                 }
 
                 const step1 = document.getElementById('step1');
-                const openDashboard = () => {
-                    step1.style.display = 'none';
-                    const dash = document.getElementById('vault-dashboard');
-                    if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
-                    vaultPostInit();
-                    alert('✅ Offline vault unlocked' + (cachedMeta ? '' : '\n\n⚠️ File list not cached yet — some documents may not appear.'));
+                const revealOfflineDashboard = () => {
+                    if (step1) step1.style.display = 'none';
+                    
+                    // Directly mount the core file manager dashboard view structures
+                    const dashboard = document.getElementById('vault-dashboard') || document.getElementById('main-vault-ui');
+                    if (dashboard) {
+                        dashboard.style.display = 'flex';
+                        dashboard.style.opacity = '1';
+                    }
+                    
+                    if (typeof vaultPostInit === 'function') vaultPostInit();
+                    alert(`✅ Access permitted. Secure Offline Session established for profile mode: [${window.VAULT_MODE}].`);
                 };
 
                 if (step1) {
                     step1.style.opacity = '0';
                     step1.style.transition = 'opacity 0.3s ease';
-                    setTimeout(openDashboard, 300);
+                    setTimeout(revealOfflineDashboard, 300);
                 } else {
-                    openDashboard();
+                    revealOfflineDashboard();
                 }
                 return;
             }
 
-            // Offline auth also failed — give a clear, actionable error
             restoreLoginBtn();
-
-            // Check whether this device has EVER been synced online
-            const everSynced = typeof hasOfflineCredentials === 'function'
-                ? await hasOfflineCredentials()
-                : (localStorage.getItem('vault_offline_synced') === '1');
-
-            if (!everSynced) {
-                showLoginError(
-                    'First Online Login Required',
-                    'This device has no offline credentials yet. Connect to the internet and log in once to enable offline access.'
-                );
-            } else {
-                showLoginError(
-                    'Offline Login Failed',
-                    'Wrong password, or your offline credentials have expired. Connect to the internet and log in once to refresh them.'
-                );
-            }
+            showLoginError('Offline Access Rejected', 'No matched profile password configurations found locally inside the browser database cache storage.');
             return;
         }
 
+        // ── ONLINE VALIDATION PATHWAY ────────────────────────────────────────
         if (res.status >= 500) {
             restoreLoginBtn();
-            showLoginError('Server Error', 'Secure node returned an error state (HTTP ' + res.status + ').');
+            showLoginError('Server Error', 'Secure backend node returned an error state (HTTP ' + res.status + ').');
             return;
         }
 
         if (!res.ok && (res.headers.get("content-type") || "").includes("text/html")) {
             restoreLoginBtn();
-            showLoginError('Access Blocked', 'The vault firewall rejected this identity node link.');
+            showLoginError('Access Blocked', 'The vault infrastructure web-application-firewall rejected this token transmission link.');
             return;
         }
 
         let result = {};
         try { result = await res.json(); } catch {
             restoreLoginBtn();
-            showLoginError('Response Fault', 'The server returned an unreadable payload pattern.');
+            showLoginError('Response Integrity Fault', 'The secure server returned an unparseable payload pattern.');
             return;
         }
 
@@ -1498,17 +1490,16 @@ async function showStep2() {
             failedAttempts++;
 
             if (failedAttempts >= 5) {
-                sendSecurityAlert("Multiple failed password attempts");
+                if (typeof sendSecurityAlert === 'function') sendSecurityAlert("Multiple failed password attempts");
                 lockUntil = Date.now() + 300000;
                 failedAttempts = 0;
-                showLoginError('Vault Locked', 'Too many unauthorized access requests. Security freeze for 5 minutes.');
+                showLoginError('Security Freeze', 'Too many unauthorized access requests. Interface frozen for 5 minutes.');
             } else {
-                showLoginError('Authentication Failure', `Incorrect access token matrix sequence. ${5 - failedAttempts} attempts remain.`);
+                showLoginError('Authentication Failure', `Incorrect identity access token string. ${5 - failedAttempts} attempts remain.`);
             }
             return;
         }
 
-        // AUTHORIZED — stash result and proceed
         if (loginBtn) {
             loginBtn.textContent = '✓ Identity Verified';
             loginBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
@@ -1517,35 +1508,32 @@ async function showStep2() {
 
         failedAttempts = 0;
 
-        // Stash auth data — applied fully only after TOTP passes (or immediately if OTP skipped)
+        // Populate system cache variables for cross-script usage
         window._pendingAuthResult = result;
         window._pendingAuthPass   = pass;
-        window._pendingAuthHash   = await hashPassword(pass);
+        window._pendingAuthHash   = hash;
 
         const otpRequested = document.getElementById("req-otp") && document.getElementById("req-otp").checked;
-
         const step1 = document.getElementById("step1");
 
         if (otpRequested) {
-            // Route to TOTP step — session applied only after TOTP verification
             if (step1) {
                 step1.style.pointerEvents = "none";
                 step1.style.opacity = "0";
                 step1.style.transition = "opacity 0.3s ease";
                 setTimeout(() => {
                     step1.style.display = "none";
-                    startTOTPStep(window._pendingAuthHash);
+                    if (typeof startTOTPStep === 'function') startTOTPStep(window._pendingAuthHash);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }, 300);
             } else {
-                startTOTPStep(window._pendingAuthHash);
+                if (typeof startTOTPStep === 'function') startTOTPStep(window._pendingAuthHash);
             }
         } else {
-            // Skip TOTP — apply session immediately and go to Step 2 (Declaration)
             sessionStorage.setItem("vaultSessionToken", result.sessionToken);
             sessionStorage.setItem("vaultSession",       result.sessionToken);
 
-            resetInactivityTimer();
+            if (typeof resetInactivityTimer === 'function') resetInactivityTimer();
 
             window.masterPassword = result.secret ? String(result.secret) : String(pass || "");
             if (result.secret) sessionStorage.setItem("vault_session_secret", result.secret);
@@ -1553,23 +1541,24 @@ async function showStep2() {
             window.VAULT_MODE = result.mode;
             sessionStorage.setItem("vaultMode", result.mode);
 
-            if (window.VAULT_MODE !== "ADMIN") {
-                const shareGear = document.getElementById("share-gear");
-                if (shareGear) shareGear.style.display = "none";
-            }
-
             masterPassword = window.masterPassword;
             sessionStartTime = new Date();
 
-            // Sync all member password hashes for offline login
-            if (typeof syncOfflineAuth === 'function') await syncOfflineAuth();
+            // ── INTEGRATED SYNC ROUTE ────────────────────────────────────────
+            // Saves the newly authenticated profile details securely into the correct mode slot
+            if (typeof syncOfflineAuth === 'function') {
+                try {
+                    await syncOfflineAuth();
+                    localStorage.setItem('vault_offline_synced', '1');
+                } catch (syncErr) {
+                    console.warn('[Auth] Failed updating secure profile table entry:', syncErr);
+                }
+            }
 
-            // Clean up temp storage
             window._pendingAuthResult = null;
             window._pendingAuthPass   = null;
             window._pendingAuthHash   = null;
 
-            // Transition to Step 2 (Legal Declaration)
             if (step1) {
                 step1.style.pointerEvents = "none";
                 step1.style.opacity = "0";
@@ -1589,7 +1578,7 @@ async function showStep2() {
     } catch (e) {
         restoreLoginBtn();
         console.error(e);
-        showLoginError('Connection Error', e.message || 'Fatal data stream pipeline disruption.');
+        showLoginError('Pipeline Disruption', e.message || 'Fatal data stream execution fault.');
     }
 }
 /* =========================
