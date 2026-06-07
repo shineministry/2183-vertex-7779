@@ -11,7 +11,7 @@
      • idbGetVaultMeta()         — returns cached file list (delegates to features.js)
    ============================================================= */
 
-window.SHINE_OFFLINE_AUTH_VERSION = '20260607-offlinefix4';
+window.SHINE_OFFLINE_AUTH_VERSION = '20260607-offlinefix5';
 
 // ── Same DB as features.js ────────────────────────────────────
 const _AUTH_DB_NAME    = 'vaultOfflineDB';
@@ -91,6 +91,13 @@ async function syncOfflineAuth() {
             tx.onerror = tx.onabort = () => rej(tx.error);
         });
 
+        // Belt-and-suspenders localStorage fallback
+        // (startup.js / session.js check these keys to confirm the device has synced online)
+        localStorage.setItem('vaultSessionToken_offline',    token);
+        localStorage.setItem('vault_session_secret_offline', secret);
+        localStorage.setItem('vaultMode_offline',            mode);
+        localStorage.setItem('vault_password_hash_offline',  passwordHash);
+
         console.log('[OfflineAuth] Credentials saved for mode:', mode);
     } catch (e) {
         console.warn('[OfflineAuth] syncOfflineAuth failed:', e);
@@ -115,7 +122,21 @@ async function offlineLogin(_ignored, password) {
         });
 
         if (!allRecords.length) {
-            console.warn('[OfflineAuth] vault_auth store is empty.');
+            console.warn('[OfflineAuth] No cached credentials found in DB — trying localStorage fallback.');
+            // localStorage fallback (set by syncOfflineAuth for startup.js compatibility)
+            const storedHash = localStorage.getItem('vault_password_hash_offline');
+            if (storedHash && storedHash === inputHash) {
+                const secret = localStorage.getItem('vault_session_secret_offline') || password;
+                const token  = localStorage.getItem('vaultSessionToken_offline') || '';
+                const mode   = localStorage.getItem('vaultMode_offline') || 'MEMBER';
+                window.masterPassword = String(secret);
+                window.VAULT_MODE = mode;
+                sessionStorage.setItem('vault_session_secret', window.masterPassword);
+                sessionStorage.setItem('vaultMode', mode);
+                if (token) { sessionStorage.setItem('vaultSessionToken', token); sessionStorage.setItem('vaultSession', token); }
+                console.log('[OfflineAuth] Login via localStorage fallback, mode:', mode);
+                return window.masterPassword;
+            }
             return false;
         }
 
@@ -123,7 +144,20 @@ async function offlineLogin(_ignored, password) {
 
         if (!match) {
             console.warn('[OfflineAuth] No matching hash found across',
-                         allRecords.length, 'stored modes.');
+                         allRecords.length, 'stored modes — trying localStorage fallback.');
+            const storedHash = localStorage.getItem('vault_password_hash_offline');
+            if (storedHash && storedHash === inputHash) {
+                const secret = localStorage.getItem('vault_session_secret_offline') || password;
+                const token  = localStorage.getItem('vaultSessionToken_offline') || '';
+                const mode   = localStorage.getItem('vaultMode_offline') || 'MEMBER';
+                window.masterPassword = String(secret);
+                window.VAULT_MODE = mode;
+                sessionStorage.setItem('vault_session_secret', window.masterPassword);
+                sessionStorage.setItem('vaultMode', mode);
+                if (token) { sessionStorage.setItem('vaultSessionToken', token); sessionStorage.setItem('vaultSession', token); }
+                console.log('[OfflineAuth] Login via localStorage fallback, mode:', mode);
+                return window.masterPassword;
+            }
             return false;
         }
 
