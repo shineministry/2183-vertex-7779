@@ -16,6 +16,7 @@ let sessionStartTime = null;
 
    let sessionId = crypto.randomUUID();
 window.allFilesData = {};
+window.SHINE_AUTH_VERSION = '20260607-offlinefix3';
 let currentCategory = "";
    
    async function sha256Bytes(text){
