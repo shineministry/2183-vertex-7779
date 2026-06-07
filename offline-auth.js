@@ -1,76 +1,56 @@
 /* =============================================================
    OFFLINE AUTH  —  offline-auth.js
-   Provides these functions called by auth.js:
-     • syncOfflineAuth()   — saves credentials after online login
-     • offlineLogin(id, pass) — checks ONE member's stored hash;
-                                returns the secret string or false
-     • idbGetVaultMeta()   — returns cached file list
-     • idbSetVaultMeta()   — caches file list (called by vault-data.js)
+   Simple, reliable offline login.
+
+   Architecture (per PDF recommendation):
+     ONE DB → ONE store → ONE user → ONE hash → ONE comparison
+
+   Public API (called by auth.js):
+     • syncOfflineAuth()         — saves credentials after online login
+     • offlineLogin(_, password) — verifies typed password; returns secret or false
+     • idbGetVaultMeta()         — returns cached file list
+     • idbSetVaultMeta(data)     — caches file list (called by vault-data.js)
    ============================================================= */
 
-const _OIDB_NAME    = 'ShineVaultOffline';
-const _OIDB_VERSION = 2;  // bumped — forces onupgradeneeded on devices with broken empty v1 DB
-window.SHINE_OFFLINE_AUTH_VERSION = '20260607-offlinefix3';
+window.SHINE_OFFLINE_AUTH_VERSION = '20260607-simple-v1';
 
-// ── Known member IDs (must match auth.js MEMBER_IDS list) ────
-const _MEMBER_IDS = ['main', 'shineil', 'brother', 'father', 'mother'];
-const _DEFAULT_MEMBER_ID = 'main';
+const _DB_NAME    = 'ShineVaultOffline';
+const _DB_VERSION = 3;           // bumped → clears all old broken stores
+const _STORE_AUTH = 'trustedLogin';
+const _STORE_META = 'vaultMeta';
 
-function _offlineMemberCandidates(memberId) {
-    const requested = String(memberId || '').trim();
-    if (requested && requested !== 'all') {
-        return [requested, ..._MEMBER_IDS.filter(id => id !== requested)];
-    }
-    return [_DEFAULT_MEMBER_ID, ..._MEMBER_IDS.filter(id => id !== _DEFAULT_MEMBER_ID)];
-}
-
-// ── Open the offline IndexedDB ────────────────────────────────
+// ── Open DB — only TWO stores, clean schema ───────────────────
 function _openOfflineDB() {
     return new Promise((resolve, reject) => {
-        const req = indexedDB.open(_OIDB_NAME, _OIDB_VERSION);
+        const req = indexedDB.open(_DB_NAME, _DB_VERSION);
+
         req.onupgradeneeded = e => {
             const db = e.target.result;
-            if (!db.objectStoreNames.contains('authHashes')) {
-                db.createObjectStore('authHashes', { keyPath: 'memberId' });
-            }
-            if (!db.objectStoreNames.contains('vaultMeta')) {
-                db.createObjectStore('vaultMeta', { keyPath: 'id' });
-            }
-            if (!db.objectStoreNames.contains('secrets')) {
-                db.createObjectStore('secrets', { keyPath: 'memberId' });
-            }
+
+            // Wipe ALL old stores so broken schemas from previous versions
+            // don't cause "object store was not found" errors.
+            Array.from(db.objectStoreNames).forEach(name => {
+                db.deleteObjectStore(name);
+            });
+
+            // Create the two stores we actually need — nothing else
+            db.createObjectStore(_STORE_AUTH, { keyPath: 'username' });
+            db.createObjectStore(_STORE_META, { keyPath: 'id' });
         };
+
         req.onsuccess = () => resolve(req.result);
         req.onerror   = () => reject(req.error);
     });
 }
 
-// ── Generic IDB get/put helpers ───────────────────────────────
-async function _idbGet(storeName, key) {
-    const db = await _openOfflineDB();
-    return new Promise((resolve, reject) => {
-        const req = db.transaction(storeName, 'readonly')
-                      .objectStore(storeName).get(key);
-        req.onsuccess = () => resolve(req.result || null);
-        req.onerror   = () => reject(req.error);
-    });
-}
-
-async function _idbPut(storeName, value) {
-    const db = await _openOfflineDB();
-    return new Promise((resolve, reject) => {
-        const req = db.transaction(storeName, 'readwrite')
-                      .objectStore(storeName).put(value);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror   = () => reject(req.error);
-    });
-}
-
-// ── SHA-256 hex helper (matches auth.js / viewer.js) ─────────
+// ── SHA-256 hex — same algorithm as auth.js hashPassword() ───
+// NOTE: auth.js hashPassword() does .trim().normalize("NFKC") before hashing.
+// We must match that exactly so the hash we store equals what auth.js produces.
 async function _sha256(text) {
+    const normalized = String(text).trim().normalize('NFKC');
     const buf = await crypto.subtle.digest(
         'SHA-256',
-        new TextEncoder().encode(String(text))
+        new TextEncoder().encode(normalized)
     );
     return Array.from(new Uint8Array(buf))
         .map(b => b.toString(16).padStart(2, '0')).join('');
@@ -78,132 +58,108 @@ async function _sha256(text) {
 
 /* =============================================================
    syncOfflineAuth()
-   Called by auth.js after every successful ONLINE login.
-
-   KEY DESIGN:
-   - The VAULT SECRET (window.masterPassword / vault_session_secret)
-     is the AES decryption key — it may differ from the typed password.
-   - We must store a hash of the TYPED LOGIN PASSWORD so that
-     offlineLogin() can verify what the user types at the login form.
-   - We also store the secret so we can restore window.masterPassword.
-
-   We save under EVERY plausible member ID so that auth.js can
-   try all of them during offline login regardless of which dropdown
-   value was selected at sync time.
+   Called by auth.js after EVERY successful online login.
+   Saves ONLY the currently logged-in user under their username.
    ============================================================= */
 async function syncOfflineAuth() {
     try {
-        const secret = sessionStorage.getItem('vault_session_secret') ||
-                       window.masterPassword || '';
-        const token  = sessionStorage.getItem('vaultSessionToken') ||
-                       sessionStorage.getItem('vaultSession') || '';
-        const mode   = sessionStorage.getItem('vaultMode') ||
-                       localStorage.getItem('vaultMode') || 'MEMBER';
+        // The typed login password is stashed by auth.js before calling us
+        const password = window._pendingAuthPass || '';
+        const secret   = sessionStorage.getItem('vault_session_secret') ||
+                         window.masterPassword || '';
+        const token    = sessionStorage.getItem('vaultSessionToken') ||
+                         sessionStorage.getItem('vaultSession') || '';
+        const mode     = sessionStorage.getItem('vaultMode') ||
+                         localStorage.getItem('vaultMode') || 'MEMBER';
 
-        // The login password is stashed temporarily in auth.js as
-        // window._pendingAuthPass (cleared after login completes).
-        // After it's cleared we fall back to the secret itself, which
-        // works when the password and the secret are the same value.
-        // Vault operators where secret ≠ password should ensure
-        // _pendingAuthPass is still set when syncOfflineAuth() fires.
-        const loginPassword = window._pendingAuthPass || secret;
+        // Username = what the user typed in the name field (same key used at login)
+        const usernameEl = document.getElementById('user-name');
+        const username   = usernameEl
+            ? usernameEl.value.trim().toLowerCase()
+            : 'vault_user';
 
-        const passwordHash = await _sha256(loginPassword);
-
-        // Determine which member ID is currently active.
-        // member-select in the sidebar may show a meaningful value
-        // after the dashboard opens; before that it may still be 'all'.
-        // We save under the resolved ID AND under every fallback ID so
-        // that auth.js can find the record regardless of which ID it tries.
-        const memberSel    = document.getElementById('member-select');
-        const activeMember = (memberSel && memberSel.value &&
-                              memberSel.value !== 'all')
-                             ? memberSel.value : 'main';
-
-        // Build the set of IDs to write under (active first, then all others)
-        const saveIds = [activeMember, ..._MEMBER_IDS.filter(id => id !== activeMember)];
-
-        for (const mid of saveIds) {
-            await _idbPut('authHashes', { memberId: mid, passwordHash });
-            await _idbPut('secrets',    { memberId: mid, secret, token, mode });
+        if (!password) {
+            console.warn('[OfflineAuth] syncOfflineAuth: no password available, skipping.');
+            return;
         }
 
-        // Belt-and-suspenders localStorage fallback
-        localStorage.setItem('vaultSessionToken_offline',    token);
-        localStorage.setItem('vault_session_secret_offline', secret);
-        localStorage.setItem('vaultMode_offline',            mode);
-        localStorage.setItem('vault_password_hash_offline',  passwordHash);
+        const passwordHash = await _sha256(password);
 
-        console.log('[OfflineAuth] Credentials synced for all member IDs.');
+        const db = await _openOfflineDB();
+        const tx = db.transaction(_STORE_AUTH, 'readwrite');
+        tx.objectStore(_STORE_AUTH).put({
+            username,
+            passwordHash,
+            secret,
+            token,
+            mode,
+            savedAt: Date.now()
+        });
+
+        await new Promise((res, rej) => {
+            tx.oncomplete = res;
+            tx.onerror    = () => rej(tx.error);
+            tx.onabort    = () => rej(tx.error);
+        });
+
+        console.log('[OfflineAuth] Credentials saved for:', username);
     } catch (e) {
         console.warn('[OfflineAuth] syncOfflineAuth failed:', e);
     }
 }
 
 /* =============================================================
-   offlineLogin(memberId, password)
-   Called by auth.js once per member ID until one succeeds.
-   auth.js iterates ALL_MEMBER_IDS itself; this function just
-   checks ONE id and returns:
-     - the secret string on success  (auth.js treats truthy = success)
-     - false on hash mismatch or missing record
-   It does NOT call showLoginError() — error display is left to
-   auth.js so it can count attempts across all IDs correctly.
+   offlineLogin(_, password)
+   The first argument is ignored (kept for API compatibility with
+   auth.js which passes a memberId). We look up by the username
+   the user types in the login form.
+   Returns the vault secret string on success, false on failure.
    ============================================================= */
-async function offlineLogin(memberId, password) {
+async function offlineLogin(_ignored, password) {
     try {
-        const enteredHash = await _sha256(password);
-        let matchedMemberId = null;
-        let stored = null;
+        // Username = what the user typed in the name field right now
+        const usernameEl = document.getElementById('user-name');
+        const username   = usernameEl
+            ? usernameEl.value.trim().toLowerCase()
+            : 'vault_user';
 
-        for (const candidate of _offlineMemberCandidates(memberId)) {
-            const row = await _idbGet('authHashes', candidate);
-            if (row && (row.passwordHash === enteredHash || row.secretHash === enteredHash)) {
-                matchedMemberId = candidate;
-                stored = row;
-                break;
-            }
+        const db   = await _openOfflineDB();
+        const tx   = db.transaction(_STORE_AUTH, 'readonly');
+        const req  = tx.objectStore(_STORE_AUTH).get(username);
+
+        const row = await new Promise((res, rej) => {
+            req.onsuccess = () => res(req.result || null);
+            req.onerror   = () => rej(req.error);
+        });
+
+        if (!row) {
+            console.warn('[OfflineAuth] No cached credentials for:', username);
+            return false;
         }
 
-        if (!stored && localStorage.getItem('vault_password_hash_offline') === enteredHash) {
-            matchedMemberId = _DEFAULT_MEMBER_ID;
-            stored = { memberId: matchedMemberId, passwordHash: enteredHash };
+        const inputHash = await _sha256(password);
+
+        if (inputHash !== row.passwordHash) {
+            console.warn('[OfflineAuth] Password mismatch for:', username);
+            return false;
         }
 
-        if (!stored) return false;   // no matching cached password
-
-        if (!stored.passwordHash && stored.secretHash === enteredHash) {
-            await _idbPut('authHashes', { memberId: matchedMemberId, passwordHash: enteredHash });
-        }
-
-        // Hash matched — load the associated secret
-        const savedSecret = await _idbGet('secrets', matchedMemberId);
-        const secret = savedSecret && savedSecret.secret
-            ? savedSecret.secret
-            : (localStorage.getItem('vault_session_secret_offline') || password);
-        const token  = savedSecret && savedSecret.token
-            ? savedSecret.token
-            : (localStorage.getItem('vaultSessionToken_offline') || '');
-        const mode   = savedSecret && savedSecret.mode
-            ? savedSecret.mode
-            : (localStorage.getItem('vaultMode_offline') || 'MEMBER');
-
-        // Restore session state (auth.js will also set these, but
-        // setting them here ensures nothing downstream is ever undefined)
-        window.masterPassword = String(secret || password);
-        window.VAULT_MODE     = mode;
+        // Hash matched — restore session state
+        const secret = row.secret || password;
+        window.masterPassword = String(secret);
+        window.VAULT_MODE     = row.mode || 'MEMBER';
         sessionStorage.setItem('vault_session_secret', window.masterPassword);
-        sessionStorage.setItem('vaultMode', mode);
-        if (token) {
-            sessionStorage.setItem('vaultSessionToken', token);
-            sessionStorage.setItem('vaultSession',      token);
+        sessionStorage.setItem('vaultMode', window.VAULT_MODE);
+        if (row.token) {
+            sessionStorage.setItem('vaultSessionToken', row.token);
+            sessionStorage.setItem('vaultSession',      row.token);
         }
 
-        console.log('[OfflineAuth] Password verified for member:', matchedMemberId);
-        return window.masterPassword;   // truthy string — auth.js uses as the secret
+        console.log('[OfflineAuth] Login verified for:', username);
+        return window.masterPassword;   // truthy → auth.js treats as success
 
     } catch (e) {
-        console.error('[OfflineAuth] offlineLogin error for', memberId, e);
+        console.error('[OfflineAuth] offlineLogin error:', e);
         return false;
     }
 }
@@ -211,11 +167,17 @@ async function offlineLogin(memberId, password) {
 /* =============================================================
    idbSetVaultMeta(data)
    Called by vault-data.js after loading files.json online.
-   Caches the full file list so the dashboard populates offline.
    ============================================================= */
 async function idbSetVaultMeta(data) {
     try {
-        await _idbPut('vaultMeta', { id: 'filelist', data });
+        const db = await _openOfflineDB();
+        const tx = db.transaction(_STORE_META, 'readwrite');
+        tx.objectStore(_STORE_META).put({ id: 'filelist', data });
+        await new Promise((res, rej) => {
+            tx.oncomplete = res;
+            tx.onerror    = () => rej(tx.error);
+            tx.onabort    = () => rej(tx.error);
+        });
         console.log('[OfflineAuth] Vault file list cached.');
     } catch (e) {
         console.warn('[OfflineAuth] idbSetVaultMeta failed:', e);
@@ -225,11 +187,16 @@ async function idbSetVaultMeta(data) {
 /* =============================================================
    idbGetVaultMeta()
    Called by auth.js during offline login to restore the file list.
-   Returns the cached data object, or null if not yet cached.
    ============================================================= */
 async function idbGetVaultMeta() {
     try {
-        const row = await _idbGet('vaultMeta', 'filelist');
+        const db  = await _openOfflineDB();
+        const tx  = db.transaction(_STORE_META, 'readonly');
+        const req = tx.objectStore(_STORE_META).get('filelist');
+        const row = await new Promise((res, rej) => {
+            req.onsuccess = () => res(req.result || null);
+            req.onerror   = () => rej(req.error);
+        });
         return row ? row.data : null;
     } catch (e) {
         console.warn('[OfflineAuth] idbGetVaultMeta failed:', e);
