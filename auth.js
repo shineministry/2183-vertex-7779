@@ -1388,17 +1388,8 @@ async function showStep2() {
         } catch (fetchErr) {
             // Network failed — try offline login with cached credentials
             if (typeof offlineLogin === 'function') {
-                const memberSel = document.getElementById('member-select');
-                const selectedMemberId  = (memberSel && memberSel.value) ? memberSel.value : 'main';
-                const offlineMemberIds = ['main', 'shineil', 'brother', 'father', 'mother'];
-                const candidates = (selectedMemberId && selectedMemberId !== 'all')
-                    ? [selectedMemberId, ...offlineMemberIds.filter(id => id !== selectedMemberId)]
-                    : offlineMemberIds;
-                let ok = false;
-                for (const memberId of candidates) {
-                    ok = await offlineLogin(memberId, pass);
-                    if (ok) break;
-                }
+                // Simple: one call, offlineLogin reads the username from the form itself
+                const ok = await offlineLogin(null, pass);
                 if (ok) {
                     const cachedMeta = await idbGetVaultMeta();
                     if (!cachedMeta) {
