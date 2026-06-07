@@ -157,7 +157,7 @@ async function offlineLogin(memberId, password) {
 
         for (const candidate of _offlineMemberCandidates(memberId)) {
             const row = await _idbGet('authHashes', candidate);
-            if (row && row.passwordHash === enteredHash) {
+            if (row && (row.passwordHash === enteredHash || row.secretHash === enteredHash)) {
                 matchedMemberId = candidate;
                 stored = row;
                 break;
@@ -170,6 +170,10 @@ async function offlineLogin(memberId, password) {
         }
 
         if (!stored) return false;   // no matching cached password
+
+        if (!stored.passwordHash && stored.secretHash === enteredHash) {
+            await _idbPut('authHashes', { memberId: matchedMemberId, passwordHash: enteredHash });
+        }
 
         // Hash matched — load the associated secret
         const savedSecret = await _idbGet('secrets', matchedMemberId);
