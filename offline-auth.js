@@ -1,41 +1,48 @@
 /* =============================================================
    OFFLINE AUTH  —  offline-auth.js
+   Version: 20260607-bridge-v1
 
-   Uses the EXISTING vaultOfflineDB (owned by features.js)
-   and its vault_auth store — no new DB, no schema conflicts.
+   Uses vaultOfflineDB (shared with features.js) for credential
+   storage, AND writes a localStorage sentinel so any HTML-level
+   "never been synced" guard can detect a prior online login.
 
    Public API:
-     • syncOfflineAuth()         — saves after online login
-     • offlineLogin(_, password) — returns secret or false
-     • idbSetVaultMeta(data)     — caches file list (delegates to features.js)
-     • idbGetVaultMeta()         — returns cached file list (delegates to features.js)
+     • syncOfflineAuth()              — save after online login
+     • offlineLogin(_, password)      — returns secret or false
+     • idbSetVaultMeta(data)          — cache file list
+     • idbGetVaultMeta()              — return cached file list
+     • hasOfflineCredentials()        — true if ever synced online
    ============================================================= */
 
-window.SHINE_OFFLINE_AUTH_VERSION = '20260607-offlinefix5';
+window.SHINE_OFFLINE_AUTH_VERSION = '20260607-bridge-v1';
 
-// ── Same DB as features.js ────────────────────────────────────
+// ── DB shared with features.js ────────────────────────────────
 const _AUTH_DB_NAME    = 'vaultOfflineDB';
-const _AUTH_DB_VERSION = 3;   // bumped from features.js v2 to add vault_auth store
+const _AUTH_DB_VERSION = 3;
 
+// ── localStorage sentinel key (checked by HTML guard) ─────────
+const _LS_SYNCED_KEY  = 'vault_offline_synced';
+const _LS_HASH_KEY    = 'vault_password_hash_offline';
+const _LS_SECRET_KEY  = 'vault_session_secret_offline';
+const _LS_TOKEN_KEY   = 'vaultSessionToken_offline';
+const _LS_MODE_KEY    = 'vaultMode_offline';
+
+// ── Open / upgrade the DB ─────────────────────────────────────
 function _openAuthDB() {
     return new Promise((resolve, reject) => {
         const req = indexedDB.open(_AUTH_DB_NAME, _AUTH_DB_VERSION);
 
         req.onupgradeneeded = e => {
             const db = e.target.result;
-            // Keep existing stores features.js created — only ADD vault_auth
-            if (!db.objectStoreNames.contains('pm_entries')) {
+            // Preserve existing stores created by features.js
+            if (!db.objectStoreNames.contains('pm_entries'))
                 db.createObjectStore('pm_entries', { keyPath: 'id' });
-            }
-            if (!db.objectStoreNames.contains('vault_docs')) {
+            if (!db.objectStoreNames.contains('vault_docs'))
                 db.createObjectStore('vault_docs', { keyPath: 'filename' });
-            }
-            if (!db.objectStoreNames.contains('vault_meta')) {
+            if (!db.objectStoreNames.contains('vault_meta'))
                 db.createObjectStore('vault_meta', { keyPath: 'key' });
-            }
-            if (!db.objectStoreNames.contains('vault_auth')) {
+            if (!db.objectStoreNames.contains('vault_auth'))
                 db.createObjectStore('vault_auth', { keyPath: 'id' });
-            }
         };
 
         req.onsuccess = () => resolve(req.result);
@@ -43,10 +50,8 @@ function _openAuthDB() {
     });
 }
 
-// ── SHA-256 matching auth.js hashPassword() exactly ──────────
+// ── SHA-256 (matches auth.js hashPassword exactly) ────────────
 async function _sha256(text) {
-    // No normalize — matches the hash format stored by syncOfflineAuth
-    // (which uses window._pendingAuthPass — the raw typed password)
     const buf = await crypto.subtle.digest(
         'SHA-256', new TextEncoder().encode(String(text))
     );
@@ -55,8 +60,41 @@ async function _sha256(text) {
 }
 
 /* =============================================================
+   hasOfflineCredentials()
+   Returns true if a successful online login has been synced.
+   Checks both localStorage (fast) and IndexedDB (thorough).
+   The HTML "never been synced" guard should call this.
+   ============================================================= */
+async function hasOfflineCredentials() {
+    // Fast path — localStorage sentinel
+    if (localStorage.getItem(_LS_SYNCED_KEY) === '1') return true;
+
+    // Fallback — check IndexedDB directly
+    try {
+        const db = await _openAuthDB();
+        const records = await new Promise((res, rej) => {
+            const req = db.transaction('vault_auth', 'readonly')
+                          .objectStore('vault_auth').getAll();
+            req.onsuccess = () => res(req.result || []);
+            req.onerror   = () => rej(req.error);
+        });
+        if (records.length > 0) {
+            // Repair missing sentinel so future checks are fast
+            localStorage.setItem(_LS_SYNCED_KEY, '1');
+            return true;
+        }
+    } catch (e) {
+        console.warn('[OfflineAuth] hasOfflineCredentials IDB check failed:', e);
+    }
+    return false;
+}
+
+/* =============================================================
    syncOfflineAuth()
-   Saves current session into vault_auth keyed by VAULT_MODE.
+   Called by auth.js after every successful ONLINE login.
+   Saves hashed password + session secret to:
+     1. vaultOfflineDB → vault_auth  (primary, keyed by mode)
+     2. localStorage                 (sentinel + fallback)
    ============================================================= */
 async function syncOfflineAuth() {
     try {
@@ -69,12 +107,13 @@ async function syncOfflineAuth() {
                          window.VAULT_MODE || '';
 
         if (!password || !mode) {
-            console.warn('[OfflineAuth] syncOfflineAuth: missing password or mode, skipping.');
+            console.warn('[OfflineAuth] syncOfflineAuth: missing password or mode — skipping.');
             return;
         }
 
         const passwordHash = await _sha256(password);
 
+        // 1. Write to IndexedDB
         const db = await _openAuthDB();
         await new Promise((res, rej) => {
             const tx = db.transaction('vault_auth', 'readwrite');
@@ -91,14 +130,16 @@ async function syncOfflineAuth() {
             tx.onerror = tx.onabort = () => rej(tx.error);
         });
 
-        // Belt-and-suspenders localStorage fallback
-        // (startup.js / session.js check these keys to confirm the device has synced online)
-        localStorage.setItem('vaultSessionToken_offline',    token);
-        localStorage.setItem('vault_session_secret_offline', secret);
-        localStorage.setItem('vaultMode_offline',            mode);
-        localStorage.setItem('vault_password_hash_offline',  passwordHash);
+        // 2. Write localStorage sentinel + fallback values
+        // (the HTML "never been synced" guard reads _LS_SYNCED_KEY)
+        localStorage.setItem(_LS_SYNCED_KEY,  '1');
+        localStorage.setItem(_LS_HASH_KEY,    passwordHash);
+        localStorage.setItem(_LS_SECRET_KEY,  secret);
+        localStorage.setItem(_LS_TOKEN_KEY,   token);
+        localStorage.setItem(_LS_MODE_KEY,    mode);
 
-        console.log('[OfflineAuth] Credentials saved for mode:', mode);
+        console.log('[OfflineAuth] Credentials synced for mode:', mode,
+                    '| sentinel set in localStorage');
     } catch (e) {
         console.warn('[OfflineAuth] syncOfflineAuth failed:', e);
     }
@@ -106,13 +147,16 @@ async function syncOfflineAuth() {
 
 /* =============================================================
    offlineLogin(_, password)
-   Scans ALL records in vault_auth, finds the one whose
+   Scans ALL records in vault_auth and finds one whose
    passwordHash matches the typed password.
+   Falls back to localStorage hash if IDB scan finds nothing.
+   Returns the secret string on success, false on failure.
    ============================================================= */
 async function offlineLogin(_ignored, password) {
     try {
         const inputHash = await _sha256(password);
 
+        // ── Primary: scan IndexedDB ───────────────────────────
         const db = await _openAuthDB();
         const allRecords = await new Promise((res, rej) => {
             const req = db.transaction('vault_auth', 'readonly')
@@ -121,50 +165,32 @@ async function offlineLogin(_ignored, password) {
             req.onerror   = () => rej(req.error);
         });
 
-        if (!allRecords.length) {
-            console.warn('[OfflineAuth] No cached credentials found in DB — trying localStorage fallback.');
-            // localStorage fallback (set by syncOfflineAuth for startup.js compatibility)
-            const storedHash = localStorage.getItem('vault_password_hash_offline');
-            if (storedHash && storedHash === inputHash) {
-                const secret = localStorage.getItem('vault_session_secret_offline') || password;
-                const token  = localStorage.getItem('vaultSessionToken_offline') || '';
-                const mode   = localStorage.getItem('vaultMode_offline') || 'MEMBER';
-                window.masterPassword = String(secret);
-                window.VAULT_MODE = mode;
-                sessionStorage.setItem('vault_session_secret', window.masterPassword);
-                sessionStorage.setItem('vaultMode', mode);
-                if (token) { sessionStorage.setItem('vaultSessionToken', token); sessionStorage.setItem('vaultSession', token); }
-                console.log('[OfflineAuth] Login via localStorage fallback, mode:', mode);
-                return window.masterPassword;
+        let match = (allRecords || []).find(r => r.passwordHash === inputHash);
+
+        // ── Fallback: localStorage hash ───────────────────────
+        if (!match) {
+            const lsHash = localStorage.getItem(_LS_HASH_KEY);
+            if (lsHash && lsHash === inputHash) {
+                // Reconstruct a minimal record from localStorage
+                match = {
+                    secret:  localStorage.getItem(_LS_SECRET_KEY) || password,
+                    token:   localStorage.getItem(_LS_TOKEN_KEY)  || '',
+                    mode:    localStorage.getItem(_LS_MODE_KEY)   || 'MEMBER'
+                };
+                console.log('[OfflineAuth] Matched via localStorage fallback.');
             }
-            return false;
         }
 
-        const match = allRecords.find(r => r.passwordHash === inputHash);
-
         if (!match) {
-            console.warn('[OfflineAuth] No matching hash found across',
-                         allRecords.length, 'stored modes — trying localStorage fallback.');
-            const storedHash = localStorage.getItem('vault_password_hash_offline');
-            if (storedHash && storedHash === inputHash) {
-                const secret = localStorage.getItem('vault_session_secret_offline') || password;
-                const token  = localStorage.getItem('vaultSessionToken_offline') || '';
-                const mode   = localStorage.getItem('vaultMode_offline') || 'MEMBER';
-                window.masterPassword = String(secret);
-                window.VAULT_MODE = mode;
-                sessionStorage.setItem('vault_session_secret', window.masterPassword);
-                sessionStorage.setItem('vaultMode', mode);
-                if (token) { sessionStorage.setItem('vaultSessionToken', token); sessionStorage.setItem('vaultSession', token); }
-                console.log('[OfflineAuth] Login via localStorage fallback, mode:', mode);
-                return window.masterPassword;
-            }
+            console.warn('[OfflineAuth] No matching hash found.',
+                         allRecords.length, 'IDB records checked.');
             return false;
         }
 
         // Restore session
         const secret = match.secret || password;
         window.masterPassword = String(secret);
-        window.VAULT_MODE     = match.mode || match.id;
+        window.VAULT_MODE     = match.mode || match.id || '';
         sessionStorage.setItem('vault_session_secret', window.masterPassword);
         sessionStorage.setItem('vaultMode', window.VAULT_MODE);
         if (match.token) {
@@ -182,8 +208,9 @@ async function offlineLogin(_ignored, password) {
 }
 
 /* =============================================================
-   idbSetVaultMeta / idbGetVaultMeta
-   Delegates to vaultOfflineDB → vault_meta (same as features.js)
+   idbSetVaultMeta(data)
+   Caches the full file list into vaultOfflineDB → vault_meta.
+   Called by vault-data.js after loading files.json online.
    ============================================================= */
 async function idbSetVaultMeta(data) {
     try {
@@ -196,12 +223,17 @@ async function idbSetVaultMeta(data) {
             tx.oncomplete = res;
             tx.onerror = tx.onabort = () => rej(tx.error);
         });
-        console.log('[OfflineAuth] Vault file list cached.');
+        console.log('[OfflineAuth] Vault file list cached in vault_meta.');
     } catch (e) {
         console.warn('[OfflineAuth] idbSetVaultMeta failed:', e);
     }
 }
 
+/* =============================================================
+   idbGetVaultMeta()
+   Returns the cached file list from vaultOfflineDB → vault_meta.
+   Called by auth.js during offline login.
+   ============================================================= */
 async function idbGetVaultMeta() {
     try {
         const db = await _openAuthDB();
