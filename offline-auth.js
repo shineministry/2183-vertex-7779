@@ -13,6 +13,15 @@ const _OIDB_VERSION = 2;  // bumped — forces onupgradeneeded on devices with b
 
 // ── Known member IDs (must match auth.js MEMBER_IDS list) ────
 const _MEMBER_IDS = ['main', 'shineil', 'brother', 'father', 'mother'];
+const _DEFAULT_MEMBER_ID = 'main';
+
+function _offlineMemberCandidates(memberId) {
+    const requested = String(memberId || '').trim();
+    if (requested && requested !== 'all') {
+        return [requested, ..._MEMBER_IDS.filter(id => id !== requested)];
+    }
+    return [_DEFAULT_MEMBER_ID, ..._MEMBER_IDS.filter(id => id !== _DEFAULT_MEMBER_ID)];
+}
 
 // ── Open the offline IndexedDB ────────────────────────────────
 function _openOfflineDB() {
@@ -142,17 +151,37 @@ async function syncOfflineAuth() {
    ============================================================= */
 async function offlineLogin(memberId, password) {
     try {
-        const stored = await _idbGet('authHashes', memberId);
-        if (!stored) return false;   // no record for this ID → keep trying
-
         const enteredHash = await _sha256(password);
-        if (enteredHash !== stored.passwordHash) return false;  // wrong password
+        let matchedMemberId = null;
+        let stored = null;
+
+        for (const candidate of _offlineMemberCandidates(memberId)) {
+            const row = await _idbGet('authHashes', candidate);
+            if (row && row.passwordHash === enteredHash) {
+                matchedMemberId = candidate;
+                stored = row;
+                break;
+            }
+        }
+
+        if (!stored && localStorage.getItem('vault_password_hash_offline') === enteredHash) {
+            matchedMemberId = _DEFAULT_MEMBER_ID;
+            stored = { memberId: matchedMemberId, passwordHash: enteredHash };
+        }
+
+        if (!stored) return false;   // no matching cached password
 
         // Hash matched — load the associated secret
-        const savedSecret = await _idbGet('secrets', memberId);
-        const secret = savedSecret ? savedSecret.secret : password;
-        const token  = savedSecret ? savedSecret.token  : '';
-        const mode   = savedSecret ? savedSecret.mode   : 'MEMBER';
+        const savedSecret = await _idbGet('secrets', matchedMemberId);
+        const secret = savedSecret && savedSecret.secret
+            ? savedSecret.secret
+            : (localStorage.getItem('vault_session_secret_offline') || password);
+        const token  = savedSecret && savedSecret.token
+            ? savedSecret.token
+            : (localStorage.getItem('vaultSessionToken_offline') || '');
+        const mode   = savedSecret && savedSecret.mode
+            ? savedSecret.mode
+            : (localStorage.getItem('vaultMode_offline') || 'MEMBER');
 
         // Restore session state (auth.js will also set these, but
         // setting them here ensures nothing downstream is ever undefined)
@@ -165,7 +194,7 @@ async function offlineLogin(memberId, password) {
             sessionStorage.setItem('vaultSession',      token);
         }
 
-        console.log('[OfflineAuth] Password verified for member:', memberId);
+        console.log('[OfflineAuth] Password verified for member:', matchedMemberId);
         return window.masterPassword;   // truthy string — auth.js uses as the secret
 
     } catch (e) {
