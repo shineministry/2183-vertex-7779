@@ -19,7 +19,7 @@
  *  network fetch — no stale authenticated shell is served.
  */
 
-const CACHE = "online-vault-v4";   // bump this string to force a full cache refresh
+const CACHE = "online-vault-v5";   // bump this string to force a full cache refresh
 
 const BACKEND_HOST = "backend.shinumaths989.workers.dev";
 
@@ -142,6 +142,12 @@ self.addEventListener("fetch", function(event) {
 
   // 4. Navigation (HTML pages) — network-first so a fresh login page is always served
   if (request.mode === "navigate") {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  // Auth scripts should update immediately after offline-login fixes.
+  if (["/auth.js", "/offline-auth.js", "/sw.js"].includes(url.pathname)) {
     event.respondWith(networkFirst(request));
     return;
   }
