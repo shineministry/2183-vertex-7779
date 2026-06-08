@@ -1,8 +1,8 @@
 /* =============================================================
    OFFLINE AUTH  —  offline-auth.js
-   v20260609-all-members
+   v20260609-all-members-final
 
-   Authentication method: LOCAL PBKDF2 PIN + full-password,
+   Authentication method: LOCAL PBKDF2 + SHA-256 server-hash,
    stored in IndexedDB. No server contact required after first
    online login.
 
@@ -10,30 +10,29 @@
    online login by any member. Every device can then authenticate
    any of the 7 modes fully offline.
 
-   Uses the EXISTING vaultOfflineDB (owned by features.js).
-   DB version bumped to 5 to add pin_auth store.
+   Algo types stored in vault_auth:
+     'pbkdf2-sha256-200k' — current user, hashed locally (most secure)
+     'sha256-server'      — all-members sync, hash from server env vars
+     (legacy) plain       — v3 records, plain sha256, backward compat
 
    Public API:
-     • syncOfflineAuth()              — saves current user after online login
-     • syncAllMembersOffline()        — fetches all 7 modes from backend, saves all
-     • offlineLogin(_, password)      — full-password offline verify → secret | false
-     • offlinePinSetup(pin)           — enrols a 4–8 digit PIN for current mode
-     • offlinePinLogin(pin)           — authenticates with PIN offline
-     • clearOfflinePin()              — removes stored PIN
-     • idbSetVaultMeta(data)          — caches file list
-     • idbGetVaultMeta()              — returns cached file list
+     syncOfflineAuth()         — saves current user after online login
+     syncAllMembersOffline()   — fetches all 7 modes from backend, saves all
+     offlineLogin(_, password) — full-password offline verify → secret | false
+     offlinePinSetup(pin)      — enrols a 4–8 digit PIN for current mode
+     offlinePinLogin(pin)      — authenticates with PIN offline
+     clearOfflinePin()         — removes stored PIN
+     idbSetVaultMeta(data)     — caches file list
+     idbGetVaultMeta()         — returns cached file list
    ============================================================= */
 
-window.SHINE_OFFLINE_AUTH_VERSION = '20260609-all-members';
+window.SHINE_OFFLINE_AUTH_VERSION = '20260609-all-members-final';
 
 const _WORKER_URL = 'https://backend.shinumaths989.workers.dev';
 
-// All 7 vault mode identifiers — must match what your backend returns as result.mode
-const ALL_VAULT_MODES = ['ADMIN', 'MEMBER1', 'MEMBER2', 'MEMBER3', 'MEMBER4', 'MEMBER5', 'MEMBER6'];
-
 // ── IndexedDB setup ────────────────────────────────────────────────────────
 const _AUTH_DB_NAME    = 'vaultOfflineDB';
-const _AUTH_DB_VERSION = 5;   // bumped from 4 to ensure pin_auth store exists
+const _AUTH_DB_VERSION = 5;
 
 function _openAuthDB() {
     return new Promise((resolve, reject) => {
@@ -65,6 +64,7 @@ function _randomSalt() {
         .map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// PBKDF2 — used for current-user sync (typed password, 200k rounds)
 async function _pbkdf2Hash(text, hexSalt, iterations = 200_000) {
     const enc    = new TextEncoder();
     const salt   = Uint8Array.from(hexSalt.match(/.{2}/g), h => parseInt(h, 16));
@@ -79,8 +79,20 @@ async function _pbkdf2Hash(text, hexSalt, iterations = 200_000) {
         .map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Legacy plain SHA-256 — backward compat with v3 records
-async function _sha256(text) {
+// SHA-256 matching auth.js hashPassword() exactly:
+// password.trim().normalize("NFKC") → SHA-256 → hex
+// Used to verify against server-side hashes (ADMIN_HASH, SHINEIL_HASH, etc.)
+async function _sha256AuthHash(password) {
+    const normalized = String(password).trim().normalize('NFKC');
+    const buf = await crypto.subtle.digest(
+        'SHA-256', new TextEncoder().encode(normalized)
+    );
+    return Array.from(new Uint8Array(buf))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Legacy plain SHA-256 (no normalize) — backward compat with v3 records
+async function _sha256Legacy(text) {
     const buf = await crypto.subtle.digest(
         'SHA-256', new TextEncoder().encode(String(text))
     );
@@ -88,8 +100,10 @@ async function _sha256(text) {
         .map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// ── Write one auth record to IndexedDB ────────────────────────────────────
-async function _saveAuthRecord({ mode, password, secret, token }) {
+// ── Write helpers ──────────────────────────────────────────────────────────
+
+// For current-user sync: hash the typed password locally with PBKDF2
+async function _saveAuthRecordLocal({ mode, password, secret, token }) {
     const salt         = _randomSalt();
     const passwordHash = await _pbkdf2Hash(password, salt);
     const db           = await _openAuthDB();
@@ -112,11 +126,33 @@ async function _saveAuthRecord({ mode, password, secret, token }) {
     });
 }
 
-// ── syncOfflineAuth: save CURRENT user only ────────────────────────────────
+// For all-members sync: backend sends the env-var SHA-256 hash directly
+// (same hash used by /get-secret for verification — no plaintext ever sent)
+async function _saveAuthRecordFromServerHash({ mode, passwordHash, secret, token }) {
+    const db = await _openAuthDB();
+
+    return new Promise((res, rej) => {
+        const tx = db.transaction('vault_auth', 'readwrite');
+        tx.objectStore('vault_auth').put({
+            id:           mode,
+            passwordHash, // SHA-256 hex straight from server env var
+            algo:         'sha256-server',
+            secret:       String(secret || ''),
+            token:        token || '',
+            mode,
+            trusted:      true,
+            savedAt:      Date.now()
+        });
+        tx.oncomplete = res;
+        tx.onerror = tx.onabort = () => rej(tx.error);
+    });
+}
+
+// ── syncOfflineAuth: save CURRENT logged-in user ───────────────────────────
 /**
  * Called after every successful online login (existing hook in auth.js).
- * Stores the current member's credentials into vault_auth.
- * Then automatically triggers syncAllMembersOffline() in the background.
+ * Saves the current member's credentials with PBKDF2.
+ * Then fires syncAllMembersOffline() in the background to cache all 7.
  */
 async function syncOfflineAuth() {
     try {
@@ -133,12 +169,12 @@ async function syncOfflineAuth() {
             return;
         }
 
-        await _saveAuthRecord({ mode, password, secret, token });
-        console.log('[OfflineAuth] Current user credentials saved for mode:', mode);
+        await _saveAuthRecordLocal({ mode, password, secret, token });
+        console.log('[OfflineAuth] Current user saved (PBKDF2) for mode:', mode);
 
-        // Kick off full sync in background — doesn't block the login flow
+        // Background: cache all 7 members — doesn't block login flow
         syncAllMembersOffline().catch(e =>
-            console.warn('[OfflineAuth] Background all-member sync failed:', e)
+            console.warn('[OfflineAuth] Background all-member sync failed:', e.message)
         );
 
     } catch (e) {
@@ -148,24 +184,14 @@ async function syncOfflineAuth() {
 
 // ── syncAllMembersOffline: fetch & cache ALL 7 modes ──────────────────────
 /**
- * Calls the backend /sync-offline-members endpoint (requires a valid session
- * token). The backend returns the plain-text secret (master password) and
- * session token for every vault mode. We PBKDF2-hash each one locally and
- * store into vault_auth, keyed by mode.
+ * Calls POST /sync-offline-members with the current session token.
+ * Backend returns { success, members: [{ mode, passwordHash, secret, token }] }
+ * where passwordHash is the SHA-256 hex already stored in the worker env vars —
+ * no plaintext password ever sent over the wire.
  *
- * Backend endpoint contract:
- *   POST /sync-offline-members
- *   Headers: Authorization: Bearer <sessionToken>
- *   Response: {
- *     success: true,
- *     members: [
- *       { mode: "ADMIN",   password: "...", secret: "...", token: "..." },
- *       { mode: "MEMBER1", password: "...", secret: "...", token: "..." },
- *       ...7 total
- *     ]
- *   }
- *
- * Returns: { synced: N, failed: [] } summary object.
+ * Each record is stored in vault_auth with algo: 'sha256-server'.
+ * offlineLogin() verifies by hashing the typed password the same way
+ * auth.js does (trim + NFKC normalize + SHA-256) and comparing.
  */
 async function syncAllMembersOffline() {
     const token = sessionStorage.getItem('vaultSessionToken') ||
@@ -181,7 +207,7 @@ async function syncAllMembersOffline() {
         return { synced: 0, failed: [] };
     }
 
-    console.log('[OfflineAuth] Syncing all member credentials for offline access...');
+    console.log('[OfflineAuth] Fetching all member credentials for offline caching...');
 
     let members = [];
 
@@ -196,7 +222,7 @@ async function syncAllMembersOffline() {
 
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            throw new Error(err.message || `HTTP ${res.status}`);
+            throw new Error(err.error || err.message || `HTTP ${res.status}`);
         }
 
         const data = await res.json();
@@ -208,42 +234,46 @@ async function syncAllMembersOffline() {
         members = data.members;
 
     } catch (fetchErr) {
-        console.warn('[OfflineAuth] /sync-offline-members fetch failed:', fetchErr.message);
-        // Don't crash — the current user was already saved by syncOfflineAuth()
-        return { synced: 0, failed: ALL_VAULT_MODES, error: fetchErr.message };
+        console.warn('[OfflineAuth] /sync-offline-members failed:', fetchErr.message);
+        return { synced: 0, failed: [], error: fetchErr.message };
     }
 
-    // Hash and store each member's credentials into IndexedDB
-    const failed  = [];
-    let   synced  = 0;
+    const failed = [];
+    let   synced = 0;
 
     for (const m of members) {
-        if (!m.mode || !m.password) {
-            console.warn('[OfflineAuth] Skipping member with missing mode/password:', m);
+        if (!m.mode || !m.passwordHash) {
+            console.warn('[OfflineAuth] Skipping member with missing mode/passwordHash:', m.mode);
             continue;
         }
         try {
-            await _saveAuthRecord({
-                mode:     m.mode,
-                password: m.password,
-                secret:   m.secret || m.password,
-                token:    m.token  || ''
+            await _saveAuthRecordFromServerHash({
+                mode:         m.mode,
+                passwordHash: m.passwordHash,
+                secret:       m.secret || '',
+                token:        m.token  || ''
             });
             synced++;
-            console.log(`[OfflineAuth] ✓ Cached credentials for mode: ${m.mode}`);
+            console.log(`[OfflineAuth] ✓ Cached mode: ${m.mode}`);
         } catch (saveErr) {
-            console.warn(`[OfflineAuth] ✗ Failed to cache mode ${m.mode}:`, saveErr);
+            console.warn(`[OfflineAuth] ✗ Failed to cache mode ${m.mode}:`, saveErr.message);
             failed.push(m.mode);
         }
     }
 
-    console.log(`[OfflineAuth] All-member sync complete — ${synced}/${members.length} stored. Failed: [${failed.join(', ') || 'none'}]`);
+    console.log(`[OfflineAuth] All-member sync done — ${synced}/${members.length} stored.${failed.length ? ' Failed: ' + failed.join(', ') : ''}`);
     return { synced, failed };
 }
 
 // ── offlineLogin: full-password path ──────────────────────────────────────
 /**
- * Scans ALL records in vault_auth. Supports PBKDF2 (new) and SHA-256 (legacy).
+ * Tries every record in vault_auth against the typed password.
+ *
+ * Three algo branches:
+ *   'pbkdf2-sha256-200k' — derive with PBKDF2 + stored salt, compare
+ *   'sha256-server'      — hash with trim+NFKC+SHA-256 (matches auth.js), compare
+ *   legacy               — plain SHA-256 no normalize (v3 backward compat)
+ *
  * Returns vault secret string on success, false on failure.
  */
 async function offlineLogin(_ignored, password) {
@@ -265,22 +295,29 @@ async function offlineLogin(_ignored, password) {
 
         for (const r of allRecords) {
             if (r.algo === 'pbkdf2-sha256-200k') {
+                // Current-user path: PBKDF2 with per-record salt
                 const derived = await _pbkdf2Hash(password, r.salt);
                 if (derived === r.passwordHash) { match = r; break; }
+
+            } else if (r.algo === 'sha256-server') {
+                // All-members path: same SHA-256 as auth.js hashPassword()
+                const derived = await _sha256AuthHash(password);
+                if (derived === r.passwordHash) { match = r; break; }
+
             } else {
-                // Legacy v3 plain SHA-256
-                const plain = await _sha256(password);
-                if (plain === r.passwordHash) { match = r; break; }
+                // Legacy v3 records: plain SHA-256, no normalization
+                const derived = await _sha256Legacy(password);
+                if (derived === r.passwordHash) { match = r; break; }
             }
         }
 
         if (!match) {
-            console.warn('[OfflineAuth] Password did not match any of the', allRecords.length, 'stored mode(s).');
+            console.warn('[OfflineAuth] No matching record found across', allRecords.length, 'stored mode(s).');
             return false;
         }
 
         _restoreSession(match, password);
-        console.log('[OfflineAuth] Full-password offline login OK, mode:', window.VAULT_MODE);
+        console.log('[OfflineAuth] Offline login OK, mode:', window.VAULT_MODE, '| algo:', match.algo);
         return window.masterPassword;
 
     } catch (e) {
@@ -293,7 +330,7 @@ async function offlineLogin(_ignored, password) {
 
 /**
  * Enrol a 4–8 digit numeric PIN for the current vault mode.
- * Must be called while a session is active (online or offline).
+ * Must be called while a session is active.
  */
 async function offlinePinSetup(pin) {
     if (!pin || !/^\d{4,8}$/.test(pin)) {
