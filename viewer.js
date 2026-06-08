@@ -24,16 +24,27 @@ async function openSecureFile(
 path,
 displayName){
 
-    // Restore masterPassword from sessionStorage (set by auth.js on login)
-    if (!window.masterPassword) {
-        const savedSecret = sessionStorage.getItem("vault_session_secret");
-        if (savedSecret) {
-            window.masterPassword = savedSecret;
-        } else {
-            alert("Session not unlocked. Please log in again.");
-            return;
-        }
-    }
+    if(!window.masterPassword){
+
+ const savedSecret =
+ sessionStorage.getItem(
+ "vault_session_secret"
+ );
+
+ if(savedSecret){
+
+  window.masterPassword =
+  savedSecret;
+
+ } else {
+
+  alert(
+  "Session not unlocked. Please log in again."
+  );
+
+  return;
+ }
+}
 
     try {
     const vaultSessionToken =
@@ -44,15 +55,11 @@ displayName){
         throw new Error("Missing vault session token. Please log in again.");
     }
 
-    // =========================
-    // FETCH: try backend first, fall back to IndexedDB cache
-    // (navigator.onLine is unreliable -- we try the network and catch failures)
-    // =========================
+    // Extract filename key (e.g. "docs/abc.enc" → "abc.enc")
+    const docKey = path.replace(/^\/docs\/|^docs\//, '');
 
     let buffer;
-
     try {
-        // ATTEMPT NETWORK FETCH
         const res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
             headers: { "Authorization": "Bearer " + vaultSessionToken }
         });
@@ -74,44 +81,23 @@ displayName){
 
         buffer = await res.arrayBuffer();
 
-        // SAVE TO INDEXEDDB for next offline session
-        try {
-            const db = await openVaultDB();
-            const tx = db.transaction("secureFiles", "readwrite");
-            tx.objectStore("secureFiles").put({ path: path, data: buffer.slice(0) });
-        } catch (cacheErr) {
-            console.warn("Offline cache write failed:", cacheErr);
+        // Cache encrypted bytes in vault_docs for offline use
+        if (typeof idbSaveDoc === 'function') {
+            idbSaveDoc(docKey, buffer).catch(() => {});
         }
 
-    } catch (fetchErr) {
-
-        // NETWORK FAILED -- try IndexedDB cache
-        console.log("Network unavailable, trying local cache...");
-
-        let saved = null;
-        try {
-            const db = await openVaultDB();
-            const tx = db.transaction("secureFiles", "readonly");
-            saved = await new Promise((resolve, reject) => {
-                const req = tx.objectStore("secureFiles").get(path);
-                req.onsuccess = () => resolve(req.result);
-                req.onerror   = () => reject(req.error);
-            });
-        } catch (dbErr) {
-            console.error("IndexedDB read failed:", dbErr);
-        }
-
-        if (!saved || !saved.data) {
-            // Only re-throw real server errors, not network failures
-            if (fetchErr.message && !fetchErr.message.toLowerCase().includes('fetch')) {
-                throw fetchErr;
+    } catch (netErr) {
+        // Network failed — try vault_docs in IndexedDB
+        if (typeof idbGetDoc === 'function') {
+            const cached = await idbGetDoc(docKey);
+            if (cached) {
+                buffer = cached;
+            } else {
+                throw new Error('Document not available offline. Open it online first to cache it.');
             }
-            alert("You are offline and this file has not been cached yet.\nPlease open it once while online to enable offline access.");
-            return;
+        } else {
+            throw netErr;
         }
-
-        buffer = saved.data;
-        console.log("Loaded from local cache.");
     }
 
         // SETTINGS LENGTH
@@ -249,11 +235,8 @@ currentDecryptedPdf = decrypted.slice(0);
 
 const pdfjsLib = window.pdfjsLib;
 
-// Point to locally hosted worker — must be in your site root.
-// Download from: https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js
-// and save as pdf.worker.min.js next to your HTML file.
-// The local file is also added to your service worker cache so it works offline.
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 // LOAD PDF
 
@@ -767,11 +750,9 @@ displayName;
 
     console.error(e);
 
-    if (e instanceof TypeError && e.message === 'Failed to fetch') {
-        alert("You are offline and this file has not been cached yet.\nPlease open it once while online to enable offline access.");
-    } else {
-        alert("Access Denied: Could not decrypt file.");
-    }
+    alert(
+        "Access Denied: Could not decrypt file."
+    );
 
 }
 
