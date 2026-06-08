@@ -16,7 +16,7 @@ let sessionStartTime = null;
 
    let sessionId = crypto.randomUUID();
 window.allFilesData = {};
-window.SHINE_AUTH_VERSION = '20260607-offlinefix3';
+window.SHINE_AUTH_VERSION = '20260608-offlinefix4';
 let currentCategory = "";
    
    async function sha256Bytes(text){
@@ -1287,26 +1287,28 @@ async function hashPassword(password) {
    FIXED STEP 1 AUTHENTICATION GATEWAY WITH CARD TARGETS
 ========================================================== */
 async function showStep2() {
+
     clearTimeout(inactivityTimer);
 
     const now = Date.now();
+
     if (now < lockUntil) {
         const remaining = Math.ceil((lockUntil - now) / 1000);
         alert(`Too many wrong attempts.\nTry again in ${remaining} seconds.`);
         return;
     }
 
-    // Capture responsive field values from DOM inputs
-    const visitorName = document.getElementById("user-name") ? document.getElementById("user-name").value.trim() : "";
-    const pass = document.getElementById("vault-pass") ? document.getElementById("vault-pass").value.trim() : "";
-    const purpose = document.getElementById("user-purpose") ? document.getElementById("user-purpose").value.trim() : "";
+    // Capture responsive field values
+    const visitorName = document.getElementById("user-name").value.trim();
+    const pass = document.getElementById("vault-pass").value.trim();
+    const purpose = document.getElementById("user-purpose").value.trim();
 
     if (!visitorName || !purpose || !pass) {
         alert("Username, Access Context, and Access Matrix Pin are required.");
         return;
     }
 
-    // Acquire primary interface control buttons
+    // Acquire primary action node buttons
     const loginBtn = document.getElementById('submitBtn');
     const originalBtnText = loginBtn ? loginBtn.textContent : '';
     if (loginBtn) {
@@ -1346,12 +1348,14 @@ async function showStep2() {
                 Dismiss
             </button>
         `;
+        
+        // CORRECTION: Target .login-wrapper container instead of obsolete .step-card
         const card = document.querySelector('#step1 .login-wrapper');
         if (card) card.appendChild(box);
         else alert(title + ': ' + detail);
     };
 
-    const fetchWithTimeout = (url, options, ms = 8000) => {
+    const fetchWithTimeout = (url, options, ms = 12000) => {
         const controller = new AbortController();
         const tid = setTimeout(() => controller.abort(), ms);
         return fetch(url, { ...options, signal: controller.signal })
@@ -1360,19 +1364,15 @@ async function showStep2() {
 
     try {
         masterPassword = pass;
-        
-        // ── NATIVE CRYPTO SAFE HARBOR ENGINE ─────────────────────────────────
-        // Mitigates offline crashes caused by uncompiled external script dependencies
-        let hash = "";
-        try {
-            const msgUint8 = new TextEncoder().encode(pass);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        } catch (cryptoErr) {
-            console.warn("[Auth] Primary hashing calculation failure. Running raw bypass fallback...");
-            hash = pass; 
-        }
+        const hash = await hashPassword(pass);
+
+        // =================================
+        // OFFLINE LOGIN — navigator.onLine is unreliable so we always
+        // attempt the network first and fall back on failure (handled
+        // in the fetchErr catch block below). Skip the hard onLine gate.
+        // =================================
+        // END OFFLINE LOGIN
+        // =================================
 
         let res;
         try {
@@ -1383,105 +1383,60 @@ async function showStep2() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ hash })
                 },
-                8000
+                12000
             );
         } catch (fetchErr) {
-            // ── OFFLINE INTERCEPT MULTI-MODE DEPLOYMENT ──────────────────────
-            console.warn("[Auth] Network node unavailable. Initiating offline multi-profile scan sequence...");
-
-            if (typeof offlineLogin !== 'function') {
-                restoreLoginBtn();
-                showLoginError('Offline Module Core Missing', 'The authentication runtime could not discover offline-auth.js bindings.');
-                return;
-            }
-
-            if (loginBtn) {
-                loginBtn.textContent = '🔒 Verifying credential matrix across profiles...';
-            }
-
-            // Stash user value temporarily into window namespace so syncOfflineAuth can capture it if needed
-            window._pendingAuthPass = pass;
-
-            let offlineSecret = false;
-            try {
-                // The updated offlineLogin scans ALL stored modes dynamically in vault_auth
-                offlineSecret = await offlineLogin(null, pass);
-            } catch (offlineErr) {
-                console.error('[Auth] Local authentication engine threw exception:', offlineErr);
-            }
-
-            if (offlineSecret) {
-                // Explicitly bind restored keys into session spaces
-                window.masterPassword = offlineSecret;
-                masterPassword = offlineSecret;
-                sessionStorage.setItem("vault_session_secret", offlineSecret);
-
-                let cachedMeta = null;
-                try {
+            // Network failed — try offline login with cached credentials
+            if (typeof offlineLogin === 'function') {
+                const ok = await offlineLogin(null, pass);
+                if (ok) {
                     if (typeof idbGetVaultMeta === 'function') {
-                        cachedMeta = await idbGetVaultMeta();
+                        const cachedMeta = await idbGetVaultMeta();
+                        if (cachedMeta) window.allFilesData = cachedMeta;
                     }
-                } catch (metaErr) {
-                    console.warn('[Auth] Cached schema document recovery failed:', metaErr);
-                }
-
-                if (cachedMeta) {
-                    window.allFilesData = cachedMeta;
-                }
-
-                if (loginBtn) {
-                    loginBtn.textContent = '✓ Unlocked Offline';
-                    loginBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
-                    loginBtn.style.opacity = '1';
-                }
-
-                const step1 = document.getElementById('step1');
-                const revealOfflineDashboard = () => {
-                    if (step1) step1.style.display = 'none';
-                    
-                    // Directly mount the core file manager dashboard view structures
-                    const dashboard = document.getElementById('vault-dashboard') || document.getElementById('main-vault-ui');
-                    if (dashboard) {
-                        dashboard.style.display = 'flex';
-                        dashboard.style.opacity = '1';
+                    if (loginBtn) {
+                        loginBtn.textContent = '✓ Offline Mode';
+                        loginBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+                        loginBtn.style.opacity = '1';
                     }
-                    
-                    if (typeof vaultPostInit === 'function') vaultPostInit();
-                    alert(`✅ Access permitted. Secure Offline Session established for profile mode: [${window.VAULT_MODE}].`);
-                };
-
-                if (step1) {
-                    step1.style.opacity = '0';
-                    step1.style.transition = 'opacity 0.3s ease';
-                    setTimeout(revealOfflineDashboard, 300);
-                } else {
-                    revealOfflineDashboard();
+                    const step1 = document.getElementById('step1');
+                    const openDashboard = () => {
+                        step1.style.display = 'none';
+                        const dash = document.getElementById('vault-dashboard');
+                        if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
+                        vaultPostInit();
+                    };
+                    if (step1) { step1.style.opacity = '0'; step1.style.transition = 'opacity 0.3s ease'; setTimeout(openDashboard, 300); }
+                    else openDashboard();
+                    return;
                 }
+                // Wrong password — tell user clearly
+                restoreLoginBtn();
+                showLoginError('Incorrect Password', 'The password does not match any saved offline profile. Try again.');
                 return;
             }
-
+            // offlineLogin not available
             restoreLoginBtn();
-            showLoginError('Offline Access Rejected', 'No matched profile password configurations found locally inside the browser database cache storage.');
+            showLoginError('Offline — Cannot Authenticate', 'Connect to the internet to log in for the first time.');
             return;
         }
 
-        // ── ONLINE VALIDATION PATHWAY ────────────────────────────────────────
         if (res.status >= 500) {
             restoreLoginBtn();
-            showLoginError('Server Error', 'Secure backend node returned an error state (HTTP ' + res.status + ').');
+            showLoginError('Server Error', 'Secure node returned an error state (HTTP ' + res.status + ').');
             return;
         }
 
         if (!res.ok && (res.headers.get("content-type") || "").includes("text/html")) {
             restoreLoginBtn();
-            showLoginError('Access Blocked', 'The vault infrastructure web-application-firewall rejected this token transmission link.');
+            showLoginError('Access Blocked', 'The vault firewall rejected this identity node link.');
             return;
         }
 
         let result = {};
         try { result = await res.json(); } catch {
             restoreLoginBtn();
-            showLoginError('Response Integrity Fault', 'The secure server returned an unparseable payload pattern.');
+            showLoginError('Response Fault', 'The server returned an unreadable payload pattern.');
             return;
         }
 
@@ -1490,16 +1445,17 @@ async function showStep2() {
             failedAttempts++;
 
             if (failedAttempts >= 5) {
-                if (typeof sendSecurityAlert === 'function') sendSecurityAlert("Multiple failed password attempts");
+                sendSecurityAlert("Multiple failed password attempts");
                 lockUntil = Date.now() + 300000;
                 failedAttempts = 0;
-                showLoginError('Security Freeze', 'Too many unauthorized access requests. Interface frozen for 5 minutes.');
+                showLoginError('Vault Locked', 'Too many unauthorized access requests. Security freeze for 5 minutes.');
             } else {
-                showLoginError('Authentication Failure', `Incorrect identity access token string. ${5 - failedAttempts} attempts remain.`);
+                showLoginError('Authentication Failure', `Incorrect access token matrix sequence. ${5 - failedAttempts} attempts remain.`);
             }
             return;
         }
 
+        // AUTHORIZED — stash result and proceed
         if (loginBtn) {
             loginBtn.textContent = '✓ Identity Verified';
             loginBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
@@ -1508,32 +1464,35 @@ async function showStep2() {
 
         failedAttempts = 0;
 
-        // Populate system cache variables for cross-script usage
+        // Stash auth data — applied fully only after TOTP passes (or immediately if OTP skipped)
         window._pendingAuthResult = result;
         window._pendingAuthPass   = pass;
-        window._pendingAuthHash   = hash;
+        window._pendingAuthHash   = await hashPassword(pass);
 
         const otpRequested = document.getElementById("req-otp") && document.getElementById("req-otp").checked;
+
         const step1 = document.getElementById("step1");
 
         if (otpRequested) {
+            // Route to TOTP step — session applied only after TOTP verification
             if (step1) {
                 step1.style.pointerEvents = "none";
                 step1.style.opacity = "0";
                 step1.style.transition = "opacity 0.3s ease";
                 setTimeout(() => {
                     step1.style.display = "none";
-                    if (typeof startTOTPStep === 'function') startTOTPStep(window._pendingAuthHash);
+                    startTOTPStep(window._pendingAuthHash);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }, 300);
             } else {
-                if (typeof startTOTPStep === 'function') startTOTPStep(window._pendingAuthHash);
+                startTOTPStep(window._pendingAuthHash);
             }
         } else {
+            // Skip TOTP — apply session immediately and go to Step 2 (Declaration)
             sessionStorage.setItem("vaultSessionToken", result.sessionToken);
             sessionStorage.setItem("vaultSession",       result.sessionToken);
 
-            if (typeof resetInactivityTimer === 'function') resetInactivityTimer();
+            resetInactivityTimer();
 
             window.masterPassword = result.secret ? String(result.secret) : String(pass || "");
             if (result.secret) sessionStorage.setItem("vault_session_secret", result.secret);
@@ -1541,24 +1500,23 @@ async function showStep2() {
             window.VAULT_MODE = result.mode;
             sessionStorage.setItem("vaultMode", result.mode);
 
+            if (window.VAULT_MODE !== "ADMIN") {
+                const shareGear = document.getElementById("share-gear");
+                if (shareGear) shareGear.style.display = "none";
+            }
+
             masterPassword = window.masterPassword;
             sessionStartTime = new Date();
 
-            // ── INTEGRATED SYNC ROUTE ────────────────────────────────────────
-            // Saves the newly authenticated profile details securely into the correct mode slot
-            if (typeof syncOfflineAuth === 'function') {
-                try {
-                    await syncOfflineAuth();
-                    localStorage.setItem('vault_offline_synced', '1');
-                } catch (syncErr) {
-                    console.warn('[Auth] Failed updating secure profile table entry:', syncErr);
-                }
-            }
+            // Sync all member password hashes for offline login
+            if (typeof syncOfflineAuth === 'function') await syncOfflineAuth();
 
+            // Clean up temp storage
             window._pendingAuthResult = null;
             window._pendingAuthPass   = null;
             window._pendingAuthHash   = null;
 
+            // Transition to Step 2 (Legal Declaration)
             if (step1) {
                 step1.style.pointerEvents = "none";
                 step1.style.opacity = "0";
@@ -1578,7 +1536,7 @@ async function showStep2() {
     } catch (e) {
         restoreLoginBtn();
         console.error(e);
-        showLoginError('Pipeline Disruption', e.message || 'Fatal data stream execution fault.');
+        showLoginError('Connection Error', e.message || 'Fatal data stream pipeline disruption.');
     }
 }
 /* =========================
@@ -1692,30 +1650,27 @@ dash.classList.add(
 
             initVault().then(() => {
 
-    console.log(
-      "INIT VAULT DONE"
-    );
+    console.log("INIT VAULT DONE");
 
     vaultPostInit();
 
-    console.log(
-      "STARTING AI INDEXING"
-    );
+    // Cache file list for offline access
+    if (typeof idbSetVaultMeta === 'function' && window.allFilesData) {
+        idbSetVaultMeta(window.allFilesData).catch(() => {});
+    }
 
     runAIIndexingOnLogin();
 
 }).catch(err => {
 
-    console.error(
-      "initVault failed:",
-      err
-    );
+    console.error("initVault failed:", err);
 
     vaultPostInit();
 
-    console.log(
-      "STARTING AI INDEXING FROM CATCH"
-    );
+    // Still try to cache whatever allFilesData we have
+    if (typeof idbSetVaultMeta === 'function' && window.allFilesData) {
+        idbSetVaultMeta(window.allFilesData).catch(() => {});
+    }
 
     runAIIndexingOnLogin();
 });
