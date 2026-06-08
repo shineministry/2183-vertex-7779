@@ -16,7 +16,7 @@ let sessionStartTime = null;
 
    let sessionId = crypto.randomUUID();
 window.allFilesData = {};
-window.SHINE_AUTH_VERSION = '20260608-offlinefix4';
+window.SHINE_AUTH_VERSION = '20260607-offlinefix3';
 let currentCategory = "";
    
    async function sha256Bytes(text){
@@ -1388,36 +1388,84 @@ async function showStep2() {
         } catch (fetchErr) {
             // Network failed — try offline login with cached credentials
             if (typeof offlineLogin === 'function') {
+                // Simple: one call, offlineLogin reads the username from the form itself
                 const ok = await offlineLogin(null, pass);
                 if (ok) {
-                    if (typeof idbGetVaultMeta === 'function') {
-                        const cachedMeta = await idbGetVaultMeta();
-                        if (cachedMeta) window.allFilesData = cachedMeta;
+                    // Load cached file list so the dashboard has data
+                    const cachedMeta = await idbGetVaultMeta();
+                    if (cachedMeta) {
+                        window.allFilesData = cachedMeta;
+                    } else {
+                        console.warn('[OfflineAuth] No cached file list — dashboard will open empty.');
                     }
-                    if (loginBtn) {
-                        loginBtn.textContent = '✓ Offline Mode';
-                        loginBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
-                        loginBtn.style.opacity = '1';
-                    }
+
+                    // Mark button as offline mode
+                    if (loginBtn) { loginBtn.textContent = '✓ Offline Mode'; loginBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)'; loginBtn.style.opacity = '1'; }
+
+                    // ── STEP 1: Hide login, show Legal Declaration (step2) ──
+                    // Captcha (step3) is skipped offline — we go step1 → step2 → dashboard
                     const step1 = document.getElementById('step1');
-                    const openDashboard = () => {
-                        step1.style.display = 'none';
+                    const step2 = document.getElementById('step2');
+
+                    // Wire showStep3 so that when user accepts the declaration,
+                    // it opens the dashboard and initialises the vault instead of
+                    // going to the captcha step (step3).
+                    window._offlineMode = true;
+
+                    const showDashboardOffline = () => {
+                        if (step2) { step2.style.display = 'none'; }
                         const dash = document.getElementById('vault-dashboard');
                         if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
+
+                        // Render the file list from cached allFilesData
+                        if (window.allFilesData && Object.keys(window.allFilesData).length) {
+                            // renderFiles is defined in vault-ui.js / auth.js
+                            // Try the first category to trigger the sidebar render
+                            const firstCat = Object.keys(window.allFilesData)[0];
+                            if (typeof renderFiles === 'function' && firstCat) {
+                                renderFiles(window.allFilesData[firstCat], firstCat);
+                            }
+                            // Also populate the sidebar category list
+                            if (typeof renderCategoryList === 'function') {
+                                renderCategoryList(window.allFilesData);
+                            }
+                        }
+
                         vaultPostInit();
+                        startSessionTimer();
+                        startInactivityMonitor();
+                        if (typeof listenForForceLogout === 'function') listenForForceLogout();
+                        console.log('[OfflineAuth] Dashboard ready — offline mode active.');
                     };
-                    if (step1) { step1.style.opacity = '0'; step1.style.transition = 'opacity 0.3s ease'; setTimeout(openDashboard, 300); }
-                    else openDashboard();
+
+                    // Patch showStep3 just for this offline session so the
+                    // "I Agree" button in step2 calls showDashboardOffline instead
+                    window._offlineShowDashboard = showDashboardOffline;
+
+                    // Transition: step1 → step2
+                    if (step1) {
+                        step1.style.opacity = '0';
+                        step1.style.transition = 'opacity 0.3s ease';
+                        setTimeout(() => {
+                            step1.style.display = 'none';
+                            if (step2) { step2.style.display = 'flex'; step2.style.opacity = '1'; }
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }, 300);
+                    } else if (step2) {
+                        step2.style.display = 'flex';
+                        step2.style.opacity = '1';
+                    }
                     return;
                 }
-                // Wrong password — tell user clearly
                 restoreLoginBtn();
-                showLoginError('Incorrect Password', 'The password does not match any saved offline profile. Try again.');
                 return;
             }
-            // offlineLogin not available
             restoreLoginBtn();
-            showLoginError('Offline — Cannot Authenticate', 'Connect to the internet to log in for the first time.');
+            if (fetchErr.name === 'AbortError') {
+                showLoginError('Connection Timed Out', 'The secure server took too long to respond.');
+            } else {
+                showLoginError('Server Unreachable', 'Your network may be blocking connection points.');
+            }
             return;
         }
 
@@ -1650,27 +1698,30 @@ dash.classList.add(
 
             initVault().then(() => {
 
-    console.log("INIT VAULT DONE");
+    console.log(
+      "INIT VAULT DONE"
+    );
 
     vaultPostInit();
 
-    // Cache file list for offline access
-    if (typeof idbSetVaultMeta === 'function' && window.allFilesData) {
-        idbSetVaultMeta(window.allFilesData).catch(() => {});
-    }
+    console.log(
+      "STARTING AI INDEXING"
+    );
 
     runAIIndexingOnLogin();
 
 }).catch(err => {
 
-    console.error("initVault failed:", err);
+    console.error(
+      "initVault failed:",
+      err
+    );
 
     vaultPostInit();
 
-    // Still try to cache whatever allFilesData we have
-    if (typeof idbSetVaultMeta === 'function' && window.allFilesData) {
-        idbSetVaultMeta(window.allFilesData).catch(() => {});
-    }
+    console.log(
+      "STARTING AI INDEXING FROM CATCH"
+    );
 
     runAIIndexingOnLogin();
 });
