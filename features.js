@@ -707,10 +707,15 @@ async function idbGetVaultDoc(filename) {
 
 // Cache the vault file metadata list (what allFilesData holds)
 async function idbSaveVaultMeta(allFilesData) {
-  const db = await openIDB();
+   const db = await openIDB();
+
+  console.log('DB NAME:', db.name);
+  console.log('DB VERSION:', db.version);
+  console.log('STORES:', [...db.objectStoreNames]);
+
   return new Promise((resolve, reject) => {
-    const tx = db.transaction('vault_meta', 'readwrite');
-    tx.objectStore('vault_meta').put({ key: 'allFilesData', value: allFilesData, savedAt: Date.now() });
+      const tx = db.transaction('vault_meta', 'readwrite');
+     tx.objectStore('vault_meta').put({ key: 'allFilesData', value: allFilesData, savedAt: Date.now() });
     tx.oncomplete = resolve;
     tx.onerror    = e => reject(e.target.error);
   });
@@ -786,7 +791,6 @@ async function preCacheVaultDocs(filesData) {
   }
   console.log('[Offline cache] Pre-caching complete.');
 }
-
 // ── Logout: clears session + SW cache so login works cleanly again ─────────
 
 /**
