@@ -120,18 +120,6 @@ async function savePMEntry() {
 }
 
 async function copyPMPassword(id) {
-  // Offline: read from IndexedDB cache instead of backend
-  if (!navigator.onLine) {
-    const entries = await idbGetAllPMEntries();
-    const entry = entries.find(e => e.id === id);
-    if (entry && entry.password) {
-      navigator.clipboard.writeText(entry.password);
-      alert('✅ Password copied! (offline cache)');
-    } else {
-      alert('❌ Password not found in offline cache.');
-    }
-    return;
-  }
   const res = await fetch(`${WORKER_URL}/passwords/get-password`, {
     method: 'POST',
     headers: await getAuthHeaders(),
@@ -249,8 +237,42 @@ const previewSessionToken =
     sessionStorage.getItem("vaultSessionToken") ||
     sessionStorage.getItem("vaultSession");
 
-        // Use offline-aware fetch instead of direct URL
-        const buf = await fetchVaultDocWithOfflineFallback(file.file);
+const res = await fetch(
+    "https://backend.shinumaths989.workers.dev/docs/" + file.file,
+    {
+        headers: {
+            "Authorization":
+                "Bearer " + previewSessionToken
+        }
+    }
+);
+
+        if (!res.ok) {
+            const eb =
+                await res.json()
+                .catch(() => ({}));
+
+            throw new Error(
+                eb.message ||
+                `HTTP ${res.status}`
+            );
+        }
+
+        const rct =
+            res.headers.get("content-type") || "";
+
+        if (rct.includes("application/json")) {
+            const eb =
+                await res.json();
+
+            throw new Error(
+                eb.message ||
+                "JSON error"
+            );
+        }
+
+        const buf =
+            await res.arrayBuffer();
 
         const sLen =
             new Uint32Array(
@@ -608,34 +630,15 @@ function copyShareLink(){
 
 // ── IndexedDB helpers ──────────────────────────────────────────────────────
 
-const IDB_NAME    = 'vaultOfflineDB';
-const IDB_VERSION = 3;
-
+// ── IDB version ownership transferred to offline-auth.js (v3) ─────────────
+// openIDB() now delegates to window.openVaultDB() so only ONE script
+// ever calls indexedDB.open() — eliminating the v2/v3 version conflict.
+// offline-auth.js MUST be loaded before features.js in HTML.
 function openIDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(IDB_NAME, IDB_VERSION);
-    req.onupgradeneeded = e => {
-      const db = e.target.result;
-      // Store for password manager entries
-      if (!db.objectStoreNames.contains('pm_entries')) {
-        db.createObjectStore('pm_entries', { keyPath: 'id' });
-      }
-      // Store for cached vault document blobs (keyed by filename)
-      if (!db.objectStoreNames.contains('vault_docs')) {
-        db.createObjectStore('vault_docs', { keyPath: 'filename' });
-      }
-      // Store for vault file metadata list
-      if (!db.objectStoreNames.contains('vault_meta')) {
-        db.createObjectStore('vault_meta', { keyPath: 'key' });
-      }
-      // Store for offline auth (per-member password hashes)
-      if (!db.objectStoreNames.contains('vault_auth')) {
-        db.createObjectStore('vault_auth', { keyPath: 'id' });
-      }
-    };
-    req.onsuccess  = e => resolve(e.target.result);
-    req.onerror    = e => reject(e.target.error);
-  });
+  if (typeof window.openVaultDB === 'function') return window.openVaultDB();
+  // Fallback if offline-auth.js somehow not loaded yet — should not happen
+  console.error('[features] window.openVaultDB not found — is offline-auth.js loaded first?');
+  return Promise.reject(new Error('openVaultDB not available'));
 }
 
 async function idbSavePMEntry(entry) {
@@ -723,107 +726,6 @@ async function idbGetVaultMeta() {
   });
 }
 
-// ===============================
-// OFFLINE AUTH HELPERS
-// ===============================
-
-/**
- * Save a single member's password hash for offline login.
- * Called after successful online login for the current user.
- */
-async function saveOfflineAuth(memberId, masterPassword) {
-  const db = await openIDB();
-  const passwordHash = await window.sha256(masterPassword);
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('vault_auth', 'readwrite');
-    tx.objectStore('vault_auth').put({
-      id: memberId || 'main',
-      trusted: true,
-      passwordHash,
-      savedAt: Date.now()
-    });
-    tx.oncomplete = resolve;
-    tx.onerror = e => reject(e.target.error);
-  });
-}
-
-/**
- * Retrieve offline auth record for a member.
- */
-async function getOfflineAuth(memberId) {
-  const db = await openIDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('vault_auth', 'readonly');
-    const req = tx.objectStore('vault_auth').get(memberId || 'main');
-    req.onsuccess = e => resolve(e.target.result || null);
-    req.onerror   = e => reject(e.target.error);
-  });
-}
-
-/**
- * Sync ALL vault member password hashes from backend into IndexedDB.
- * Called after every successful online login.
- * Requires /vault-auth-hashes endpoint on the worker (see worker code below).
- * Backend returns: { members: [{ member: "MEM1", passwordHash: "abc...", mode: "MEMBER" }, ...] }
- * Hashes are pre-computed SHA-256 on the worker — plaintext passwords never leave the worker.
- */
-async function syncOfflineAuth() {
-  if (!navigator.onLine) return;
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`${WORKER_URL}/vault-auth-hashes`, { headers });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const members = data.members || [];
-    if (!members.length) { console.warn('[Offline Auth] No members returned'); return; }
-
-    const db = await openIDB();
-    await new Promise((resolve, reject) => {
-      const tx    = db.transaction('vault_auth', 'readwrite');
-      const store = tx.objectStore('vault_auth');
-      store.clear();
-      for (const m of members) {
-        store.put({
-          id:           m.member,
-          trusted:      true,
-          passwordHash: m.passwordHash,
-          mode:         m.mode || 'MEMBER',
-          savedAt:      Date.now()
-        });
-      }
-      tx.oncomplete = resolve;
-      tx.onerror    = e => reject(e.target.error);
-    });
-    console.log('[Offline Auth] Synced', members.length, 'members into IndexedDB');
-  } catch (err) {
-    console.warn('[Offline Auth] Sync failed (non-fatal):', err);
-  }
-}
-
-/**
- * Full offline login flow.
- * Returns true on success (caller should open dashboard), false on failure.
- */
-async function offlineLogin(memberId, enteredPassword) {
-  const auth = await getOfflineAuth(memberId || 'main');
-  if (!auth) {
-    alert(`❌ ${memberId || 'This account'} has never been synced online on this device.\nPlease connect to the internet and log in once first.`);
-    return false;
-  }
-  const enteredHash = await window.sha256(enteredPassword);
-  if (enteredHash !== auth.passwordHash) {
-    alert('❌ Wrong password');
-    return false;
-  }
-  // Restore vault key in memory so AES decryption works
-  window.masterPassword = enteredPassword;
-  masterPassword        = enteredPassword;
-  // Fake session flags so the rest of the app thinks it's logged in
-  sessionStorage.setItem('vaultSessionToken', 'OFFLINE_MODE');
-  sessionStorage.setItem('vaultMode', auth.mode || 'MEMBER');
-  return true;
-}
-
 // ── Offline doc fetch: tries network first, falls back to IndexedDB ────────
 
 /**
@@ -834,23 +736,22 @@ async function fetchVaultDocWithOfflineFallback(filename) {
   const url     = `${WORKER_URL}/docs/${filename}`;
   const headers = { Authorization: (await getAuthHeaders()).Authorization };
 
-  if (navigator.onLine) {
-    try {
-      const res = await fetch(url, { headers });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const buf = await res.arrayBuffer();
-      // Persist to IndexedDB in background for future offline use
-      idbCacheVaultDoc(filename, buf).catch(e => console.warn('IDB cache write failed:', e));
-      return buf;
-    } catch (err) {
-      console.warn(`Online fetch failed for ${filename}, trying IDB cache:`, err);
-    }
+  // Always try network first — navigator.onLine is unreliable
+  try {
+    const res = await fetch(url, { headers });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const buf = await res.arrayBuffer();
+    // Persist to IndexedDB in background for future offline use
+    idbCacheVaultDoc(filename, buf).catch(e => console.warn('IDB cache write failed:', e));
+    return buf;
+  } catch (err) {
+    console.warn(`Network fetch failed for ${filename}, trying IDB cache:`, err);
   }
 
-  // Offline path
+  // Network failed — try IndexedDB
   const cached = await idbGetVaultDoc(filename);
   if (cached) return cached.data;
-  throw new Error('Document not available offline. Please connect to the internet to download it first.');
+  throw new Error('Document not available offline. Open it online first to cache it.');
 }
 
 // ── Pre-cache all visible vault docs (called after vault initialises) ───────
@@ -1078,7 +979,14 @@ async function renderComparePane(side, file){
     try {
         const rawPassword = window.masterPassword || masterPassword;
 
-        // Use offline-aware fetch instead of direct backend URL
+        // FIX: use the real session token (same as openSecureFile/initVault)
+        const vaultSessionToken =
+            sessionStorage.getItem("vaultSessionToken") ||
+            sessionStorage.getItem("vaultSession");
+
+        if (!vaultSessionToken) throw new Error("Missing session token. Please log in again.");
+
+        // Use offline-aware fetch (tries network, falls back to IDB vault_docs)
         const buf = await fetchVaultDocWithOfflineFallback(file.file);
         const sLen = new Uint32Array(buf.slice(0,4))[0];
         if(sLen === 0 || sLen > buf.byteLength - 32) throw new Error('Corrupted file header.');
