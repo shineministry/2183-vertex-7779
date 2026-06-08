@@ -16,50 +16,60 @@ try {
         );
     }
 
-    const res = await fetch(
-        "https://backend.shinumaths989.workers.dev/files.json",
-        {
-            headers: {
-                "Authorization": "Bearer " + sessionToken
-            }
-        }
-    );
-
-    // 🛡️ Firewall / backend errors
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') || '';
-        if (contentType.includes('text/html')) {
-            throw new Error("Security Exception: Domain rejected by Gateway Firewall.");
-        }
-        throw new Error(`Server returned HTTP status ${res.status}`);
-    }
-
-    const raw = await res.json();
-    // ── Normalise: backend may return either
-    //    a) category-keyed object  { "Passport": [{...}], "ID": [{...}] }
-    //    b) flat array             [ {name, file, member, category}, ... ]
-    //    Convert (b) → (a) so the rest of the code always works the same way.
+    // Try network first; fall back to IndexedDB (vault_meta) when offline
     let data = {};
-    if (Array.isArray(raw)) {
-        // Flat array — group by category field (fallback: "Documents")
-        raw.forEach(file => {
-            const cat = file.category || file.type || "Documents";
-            if (!data[cat]) data[cat] = [];
-            data[cat].push(file);
-        });
+    try {
+        const res = await fetch(
+            "https://backend.shinumaths989.workers.dev/files.json",
+            { headers: { "Authorization": "Bearer " + sessionToken } }
+        );
 
-    } else if (raw && typeof raw === 'object') {
-        data = raw;
-    } else {
-        throw new Error("Unexpected response format from files.json");
+        // 🛡️ Firewall / backend errors
+        if (!res.ok) {
+            const contentType = res.headers.get('content-type') || '';
+            if (contentType.includes('text/html')) {
+                throw new Error("Security Exception: Domain rejected by Gateway Firewall.");
+            }
+            throw new Error(`Server returned HTTP status ${res.status}`);
+        }
+
+        const raw = await res.json();
+        // Normalise: backend may return either
+        //   a) category-keyed object  { "Passport": [{...}], "ID": [{...}] }
+        //   b) flat array             [ {name, file, member, category}, ... ]
+        if (Array.isArray(raw)) {
+            raw.forEach(file => {
+                const cat = file.category || file.type || "Documents";
+                if (!data[cat]) data[cat] = [];
+                data[cat].push(file);
+            });
+        } else if (raw && typeof raw === 'object') {
+            data = raw;
+        } else {
+            throw new Error("Unexpected response format from files.json");
+        }
+
+        // Cache file list for offline use
+        if (typeof idbSetVaultMeta === 'function') {
+            idbSetVaultMeta(data).catch(() => {});
+        }
+
+    } catch (netErr) {
+        // Network failed — try cached file list from IndexedDB
+        if (typeof idbGetVaultMeta === 'function') {
+            const cached = await idbGetVaultMeta();
+            if (cached) {
+                data = cached;
+                console.log('[initVault] Using cached file list (offline mode).');
+            } else {
+                throw new Error('No internet and no cached file list. Log in online first.');
+            }
+        } else {
+            throw netErr;
+        }
     }
 
     allFilesData = data;
-
-    // Cache file list to IndexedDB so offline login can restore the dashboard
-    if (typeof idbSetVaultMeta === 'function') {
-        idbSetVaultMeta(data).catch(e => console.warn('[VaultData] idbSetVaultMeta failed:', e));
-    }
 
     const list = document.getElementById('cat-list');
     list.innerHTML = "";
