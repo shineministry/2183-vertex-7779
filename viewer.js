@@ -59,44 +59,66 @@ displayName){
     const docKey = path.replace(/^\/docs\/|^docs\//, '');
 
     let buffer;
-    try {
-        const res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
-            headers: { "Authorization": "Bearer " + vaultSessionToken }
-        });
 
-        // GUARD: catch backend error responses before treating as binary
-        if (!res.ok) {
+    // ── Offline-first: if we already have it cached, use it immediately ──────
+    // This avoids a slow/hanging fetch when offline and ensures instant open
+    // for previously-viewed docs regardless of connectivity.
+    if (typeof idbGetDoc === 'function') {
+        const precached = await idbGetDoc(docKey).catch(() => null);
+        if (precached) {
+            buffer = precached;
+        }
+    }
+
+    if (!buffer) {
+        // ── Network fetch with timeout so it fails fast when offline ─────────
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            let res;
+            try {
+                res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
+                    headers: { "Authorization": "Bearer " + vaultSessionToken },
+                    signal: controller.signal
+                });
+            } finally {
+                clearTimeout(timeoutId);
+            }
+
+            // GUARD: catch backend error responses before treating as binary
+            if (!res.ok) {
+                const ct = res.headers.get('content-type') || '';
+                if (ct.includes('application/json')) {
+                    const errBody = await res.json();
+                    throw new Error(errBody.message || `Server error: HTTP ${res.status}`);
+                }
+                throw new Error(`Server error: HTTP ${res.status}`);
+            }
             const ct = res.headers.get('content-type') || '';
             if (ct.includes('application/json')) {
                 const errBody = await res.json();
-                throw new Error(errBody.message || `Server error: HTTP ${res.status}`);
+                throw new Error(errBody.message || 'Backend returned JSON instead of encrypted file.');
             }
-            throw new Error(`Server error: HTTP ${res.status}`);
-        }
-        const ct = res.headers.get('content-type') || '';
-        if (ct.includes('application/json')) {
-            const errBody = await res.json();
-            throw new Error(errBody.message || 'Backend returned JSON instead of encrypted file.');
-        }
 
-        buffer = await res.arrayBuffer();
+            buffer = await res.arrayBuffer();
 
-        // Cache encrypted bytes in vault_docs for offline use
-        if (typeof idbSaveDoc === 'function') {
-            idbSaveDoc(docKey, buffer).catch(() => {});
-        }
+            // Cache encrypted bytes in vault_docs for offline use
+            if (typeof idbSaveDoc === 'function') {
+                idbSaveDoc(docKey, buffer).catch(() => {});
+            }
 
-    } catch (netErr) {
-        // Network failed — try vault_docs in IndexedDB
-        if (typeof idbGetDoc === 'function') {
-            const cached = await idbGetDoc(docKey);
-            if (cached) {
-                buffer = cached;
+        } catch (netErr) {
+            // Network failed — try vault_docs in IndexedDB as last resort
+            if (typeof idbGetDoc === 'function') {
+                const cached = await idbGetDoc(docKey);
+                if (cached) {
+                    buffer = cached;
+                } else {
+                    throw new Error('Document not available offline. Open it online first to cache it.');
+                }
             } else {
-                throw new Error('Document not available offline. Open it online first to cache it.');
+                throw netErr;
             }
-        } else {
-            throw netErr;
         }
     }
 
