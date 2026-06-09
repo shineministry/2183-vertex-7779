@@ -842,7 +842,7 @@ window.addEventListener('online', async () => {
 
 if ('serviceWorker' in navigator && !navigator.serviceWorker.controller) {
   const swVersion = window.SHINE_OFFLINE_FIX_VERSION || 'default';
-  navigator.serviceWorker.register('/sw.js?v=' + swVersion, { updateViaCache: 'none' })
+  navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
     .then(reg => {
       console.log('[SW] Registered, scope:', reg.scope);
       if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
