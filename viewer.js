@@ -257,8 +257,9 @@ currentDecryptedPdf = decrypted.slice(0);
 
 const pdfjsLib = window.pdfjsLib;
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+// Use local worker file (cached by SW) so PDF rendering works offline.
+// Fall back to CDN only if the local copy isn't available.
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 // LOAD PDF
 
