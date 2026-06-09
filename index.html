@@ -25,7 +25,7 @@ content="width=device-width, initial-scale=1.0">
 
    <meta http-equiv="Cache-Control"
 content="no-store, no-cache, must-revalidate">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="/pdf.min.js" onerror="var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';document.head.appendChild(s);"></script>
 
 <script src="pdfjs-init.js"></script>
    
@@ -956,13 +956,13 @@ min-width:220px;
    
 <script>
 (function () {
-    const FIX_VERSION = '20260607-offlinefix3';
+    const FIX_VERSION = '20260610-offlinefix4';
     window.SHINE_OFFLINE_FIX_VERSION = FIX_VERSION;
 
     if ('caches' in window && localStorage.getItem('shine_offline_fix_cache') !== FIX_VERSION) {
         caches.keys().then(keys => Promise.all(
             keys
-                .filter(key => /^online-vault-v/i.test(key) && key !== 'online-vault-v6')
+                .filter(key => /^online-vault-v/i.test(key) && key !== 'online-vault-v7')
                 .map(key => caches.delete(key))
         )).finally(() => {
             localStorage.setItem('shine_offline_fix_cache', FIX_VERSION);
@@ -982,9 +982,9 @@ min-width:220px;
 
 <script src="sha256.js"></script> 
 
-<script src="offline-auth.js?v=20260607-offlinefix3"></script>
+<script src="offline-auth.js?v=20260610-offlinefix4"></script>
    
-<script src="auth.js?v=20260607-offlinefix3"></script>
+<script src="auth.js?v=20260610-offlinefix4"></script>
    
 <script src="session.js"></script>
 
