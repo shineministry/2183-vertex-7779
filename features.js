@@ -48,10 +48,8 @@ async function getAuthHeaders() {
 }
 
 async function loadPMEntries() {
-  // If offline, serve from IndexedDB cache immediately
-  if (!navigator.onLine) {
-    return idbGetAllPMEntries();
-  }
+  // Always try network first (navigator.onLine is unreliable — can be true
+  // even when the backend is unreachable). Fall back to IndexedDB on any error.
   try {
     const res = await fetch(`${WORKER_URL}/passwords`, { headers: await getAuthHeaders() });
     if (!res.ok) {
@@ -61,7 +59,7 @@ async function loadPMEntries() {
     const data = await res.json();
     const entries = data.entries || [];
     // Sync fresh server list into IndexedDB for offline use
-    await idbSyncPMEntries(entries);
+    await idbSyncPMEntries(entries).catch(() => {});
     return entries;
   } catch (err) {
     console.warn('loadPMEntries fetch failed, falling back to IndexedDB:', err);
@@ -83,6 +81,18 @@ async function savePMEntry() {
     return;
   }
 
+  // Save to IndexedDB immediately (offline-first) so it's never lost
+  const localId = Date.now().toString();
+  await idbSavePMEntry({ id: localId, site, username, password, notes, _pendingSync: true })
+    .catch(e => console.warn('[PM] Local IDB save failed:', e));
+
+  // Clear form right away — data is safe in IDB
+  document.getElementById('pm-site').value     = '';
+  document.getElementById('pm-username').value = '';
+  document.getElementById('pm-password').value = '';
+  document.getElementById('pm-notes').value    = '';
+
+  // Then try to sync to server
   try {
     const res = await fetch(`${WORKER_URL}/passwords`, {
       method: 'POST',
@@ -99,23 +109,29 @@ async function savePMEntry() {
 
     if (!res.ok) {
       const msg = data.error || data.message || `Server error ${res.status}`;
-      alert(`❌ Failed to save: ${msg}`);
+      // Entry is saved locally; warn but don't block UI
+      console.warn(`[PM] Server save failed (entry kept offline): ${msg}`);
+      alert(`⚠️ Saved locally. Will sync when back online.\n(Server: ${msg})`);
+      renderPMList();
       return;
     }
 
-    // Clear form only on confirmed success
-    document.getElementById('pm-site').value     = '';
-    document.getElementById('pm-username').value = '';
-    document.getElementById('pm-password').value = '';
-    document.getElementById('pm-notes').value    = '';
-
-    // Also persist to IndexedDB for offline access
-    await idbSavePMEntry({ id: data.id || Date.now().toString(), site, username, password, notes });
+    // Server assigned a real ID — update the local IDB entry with it
+    const serverId = data.id || localId;
+    if (serverId !== localId) {
+      await idbDeletePMEntry(localId).catch(() => {});
+      await idbSavePMEntry({ id: serverId, site, username, password, notes }).catch(() => {});
+    } else {
+      // Clear the pending-sync flag
+      await idbSavePMEntry({ id: localId, site, username, password, notes }).catch(() => {});
+    }
 
     renderPMList();
   } catch (err) {
-    console.error('savePMEntry error:', err);
-    alert(`❌ Could not save password: ${err.message}`);
+    // Network error — entry already saved to IDB above, just inform user
+    console.warn('[PM] Network error during server sync (entry kept offline):', err);
+    alert(`⚠️ Saved locally (offline). Will sync when back online.`);
+    renderPMList();
   }
 }
 
@@ -803,10 +819,17 @@ window.addEventListener('online', async () => {
 });
 
 // ── Service Worker registration ────────────────────────────────────────────
+// NOTE: SW is already registered by index.html with the versioned URL
+// (?v=SHINE_OFFLINE_FIX_VERSION). We only register here as a fallback for
+// environments where index.html's inline script hasn't run yet.
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(reg => console.log('[SW] Registered, scope:', reg.scope))
+if ('serviceWorker' in navigator && !navigator.serviceWorker.controller) {
+  const swVersion = window.SHINE_OFFLINE_FIX_VERSION || 'default';
+  navigator.serviceWorker.register('/sw.js?v=' + swVersion, { updateViaCache: 'none' })
+    .then(reg => {
+      console.log('[SW] Registered, scope:', reg.scope);
+      if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    })
     .catch(err => console.warn('[SW] Registration failed (expected in dev):', err));
 }
 
