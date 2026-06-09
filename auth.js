@@ -1402,30 +1402,21 @@ async function showStep2() {
                     // Mark button as offline mode
                     if (loginBtn) { loginBtn.textContent = '✓ Offline Mode'; loginBtn.style.background = 'linear-gradient(135deg,#10b981,#059669)'; loginBtn.style.opacity = '1'; }
 
-                    // ── STEP 1: Hide login, show Legal Declaration (step2) ──
-                    // Captcha (step3) is skipped offline — we go step1 → step2 → dashboard
-                    const step1 = document.getElementById('step1');
-                    const step2 = document.getElementById('step2');
-
-                    // Wire showStep3 so that when user accepts the declaration,
-                    // it opens the dashboard and initialises the vault instead of
-                    // going to the captcha step (step3).
+                    // Flag offline mode — showStep3() uses this to skip captcha
                     window._offlineMode = true;
 
-                    const showDashboardOffline = () => {
+                    // Store the dashboard init function for showStep3 to call
+                    window._offlineShowDashboard = () => {
+                        const step2 = document.getElementById('step2');
                         if (step2) { step2.style.display = 'none'; }
                         const dash = document.getElementById('vault-dashboard');
                         if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
 
-                        // Render the file list from cached allFilesData
                         if (window.allFilesData && Object.keys(window.allFilesData).length) {
-                            // renderFiles is defined in vault-ui.js / auth.js
-                            // Try the first category to trigger the sidebar render
                             const firstCat = Object.keys(window.allFilesData)[0];
                             if (typeof renderFiles === 'function' && firstCat) {
                                 renderFiles(window.allFilesData[firstCat], firstCat);
                             }
-                            // Also populate the sidebar category list
                             if (typeof renderCategoryList === 'function') {
                                 renderCategoryList(window.allFilesData);
                             }
@@ -1438,11 +1429,10 @@ async function showStep2() {
                         console.log('[OfflineAuth] Dashboard ready — offline mode active.');
                     };
 
-                    // Patch showStep3 just for this offline session so the
-                    // "I Agree" button in step2 calls showDashboardOffline instead
-                    window._offlineShowDashboard = showDashboardOffline;
-
-                    // Transition: step1 → step2
+                    // Transition: step1 → step2 (Legal Declaration)
+                    // After declaration, showStep3() sees _offlineMode and goes straight to dashboard
+                    const step1 = document.getElementById('step1');
+                    const step2 = document.getElementById('step2');
                     if (step1) {
                         step1.style.opacity = '0';
                         step1.style.transition = 'opacity 0.3s ease';
@@ -1457,6 +1447,8 @@ async function showStep2() {
                     }
                     return;
                 }
+
+                // Wrong password offline — error already shown by offlineLogin/_showOfflineError
                 restoreLoginBtn();
                 return;
             }
@@ -1593,36 +1585,35 @@ async function showStep2() {
 
 function showStep3(){
 
-    if(!document.getElementById(
-    'terms-tick').checked){
-
-        alert(
-        "You must agree to the declaration."
-        );
-
+    if(!document.getElementById('terms-tick').checked){
+        alert("You must agree to the declaration.");
         return;
     }
 
-    const step2 =
-    document.getElementById(
-    'step2');
+    // Offline mode: skip reCAPTCHA and go directly to dashboard
+    if (window._offlineMode && typeof window._offlineShowDashboard === 'function') {
+        const step2 = document.getElementById('step2');
+        if (step2) {
+            step2.style.pointerEvents = 'none';
+            step2.classList.add('slide-up-exit');
+            setTimeout(() => {
+                step2.style.display = 'none';
+                window._offlineShowDashboard();
+            }, 500);
+        } else {
+            window._offlineShowDashboard();
+        }
+        return;
+    }
 
-    step2.style.pointerEvents =
-    "none";
-
-    step2.classList.add(
-    'slide-up-exit');
-
+    // Online mode: proceed to reCAPTCHA (step3)
+    const step2 = document.getElementById('step2');
+    step2.style.pointerEvents = "none";
+    step2.classList.add('slide-up-exit');
     setTimeout(()=>{
-
-        step2.style.display =
-        'none';
-
-        document.getElementById(
-        'step3').style.display =
-        'flex';
-
-    },700);
+        step2.style.display = 'none';
+        document.getElementById('step3').style.display = 'flex';
+    }, 700);
 
 }
 
