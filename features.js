@@ -120,15 +120,39 @@ async function savePMEntry() {
 }
 
 async function copyPMPassword(id) {
-  const res = await fetch(`${WORKER_URL}/passwords/get-password`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify({ id })
-  });
-  const data = await res.json();
-  if (data.password) {
-    navigator.clipboard.writeText(data.password);
-    alert('✅ Password copied!');
+  // Try server first; fall back to local IDB cache offline
+  if (!navigator.onLine) {
+    const entries = await idbGetAllPMEntries().catch(() => []);
+    const entry = entries.find(e => e.id === id);
+    if (entry && entry.password) {
+      navigator.clipboard.writeText(entry.password);
+      alert('✅ Password copied! (offline)');
+    } else {
+      alert('❌ Password not available offline. Connect to the internet first.');
+    }
+    return;
+  }
+  try {
+    const res = await fetch(`${WORKER_URL}/passwords/get-password`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+    if (data.password) {
+      navigator.clipboard.writeText(data.password);
+      alert('✅ Password copied!');
+    }
+  } catch (err) {
+    // Network failed — try IDB cache
+    const entries = await idbGetAllPMEntries().catch(() => []);
+    const entry = entries.find(e => e.id === id);
+    if (entry && entry.password) {
+      navigator.clipboard.writeText(entry.password);
+      alert('✅ Password copied! (cached)');
+    } else {
+      alert('❌ Could not copy password: ' + err.message);
+    }
   }
 }
 
@@ -586,34 +610,32 @@ function copyShareLink(){
 ========================= */
 
 // ── IndexedDB helpers ──────────────────────────────────────────────────────
+// NOTE: offline-auth.js (loaded first) owns the master DB schema and provides:
+//   idbSaveDoc(filename, arrayBuffer)  — cache encrypted doc bytes
+//   idbGetDoc(filename)                — retrieve cached doc bytes (ArrayBuffer)
+//   idbSetVaultMeta(data)              — cache file list
+//   idbGetVaultMeta()                  — retrieve file list
+// This file only opens a connection for pm_entries (Password Manager).
 
 const IDB_NAME    = 'vaultOfflineDB';
-const IDB_VERSION = 5; // must match offline-auth.js — single DB, all stores declared here
+const IDB_VERSION = 5; // must match offline-auth.js
 
 function openIDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(IDB_NAME, IDB_VERSION);
     req.onupgradeneeded = e => {
       const db = e.target.result;
-      // Store for password manager entries
       if (!db.objectStoreNames.contains('pm_entries')) {
         db.createObjectStore('pm_entries', { keyPath: 'id' });
       }
-      // Store for cached vault document blobs (keyed by filename)
       if (!db.objectStoreNames.contains('vault_docs')) {
         db.createObjectStore('vault_docs', { keyPath: 'filename' });
       }
-      // Store for vault file metadata list
       if (!db.objectStoreNames.contains('vault_meta')) {
         db.createObjectStore('vault_meta', { keyPath: 'key' });
       }
-      // Store for offline auth credentials (shared with offline-auth.js)
       if (!db.objectStoreNames.contains('vault_auth')) {
         db.createObjectStore('vault_auth', { keyPath: 'id' });
-      }
-      // Store for offline PIN records (shared with offline-auth.js)
-      if (!db.objectStoreNames.contains('pin_auth')) {
-        db.createObjectStore('pin_auth', { keyPath: 'id' });
       }
     };
     req.onsuccess  = e => resolve(e.target.result);
@@ -664,105 +686,68 @@ async function idbSyncPMEntries(serverEntries) {
   });
 }
 
-// Cache an encrypted vault doc blob (raw ArrayBuffer from R2/worker)
-async function idbCacheVaultDoc(filename, arrayBuffer) {
-  const db = await openIDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('vault_docs', 'readwrite');
-    tx.objectStore('vault_docs').put({ filename, data: arrayBuffer, cachedAt: Date.now() });
-    tx.oncomplete = resolve;
-    tx.onerror    = e => reject(e.target.error);
-  });
-}
+// ── Offline doc caching: all functions provided by offline-auth.js ───────────
+//   idbSaveDoc(filename, arrayBuffer)  — stores encrypted bytes (Uint8Array)
+//   idbGetDoc(filename)                — returns ArrayBuffer | null
+//   idbSetVaultMeta(data)              — stores file list
+//   idbGetVaultMeta()                  — returns file list | null
 
-async function idbGetVaultDoc(filename) {
-  const db = await openIDB();
-  return new Promise((resolve, reject) => {
-    const tx  = db.transaction('vault_docs', 'readonly');
-    const req = tx.objectStore('vault_docs').get(filename);
-    req.onsuccess = e => resolve(e.target.result || null);
-    req.onerror   = e => reject(e.target.error);
-  });
-}
-
-// Cache the vault file metadata list (what allFilesData holds)
-async function idbSaveVaultMeta(allFilesData) {
-  const db = await openIDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('vault_meta', 'readwrite');
-    tx.objectStore('vault_meta').put({ key: 'allFilesData', value: allFilesData, savedAt: Date.now() });
-    tx.oncomplete = resolve;
-    tx.onerror    = e => reject(e.target.error);
-  });
-}
-
-async function idbGetVaultMeta() {
-  const db = await openIDB();
-  return new Promise((resolve, reject) => {
-    const tx  = db.transaction('vault_meta', 'readonly');
-    const req = tx.objectStore('vault_meta').get('allFilesData');
-    req.onsuccess = e => resolve(e.target.result ? e.target.result.value : null);
-    req.onerror   = e => reject(e.target.error);
-  });
-}
-
-// ── Offline doc fetch: tries network first, falls back to IndexedDB ────────
-
-/**
- * Use this wherever you fetch an encrypted doc from R2/worker.
- * Returns an ArrayBuffer — the same bytes you'd get from res.arrayBuffer().
- */
 async function fetchVaultDocWithOfflineFallback(filename) {
   const url     = `${WORKER_URL}/docs/${filename}`;
   const headers = { Authorization: (await getAuthHeaders()).Authorization };
 
-  if (navigator.onLine) {
-    try {
-      const res = await fetch(url, { headers });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const buf = await res.arrayBuffer();
-      // Persist to IndexedDB in background for future offline use
-      idbCacheVaultDoc(filename, buf).catch(e => console.warn('IDB cache write failed:', e));
-      return buf;
-    } catch (err) {
-      console.warn(`Online fetch failed for ${filename}, trying IDB cache:`, err);
+  try {
+    const res = await fetch(url, { headers });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const buf = await res.arrayBuffer();
+    if (typeof idbSaveDoc === 'function') {
+      idbSaveDoc(filename, buf).catch(e => console.warn('[Offline] IDB write failed:', e));
     }
+    return buf;
+  } catch (err) {
+    console.warn(`[Offline] Online fetch failed for ${filename}:`, err.message);
   }
 
-  // Offline path
-  const cached = await idbGetVaultDoc(filename);
-  if (cached) return cached.data;
-  throw new Error('Document not available offline. Please connect to the internet to download it first.');
+  if (typeof idbGetDoc === 'function') {
+    const cached = await idbGetDoc(filename);
+    if (cached) return cached;
+  }
+  throw new Error('Document not available offline. Open it online first to cache it.');
 }
 
-// ── Pre-cache all visible vault docs (called after vault initialises) ───────
+// ── Pre-cache all visible vault docs after login ──────────────────────────────
 
 async function preCacheVaultDocs(filesData) {
-  if (!navigator.onLine) return; // nothing to fetch
-  // Flatten all file entries
+  if (!navigator.onLine) return;
+
   const allFiles = [];
   Object.values(filesData).forEach(cat => {
     if (Array.isArray(cat)) cat.forEach(f => allFiles.push(f));
   });
 
-  // Save metadata list for offline category/file listing
-  await idbSaveVaultMeta(filesData).catch(e => console.warn('IDB meta save failed:', e));
+  if (typeof idbSetVaultMeta === 'function') {
+    await idbSetVaultMeta(filesData).catch(e => console.warn('[Offline] Meta save failed:', e));
+  }
 
-  // Fetch and cache each doc in the background (no UI blocking)
+  const authHeaders = { Authorization: (await getAuthHeaders()).Authorization };
+
   for (const f of allFiles) {
     if (!f.file) continue;
-    const cached = await idbGetVaultDoc(f.file).catch(() => null);
-    if (cached) continue; // already have it
+    if (typeof idbGetDoc === 'function') {
+      const existing = await idbGetDoc(f.file).catch(() => null);
+      if (existing) { console.log(`[Offline cache] Already cached: ${f.file}`); continue; }
+    }
     try {
-      const headers = { Authorization: (await getAuthHeaders()).Authorization };
-      const res = await fetch(`${WORKER_URL}/docs/${f.file}`, { headers });
+      const res = await fetch(`${WORKER_URL}/docs/${f.file}`, { headers: authHeaders });
       if (res.ok) {
         const buf = await res.arrayBuffer();
-        await idbCacheVaultDoc(f.file, buf);
+        if (typeof idbSaveDoc === 'function') await idbSaveDoc(f.file, buf);
         console.log(`[Offline cache] Cached: ${f.file}`);
+      } else {
+        console.warn(`[Offline cache] HTTP ${res.status} for: ${f.file}`);
       }
     } catch (e) {
-      console.warn(`[Offline cache] Skipped ${f.file}:`, e);
+      console.warn(`[Offline cache] Skipped ${f.file}:`, e.message);
     }
   }
   console.log('[Offline cache] Pre-caching complete.');
