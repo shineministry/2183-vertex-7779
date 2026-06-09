@@ -1,10 +1,10 @@
 /* =============================================================
    OFFLINE AUTH  —  offline-auth.js
-   v20260609-all-members-final
+   v20260609-clean
 
    Authentication method: LOCAL PBKDF2 + SHA-256 server-hash,
-   stored in IndexedDB. No server contact required after first
-   online login.
+   stored in IndexedDB (vaultOfflineDB). No server required after
+   first online login.
 
    ALL 7 VAULT MODES are cached on the device after the first
    online login by any member. Every device can then authenticate
@@ -16,17 +16,16 @@
      (legacy) plain       — v3 records, plain sha256, backward compat
 
    Public API:
-     syncOfflineAuth()         — saves current user after online login
-     syncAllMembersOffline()   — fetches all 7 modes from backend, saves all
-     offlineLogin(_, password) — full-password offline verify → secret | false
-     offlinePinSetup(pin)      — enrols a 4–8 digit PIN for current mode
-     offlinePinLogin(pin)      — authenticates with PIN offline
-     clearOfflinePin()         — removes stored PIN
-     idbSetVaultMeta(data)     — caches file list
-     idbGetVaultMeta()         — returns cached file list
+     syncOfflineAuth()      — saves current user after online login
+     syncAllMembersOffline()— fetches all 7 modes from backend, saves all
+     offlineLogin(_, pass)  — full-password offline verify → secret | false
+     idbSetVaultMeta(data)  — caches file list
+     idbGetVaultMeta()      — returns cached file list
+     idbSaveDoc(key, buf)   — caches encrypted document bytes
+     idbGetDoc(key)         — returns cached encrypted document bytes
    ============================================================= */
 
-window.SHINE_OFFLINE_AUTH_VERSION = '20260609-all-members-final';
+window.SHINE_OFFLINE_AUTH_VERSION = '20260609-clean';
 
 const _WORKER_URL = 'https://backend.shinumaths989.workers.dev';
 
@@ -48,8 +47,6 @@ function _openAuthDB() {
                 db.createObjectStore('vault_meta',  { keyPath: 'key' });
             if (!db.objectStoreNames.contains('vault_auth'))
                 db.createObjectStore('vault_auth',  { keyPath: 'id' });
-            if (!db.objectStoreNames.contains('pin_auth'))
-                db.createObjectStore('pin_auth',    { keyPath: 'id' });
         };
 
         req.onsuccess = () => resolve(req.result);
@@ -81,7 +78,6 @@ async function _pbkdf2Hash(text, hexSalt, iterations = 200_000) {
 
 // SHA-256 matching auth.js hashPassword() exactly:
 // password.trim().normalize("NFKC") → SHA-256 → hex
-// Used to verify against server-side hashes (ADMIN_HASH, SHINEIL_HASH, etc.)
 async function _sha256AuthHash(password) {
     const normalized = String(password).trim().normalize('NFKC');
     const buf = await crypto.subtle.digest(
@@ -102,7 +98,6 @@ async function _sha256Legacy(text) {
 
 // ── Write helpers ──────────────────────────────────────────────────────────
 
-// For current-user sync: hash the typed password locally with PBKDF2
 async function _saveAuthRecordLocal({ mode, password, secret, token }) {
     const salt         = _randomSalt();
     const passwordHash = await _pbkdf2Hash(password, salt);
@@ -126,8 +121,6 @@ async function _saveAuthRecordLocal({ mode, password, secret, token }) {
     });
 }
 
-// For all-members sync: backend sends the env-var SHA-256 hash directly
-// (same hash used by /get-secret for verification — no plaintext ever sent)
 async function _saveAuthRecordFromServerHash({ mode, passwordHash, secret, token }) {
     const db = await _openAuthDB();
 
@@ -135,7 +128,7 @@ async function _saveAuthRecordFromServerHash({ mode, passwordHash, secret, token
         const tx = db.transaction('vault_auth', 'readwrite');
         tx.objectStore('vault_auth').put({
             id:           mode,
-            passwordHash, // SHA-256 hex straight from server env var
+            passwordHash,
             algo:         'sha256-server',
             secret:       String(secret || ''),
             token:        token || '',
@@ -149,11 +142,6 @@ async function _saveAuthRecordFromServerHash({ mode, passwordHash, secret, token
 }
 
 // ── syncOfflineAuth: save CURRENT logged-in user ───────────────────────────
-/**
- * Called after every successful online login (existing hook in auth.js).
- * Saves the current member's credentials with PBKDF2.
- * Then fires syncAllMembersOffline() in the background to cache all 7.
- */
 async function syncOfflineAuth() {
     try {
         const password = window._pendingAuthPass || '';
@@ -172,7 +160,6 @@ async function syncOfflineAuth() {
         await _saveAuthRecordLocal({ mode, password, secret, token });
         console.log('[OfflineAuth] Current user saved (PBKDF2) for mode:', mode);
 
-        // Background: cache all 7 members — doesn't block login flow
         syncAllMembersOffline().catch(e =>
             console.warn('[OfflineAuth] Background all-member sync failed:', e.message)
         );
@@ -183,16 +170,6 @@ async function syncOfflineAuth() {
 }
 
 // ── syncAllMembersOffline: fetch & cache ALL 7 modes ──────────────────────
-/**
- * Calls POST /sync-offline-members with the current session token.
- * Backend returns { success, members: [{ mode, passwordHash, secret, token }] }
- * where passwordHash is the SHA-256 hex already stored in the worker env vars —
- * no plaintext password ever sent over the wire.
- *
- * Each record is stored in vault_auth with algo: 'sha256-server'.
- * offlineLogin() verifies by hashing the typed password the same way
- * auth.js does (trim + NFKC normalize + SHA-256) and comparing.
- */
 async function syncAllMembersOffline() {
     const token = sessionStorage.getItem('vaultSessionToken') ||
                   sessionStorage.getItem('vaultSession') || '';
@@ -266,16 +243,6 @@ async function syncAllMembersOffline() {
 }
 
 // ── offlineLogin: full-password path ──────────────────────────────────────
-/**
- * Tries every record in vault_auth against the typed password.
- *
- * Three algo branches:
- *   'pbkdf2-sha256-200k' — derive with PBKDF2 + stored salt, compare
- *   'sha256-server'      — hash with trim+NFKC+SHA-256 (matches auth.js), compare
- *   legacy               — plain SHA-256 no normalize (v3 backward compat)
- *
- * Returns vault secret string on success, false on failure.
- */
 async function offlineLogin(_ignored, password) {
     try {
         const db = await _openAuthDB();
@@ -295,17 +262,14 @@ async function offlineLogin(_ignored, password) {
 
         for (const r of allRecords) {
             if (r.algo === 'pbkdf2-sha256-200k') {
-                // Current-user path: PBKDF2 with per-record salt
                 const derived = await _pbkdf2Hash(password, r.salt);
                 if (derived === r.passwordHash) { match = r; break; }
 
             } else if (r.algo === 'sha256-server') {
-                // All-members path: same SHA-256 as auth.js hashPassword()
                 const derived = await _sha256AuthHash(password);
                 if (derived === r.passwordHash) { match = r; break; }
 
             } else {
-                // Legacy v3 records: plain SHA-256, no normalization
                 const derived = await _sha256Legacy(password);
                 if (derived === r.passwordHash) { match = r; break; }
             }
@@ -313,6 +277,7 @@ async function offlineLogin(_ignored, password) {
 
         if (!match) {
             console.warn('[OfflineAuth] No matching record found across', allRecords.length, 'stored mode(s).');
+            _showOfflineError('Incorrect password. Please try again.');
             return false;
         }
 
@@ -322,121 +287,8 @@ async function offlineLogin(_ignored, password) {
 
     } catch (e) {
         console.error('[OfflineAuth] offlineLogin error:', e);
+        _showOfflineError('Offline authentication error. Please try again.');
         return false;
-    }
-}
-
-// ── PIN enrolment & login ──────────────────────────────────────────────────
-
-/**
- * Enrol a 4–8 digit numeric PIN for the current vault mode.
- * Must be called while a session is active.
- */
-async function offlinePinSetup(pin) {
-    if (!pin || !/^\d{4,8}$/.test(pin)) {
-        alert('PIN must be 4–8 digits.');
-        return false;
-    }
-
-    const mode   = sessionStorage.getItem('vaultMode') || window.VAULT_MODE || '';
-    const secret = sessionStorage.getItem('vault_session_secret') || window.masterPassword || '';
-    const token  = sessionStorage.getItem('vaultSessionToken') ||
-                   sessionStorage.getItem('vaultSession') || '';
-
-    if (!mode || !secret) {
-        alert('Cannot save PIN: vault session not active.');
-        return false;
-    }
-
-    try {
-        const salt    = _randomSalt();
-        const pinHash = await _pbkdf2Hash(pin, salt);
-
-        const db = await _openAuthDB();
-        await new Promise((res, rej) => {
-            const tx = db.transaction('pin_auth', 'readwrite');
-            tx.objectStore('pin_auth').put({
-                id:      `pin_${mode}`,
-                pinHash,
-                salt,
-                algo:    'pbkdf2-sha256-200k',
-                mode,
-                secret,
-                token,
-                savedAt: Date.now()
-            });
-            tx.oncomplete = res;
-            tx.onerror = tx.onabort = () => rej(tx.error);
-        });
-
-        console.log('[OfflineAuth] PIN enrolled for mode:', mode);
-        return true;
-    } catch (e) {
-        console.error('[OfflineAuth] offlinePinSetup error:', e);
-        return false;
-    }
-}
-
-/**
- * Authenticate offline using a short numeric PIN.
- * Returns vault secret on success, false on failure.
- */
-async function offlinePinLogin(pin) {
-    if (!pin || !/^\d{4,8}$/.test(pin)) {
-        _showOfflineError('Enter a valid 4–8 digit PIN.');
-        return false;
-    }
-
-    try {
-        const db = await _openAuthDB();
-        const allPins = await new Promise((res, rej) => {
-            const req = db.transaction('pin_auth', 'readonly')
-                          .objectStore('pin_auth').getAll();
-            req.onsuccess = () => res(req.result || []);
-            req.onerror   = () => rej(req.error);
-        });
-
-        if (!allPins.length) {
-            _showOfflineError('No PIN registered. Please log in online first and set a PIN.');
-            return false;
-        }
-
-        let match = null;
-        for (const r of allPins) {
-            const derived = await _pbkdf2Hash(pin, r.salt);
-            if (derived === r.pinHash) { match = r; break; }
-        }
-
-        if (!match) {
-            console.warn('[OfflineAuth] PIN did not match any stored record.');
-            return false;
-        }
-
-        _restoreSession(match, match.secret);
-        console.log('[OfflineAuth] PIN offline login OK, mode:', window.VAULT_MODE);
-        return window.masterPassword;
-
-    } catch (e) {
-        console.error('[OfflineAuth] offlinePinLogin error:', e);
-        return false;
-    }
-}
-
-/** Remove the stored PIN for the current mode. */
-async function clearOfflinePin() {
-    const mode = sessionStorage.getItem('vaultMode') || window.VAULT_MODE || '';
-    if (!mode) return;
-    try {
-        const db = await _openAuthDB();
-        await new Promise((res, rej) => {
-            const tx = db.transaction('pin_auth', 'readwrite');
-            tx.objectStore('pin_auth').delete(`pin_${mode}`);
-            tx.oncomplete = res;
-            tx.onerror = tx.onabort = () => rej(tx.error);
-        });
-        console.log('[OfflineAuth] PIN cleared for mode:', mode);
-    } catch (e) {
-        console.warn('[OfflineAuth] clearOfflinePin error:', e);
     }
 }
 
@@ -454,22 +306,111 @@ function _restoreSession(record, passwordFallback) {
     }
 }
 
+// ── Animated wrong password error ─────────────────────────────────────────
 function _showOfflineError(msg) {
+    // Inject keyframes once
+    if (!document.getElementById('_offlineAuthStyles')) {
+        const style = document.createElement('style');
+        style.id = '_offlineAuthStyles';
+        style.textContent = `
+            @keyframes _offlineShake {
+                0%,100% { transform: translateX(0); }
+                15%     { transform: translateX(-8px); }
+                30%     { transform: translateX(8px); }
+                45%     { transform: translateX(-6px); }
+                60%     { transform: translateX(6px); }
+                75%     { transform: translateX(-3px); }
+                90%     { transform: translateX(3px); }
+            }
+            @keyframes _offlineFadeSlide {
+                from { opacity: 0; transform: translateY(-10px) scale(0.97); }
+                to   { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            @keyframes _offlinePulse {
+                0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+                50%     { box-shadow: 0 0 0 6px rgba(239,68,68,0.18); }
+            }
+            #offline-auth-error {
+                animation: _offlineFadeSlide .28s cubic-bezier(.34,1.56,.64,1) forwards,
+                           _offlinePulse 1.2s ease 0.28s 2;
+            }
+            #offline-auth-error.shake {
+                animation: _offlineShake .45s ease forwards;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
     const existing = document.getElementById('offline-auth-error');
-    if (existing) existing.remove();
+    if (existing) {
+        // Re-shake if already visible
+        existing.classList.remove('shake');
+        void existing.offsetWidth; // force reflow
+        existing.classList.add('shake');
+        existing.querySelector('.offline-err-msg').textContent = msg;
+        return;
+    }
+
     const box = document.createElement('div');
     box.id = 'offline-auth-error';
     box.style.cssText = `
-        background:rgba(239,68,68,0.12);border:1px solid #ef4444;
-        border-radius:12px;padding:14px 16px;margin-top:14px;
-        font-size:13px;color:#fca5a5;line-height:1.5;animation:fadeInUp .3s ease;
+        background: linear-gradient(135deg, rgba(239,68,68,0.13) 0%, rgba(185,28,28,0.09) 100%);
+        border: 1.5px solid rgba(239,68,68,0.55);
+        border-radius: 14px;
+        padding: 14px 16px 12px;
+        margin-top: 14px;
+        display: flex;
+        align-items: flex-start;
+        gap: 11px;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        position: relative;
+        overflow: hidden;
     `;
-    box.innerHTML = `⚠️ ${msg}
-        <button onclick="this.parentElement.remove()" style="
-            display:block;margin-top:8px;border:none;background:#ef4444;color:#fff;
-            border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;">
-            Dismiss
-        </button>`;
+
+    box.innerHTML = `
+        <div style="
+            width:34px; height:34px; border-radius:50%;
+            background:rgba(239,68,68,0.18);
+            display:flex; align-items:center; justify-content:center;
+            flex-shrink:0; font-size:17px; margin-top:1px;
+        ">🔑</div>
+        <div style="flex:1; min-width:0;">
+            <div style="
+                font-weight:800; color:#fca5a5; font-size:13px;
+                margin-bottom:3px; letter-spacing:0.3px;
+            ">Access Denied</div>
+            <div class="offline-err-msg" style="
+                font-size:12px; color:rgba(255,255,255,0.75);
+                line-height:1.55;
+            ">${msg}</div>
+        </div>
+        <button onclick="this.closest('#offline-auth-error').remove()" style="
+            position:absolute; top:9px; right:10px;
+            background:transparent; border:none; cursor:pointer;
+            color:rgba(252,165,165,0.6); font-size:15px; line-height:1;
+            padding:2px 4px; border-radius:4px;
+            transition: color .15s;
+        " onmouseenter="this.style.color='#fca5a5'" onmouseleave="this.style.color='rgba(252,165,165,0.6)'">✕</button>
+        <div style="
+            position:absolute; bottom:0; left:0; right:0; height:2px;
+            background:linear-gradient(90deg, #ef4444, #b91c1c, #ef4444);
+            background-size:200% 100%;
+            animation: _offlineShake 0s; /* reuse @keyframes slot — no actual shake */
+        "></div>
+    `;
+
+    // Also shake the password field
+    const passField = document.getElementById('vault-pass');
+    if (passField) {
+        passField.style.borderColor = 'rgba(239,68,68,0.6)';
+        passField.style.animation = '_offlineShake .45s ease';
+        setTimeout(() => {
+            passField.style.animation = '';
+            passField.style.borderColor = '';
+        }, 500);
+    }
+
     const card = document.querySelector('#step1 .login-wrapper') || document.getElementById('step1');
     if (card) card.appendChild(box);
 }
@@ -505,6 +446,51 @@ async function idbGetVaultMeta() {
         return row ? row.value : null;
     } catch (e) {
         console.warn('[OfflineAuth] idbGetVaultMeta failed:', e);
+        return null;
+    }
+}
+
+// ── idbSaveDoc / idbGetDoc — encrypted document caching ───────────────────
+// Used by viewer.js to cache encrypted bytes for offline document access.
+// Key = docKey (e.g. "abc.enc"), value = ArrayBuffer.
+
+async function idbSaveDoc(filename, arrayBuffer) {
+    try {
+        const db = await _openAuthDB();
+        // Store as Uint8Array — ArrayBuffer is not directly storable in all browsers
+        const bytes = new Uint8Array(arrayBuffer);
+        await new Promise((res, rej) => {
+            const tx = db.transaction('vault_docs', 'readwrite');
+            tx.objectStore('vault_docs').put({
+                filename,
+                bytes,
+                savedAt: Date.now()
+            });
+            tx.oncomplete = res;
+            tx.onerror = tx.onabort = () => rej(tx.error);
+        });
+        console.log(`[OfflineAuth] Cached doc: ${filename} (${(arrayBuffer.byteLength / 1024).toFixed(1)} KB)`);
+    } catch (e) {
+        console.warn('[OfflineAuth] idbSaveDoc failed:', e);
+    }
+}
+
+async function idbGetDoc(filename) {
+    try {
+        const db = await _openAuthDB();
+        const row = await new Promise((res, rej) => {
+            const req = db.transaction('vault_docs', 'readonly')
+                          .objectStore('vault_docs').get(filename);
+            req.onsuccess = () => res(req.result || null);
+            req.onerror   = () => rej(req.error);
+        });
+        if (!row) return null;
+        // Return as ArrayBuffer for compatibility with viewer.js
+        return row.bytes instanceof Uint8Array
+            ? row.bytes.buffer.slice(row.bytes.byteOffset, row.bytes.byteOffset + row.bytes.byteLength)
+            : row.bytes;
+    } catch (e) {
+        console.warn('[OfflineAuth] idbGetDoc failed:', e);
         return null;
     }
 }
