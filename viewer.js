@@ -257,9 +257,14 @@ currentDecryptedPdf = decrypted.slice(0);
 
 const pdfjsLib = window.pdfjsLib;
 
+if (!pdfjsLib) {
+    throw new Error('PDF viewer not available offline. Please open this document once while online so the viewer can be cached.');
+}
+
 // Use local worker file (cached by SW) so PDF rendering works offline.
-// Fall back to CDN only if the local copy isn't available.
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+}
 
 // LOAD PDF
 
