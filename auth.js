@@ -1412,13 +1412,24 @@ async function showStep2() {
                         const dash = document.getElementById('vault-dashboard');
                         if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
 
-                        if (window.allFilesData && Object.keys(window.allFilesData).length) {
+                        // initVault() reads allFilesData from IDB (already loaded above)
+                        // and renders both the left-nav category list and the file list.
+                        if (typeof initVault === 'function') {
+                            initVault().catch(err => {
+                                console.warn('[OfflineAuth] initVault failed in offline mode:', err);
+                                // Fallback: if initVault can't run, render directly from allFilesData
+                                if (window.allFilesData && Object.keys(window.allFilesData).length) {
+                                    const firstCat = Object.keys(window.allFilesData)[0];
+                                    if (typeof renderFiles === 'function' && firstCat) {
+                                        renderFiles(window.allFilesData[firstCat], firstCat);
+                                    }
+                                }
+                            });
+                        } else if (window.allFilesData && Object.keys(window.allFilesData).length) {
+                            // Last-resort fallback if vault-data.js isn't loaded yet
                             const firstCat = Object.keys(window.allFilesData)[0];
                             if (typeof renderFiles === 'function' && firstCat) {
                                 renderFiles(window.allFilesData[firstCat], firstCat);
-                            }
-                            if (typeof renderCategoryList === 'function') {
-                                renderCategoryList(window.allFilesData);
                             }
                         }
 
