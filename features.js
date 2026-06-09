@@ -712,8 +712,22 @@ async function fetchVaultDocWithOfflineFallback(filename) {
   const url     = `${WORKER_URL}/docs/${filename}`;
   const headers = { Authorization: (await getAuthHeaders()).Authorization };
 
+  // ── IDB-first: if already cached, return immediately ────────────────────
+  if (typeof idbGetDoc === 'function') {
+    const precached = await idbGetDoc(filename).catch(() => null);
+    if (precached) return precached;
+  }
+
+  // ── Network fetch with 8-second timeout so offline fails fast ───────────
   try {
-    const res = await fetch(url, { headers });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    let res;
+    try {
+      res = await fetch(url, { headers, signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const buf = await res.arrayBuffer();
     if (typeof idbSaveDoc === 'function') {
@@ -724,6 +738,7 @@ async function fetchVaultDocWithOfflineFallback(filename) {
     console.warn(`[Offline] Online fetch failed for ${filename}:`, err.message);
   }
 
+  // ── Last resort: check IDB again (race: may have been cached since check) ─
   if (typeof idbGetDoc === 'function') {
     const cached = await idbGetDoc(filename);
     if (cached) return cached;
@@ -734,7 +749,9 @@ async function fetchVaultDocWithOfflineFallback(filename) {
 // ── Pre-cache all visible vault docs after login ──────────────────────────────
 
 async function preCacheVaultDocs(filesData) {
-  if (!navigator.onLine) return;
+  // Do NOT gate on navigator.onLine — it's unreliable and would skip caching
+  // even when the network is actually available. Let individual fetches fail
+  // gracefully instead.
 
   const allFiles = [];
   Object.values(filesData).forEach(cat => {
