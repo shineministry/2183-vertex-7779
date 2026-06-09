@@ -970,7 +970,7 @@ min-width:220px;
     }
 
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js?v=' + FIX_VERSION, { updateViaCache: 'none' })
+        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
             .then(reg => {
                 reg.update();
                 if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
