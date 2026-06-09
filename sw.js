@@ -30,6 +30,7 @@ const PRECACHE_URLS = [
   "/favicon.png",
   "/auth.js",
   "/offline-auth.js",
+  "/pdf.min.js",
   "/pdf.worker.min.js",
   "/profile.png",
   "/features.js",
