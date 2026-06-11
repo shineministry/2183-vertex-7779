@@ -96,6 +96,19 @@ href="favicon.png">
     box-sizing: border-box;
 }
 
+#white-curtain{
+    position:fixed;
+    inset:0;
+    background:#ffffff;
+    z-index:100000;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .35s ease;
+}
+#white-curtain.show{
+    opacity:1;
+}
+
 /* Fluid Layout Wrapper Container */
 .login-wrapper {
     width: 100%;
@@ -110,6 +123,66 @@ href="favicon.png">
     animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     margin-bottom: 20px;
     box-sizing: border-box;
+}
+
+.login-grid{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap:24px;
+}
+
+.login-footer-links{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-top:14px;
+    font-size:11px;
+    color:var(--text-muted);
+}
+.login-footer-links a{
+    color:var(--accent-primary);
+    text-decoration:none;
+    font-weight:600;
+}
+.login-footer-links a:hover{
+    text-decoration:underline;
+}
+
+.status-container{
+    width:100%;
+}
+.status-card{
+    background:var(--card-inner);
+    border:1px solid var(--border-color);
+    border-radius:16px;
+    padding:18px;
+}
+.status-card h3{
+    font-size:13px;
+    margin:0 0 10px;
+}
+.status-list{
+    list-style:none;
+    padding:0;
+    margin:0;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    font-size:12px;
+    font-weight:600;
+}
+
+@media (min-width: 860px) {
+    .login-wrapper{
+        max-width:920px;
+    }
+    .login-grid{
+        grid-template-columns: 1.1fr 1fr;
+        align-items:start;
+    }
+    .login-col-right{
+        padding-top:6px;
+    }
 }
 
 .header-section { 
@@ -436,6 +509,8 @@ h1 {
     <button id="compare-bar-clear" onclick="clearCompare()">✕ Clear</button>
 </div>
 
+<div id="white-curtain"></div>
+
 <!-- =========================
      STEP 1
 ========================= -->
@@ -448,7 +523,8 @@ h1 {
             <div class="subtitle">Secure Storage Infrastructure Management</div>
         </div>
 
-        <div>
+        <div class="login-grid">
+            <div class="login-col login-col-left">
             <div class="form-group">
                 <label for="user-name">Username / Identity</label>
                 <div class="input-wrapper">
@@ -479,6 +555,23 @@ h1 {
                 </div>
             </div>
 
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button class="btn-primary" id="submitBtn" onclick="showStep2()">CONTINUE SECURELY</button>
+                <button onclick="alert('Connecting encrypted hardware security token...')" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer;">
+                    🔑 USE HARDWARE SECURITY PASSKEY
+                </button>
+            </div>
+
+            <div class="login-footer-links">
+                <a href="#" onclick="return false;">Privacy</a>
+                <span>·</span>
+                <a href="#" onclick="return false;">Terms</a>
+                <span>·</span>
+                <a href="#" onclick="return false;">Don't Know Password</a>
+            </div>
+            </div>
+
+            <div class="login-col login-col-right">
             <div class="options-grid">
                 <label class="custom-checkbox"><input type="checkbox" id="req-otp"><span>Request OTP</span></label>
                 <label class="custom-checkbox"><input type="checkbox" id="trust-device"><span>Trust (14 days)</span></label>
@@ -500,24 +593,18 @@ h1 {
                 <div class="meta-item"><span>Session Lifecycle:</span><span class="meta-val" id="lifecycleTimer" style="color:#fbbf24;">10:00 mins remaining</span></div>
             </div>
 
-            <div style="display:flex; flex-direction:column; gap:10px;">
-                <button class="btn-primary" id="submitBtn" onclick="showStep2()">CONTINUE SECURELY</button>
-                <button onclick="alert('Connecting encrypted hardware security token...')" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer;">
-                    🔑 USE HARDWARE SECURITY PASSKEY
-                </button>
+            <div class="status-container">
+                <div class="status-card">
+                    <h3>Environment Security Parameters</h3>
+                    <ul class="status-list">
+                        <li style="color:var(--success);">✓ End-to-End Encryption</li>
+                        <li style="color:var(--success);">✓ Device Sandbox Valid</li>
+                        <li style="color:var(--success);">✓ Threat Guards Armed</li>
+                        <li style="color:var(--success);">✓ Global Sync Normal</li>
+                    </ul>
+                </div>
             </div>
-        </div>
-    </div>
-
-    <div class="status-container">
-        <div class="status-card">
-            <h3>Environment Security Parameters</h3>
-            <ul class="status-list">
-                <li style="color:var(--success);">✓ End-to-End Encryption</li>
-                <li style="color:var(--success);">✓ Device Sandbox Valid</li>
-                <li style="color:var(--success);">✓ Threat Guards Armed</li>
-                <li style="color:var(--success);">✓ Global Sync Normal</li>
-            </ul>
+            </div>
         </div>
     </div>
 </div>
@@ -782,6 +869,15 @@ style="display:none;">
         <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
             <span class="security-status-dot">Security Status: Protected</span>
             <span class="e2e-badge">🔒 AES-256 End-to-End Encrypted</span>
+            <div style="position:relative;">
+                <button class="icon-btn" data-tip="Notifications" onclick="toggleNotifications()" id="notifBellBtn" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border-color);background:rgba(37,99,235,.06);cursor:pointer;font-size:15px;">
+                    🔔<span id="notifDot" style="display:none;position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:var(--danger);border:2px solid #fff;"></span>
+                </button>
+                <div id="notifPanel" style="display:none;position:absolute;top:calc(100% + 10px);right:0;width:280px;max-height:320px;overflow-y:auto;background:#fff;border:1px solid var(--border-color);border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.12);z-index:200;padding:10px;">
+                    <div style="font-weight:800;font-size:13px;margin-bottom:8px;padding:0 4px;">Notifications</div>
+                    <div id="notifList"></div>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -794,19 +890,19 @@ style="display:none;">
         <div class="nav-brand">
             <div class="brand-title">
                 <span class="brand-full">FORTRESS ONLINE VAULT</span>
-                <span class="brand-short">🔐 VAULT</span>
+                <span class="brand-short">🔐 F.O.V</span>
             </div>
         </div>
 
         <!-- RIGHT: DESKTOP BUTTONS (hidden on mobile) -->
         <div class="nav-auth nav-auth-desktop">
-    <button class="btn-outline" onclick="showPinned()">⭐ FAVOURITES</button>
-    <button class="btn-outline" onclick="startCompareMode()" id="compareNavBtn">⚖️ COMPARE</button>
-    <button class="btn-outline" onclick="openLogs()">ACCESS LOG</button>
-    <button class="btn-outline" onclick="openPasswordManager()">🔑 PASSWORDS</button>
-    <button class="btn-solid" onclick="openEmergencyContact()">EMERGENCY CONTACT</button>
-    <button onclick="openAIChat()" style="padding:10px 18px;border:none;border-radius:10px;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-weight:800;font-size:13px;cursor:pointer;letter-spacing:.5px;box-shadow:0 2px 10px rgba(124,77,255,0.35);transition:transform .15s;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">✦ AI</button>
-    <button class="btn-logout" onclick="logoutVault('Logged out successfully.')">LOGOUT</button>
+    <button class="btn-outline icon-btn" data-tip="Favourites" onclick="showPinned()">⭐</button>
+    <button class="btn-outline icon-btn" data-tip="Compare Documents" onclick="startCompareMode()" id="compareNavBtn">⚖️</button>
+    <button class="btn-outline icon-btn" data-tip="Access Log" onclick="openLogs()">📋</button>
+    <button class="btn-outline icon-btn" data-tip="Password Manager" onclick="openPasswordManager()">🔑</button>
+    <button class="btn-solid icon-btn" data-tip="Emergency Contact" onclick="openEmergencyContact()">🆘</button>
+    <button class="icon-btn" data-tip="Vault AI Assistant" onclick="openAIChat()" style="width:42px;height:42px;padding:0;border:none;border-radius:10px;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 2px 10px rgba(124,77,255,0.35);transition:transform .15s;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">✦</button>
+    <button class="btn-logout icon-btn" data-tip="Logout" onclick="logoutVault('Logged out successfully.')">🔓</button>
         </div>
 
         <!-- RIGHT: MOBILE BUTTONS (hidden on desktop) -->
@@ -832,15 +928,6 @@ style="display:none;">
 <div class="main-container">
 
     <aside class="sidebar">
-
-        <!-- Fortress brand header inside dark sidebar -->
-        <div class="sidebar-fortress-brand">
-          <div class="sb-icon">🛡️</div>
-          <div class="sb-text">
-            <strong>FORTRESS</strong>
-            <span>ONLINE VAULT</span>
-          </div>
-        </div>
 
         <div style="
         display:flex;

@@ -3,6 +3,16 @@
 ========================= */
 var masterPassword = "";
 
+function showCurtain(){
+    const c = document.getElementById('white-curtain');
+    if(c) c.classList.add('show');
+}
+function hideCurtain(delay){
+    const c = document.getElementById('white-curtain');
+    if(!c) return;
+    setTimeout(()=>{ c.classList.remove('show'); }, delay || 50);
+}
+
 let sessionSeconds = 3600;
 
    let failedAttempts = 0;
@@ -1618,12 +1628,14 @@ function showStep3(){
     }
 
     // Online mode: proceed to reCAPTCHA (step3)
+    showCurtain();
     const step2 = document.getElementById('step2');
     step2.style.pointerEvents = "none";
     step2.classList.add('slide-up-exit');
     setTimeout(()=>{
         step2.style.display = 'none';
         document.getElementById('step3').style.display = 'flex';
+        hideCurtain(150);
     }, 700);
 
 }
@@ -1633,6 +1645,8 @@ function showStep3(){
 ========================= */
 
 function onCaptchaSuccess(){
+
+    showCurtain();
 
     document.getElementById(
     'loading-msg').style.display =
@@ -1658,6 +1672,8 @@ dash.style.display = 'flex';
 
 dash.classList.add(
 'dashboard-enter');
+
+hideCurtain(200);
 
             saveAccessLog();
 

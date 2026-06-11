@@ -167,6 +167,64 @@ try {
    FILES
 ========================= */
 
+function buildHomeDashboard(){
+
+    const categories = Object.keys(allFilesData || {});
+    let totalFiles = 0;
+    categories.forEach(c => totalFiles += (allFilesData[c] || []).length);
+
+    let recents = [];
+    try{ recents = JSON.parse(localStorage.getItem('recentFiles') || '[]'); }catch(e){}
+
+    const historyHTML = recents.length
+        ? recents.slice(0,8).map(r => `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#f8fafc;border:1px solid var(--border);margin-bottom:8px;">
+                <div style="overflow:hidden;">
+                    <div style="font-weight:700;font-size:12.5px;color:var(--text-main, #0f172a);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📄 ${r.name}</div>
+                    <div style="font-size:10.5px;color:var(--muted);margin-top:2px;">${r.category || ''} · ${r.date || ''}</div>
+                </div>
+            </div>`).join('')
+        : `<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">No files viewed yet</div>`;
+
+    const categoriesHTML = categories.length
+        ? categories.map(c => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:12px;background:#f8fafc;border:1px solid var(--border);margin-bottom:8px;">
+                <div style="font-weight:700;font-size:12.5px;color:var(--text-main, #0f172a);">📁 ${c}</div>
+                <div style="font-size:11px;font-weight:800;color:var(--accent);background:#eff6ff;padding:3px 10px;border-radius:999px;">${(allFilesData[c]||[]).length}</div>
+            </div>`).join('')
+        : `<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">No categories</div>`;
+
+    return `
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:8px;">
+        <div style="background:white;border:1px solid var(--border);border-radius:20px;padding:22px;display:flex;align-items:center;gap:16px;">
+            <div style="font-size:30px;">🗂️</div>
+            <div>
+                <div style="font-size:11px;font-weight:800;letter-spacing:.5px;color:var(--muted);">NO. OF FILES IN VAULT</div>
+                <div style="font-size:24px;font-weight:900;color:var(--accent);">${totalFiles}</div>
+            </div>
+        </div>
+        <div style="background:white;border:1px solid var(--border);border-radius:20px;padding:22px;display:flex;align-items:center;gap:16px;">
+            <div style="font-size:30px;">🛡️</div>
+            <div>
+                <div style="font-size:11px;font-weight:800;letter-spacing:.5px;color:var(--muted);">SECURITY STATUS</div>
+                <div style="font-size:18px;font-weight:900;color:var(--success,#16a34a);">Protected · AES-256</div>
+            </div>
+        </div>
+    </div>
+
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-bottom:8px;">
+        <div class="profile-box" style="text-align:left;">
+            <h3>🕘 Files History</h3>
+            ${historyHTML}
+        </div>
+        <div class="profile-box" style="text-align:left;">
+            <h3>📚 Categories</h3>
+            ${categoriesHTML}
+        </div>
+    </div>
+    `;
+}
+
 function renderFiles(
 files,
 category){
@@ -403,12 +461,15 @@ profiles[member]
 
 grid.innerHTML=`
 
+${buildHomeDashboard()}
+
 <div style="
 grid-column:1/-1;
 background:white;
 border:1px solid var(--border);
 border-radius:24px;
 padding:35px;">
+
 
 <div style="
 display:flex;

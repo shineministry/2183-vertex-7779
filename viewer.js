@@ -24,6 +24,13 @@ async function openSecureFile(
 path,
 displayName){
 
+    try{
+        const recents = JSON.parse(localStorage.getItem('recentFiles') || '[]');
+        const filtered = recents.filter(r => r.path !== path);
+        filtered.unshift({ path, name: displayName || path, category: (typeof currentCategory !== 'undefined' ? currentCategory : ''), date: new Date().toLocaleString() });
+        localStorage.setItem('recentFiles', JSON.stringify(filtered.slice(0, 15)));
+    }catch(e){}
+
     if(!window.masterPassword){
 
  const savedSecret =

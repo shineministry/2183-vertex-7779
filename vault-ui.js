@@ -1,4 +1,67 @@
-document.addEventListener("visibilitychange", () => {
+/* =========================
+   ADMIN NOTIFICATIONS
+========================= */
+
+function getNotifications(){
+    try{ return JSON.parse(localStorage.getItem('adminNotifications') || '[]'); }
+    catch(e){ return []; }
+}
+
+function renderNotifications(){
+    const list = document.getElementById('notifList');
+    const dot  = document.getElementById('notifDot');
+    if(!list) return;
+    const notes = getNotifications();
+    if(notes.length === 0){
+        list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">No notifications</div>';
+        if(dot) dot.style.display = 'none';
+        return;
+    }
+    list.innerHTML = notes.slice().reverse().map(n => `
+        <div style="padding:10px;border-radius:10px;margin-bottom:6px;background:#f8fafc;border:1px solid var(--border-color);">
+            <div style="font-weight:700;font-size:12.5px;color:var(--text-main);">${(n.title||'Admin Notice')}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${n.msg||''}</div>
+            <div style="font-size:10.5px;color:var(--text-muted);margin-top:4px;opacity:.7;">${n.date||''}</div>
+        </div>
+    `).join('');
+    const unread = notes.filter(n => !n.read).length;
+    if(dot) dot.style.display = unread > 0 ? 'block' : 'none';
+}
+
+function toggleNotifications(){
+    const panel = document.getElementById('notifPanel');
+    if(!panel) return;
+    const open = panel.style.display === 'block';
+    panel.style.display = open ? 'none' : 'block';
+    if(!open){
+        renderNotifications();
+        const notes = getNotifications().map(n => ({...n, read:true}));
+        localStorage.setItem('adminNotifications', JSON.stringify(notes));
+        const dot = document.getElementById('notifDot');
+        if(dot) dot.style.display = 'none';
+    }
+}
+
+// Admin helper: call from console as
+// addAdminNotification("Title", "Message")
+function addAdminNotification(title, msg){
+    const notes = getNotifications();
+    notes.push({ title, msg, date: new Date().toLocaleString(), read:false });
+    localStorage.setItem('adminNotifications', JSON.stringify(notes));
+    renderNotifications();
+}
+
+document.addEventListener('click', (e)=>{
+    const panel = document.getElementById('notifPanel');
+    const btn = document.getElementById('notifBellBtn');
+    if(!panel || panel.style.display !== 'block') return;
+    if(!panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)){
+        panel.style.display = 'none';
+    }
+});
+
+document.addEventListener('DOMContentLoaded', renderNotifications);
+
 
     const dash =
     document.getElementById(
