@@ -779,7 +779,8 @@ style="display:none;">
             Thursday 14 May 2026 at 11:48 PM
         </div>
 
-        <div style="margin-left:auto;">
+        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+            <span class="security-status-dot">Security Status: Protected</span>
             <span class="e2e-badge">🔒 AES-256 End-to-End Encrypted</span>
         </div>
 
@@ -832,6 +833,15 @@ style="display:none;">
 
     <aside class="sidebar">
 
+        <!-- Fortress brand header inside dark sidebar -->
+        <div class="sidebar-fortress-brand">
+          <div class="sb-icon">🛡️</div>
+          <div class="sb-text">
+            <strong>FORTRESS</strong>
+            <span>ONLINE VAULT</span>
+          </div>
+        </div>
+
         <div style="
         display:flex;
         align-items:center;
@@ -843,31 +853,31 @@ style="display:none;">
                 flex:1;
                 padding:12px;
                 border-radius:12px;
-                border:1px solid #e2e8f0;
+                border:1px solid rgba(255,255,255,.15);
                 font-weight:700;
                 font-size:13px;
                 cursor:pointer;
-                background:white;
-                color:#0f172a;
+                background:rgba(255,255,255,.08);
+                color:#e2e8f0;
             ">
 
-                <option value="all">
+                <option value="all" style="background:#1e293b;color:#e2e8f0;">
                     👥 All Members
                 </option>
 
-                <option value="shineil">
+                <option value="shineil" style="background:#1e293b;color:#e2e8f0;">
                     SHINEIL MATHIAS
                 </option>
 
-                <option value="brother">
+                <option value="brother" style="background:#1e293b;color:#e2e8f0;">
                     KEVIN MATHIAS
                 </option>
 
-                <option value="father">
+                <option value="father" style="background:#1e293b;color:#e2e8f0;">
                     STEPHEN MATHIAS
                 </option>
 
-                <option value="mother">
+                <option value="mother" style="background:#1e293b;color:#e2e8f0;">
                     KANCHAN MATHIAS
                 </option>
 
@@ -876,15 +886,16 @@ style="display:none;">
             <button id="share-gear" style="
                 width:46px;
                 height:46px;
-                border:1px solid #e2e8f0;
+                border:1px solid rgba(255,255,255,.15);
                 border-radius:12px;
-                background:white;
+                background:rgba(255,255,255,.08);
                 cursor:pointer;
                 font-size:18px;
                 display:flex;
                 align-items:center;
                 justify-content:center;
                 flex-shrink:0;
+                color:#94a3b8;
             ">
                 ⚙️
             </button>

@@ -2151,3 +2151,332 @@ button{
   60%{transform:translateX(-4px)}
   80%{transform:translateX(4px)}
 }
+
+/* ============================================================
+   FORTRESS ONLINE VAULT — DARK SIDEBAR REDESIGN
+   Matches the target dashboard design exactly
+   ============================================================ */
+
+/* ── 1. NAVBAR: white, clean, Fortress branded ── */
+.passport-navbar {
+  background: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 8px rgba(0,0,0,.06) !important;
+}
+
+.passport-top-utility {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 8px 22px !important;
+}
+
+#passport-datetime {
+  font-size: 12px !important;
+  color: #64748b !important;
+  font-weight: 500 !important;
+}
+
+.e2e-badge {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0) !important;
+  border: 1px solid #86efac !important;
+  color: #166534 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  padding: 5px 12px !important;
+  border-radius: 20px !important;
+}
+
+/* Brand: "FORTRESS ONLINE VAULT" in bold navy-blue */
+.brand-title {
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  color: #1e3a8a !important;
+  letter-spacing: .5px !important;
+}
+
+/* Nav buttons: outlined small pills */
+.btn-outline {
+  background: #f1f5f9 !important;
+  color: #1e3a8a !important;
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 7px 13px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  transition: all .2s !important;
+}
+.btn-outline:hover {
+  background: #eff6ff !important;
+  border-color: #2563eb !important;
+  color: #2563eb !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Emergency = red */
+.btn-solid {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 800 !important;
+}
+
+/* Logout = dark */
+.btn-logout {
+  background: #0f172a !important;
+  color: white !important;
+  border: none !important;
+}
+
+/* ── 2. MAIN LAYOUT ── */
+#vault-dashboard {
+  display: flex !important;  /* shown after login */
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main-container {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+
+/* ── 3. DARK NAVY SIDEBAR ── */
+.sidebar {
+  width: 240px !important;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+  border-right: none !important;
+  padding: 20px 14px !important;
+  overflow-y: auto !important;
+  height: 100% !important;
+  flex-shrink: 0 !important;
+  box-shadow: 4px 0 20px rgba(0,0,0,.18) !important;
+}
+
+/* Member select — dark themed */
+#member-select {
+  background: rgba(255,255,255,.08) !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  border-radius: 12px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  padding: 10px 12px !important;
+}
+
+#member-select option {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+/* Settings gear button — dark */
+#share-gear {
+  background: rgba(255,255,255,.08) !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  color: #94a3b8 !important;
+  border-radius: 12px !important;
+}
+
+/* Category list items */
+#cat-list li {
+  color: #94a3b8 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  padding: 11px 14px !important;
+  border-radius: 10px !important;
+  margin-bottom: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  transition: all .18s !important;
+  letter-spacing: .2px !important;
+}
+
+#cat-list li:hover {
+  background: rgba(255,255,255,.1) !important;
+  color: #ffffff !important;
+  transform: translateX(3px) !important;
+}
+
+#cat-list li.active {
+  background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
+  color: #ffffff !important;
+  transform: none !important;
+  box-shadow: 0 4px 14px rgba(37,99,235,.4) !important;
+}
+
+/* ── 4. CONTENT AREA ── */
+.content-view {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 28px 32px !important;
+  height: 100% !important;
+  background: #f1f5f9 !important;
+}
+
+/* Title */
+#cat-title {
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+  letter-spacing: .3px !important;
+  margin-bottom: 20px !important;
+  text-transform: uppercase !important;
+}
+
+/* Search input */
+#unified-search {
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  padding: 12px 18px !important;
+  font-size: 14px !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04) !important;
+}
+#unified-search::placeholder { color: #94a3b8 !important; }
+#unified-search:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.1) !important;
+  outline: none !important;
+}
+
+/* Timer box */
+.timer-box {
+  background: #fffbeb !important;
+  border: 1px solid #fde68a !important;
+  border-radius: 12px !important;
+  padding: 12px 18px !important;
+  margin-bottom: 22px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+/* File grid cards */
+.file-card, .doc-card {
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05) !important;
+  transition: all .2s !important;
+}
+.file-card:hover, .doc-card:hover {
+  border-color: #bfdbfe !important;
+  box-shadow: 0 6px 20px rgba(37,99,235,.1) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ── 5. MOBILE: sidebar becomes horizontal scrollable pill bar ── */
+@media (max-width: 900px) {
+  .sidebar {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 130px !important;
+    flex-direction: column !important;
+    padding: 12px !important;
+    background: linear-gradient(135deg, #0f172a, #1e293b) !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,.2) !important;
+  }
+
+  #cat-list {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    gap: 8px !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    padding-bottom: 2px !important;
+  }
+
+  #cat-list::-webkit-scrollbar { display: none !important; }
+
+  #cat-list li {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    padding: 9px 16px !important;
+    margin-bottom: 0 !important;
+    font-size: 12px !important;
+    border-radius: 20px !important;
+    transform: none !important;
+  }
+
+  #cat-list li:hover {
+    transform: none !important;
+  }
+
+  #cat-list li.active {
+    transform: none !important;
+  }
+
+  .content-view {
+    padding: 16px !important;
+  }
+
+  #cat-title {
+    font-size: 16px !important;
+    margin-bottom: 14px !important;
+  }
+
+  #member-select, #share-gear {
+    height: 40px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .sidebar {
+    max-height: 120px !important;
+    padding: 8px !important;
+  }
+
+  .content-view {
+    padding: 12px !important;
+  }
+}
+
+/* ── 6. Sidebar logo/header area (add a Fortress brand header above cat list) ── */
+.sidebar-fortress-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  margin-bottom: 16px;
+}
+.sidebar-fortress-brand .sb-icon {
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(37,99,235,.4);
+}
+.sidebar-fortress-brand .sb-text {
+  display: flex; flex-direction: column;
+}
+.sidebar-fortress-brand .sb-text strong {
+  font-size: 11px; font-weight: 900; color: #ffffff; letter-spacing: .8px;
+}
+.sidebar-fortress-brand .sb-text span {
+  font-size: 9px; color: #64748b; letter-spacing: 1px; text-transform: uppercase; margin-top: 1px;
+}
+
+/* Hide brand on mobile horizontal scroll */
+@media (max-width: 900px) {
+  .sidebar-fortress-brand { display: none !important; }
+}
+
+/* ── 7. Security status badge in top bar ── */
+.security-status-dot {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; color: #166534;
+}
+.security-status-dot::before {
+  content: ''; width: 7px; height: 7px;
+  background: #16a34a; border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 6px rgba(22,163,74,.5);
+}

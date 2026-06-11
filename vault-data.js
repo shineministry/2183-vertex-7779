@@ -86,9 +86,22 @@ try {
         return;
     }
 
+    // Category icon map for dark sidebar
+    const CAT_ICONS = {
+        'HOME': '🏠', 'Guardian': '👥', 'Visa': '✈️', 'Finance': '💰',
+        'School': '🎓', 'Personal': '👤', 'Residence': '🏡', 'Church': '✝️',
+        'Education': '📚', 'Identity': '🪪', 'Legal': '⚖️', 'Financial': '💳',
+        'Ministry': '🕊️', 'Medical': '🏥', 'Insurance': '🛡️', 'Tax': '📋',
+        'Property': '🏠', 'Vehicle': '🚗', 'Travel': '🌍', 'Work': '💼',
+        'Bank': '🏦', 'Documents': '📄', 'Certificates': '🏅'
+    };
+    function getCatIcon(cat) {
+        return CAT_ICONS[cat] || CAT_ICONS[Object.keys(CAT_ICONS).find(k => cat.toLowerCase().includes(k.toLowerCase()))] || '📁';
+    }
+
     // ── Inject HOME profile item first ──
     const homeLi = document.createElement('li');
-    homeLi.textContent = '🏠 HOME';
+    homeLi.innerHTML = `<span style="font-size:15px;">🏠</span><span>HOME</span>`;
     homeLi.onclick = () => {
         document.querySelectorAll('#cat-list li')
             .forEach(el => el.classList.remove('active'));
@@ -99,7 +112,8 @@ try {
 
     categories.forEach(cat => {
         const li = document.createElement('li');
-        li.textContent = cat;
+        const icon = getCatIcon(cat);
+        li.innerHTML = `<span style="font-size:15px;">${icon}</span><span>${cat}</span>`;
 
         li.onclick = () => {
             document.querySelectorAll('#cat-list li')
