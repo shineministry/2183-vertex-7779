@@ -8,18 +8,21 @@
 // ============ PASSWORD MANAGER ============
 const WORKER_URL = 'https://backend.shinumaths989.workers.dev'; // your worker URL
 
-// NOTE: If renderPMList is declared in another file, you can safely remove this stub.
+// renderPMList, openPasswordManager, closePasswordManager are defined in index.html
 if (typeof renderPMList !== 'function') {
-  var renderPMList = function() { console.warn("renderPMList() is not implemented yet."); };
+  var renderPMList = function() { console.warn("renderPMList() not yet ready."); };
 }
-
-function openPasswordManager() {
-  document.getElementById('passwordManagerModal').style.display = 'flex';
-  renderPMList();
+if (typeof openPasswordManager !== 'function') {
+  function openPasswordManager() {
+    const m = document.getElementById('passwordManagerModal');
+    if (m) { m.classList.add('open'); renderPMList(); }
+  }
 }
+if (typeof closePasswordManager !== 'function') {
 function closePasswordManager() {
   document.getElementById('passwordManagerModal').style.display = 'none';
 }
+} // end if closePasswordManager
 
 function togglePMPassword(buttonElement, inputId) {
   const passwordInput = document.getElementById(inputId);
