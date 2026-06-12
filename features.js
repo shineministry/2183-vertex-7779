@@ -637,7 +637,7 @@ function copyShareLink(){
 // This file only opens a connection for pm_entries (Password Manager).
 
 const IDB_NAME    = 'vaultOfflineDB';
-const IDB_VERSION = 5; // must match offline-auth.js
+const IDB_VERSION = 6; // bumped to add vault_notifications store
 
 function openIDB() {
   return new Promise((resolve, reject) => {
@@ -655,6 +655,9 @@ function openIDB() {
       }
       if (!db.objectStoreNames.contains('vault_auth')) {
         db.createObjectStore('vault_auth', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('vault_notifications')) {
+        db.createObjectStore('vault_notifications', { keyPath: 'id', autoIncrement: true });
       }
     };
     req.onsuccess  = e => resolve(e.target.result);
@@ -1141,6 +1144,8 @@ function vaultPostInit(){
 
     renderPinnedSection();
     setTimeout(checkDocExpiryReminders, 2000);
+    // Load notifications and show badge/bubble
+    initVaultNotifications().catch(() => {});
 
     // ── Pre-cache vault docs into IndexedDB for offline access ──
     // Runs after a short delay so it doesn't compete with the initial render
@@ -1167,3 +1172,189 @@ function vaultPostInit(){
         if (activeLi) activeLi.click();
     });
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  VAULT NOTIFICATIONS SYSTEM
+//  Reads published notifications from IndexedDB (written by notify.html)
+//  Shows badge count on bell + welcome bubble on login
+// ═══════════════════════════════════════════════════════════════
+
+const NOTIF_IDB_NAME    = 'vaultOfflineDB';
+const NOTIF_IDB_VERSION = 6; // bumped from 5 to add vault_notifications store
+
+function openNotifIDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(NOTIF_IDB_NAME, NOTIF_IDB_VERSION);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('pm_entries'))         db.createObjectStore('pm_entries',          { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('vault_docs'))         db.createObjectStore('vault_docs',          { keyPath: 'filename' });
+      if (!db.objectStoreNames.contains('vault_meta'))         db.createObjectStore('vault_meta',          { keyPath: 'key' });
+      if (!db.objectStoreNames.contains('vault_auth'))         db.createObjectStore('vault_auth',          { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('vault_notifications'))db.createObjectStore('vault_notifications', { keyPath: 'id', autoIncrement: true });
+    };
+    req.onsuccess  = e => resolve(e.target.result);
+    req.onerror    = e => reject(e.target.error);
+  });
+}
+
+async function idbGetNotifications() {
+  try {
+    const db = await openNotifIDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('vault_notifications', 'readonly');
+      const req = tx.objectStore('vault_notifications').getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror   = () => resolve([]);
+    });
+  } catch { return []; }
+}
+
+async function idbMarkNotifRead(id) {
+  try {
+    const db = await openNotifIDB();
+    const tx = db.transaction('vault_notifications', 'readwrite');
+    const store = tx.objectStore('vault_notifications');
+    const rec = await new Promise(r => { const g = store.get(id); g.onsuccess = () => r(g.result); });
+    if (rec) { rec.read = true; store.put(rec); }
+  } catch {}
+}
+
+// Called by vaultPostInit — loads notifications and shows badge + bubble
+async function initVaultNotifications() {
+  const all = await idbGetNotifications();
+  const currentUser = sessionStorage.getItem('vaultUser') || 'all';
+  // Filter: show Global or targeted to this user
+  const relevant = all.filter(n => {
+    if (n.type === 'global') return true;
+    if (n.type === 'targeted') {
+      const targets = (n.targets || '').toLowerCase().split(',').map(x => x.trim());
+      return targets.includes(currentUser.toLowerCase()) || targets.includes('all');
+    }
+    return true;
+  });
+  const unread = relevant.filter(n => !n.read);
+  _updateNotifBadge(unread.length);
+  if (unread.length > 0) {
+    _showNotifWelcomeBubble(unread);
+  }
+}
+
+function _updateNotifBadge(count) {
+  const dot   = document.getElementById('notifDot');
+  const badge = document.getElementById('notifCount');
+  if (!dot || !badge) return;
+  if (count > 0) {
+    dot.style.display   = 'none';
+    badge.style.display = 'block';
+    badge.textContent   = count > 9 ? '9+' : count;
+  } else {
+    dot.style.display   = 'none';
+    badge.style.display = 'none';
+  }
+}
+
+function _showNotifWelcomeBubble(unread) {
+  const bubble = document.getElementById('notifWelcomeBubble');
+  if (!bubble) return;
+  const preview = document.getElementById('bubbleNotifPreview');
+  if (preview && unread.length > 0) {
+    const first = unread[0];
+    preview.innerHTML = `<strong style="color:#f8fafc;">${first.title || 'Admin Notification'}</strong><br><span style="color:#cbd5e1;">${(first.body || '').substring(0, 80)}${(first.body||'').length > 80 ? '…' : ''}</span>`;
+  }
+  bubble.style.display = 'block';
+  bubble.style.animation = 'notifBubblePop .35s cubic-bezier(.34,1.56,.64,1)';
+  // Auto-hide after 10 seconds
+  setTimeout(() => dismissNotifBubble(), 10000);
+}
+
+function dismissNotifBubble() {
+  const bubble = document.getElementById('notifWelcomeBubble');
+  if (bubble) { bubble.style.opacity='0'; bubble.style.transform='scale(.92)'; bubble.style.transition='.2s'; setTimeout(() => bubble.style.display='none', 200); }
+}
+
+function openNotifBubble() {
+  dismissNotifBubble();
+  toggleNotifications();
+}
+
+function toggleNotifications() {
+  const panel = document.getElementById('notifPanel');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    _renderNotifPanel();
+    dismissNotifBubble();
+  }
+}
+
+async function _renderNotifPanel() {
+  const listEl = document.getElementById('notifList');
+  if (!listEl) return;
+  const all = await idbGetNotifications();
+  const currentUser = sessionStorage.getItem('vaultUser') || 'all';
+  const relevant = all.filter(n => {
+    if (n.type === 'global') return true;
+    if (n.type === 'targeted') {
+      const targets = (n.targets || '').toLowerCase().split(',').map(x => x.trim());
+      return targets.includes(currentUser.toLowerCase()) || targets.includes('all');
+    }
+    return true;
+  }).sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+
+  if (relevant.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px;">No notifications yet</div>';
+    return;
+  }
+  listEl.innerHTML = relevant.map(n => `
+    <div id="notif-item-${n.id}" onclick="markNotifRead(${n.id})" style="padding:10px 12px;border-radius:10px;margin-bottom:6px;cursor:pointer;background:${n.read ? 'transparent' : 'rgba(59,130,246,.07)'};border:1px solid ${n.read ? 'transparent' : 'rgba(59,130,246,.15)'};transition:.2s;">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <span style="font-size:18px;flex-shrink:0;">${n.type === 'global' ? '📢' : '🎯'}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:${n.read ? '600' : '800'};font-size:13px;color:#0f172a;margin-bottom:2px;">${escHtml(n.title||'Notification')}</div>
+          <div style="font-size:12px;color:#475569;line-height:1.5;">${escHtml(n.body||'')}</div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:4px;">${n.type === 'global' ? '🌐 Global' : '🎯 Targeted'} · ${n.timestamp ? new Date(n.timestamp).toLocaleString() : ''}</div>
+        </div>
+        ${!n.read ? '<span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;flex-shrink:0;margin-top:4px;"></span>' : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function markNotifRead(id) {
+  await idbMarkNotifRead(id);
+  const el = document.getElementById(`notif-item-${id}`);
+  if (el) { el.style.background='transparent'; el.style.border='1px solid transparent'; const dot = el.querySelector('span[style*="8px;border-radius:50%;background:#3b82f6"]'); if(dot) dot.remove(); }
+  // Recount unread
+  const all = await idbGetNotifications();
+  const unread = all.filter(n => !n.read);
+  _updateNotifBadge(unread.length);
+}
+
+async function markAllNotifsRead() {
+  const all = await idbGetNotifications();
+  for (const n of all) if (!n.read) await idbMarkNotifRead(n.id);
+  _updateNotifBadge(0);
+  _renderNotifPanel();
+}
+
+// Close notif panel when clicking outside
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('notifPanel');
+  const btn   = document.getElementById('notifBellBtn');
+  if (panel && panel.style.display !== 'none' && !panel.contains(e.target) && btn && !btn.contains(e.target)) {
+    panel.style.display = 'none';
+  }
+});
+
+// Bubble pop animation
+(function() {
+  const s = document.createElement('style');
+  s.textContent = `@keyframes notifBubblePop { from { opacity:0; transform:scale(.85) translateY(-6px); } to { opacity:1; transform:scale(1) translateY(0); } }`;
+  document.head.appendChild(s);
+})();
