@@ -910,6 +910,7 @@ style="display:none;">
 
         <!-- RIGHT: DESKTOP BUTTONS (hidden on mobile) -->
         <div class="nav-auth nav-auth-desktop">
+    <button id="homeNavBtn" class="btn-outline" onclick="showHomeView()">🏠 HOME</button>
     <button id="vaultModesNavBtn" class="btn-outline" onclick="openVaultModes()">⚡ MODES</button>
     <button class="btn-outline icon-btn" data-tip="Favourites" onclick="showPinned()">⭐</button>
     <button class="btn-outline icon-btn" data-tip="Compare Documents" onclick="startCompareMode()" id="compareNavBtn">⚖️</button>
@@ -932,6 +933,7 @@ style="display:none;">
 
     <!-- MOBILE DROPDOWN MENU -->
     <div id="mobile-nav-menu" class="mobile-nav-menu">
+        <button id="homeMobileBtn" onclick="showHomeView();toggleMobileMenu()">🏠 Home</button>
         <button id="vaultModesMobileBtn" onclick="openVaultModes();toggleMobileMenu()">⚡ Vault Modes</button>
         <button onclick="showPinned();toggleMobileMenu()">⭐ Favourites</button>
         <button onclick="openPasswordManager();toggleMobileMenu()">🔑 Passwords</button>
@@ -941,7 +943,89 @@ style="display:none;">
 
 </div>
 
-<div class="main-container">
+<!-- =========================
+     HOME VIEW
+========================= -->
+<div id="home-view">
+
+    <div class="home-welcome" style="
+        background:linear-gradient(135deg,#1e3a8a,#0f172a);
+        color:#f8fafc;
+        border-radius:16px;
+        padding:22px;
+        margin-bottom:18px;
+        ">
+        <div style="font-size:20px;font-weight:800;margin-bottom:4px;">👋 Welcome back</div>
+        <div id="home-welcome-sub" style="font-size:13px;color:#cbd5e1;">Here's what's happening in your vault today.</div>
+        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
+            <span class="security-status-dot" style="background:rgba(255,255,255,.1);padding:4px 10px;border-radius:8px;">Security Status: Protected</span>
+            <span class="e2e-badge" style="background:rgba(255,255,255,.1);padding:4px 10px;border-radius:8px;">🔒 AES-256 End-to-End Encrypted</span>
+        </div>
+    </div>
+
+    <!-- QUICK STATS -->
+    <div id="home-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;"></div>
+
+    <!-- QUICK ACTIONS -->
+    <div style="margin-bottom:18px;">
+        <h3 style="margin-bottom:10px;">⚡ Quick Actions</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-outline" onclick="showVaultView()">📁 Browse Vault</button>
+            <button class="btn-outline" onclick="showPinned();showVaultView()">⭐ Favourites</button>
+            <button class="btn-outline" onclick="openPasswordManager()">🔑 Password Manager</button>
+            <button class="btn-outline" onclick="openLogs()">📋 Access Log</button>
+            <button class="btn-outline" onclick="startCompareMode();showVaultView()">⚖️ Compare Documents</button>
+            <button class="btn-outline" onclick="showProfileView()">👤 My Profile</button>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;">
+
+        <!-- RECENT FILES -->
+        <div>
+            <h3 style="margin-bottom:10px;">🕘 Recent Files</h3>
+            <div id="home-recent-files" class="file-grid"></div>
+        </div>
+
+        <!-- RECENT ACTIVITY -->
+        <div>
+            <h3 style="margin-bottom:10px;">📜 Recent Activity</h3>
+            <div id="home-activity-list"></div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     PROFILE VIEW
+========================= -->
+<div id="profile-view" style="display:none;">
+
+    <button class="btn-outline" onclick="showHomeView()" style="margin-bottom:14px;">⬅ Back to Home</button>
+
+    <div id="profile-card" style="
+        background:linear-gradient(135deg,#0f172a,#1e293b);
+        color:#f8fafc;
+        border-radius:16px;
+        padding:24px;
+        max-width:520px;
+        ">
+        <div id="profile-avatar" style="
+            width:72px;height:72px;border-radius:50%;
+            background:rgba(255,255,255,.1);
+            display:flex;align-items:center;justify-content:center;
+            font-size:30px;font-weight:800;margin-bottom:14px;
+            ">👤</div>
+        <div id="profile-name" style="font-size:20px;font-weight:800;"></div>
+        <div id="profile-role" style="font-size:13px;color:#94a3b8;margin-bottom:16px;"></div>
+
+        <div id="profile-details" style="display:flex;flex-direction:column;gap:8px;font-size:13px;"></div>
+    </div>
+
+</div>
+
+<div class="main-container" id="vault-main-container" style="display:none;">
 
     <aside class="sidebar">
 
@@ -998,7 +1082,7 @@ style="display:none;">
 
             </select>
 
-            <button id="share-gear" style="
+            <button id="share-gear" onclick="showProfileView()" style="
                 width:46px;
                 height:46px;
                 border:1px solid rgba(255,255,255,.18);
@@ -2918,6 +3002,171 @@ function setVaultMode(id) {
 
 <script>
 // MODES button is now a real HTML button in the navbar — no injection needed.
+</script>
+<script>
+/* =========================
+   HOME / PROFILE VIEWS
+========================= */
+
+const MEMBER_PROFILES = {
+    all:      { name: "All Members", role: "Family Vault Overview", emoji: "👥" },
+    shineil:  { name: "SHINEIL MATHIAS", role: "Vault Member", emoji: "🧑" },
+    brother:  { name: "KEVIN MATHIAS",   role: "Vault Member · Brother", emoji: "🧑" },
+    father:   { name: "STEPHEN MATHIAS", role: "Vault Member · Father", emoji: "👨" },
+    mother:   { name: "KANCHAN MATHIAS", role: "Vault Member · Mother", emoji: "👩" }
+};
+
+function showHomeView(){
+    document.getElementById('home-view').style.display = 'block';
+    document.getElementById('profile-view').style.display = 'none';
+    const vc = document.getElementById('vault-main-container');
+    if(vc) vc.style.display = 'none';
+    renderHomeView();
+    if(document.getElementById('mobile-nav-menu')?.classList.contains('open')) toggleMobileMenu();
+}
+
+function showVaultView(){
+    document.getElementById('home-view').style.display = 'none';
+    document.getElementById('profile-view').style.display = 'none';
+    const vc = document.getElementById('vault-main-container');
+    if(vc) vc.style.display = 'flex';
+}
+
+function showProfileView(){
+    document.getElementById('home-view').style.display = 'none';
+    const vc = document.getElementById('vault-main-container');
+    if(vc) vc.style.display = 'none';
+    document.getElementById('profile-view').style.display = 'block';
+    renderProfileView();
+}
+
+function renderProfileView(){
+    const sel = document.getElementById('member-select');
+    const key = sel ? sel.value : 'all';
+    const profile = MEMBER_PROFILES[key] || MEMBER_PROFILES.all;
+
+    document.getElementById('profile-avatar').textContent = profile.emoji;
+    document.getElementById('profile-name').textContent = profile.name;
+    document.getElementById('profile-role').textContent = profile.role;
+
+    const logs = JSON.parse(localStorage.getItem('vaultLogs') || '[]');
+    const lastLog = logs[logs.length - 1];
+
+    const details = document.getElementById('profile-details');
+    details.innerHTML = '';
+    const rows = [
+        ['🔐 Access Level', key === 'all' ? 'Full Family Vault' : 'Member Vault'],
+        ['🕘 Last Session', lastLog ? lastLog.loginTime : '—'],
+        ['💻 Last Device', lastLog ? lastLog.device : '—'],
+        ['🌍 Timezone', lastLog ? lastLog.timezone : '—'],
+        ['🔒 Encryption', 'AES-256 End-to-End']
+    ];
+    rows.forEach(([label, val])=>{
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08);padding:6px 0;';
+        row.innerHTML = `<span style="color:#94a3b8;">${label}</span><span style="font-weight:700;">${val}</span>`;
+        details.appendChild(row);
+    });
+}
+
+function recordRecentFile(name){
+    if(!name) return;
+    let recent = JSON.parse(localStorage.getItem('recentFileHistory') || '[]');
+    recent = recent.filter(r => r.name !== name);
+    recent.unshift({ name, date: new Date().toLocaleString() });
+    recent = recent.slice(0, 8);
+    localStorage.setItem('recentFileHistory', JSON.stringify(recent));
+}
+
+// Best-effort: capture clicks on file cards anywhere in the vault to build recent file history
+document.addEventListener('click', (e)=>{
+    const card = e.target.closest('#file-grid [data-doc-name], #file-grid .file-card, #file-grid .pdf-card, #file-grid [class*="card"]');
+    if(!card) return;
+    const name = card.getAttribute('data-doc-name') || card.querySelector('[class*="title"],[class*="name"]')?.textContent?.trim() || card.textContent?.trim().slice(0,60);
+    recordRecentFile(name);
+});
+
+function renderHomeStats(){
+    const statsEl = document.getElementById('home-stats');
+    if(!statsEl) return;
+
+    const memberCount = document.getElementById('member-select')?.options.length || 0;
+    const catCount = document.getElementById('cat-list')?.children.length || 0;
+    const fileCount = document.getElementById('file-grid')?.children.length || 0;
+    const pinnedCount = document.getElementById('pinned-grid')?.children.length || 0;
+    const notifCount = (typeof getNotifications === 'function') ? getNotifications().filter(n=>!n.read).length : 0;
+
+    const cards = [
+        ['👥', memberCount, 'Family Members'],
+        ['🗂️', catCount, 'Categories'],
+        ['📄', fileCount, 'Files in View'],
+        ['⭐', pinnedCount, 'Pinned Docs'],
+        ['🔔', notifCount, 'Unread Alerts']
+    ];
+
+    statsEl.innerHTML = cards.map(([icon, val, label]) => `
+        <div style="background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:14px;text-align:center;">
+            <div style="font-size:22px;">${icon}</div>
+            <div style="font-size:20px;font-weight:800;margin-top:4px;">${val}</div>
+            <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">${label}</div>
+        </div>
+    `).join('');
+}
+
+function renderHomeRecentFiles(){
+    const grid = document.getElementById('home-recent-files');
+    if(!grid) return;
+    const recent = JSON.parse(localStorage.getItem('recentFileHistory') || '[]');
+    if(recent.length === 0){
+        grid.innerHTML = '<div style="padding:16px;color:var(--text-muted);font-size:13px;">No files opened yet. Browse the vault to build your recent history.</div>';
+        return;
+    }
+    grid.innerHTML = recent.map(r => `
+        <div style="background:#fff;border:1px solid var(--border-color);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:700;font-size:13px;">📄 ${r.name}</span>
+            <span style="font-size:11px;color:var(--text-muted);">${r.date}</span>
+        </div>
+    `).join('');
+}
+
+function renderHomeActivity(){
+    const list = document.getElementById('home-activity-list');
+    if(!list) return;
+    const logs = JSON.parse(localStorage.getItem('vaultLogs') || '[]').slice(-6).reverse();
+    if(logs.length === 0){
+        list.innerHTML = '<div style="padding:16px;color:var(--text-muted);font-size:13px;">No recent activity recorded.</div>';
+        return;
+    }
+    list.innerHTML = logs.map(l => `
+        <div style="background:#fff;border:1px solid var(--border-color);border-radius:12px;padding:12px;margin-bottom:8px;">
+            <div style="font-weight:700;font-size:13px;">${l.visitorName || 'Unknown user'}</div>
+            <div style="font-size:12px;color:var(--text-muted);">${l.purpose || ''}</div>
+            <div style="font-size:11px;color:var(--text-muted);opacity:.8;margin-top:2px;">${l.loginTime || ''} · ${l.device || ''}</div>
+        </div>
+    `).join('');
+}
+
+function renderHomeWelcome(){
+    const sub = document.getElementById('home-welcome-sub');
+    const sel = document.getElementById('member-select');
+    const profile = MEMBER_PROFILES[sel ? sel.value : 'all'] || MEMBER_PROFILES.all;
+    if(sub) sub.textContent = `Viewing as ${profile.name} · Here's what's happening in your vault today.`;
+}
+
+function renderHomeView(){
+    renderHomeWelcome();
+    renderHomeStats();
+    renderHomeRecentFiles();
+    renderHomeActivity();
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+    document.getElementById('member-select')?.addEventListener('change', ()=>{
+        if(document.getElementById('home-view').style.display !== 'none') renderHomeView();
+        if(document.getElementById('profile-view').style.display !== 'none') renderProfileView();
+    });
+    if(document.getElementById('home-view')?.style.display !== 'none') renderHomeView();
+});
 </script>
 </body>
 </html>
