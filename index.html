@@ -872,10 +872,24 @@ style="display:none;">
             <div style="position:relative;">
                 <button class="icon-btn" data-tip="Notifications" onclick="toggleNotifications()" id="notifBellBtn" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border-color);background:rgba(37,99,235,.06);cursor:pointer;font-size:15px;">
                     🔔<span id="notifDot" style="display:none;position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:var(--danger);border:2px solid #fff;"></span>
+                    <span id="notifCount" style="display:none;position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;line-height:18px;text-align:center;padding:0 4px;border:2px solid #fff;"></span>
                 </button>
-                <div id="notifPanel" style="display:none;position:absolute;top:calc(100% + 10px);right:0;width:280px;max-height:320px;overflow-y:auto;background:#fff;border:1px solid var(--border-color);border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.12);z-index:200;padding:10px;">
-                    <div style="font-weight:800;font-size:13px;margin-bottom:8px;padding:0 4px;">Notifications</div>
-                    <div id="notifList"></div>
+                <!-- Notification Panel -->
+                <div id="notifPanel" style="display:none;position:absolute;top:calc(100% + 10px);right:0;width:320px;max-height:380px;overflow-y:auto;background:#fff;border:1px solid var(--border-color);border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.12);z-index:200;padding:12px;">
+                    <div style="font-weight:800;font-size:13px;margin-bottom:8px;padding:0 4px;display:flex;align-items:center;justify-content:space-between;">
+                        <span>🔔 Notifications</span>
+                        <button onclick="markAllNotifsRead()" style="font-size:11px;color:#3b82f6;background:none;border:none;cursor:pointer;font-weight:600;">Mark all read</button>
+                    </div>
+                    <div id="notifList"><div style="text-align:center;color:#94a3b8;padding:20px;font-size:13px;">No notifications</div></div>
+                </div>
+                <!-- Welcome Bubble -->
+                <div id="notifWelcomeBubble" style="display:none;position:absolute;top:calc(100% + 12px);right:0;width:260px;background:linear-gradient(135deg,#1e3a8a,#0f172a);color:#f8fafc;border-radius:16px;padding:16px;box-shadow:0 10px 40px rgba(15,23,42,.4);z-index:300;border:1px solid rgba(255,255,255,.15);cursor:pointer;" onclick="openNotifBubble()">
+                    <div style="position:absolute;top:-8px;right:14px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:8px solid #1e3a8a;"></div>
+                    <div style="font-size:18px;margin-bottom:6px;">👋</div>
+                    <div style="font-weight:800;font-size:13px;margin-bottom:4px;">Welcome to your Vault!</div>
+                    <div style="font-size:12px;color:#94a3b8;line-height:1.5;">Click here before you start using the online vault</div>
+                    <div id="bubbleNotifPreview" style="margin-top:10px;font-size:11px;background:rgba(255,255,255,.1);border-radius:8px;padding:8px;"></div>
+                    <div style="margin-top:8px;text-align:right;"><button onclick="event.stopPropagation();dismissNotifBubble()" style="background:rgba(255,255,255,.15);border:none;color:#94a3b8;font-size:10px;padding:4px 10px;border-radius:6px;cursor:pointer;">Dismiss</button></div>
                 </div>
             </div>
         </div>
@@ -896,6 +910,7 @@ style="display:none;">
 
         <!-- RIGHT: DESKTOP BUTTONS (hidden on mobile) -->
         <div class="nav-auth nav-auth-desktop">
+    <button id="vaultModesNavBtn" class="btn-outline" onclick="openVaultModes()">⚡ MODES</button>
     <button class="btn-outline icon-btn" data-tip="Favourites" onclick="showPinned()">⭐</button>
     <button class="btn-outline icon-btn" data-tip="Compare Documents" onclick="startCompareMode()" id="compareNavBtn">⚖️</button>
     <button class="btn-outline icon-btn" data-tip="Access Log" onclick="openLogs()">📋</button>
@@ -917,6 +932,7 @@ style="display:none;">
 
     <!-- MOBILE DROPDOWN MENU -->
     <div id="mobile-nav-menu" class="mobile-nav-menu">
+        <button id="vaultModesMobileBtn" onclick="openVaultModes();toggleMobileMenu()">⚡ Vault Modes</button>
         <button onclick="showPinned();toggleMobileMenu()">⭐ Favourites</button>
         <button onclick="openPasswordManager();toggleMobileMenu()">🔑 Passwords</button>
         <button onclick="startCompareMode();toggleMobileMenu()" id="compareNavBtn">⚖️ Compare</button>
@@ -930,17 +946,23 @@ style="display:none;">
     <aside class="sidebar">
 
         <div style="
+        background:linear-gradient(135deg,#0f172a,#1e293b);
+        border-radius:14px;
+        padding:12px;
+        margin-bottom:14px;
+        border:1px solid rgba(255,255,255,.1);
+        ">
+        <div style="
         display:flex;
         align-items:center;
         gap:8px;
-        margin-bottom:18px;
         ">
 
             <select id="member-select" style="
                 flex:1;
                 padding:12px;
                 border-radius:12px;
-                border:1px solid rgba(255,255,255,.15);
+                border:1px solid rgba(255,255,255,.18);
                 font-weight:700;
                 font-size:13px;
                 cursor:pointer;
@@ -973,7 +995,7 @@ style="display:none;">
             <button id="share-gear" style="
                 width:46px;
                 height:46px;
-                border:1px solid rgba(255,255,255,.15);
+                border:1px solid rgba(255,255,255,.18);
                 border-radius:12px;
                 background:rgba(255,255,255,.08);
                 cursor:pointer;
@@ -988,6 +1010,7 @@ style="display:none;">
             </button>
 
         </div>
+        </div><!-- end dark sidebar controls wrapper -->
 
         <ul id="cat-list"></ul>
 
@@ -2887,30 +2910,8 @@ function setVaultMode(id) {
 }
 </script>
 
-<!-- Add Vault Modes button to navbar if not already there -->
 <script>
-// Inject Modes button into desktop nav after DOM ready
-document.addEventListener('DOMContentLoaded', function() {
-  const navDesktop = document.querySelector('.nav-auth.nav-auth-desktop');
-  if (navDesktop && !document.getElementById('vaultModesNavBtn')) {
-    const btn = document.createElement('button');
-    btn.id = 'vaultModesNavBtn';
-    btn.className = 'btn-outline';
-    btn.innerHTML = '⚡ MODES';
-    btn.onclick = openVaultModes;
-    // Insert before the first button
-    navDesktop.insertBefore(btn, navDesktop.firstChild);
-  }
-  // Mobile menu
-  const mobileMenu = document.getElementById('mobile-nav-menu');
-  if (mobileMenu && !document.getElementById('vaultModesMobileBtn')) {
-    const btn2 = document.createElement('button');
-    btn2.id = 'vaultModesMobileBtn';
-    btn2.innerHTML = '⚡ Vault Modes';
-    btn2.onclick = () => { openVaultModes(); toggleMobileMenu(); };
-    mobileMenu.insertBefore(btn2, mobileMenu.firstChild);
-  }
-});
+// MODES button is now a real HTML button in the navbar — no injection needed.
 </script>
 </body>
 </html>
