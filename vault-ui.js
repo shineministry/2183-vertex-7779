@@ -62,6 +62,7 @@ document.addEventListener('click', (e)=>{
 
 document.addEventListener('DOMContentLoaded', renderNotifications);
 
+document.addEventListener('visibilitychange', () => {
 
     const dash =
     document.getElementById(
