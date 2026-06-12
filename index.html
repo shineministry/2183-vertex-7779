@@ -951,15 +951,20 @@ style="display:none;">
         padding:12px;
         margin-bottom:14px;
         border:1px solid rgba(255,255,255,.1);
+        box-sizing:border-box;
+        overflow:hidden;
         ">
         <div style="
         display:flex;
         align-items:center;
         gap:8px;
+        width:100%;
+        box-sizing:border-box;
         ">
 
             <select id="member-select" style="
                 flex:1;
+                min-width:0;
                 padding:12px;
                 border-radius:12px;
                 border:1px solid rgba(255,255,255,.18);
@@ -968,6 +973,7 @@ style="display:none;">
                 cursor:pointer;
                 background:rgba(255,255,255,.08);
                 color:#e2e8f0;
+                box-sizing:border-box;
             ">
 
                 <option value="all" style="background:#1e293b;color:#e2e8f0;">
