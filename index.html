@@ -3194,6 +3194,9 @@ function switchPage(page) {
     document.getElementById('page-files').style.display = '';
   } else if (page === 'profile') {
     document.getElementById('page-profile').style.display = '';
+    if (typeof renderLegacyProfilePage === 'function') {
+      renderLegacyProfilePage();
+    }
   }
 
   // Update sidebar nav highlight
