@@ -1454,6 +1454,7 @@ async function showStep2() {
                     // After declaration, showStep3() sees _offlineMode and goes straight to dashboard
                     const step1 = document.getElementById('step1');
                     const step2 = document.getElementById('step2');
+                    showCurtain();
                     if (step1) {
                         step1.style.opacity = '0';
                         step1.style.transition = 'opacity 0.3s ease';
@@ -1461,10 +1462,12 @@ async function showStep2() {
                             step1.style.display = 'none';
                             if (step2) { step2.style.display = 'flex'; step2.style.opacity = '1'; }
                             window.scrollTo({ top: 0, behavior: 'smooth' });
+                            hideCurtain(150);
                         }, 300);
                     } else if (step2) {
                         step2.style.display = 'flex';
                         step2.style.opacity = '1';
+                        hideCurtain(150);
                     }
                     return;
                 }
@@ -1578,6 +1581,7 @@ async function showStep2() {
             window._pendingAuthHash   = null;
 
             // Transition to Step 2 (Legal Declaration)
+            showCurtain();
             if (step1) {
                 step1.style.pointerEvents = "none";
                 step1.style.opacity = "0";
@@ -1587,10 +1591,12 @@ async function showStep2() {
                     const step2 = document.getElementById("step2");
                     if (step2) { step2.style.display = "flex"; step2.style.opacity = "1"; }
                     window.scrollTo({ top: 0, behavior: 'smooth' });
+                    hideCurtain(150);
                 }, 300);
             } else {
                 const step2 = document.getElementById("step2");
                 if (step2) { step2.style.display = "flex"; step2.style.opacity = "1"; }
+                hideCurtain(150);
             }
         }
 
