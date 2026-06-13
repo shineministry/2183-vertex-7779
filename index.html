@@ -3225,11 +3225,7 @@ function switchPage(page) {
     }
   }
 
-  // Show or hide the cat-list (files section) in sidebar
-  const sidebarFiles = document.getElementById('sidebar-files-section');
-  if (sidebarFiles) {
-    sidebarFiles.style.display = (page === 'files') ? '' : 'none';
-  }
+  // Category list always stays visible in sidebar
 }
 
 function refreshHomePage() {
