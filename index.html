@@ -3246,30 +3246,17 @@ function refreshHomePage() {
   setTimeout(function() {
     try {
       // Total files count
+      const fileGrid = document.getElementById('file-grid');
+      const fileCards = fileGrid ? fileGrid.querySelectorAll('.file-card,.doc-card,[class*="card"]') : [];
       const statFiles = document.getElementById('home-stat-files');
       if (statFiles) {
-        // Priority 1: window.VAULT_FILES array from vault-data.js
+        // Try window.vaultFiles if defined by vault-data.js
         if (window.VAULT_FILES && Array.isArray(window.VAULT_FILES)) {
           statFiles.textContent = window.VAULT_FILES.length;
+        } else if (fileCards.length > 0) {
+          statFiles.textContent = fileCards.length;
         } else {
-          // Priority 2: sum (N) counts shown in each sidebar category <li>
-          const catList = document.getElementById('cat-list');
-          let total = 0;
-          let found = false;
-          if (catList) {
-            catList.querySelectorAll('li').forEach(function(li) {
-              const m = li.textContent.match(/\((\d+)\)/);
-              if (m) { total += parseInt(m[1], 10); found = true; }
-            });
-          }
-          if (found) {
-            statFiles.textContent = total;
-          } else {
-            // Priority 3: count rendered file-grid cards
-            const fileGrid = document.getElementById('file-grid');
-            const fileCards = fileGrid ? fileGrid.querySelectorAll('.file-card,.doc-card,[class*="card"]') : [];
-            statFiles.textContent = fileCards.length > 0 ? fileCards.length : '—';
-          }
+          statFiles.textContent = '—';
         }
       }
 
@@ -3303,22 +3290,20 @@ function buildHomeCatOverview() {
   if (!container) return;
   const catList = document.getElementById('cat-list');
   if (!catList) return;
-  const items = Array.from(catList.querySelectorAll('li'));
+  const items = catList.querySelectorAll('li');
   if (!items.length) {
     container.innerHTML = '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:12px 0;">No categories loaded yet.</div>';
     return;
   }
   const colors = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626','#0891b2','#be185d'];
   let html = '';
-  // Fix 2: use data-index to find the correct <li> at click time (avoids broken closure)
-  items.slice(0, 8).forEach((li, i) => {
+  Array.from(items).slice(0, 8).forEach((li, i) => {
     const name = li.textContent.trim().replace(/\(\d+\)/,'').trim();
     const match = li.textContent.match(/\((\d+)\)/);
     const count = match ? match[1] : '?';
     const color = colors[i % colors.length];
-    // Store index so the onclick can look up the live li
     html += `
-      <div data-cat-index="${i}" onclick="(function(el){var idx=parseInt(el.getAttribute('data-cat-index'));var lis=document.getElementById('cat-list').querySelectorAll('li');if(lis[idx])lis[idx].click();switchPage('files');})(this)" style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;border:1px solid #f1f5f9;cursor:pointer;background:#f8fafc;transition:background .1s;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#f8fafc'">
+      <div onclick="li.click();switchPage('files')" style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;border:1px solid #f1f5f9;cursor:pointer;background:#f8fafc;transition:background .1s;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#f8fafc'">
         <span style="font-size:12px;font-weight:700;color:#0f172a;">${name}</span>
         <span style="background:${color};color:#fff;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;">${count}</span>
       </div>`;
@@ -3398,36 +3383,187 @@ function buildHomePinned() {
   };
 })();
 
-/* ── Fix 1: Remove duplicate HOME <li> injected by vault-ui.js into #cat-list ── */
-(function removeDuplicateHomeFromCatList() {
-  function stripHomeLi(list) {
-    if (!list) return;
-    list.querySelectorAll('li').forEach(function(li) {
-      const txt = li.textContent.replace(/\s/g,'').toUpperCase();
-      // Remove any li whose label is just "HOME" or "🏠HOME"
-      if (/^[🏠\s]*HOME(\(\d+\))?$/i.test(li.textContent.trim())) {
-        li.remove();
-      }
-    });
-  }
-  document.addEventListener('DOMContentLoaded', function() {
-    const catList = document.getElementById('cat-list');
-    if (!catList) return;
-    // Strip immediately after DOM ready
-    stripHomeLi(catList);
-    // Also watch for vault-ui.js to populate the list dynamically
-    const obs = new MutationObserver(function() { stripHomeLi(catList); });
-    obs.observe(catList, { childList: true, subtree: true });
-    // Disconnect after 5 s to avoid permanent overhead
-    setTimeout(function() { obs.disconnect(); }, 5000);
-  });
-})();
-
 /* On dashboard load → default to HOME page */
 document.addEventListener('DOMContentLoaded', function() {
   // Wait for vault-ui.js to render categories then show home
   setTimeout(function() { switchPage('home'); }, 600);
 });
+</script>
+<script>
+/* ============================================================
+   SIDEBAR CATEGORY / HOME STATS REPAIR
+   - hides the extra HOME category row injected by vault-data.js
+   - opens Files page before category rendering when sidebar rows are clicked
+   - counts files/categories from allFilesData instead of rendered cards
+   ============================================================ */
+(function() {
+  const CATEGORY_HOME_LABEL = 'HOME';
+
+  function getVaultData() {
+    try {
+      if (window.allFilesData && typeof window.allFilesData === 'object') {
+        return window.allFilesData;
+      }
+      if (typeof allFilesData !== 'undefined' && allFilesData && typeof allFilesData === 'object') {
+        return allFilesData;
+      }
+    } catch (e) {}
+    return {};
+  }
+
+  function getSelectedMember() {
+    return document.getElementById('member-select')?.value || 'all';
+  }
+
+  function filterFilesForMember(files) {
+    if (!Array.isArray(files)) return [];
+    const selectedMember = getSelectedMember();
+    if (selectedMember === 'all') return files;
+    return files.filter(file =>
+      Array.isArray(file.members)
+        ? file.members.includes(selectedMember)
+        : (file.member === selectedMember || !file.member)
+    );
+  }
+
+  function getCategoryEntries() {
+    return Object.entries(getVaultData())
+      .filter(([name, files]) =>
+        String(name || '').trim().toUpperCase() !== CATEGORY_HOME_LABEL &&
+        Array.isArray(files)
+      );
+  }
+
+  function getCleanCategoryName(li) {
+    return (li?.textContent || '')
+      .replace(/\(\d+\)/g, '')
+      .replace(/^[^\w]+/, '')
+      .trim();
+  }
+
+  function syncSidebarCategories() {
+    const list = document.getElementById('cat-list');
+    if (!list) return;
+
+    Array.from(list.querySelectorAll('li')).forEach(li => {
+      const categoryName = getCleanCategoryName(li);
+      if (categoryName.toUpperCase() === CATEGORY_HOME_LABEL) {
+        li.style.display = 'none';
+        li.classList.remove('active');
+        return;
+      }
+
+      if (li.dataset.filesPageHooked === '1') return;
+      li.dataset.filesPageHooked = '1';
+      li.addEventListener('click', function() {
+        switchPage('files');
+      }, true);
+    });
+  }
+
+  function selectVaultCategory(categoryName) {
+    const data = getVaultData();
+    const files = filterFilesForMember(data[categoryName] || []);
+
+    switchPage('files');
+
+    document.querySelectorAll('#cat-list li').forEach(li => {
+      const liCategory = getCleanCategoryName(li);
+      li.classList.toggle('active', liCategory === categoryName);
+    });
+
+    if (typeof renderFiles === 'function') {
+      renderFiles(files, categoryName);
+    }
+  }
+
+  function updateHomeStats() {
+    const entries = getCategoryEntries();
+    const totalFiles = entries.reduce((sum, [, files]) => {
+      return sum + filterFilesForMember(files).length;
+    }, 0);
+
+    const statFiles = document.getElementById('home-stat-files');
+    const statCats = document.getElementById('home-stat-cats');
+    const statPinned = document.getElementById('home-stat-pinned');
+
+    if (statFiles) statFiles.textContent = String(totalFiles);
+    if (statCats) statCats.textContent = String(entries.length);
+    if (statPinned) {
+      statPinned.textContent = String(
+        Object.keys(localStorage).filter(k => k.startsWith('pinned-')).length
+      );
+    }
+  }
+
+  function buildFixedHomeCatOverview() {
+    const container = document.getElementById('home-cat-overview');
+    if (!container) return;
+
+    const entries = getCategoryEntries();
+    if (!entries.length) {
+      container.innerHTML = '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:12px 0;">No categories loaded yet.</div>';
+      return;
+    }
+
+    const colors = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626','#0891b2','#be185d'];
+    container.innerHTML = '';
+
+    entries.slice(0, 8).forEach(([name, files], i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;border:1px solid #f1f5f9;cursor:pointer;background:#f8fafc;transition:background .1s;';
+      row.onmouseover = () => { row.style.background = '#eff6ff'; };
+      row.onmouseout = () => { row.style.background = '#f8fafc'; };
+      row.onclick = () => selectVaultCategory(name);
+
+      const label = document.createElement('span');
+      label.style.cssText = 'font-size:12px;font-weight:700;color:#0f172a;';
+      label.textContent = name;
+
+      const badge = document.createElement('span');
+      badge.style.cssText = `background:${colors[i % colors.length]};color:#fff;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;`;
+      badge.textContent = String(filterFilesForMember(files).length);
+
+      row.append(label, badge);
+      container.appendChild(row);
+    });
+  }
+
+  const originalSwitchPage = window.switchPage;
+  if (typeof originalSwitchPage === 'function') {
+    window.switchPage = function(page) {
+      const result = originalSwitchPage.apply(this, arguments);
+      if (page === 'home') {
+        setTimeout(function() {
+          syncSidebarCategories();
+          updateHomeStats();
+          buildFixedHomeCatOverview();
+        }, 350);
+      } else {
+        setTimeout(syncSidebarCategories, 0);
+      }
+      return result;
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const refresh = function() {
+      syncSidebarCategories();
+      updateHomeStats();
+      buildFixedHomeCatOverview();
+    };
+
+    setTimeout(refresh, 800);
+    setTimeout(refresh, 1600);
+    setTimeout(refresh, 3000);
+
+    document.getElementById('member-select')?.addEventListener('change', function() {
+      setTimeout(refresh, 250);
+    });
+  });
+
+  window.selectVaultCategory = selectVaultCategory;
+})();
 </script>
 </body>
 </html>
