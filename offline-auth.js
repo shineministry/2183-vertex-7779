@@ -31,7 +31,7 @@ const _WORKER_URL = 'https://backend.shinumaths989.workers.dev';
 
 // ── IndexedDB setup ────────────────────────────────────────────────────────
 const _AUTH_DB_NAME    = 'vaultOfflineDB';
-const _AUTH_DB_VERSION = 5;
+const _AUTH_DB_VERSION = 8;
 
 function _openAuthDB() {
     return new Promise((resolve, reject) => {
@@ -47,6 +47,8 @@ function _openAuthDB() {
                 db.createObjectStore('vault_meta',  { keyPath: 'key' });
             if (!db.objectStoreNames.contains('vault_auth'))
                 db.createObjectStore('vault_auth',  { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('vault_notifications'))
+                db.createObjectStore('vault_notifications', { keyPath: 'id', autoIncrement: true });
         };
 
         req.onsuccess = () => resolve(req.result);
