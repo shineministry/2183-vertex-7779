@@ -16,13 +16,52 @@ if (typeof openPasswordManager !== 'function') {
   function openPasswordManager() {
     const m = document.getElementById('passwordManagerModal');
     if (m) { m.classList.add('open'); renderPMList(); }
+    _pmStartAutoLock();
   }
 }
 if (typeof closePasswordManager !== 'function') {
 function closePasswordManager() {
   document.getElementById('passwordManagerModal').style.display = 'none';
+  _pmStopAutoLock();
 }
 } // end if closePasswordManager
+
+// ── Security: auto-lock the Password Manager after 2 minutes idle ──────────
+// Closes the PM panel and re-blurs any visible passwords so they can't be
+// left exposed on screen if the device is walked away from.
+let _pmAutoLockTimer = null;
+function _pmStartAutoLock() {
+  _pmStopAutoLock();
+  const reset = () => {
+    clearTimeout(_pmAutoLockTimer);
+    _pmAutoLockTimer = setTimeout(() => {
+      const m = document.getElementById('passwordManagerModal');
+      if (m && (m.classList.contains('open') || m.style.display !== 'none')) {
+        m.classList.remove('open');
+        m.style.display = 'none';
+        document.querySelectorAll('#pm-entries-container input[type="text"][data-pm-pass]')
+          .forEach(inp => inp.type = 'password');
+        alert('🔒 Password Manager auto-locked after inactivity.');
+      }
+      _pmStopAutoLock();
+    }, 120000);
+  };
+  ['mousemove','keydown','click','touchstart'].forEach(evt =>
+    document.addEventListener(evt, reset, { passive: true })
+  );
+  _pmAutoLockResetFn = reset;
+  reset();
+}
+let _pmAutoLockResetFn = null;
+function _pmStopAutoLock() {
+  clearTimeout(_pmAutoLockTimer);
+  if (_pmAutoLockResetFn) {
+    ['mousemove','keydown','click','touchstart'].forEach(evt =>
+      document.removeEventListener(evt, _pmAutoLockResetFn)
+    );
+    _pmAutoLockResetFn = null;
+  }
+}
 
 function togglePMPassword(buttonElement, inputId) {
   const passwordInput = document.getElementById(inputId);
@@ -138,14 +177,27 @@ async function savePMEntry() {
   }
 }
 
+// ── Security: auto-clear clipboard after copying a PM password ─────────────
+// Prevents a copied password from lingering on the clipboard where another
+// app or person could paste it later.
+function _pmCopyToClipboard(text, label) {
+  navigator.clipboard.writeText(text);
+  alert(label + ' (clipboard clears in 20s)');
+  const snapshot = text;
+  setTimeout(() => {
+    navigator.clipboard.readText().then(cur => {
+      if (cur === snapshot) navigator.clipboard.writeText('');
+    }).catch(() => {});
+  }, 20000);
+}
+
 async function copyPMPassword(id) {
   // Try server first; fall back to local IDB cache offline
   if (!navigator.onLine) {
     const entries = await idbGetAllPMEntries().catch(() => []);
     const entry = entries.find(e => e.id === id);
     if (entry && entry.password) {
-      navigator.clipboard.writeText(entry.password);
-      alert('✅ Password copied! (offline)');
+      _pmCopyToClipboard(entry.password, '✅ Password copied! (offline)');
     } else {
       alert('❌ Password not available offline. Connect to the internet first.');
     }
@@ -159,16 +211,14 @@ async function copyPMPassword(id) {
     });
     const data = await res.json();
     if (data.password) {
-      navigator.clipboard.writeText(data.password);
-      alert('✅ Password copied!');
+      _pmCopyToClipboard(data.password, '✅ Password copied!');
     }
   } catch (err) {
     // Network failed — try IDB cache
     const entries = await idbGetAllPMEntries().catch(() => []);
     const entry = entries.find(e => e.id === id);
     if (entry && entry.password) {
-      navigator.clipboard.writeText(entry.password);
-      alert('✅ Password copied! (cached)');
+      _pmCopyToClipboard(entry.password, '✅ Password copied! (cached)');
     } else {
       alert('❌ Could not copy password: ' + err.message);
     }
@@ -637,7 +687,7 @@ function copyShareLink(){
 // This file only opens a connection for pm_entries (Password Manager).
 
 const IDB_NAME    = 'vaultOfflineDB';
-const IDB_VERSION = 6; // bumped to add vault_notifications store
+const IDB_VERSION = 8; // aligned with offline-auth.js _AUTH_DB_VERSION
 
 function openIDB() {
   return new Promise((resolve, reject) => {
@@ -1180,7 +1230,7 @@ function vaultPostInit(){
 // ═══════════════════════════════════════════════════════════════
 
 const NOTIF_IDB_NAME    = 'vaultOfflineDB';
-const NOTIF_IDB_VERSION = 6; // bumped from 5 to add vault_notifications store
+const NOTIF_IDB_VERSION = 8; // aligned with offline-auth.js _AUTH_DB_VERSION
 
 function openNotifIDB() {
   return new Promise((resolve, reject) => {
@@ -1232,12 +1282,26 @@ async function initVaultNotifications() {
       return targets.includes(currentUser.toLowerCase()) || targets.includes('all');
     }
     return true;
-  });
+  }).sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+
   const unread = relevant.filter(n => !n.read);
   _updateNotifBadge(unread.length);
-  if (unread.length > 0) {
-    _showNotifWelcomeBubble(unread);
+
+  // Float ALL relevant notifications one-by-one on every login,
+  // even ones already marked read in a previous session.
+  if (relevant.length > 0) {
+    _showNotifBubbleQueue(relevant);
   }
+}
+
+function _showNotifBubbleQueue(notes, idx = 0) {
+  if (idx >= notes.length) return;
+  _showNotifWelcomeBubble(notes, idx);
+  const delay = 6000; // each bubble shows for 6s before the next floats in
+  setTimeout(() => {
+    dismissNotifBubble();
+    setTimeout(() => _showNotifBubbleQueue(notes, idx + 1), 300);
+  }, delay);
 }
 
 function _updateNotifBadge(count) {
@@ -1254,18 +1318,32 @@ function _updateNotifBadge(count) {
   }
 }
 
-function _showNotifWelcomeBubble(unread) {
+function _showNotifWelcomeBubble(notes, idx = 0) {
   const bubble = document.getElementById('notifWelcomeBubble');
   if (!bubble) return;
   const preview = document.getElementById('bubbleNotifPreview');
-  if (preview && unread.length > 0) {
-    const first = unread[0];
-    preview.innerHTML = `<strong style="color:#f8fafc;">${first.title || 'Admin Notification'}</strong><br><span style="color:#cbd5e1;">${(first.body || '').substring(0, 80)}${(first.body||'').length > 80 ? '…' : ''}</span>`;
+  const current = notes[idx];
+  if (preview && current) {
+    preview.innerHTML = `<strong style="color:#f8fafc;">${escHtml(current.title || 'Admin Notification')}</strong><br><span style="color:#cbd5e1;">${escHtml((current.body || '').substring(0, 80))}${(current.body||'').length > 80 ? '…' : ''}</span>`;
+  }
+  // Show progress indicator when there are multiple queued notifications
+  let progress = document.getElementById('bubbleNotifProgress');
+  if (notes.length > 1) {
+    if (!progress) {
+      progress = document.createElement('div');
+      progress.id = 'bubbleNotifProgress';
+      progress.style.cssText = 'margin-top:6px;font-size:10px;color:#94a3b8;text-align:right;';
+      bubble.appendChild(progress);
+    }
+    progress.textContent = `${idx + 1} / ${notes.length}`;
+    progress.style.display = 'block';
+  } else if (progress) {
+    progress.style.display = 'none';
   }
   bubble.style.display = 'block';
+  bubble.style.opacity = '1';
+  bubble.style.transform = 'none';
   bubble.style.animation = 'notifBubblePop .35s cubic-bezier(.34,1.56,.64,1)';
-  // Auto-hide after 10 seconds
-  setTimeout(() => dismissNotifBubble(), 10000);
 }
 
 function dismissNotifBubble() {
