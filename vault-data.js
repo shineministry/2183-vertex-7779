@@ -164,8 +164,235 @@ try {
 }
 
 /* =========================
-   FILES
+   PROFILES DATA (module scope)
 ========================= */
+const profiles = {
+
+shineil:{
+image:"profile.png",
+name:"SHINEIL KEITH MATHIAS",
+role:"Founder of SHINE MINISTRY • Student • Public Speaker • Digital Creator",
+
+personal:`
+<b>Full Name:</b> Shineil Keith Mathias<br>
+<b>Date of Birth:</b> 7 March 2010<br>
+<b>Gender:</b> Male<br>
+<b>Nationality:</b> Indian<br>
+<b>Location:</b> Khandala, Pune
+`,
+
+contact:`
+<b>Phone:</b> +91 8605586173<br>
+<b>Email:</b> shinumaths989@gmail.com<br>
+<b>Website:</b> shine-ministry.com<br>
+<b>Instagram:</b> @shinu_vordenker_7
+`,
+
+education:`
+Don Bosco High School<br>
+2020–2026<br>
+Secondary Education
+`,
+
+skills:`
+• Public Speaking<br>
+• Leadership<br>
+• Mathematics<br>
+• Web Editing
+`,
+
+languages:`
+English — Fluent<br>
+Hindi — Fluent<br>
+German — Basic
+`,
+
+achievements:`
+• Green House Captain<br>
+• Debate Awards<br>
+• Student Recognition
+`,
+
+experience:`
+Founder — SHINE MINISTRY<br>
+Digital Projects<br>
+Leadership Activities
+`,
+
+projects:`
+Secure Vault<br>
+SHINE MINISTRY<br>
+PDF Systems
+`,
+
+goals:`
+Technology<br>
+Education<br>
+Leadership
+`,
+
+faith:`
+Founder of SHINE MINISTRY<br>
+Christian Service
+`,
+
+about:`
+Student with strong communication,
+leadership and ministry interests.
+`,
+
+hobbies:`
+Debating, technology,
+public speaking, reading
+`
+},
+
+
+
+brother:{
+
+image:"ProfileK.png",
+name:"KEVIN SHREESH MATHIAS",
+role:"Bartender • Hospitality",
+
+personal:`
+<b>Name:</b> Kevin Shreesh Mathias<br>
+<b>Location:</b> Pune<br>
+<b>Industry:</b> Hospitality
+`,
+
+contact:`
+Add Number<br>
+Add Email
+`,
+
+education:`
+Guardian School — SSC<br>
+IHM Mumbai<br>
+Flair Mania Bartending Academy
+`,
+
+skills:`
+• Bartending<br>
+• Customer Service<br>
+• POS<br>
+• Inventory
+`,
+
+languages:`
+English<br>
+Hindi
+`,
+
+achievements:`
+Assistant Bartender — Bombay Cartel<br>
+Assistant Bartender — Janwani
+`,
+
+experience:`
+2023–2025 Bombay Cartel<br>
+Present — Janwani
+`,
+
+projects:`
+Hospitality Training<br>
+Service Experience
+`,
+
+goals:`
+Career Growth<br>
+Hospitality Industry
+`,
+
+faith:`-`,
+
+about:`
+Hospitality professional with
+bartending and customer service experience.
+`,
+
+hobbies:`
+Service industry,
+teamwork,
+food & beverage
+`
+},
+
+
+
+father:{
+image:"ProfileSt.png",
+name:"STEPHEN CONDRAD MATHIAS",
+role:"Father",
+personal:`Add`,
+contact:`+91 99216 68744, +91 93707 50143`,
+education:`Add`,
+skills:`Add`,
+languages:`English, Hindi, Konkani, Tulu, Kannada`,
+achievements:`Add`,
+experience:`Add`,
+projects:`Add`,
+goals:`Add`,
+faith:`Roman Catholic`,
+about:`Add`,
+hobbies:`Add`
+},
+
+
+
+mother:{
+image:"mother.png",
+name:"KANCHAN MATHIAS",
+role:"Mother",
+personal:`Add`,
+contact:`Add`,
+education:`Add`,
+skills:`Add`,
+languages:`Add`,
+achievements:`Add`,
+experience:`Add`,
+projects:`Add`,
+goals:`Add`,
+faith:`Add`,
+about:`Add`,
+hobbies:`Add`
+}
+
+};
+
+// ── Category summaries (item 2): short blurb shown above each category's
+// file grid so the user knows at a glance what the category contains. ──
+const CAT_SUMMARIES = {
+    'Visa':         'Visa applications, approvals, and travel authorization documents.',
+    'Guardian':     'Guardian access records and authorizations for trusted contacts.',
+    'School':       'School admission, report cards, and academic records.',
+    'Finance':      'Bank statements, financial records, and money-related documents.',
+    'Financial':    'Bank statements, financial records, and money-related documents.',
+    'Personal':     'Personal identification and miscellaneous personal records.',
+    'Residence':    'Residence proofs, rental agreements, and address records.',
+    'Church':       'Church and ministry related certificates and records.',
+    'Education':    'Academic certificates, mark sheets, and education history.',
+    'Identity':     'Government-issued identity documents (ID cards, passports, etc.).',
+    'Legal':        'Legal declarations, agreements, and official legal paperwork.',
+    'Ministry':     'Ministry activity records and related documentation.',
+    'Medical':      'Medical reports, prescriptions, and health records.',
+    'Insurance':    'Insurance policies, claims, and coverage documents.',
+    'Tax':          'Tax filings, receipts, and related financial paperwork.',
+    'Property':     'Property ownership, deeds, and related legal documents.',
+    'Vehicle':      'Vehicle registration, insurance, and ownership documents.',
+    'Travel':       'Travel itineraries, bookings, and trip-related documents.',
+    'Work':         'Employment, work experience, and professional documents.',
+    'Bank':         'Bank account statements and related financial documents.',
+    'Certificates': 'Awards, certifications, and recognition documents.'
+};
+
+function getCatSummary(cat) {
+    return CAT_SUMMARIES[cat]
+        || CAT_SUMMARIES[Object.keys(CAT_SUMMARIES).find(k => cat.toLowerCase().includes(k.toLowerCase()))]
+        || `Documents related to ${cat}.`;
+}
+
+
 
 function buildHomeDashboard(){
 
