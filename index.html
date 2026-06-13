@@ -3246,17 +3246,30 @@ function refreshHomePage() {
   setTimeout(function() {
     try {
       // Total files count
-      const fileGrid = document.getElementById('file-grid');
-      const fileCards = fileGrid ? fileGrid.querySelectorAll('.file-card,.doc-card,[class*="card"]') : [];
       const statFiles = document.getElementById('home-stat-files');
       if (statFiles) {
-        // Try window.vaultFiles if defined by vault-data.js
+        // Priority 1: window.VAULT_FILES array from vault-data.js
         if (window.VAULT_FILES && Array.isArray(window.VAULT_FILES)) {
           statFiles.textContent = window.VAULT_FILES.length;
-        } else if (fileCards.length > 0) {
-          statFiles.textContent = fileCards.length;
         } else {
-          statFiles.textContent = '—';
+          // Priority 2: sum (N) counts shown in each sidebar category <li>
+          const catList = document.getElementById('cat-list');
+          let total = 0;
+          let found = false;
+          if (catList) {
+            catList.querySelectorAll('li').forEach(function(li) {
+              const m = li.textContent.match(/\((\d+)\)/);
+              if (m) { total += parseInt(m[1], 10); found = true; }
+            });
+          }
+          if (found) {
+            statFiles.textContent = total;
+          } else {
+            // Priority 3: count rendered file-grid cards
+            const fileGrid = document.getElementById('file-grid');
+            const fileCards = fileGrid ? fileGrid.querySelectorAll('.file-card,.doc-card,[class*="card"]') : [];
+            statFiles.textContent = fileCards.length > 0 ? fileCards.length : '—';
+          }
         }
       }
 
@@ -3290,20 +3303,22 @@ function buildHomeCatOverview() {
   if (!container) return;
   const catList = document.getElementById('cat-list');
   if (!catList) return;
-  const items = catList.querySelectorAll('li');
+  const items = Array.from(catList.querySelectorAll('li'));
   if (!items.length) {
     container.innerHTML = '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:12px 0;">No categories loaded yet.</div>';
     return;
   }
   const colors = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626','#0891b2','#be185d'];
   let html = '';
-  Array.from(items).slice(0, 8).forEach((li, i) => {
+  // Fix 2: use data-index to find the correct <li> at click time (avoids broken closure)
+  items.slice(0, 8).forEach((li, i) => {
     const name = li.textContent.trim().replace(/\(\d+\)/,'').trim();
     const match = li.textContent.match(/\((\d+)\)/);
     const count = match ? match[1] : '?';
     const color = colors[i % colors.length];
+    // Store index so the onclick can look up the live li
     html += `
-      <div onclick="li.click();switchPage('files')" style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;border:1px solid #f1f5f9;cursor:pointer;background:#f8fafc;transition:background .1s;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#f8fafc'">
+      <div data-cat-index="${i}" onclick="(function(el){var idx=parseInt(el.getAttribute('data-cat-index'));var lis=document.getElementById('cat-list').querySelectorAll('li');if(lis[idx])lis[idx].click();switchPage('files');})(this)" style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;border:1px solid #f1f5f9;cursor:pointer;background:#f8fafc;transition:background .1s;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#f8fafc'">
         <span style="font-size:12px;font-weight:700;color:#0f172a;">${name}</span>
         <span style="background:${color};color:#fff;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;">${count}</span>
       </div>`;
@@ -3381,6 +3396,31 @@ function buildHomePinned() {
     } catch(e) {}
     if (typeof _origOpen === 'function') return _origOpen.apply(this, arguments);
   };
+})();
+
+/* ── Fix 1: Remove duplicate HOME <li> injected by vault-ui.js into #cat-list ── */
+(function removeDuplicateHomeFromCatList() {
+  function stripHomeLi(list) {
+    if (!list) return;
+    list.querySelectorAll('li').forEach(function(li) {
+      const txt = li.textContent.replace(/\s/g,'').toUpperCase();
+      // Remove any li whose label is just "HOME" or "🏠HOME"
+      if (/^[🏠\s]*HOME(\(\d+\))?$/i.test(li.textContent.trim())) {
+        li.remove();
+      }
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    const catList = document.getElementById('cat-list');
+    if (!catList) return;
+    // Strip immediately after DOM ready
+    stripHomeLi(catList);
+    // Also watch for vault-ui.js to populate the list dynamically
+    const obs = new MutationObserver(function() { stripHomeLi(catList); });
+    obs.observe(catList, { childList: true, subtree: true });
+    // Disconnect after 5 s to avoid permanent overhead
+    setTimeout(function() { obs.disconnect(); }, 5000);
+  });
 })();
 
 /* On dashboard load → default to HOME page */
