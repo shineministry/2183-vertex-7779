@@ -1,6 +1,129 @@
 /* =========================
    INIT VAULT
 ========================= */
+function showProfile() {
+
+    const member =
+        document.getElementById("member-select")?.value || "shineil";
+
+    const p = profiles[member];
+
+    const grid = document.getElementById("file-grid");
+
+    if (!grid) {
+        console.error("file-grid not found");
+        return;
+    }
+
+    if (!p) {
+        grid.innerHTML = `
+        <div style="
+            padding:30px;
+            text-align:center;
+            color:#64748b;
+            font-weight:700;
+        ">
+            No profile found
+        </div>`;
+        return;
+    }
+
+    document.getElementById("cat-title").textContent =
+        "PROFILE";
+
+    grid.innerHTML = `
+    <div style="
+        grid-column:1/-1;
+        background:white;
+        border:1px solid #e2e8f0;
+        border-radius:22px;
+        overflow:hidden;
+        box-shadow:0 4px 20px rgba(0,0,0,.05);
+    ">
+
+        <div style="
+            background:linear-gradient(135deg,#0f172a,#1e3a8a);
+            padding:30px;
+            color:white;
+            display:flex;
+            gap:20px;
+            align-items:center;
+            flex-wrap:wrap;
+        ">
+            <img src="${p.image}" style="
+                width:100px;
+                height:100px;
+                border-radius:50%;
+                object-fit:cover;
+                border:4px solid rgba(255,255,255,.2);
+            ">
+
+            <div>
+                <h2 style="margin:0;font-size:26px;">
+                    ${p.name}
+                </h2>
+
+                <div style="
+                    margin-top:6px;
+                    opacity:.9;
+                    font-size:14px;
+                ">
+                    ${p.role}
+                </div>
+            </div>
+        </div>
+
+        <div style="
+            padding:22px;
+            display:grid;
+            grid-template-columns:
+            repeat(auto-fit,minmax(280px,1fr));
+            gap:16px;
+        ">
+
+            ${profileSection("👤 Personal", p.personal)}
+            ${profileSection("📞 Contact", p.contact)}
+            ${profileSection("🎓 Education", p.education)}
+            ${profileSection("🛠 Skills", p.skills)}
+            ${profileSection("🌍 Languages", p.languages)}
+            ${profileSection("🏆 Achievements", p.achievements)}
+            ${profileSection("💼 Experience", p.experience)}
+            ${profileSection("🚀 Projects", p.projects)}
+            ${profileSection("🎯 Goals", p.goals)}
+            ${profileSection("✝️ Faith", p.faith)}
+            ${profileSection("📖 About", p.about)}
+            ${profileSection("🎵 Hobbies", p.hobbies)}
+
+        </div>
+    </div>`;
+}
+
+function profileSection(title, content) {
+    return `
+    <div style="
+        background:#f8fafc;
+        border:1px solid #e2e8f0;
+        border-radius:16px;
+        padding:18px;
+    ">
+        <div style="
+            font-weight:800;
+            margin-bottom:10px;
+            color:#0f172a;
+            font-size:14px;
+        ">
+            ${title}
+        </div>
+
+        <div style="
+            font-size:13px;
+            line-height:1.7;
+            color:#334155;
+        ">
+            ${content || "No data"}
+        </div>
+    </div>`;
+}
 
 async function initVault() {
 try {
