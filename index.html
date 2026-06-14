@@ -3489,31 +3489,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   window.selectVaultCategory = selectVaultCategory;
 })();
-   function showProfile() {
-
-    const member =
-        document.getElementById("member-select")?.value || "shineil";
-
-    const p = profiles[member];
-
-    if (!p) {
-        document.getElementById("file-grid").innerHTML =
-            "<div>No profile found</div>";
-        return;
-    }
-
-    document.getElementById("file-grid").innerHTML = `
-        <div class="profile-box">
-            <img src="${p.image}" style="width:80px;border-radius:50%;">
-            <h2>${p.name}</h2>
-            <div>${p.role}</div>
-            <hr>
-            <div>${p.personal}</div>
-            <hr>
-            <div>${p.contact}</div>
-        </div>
-    `;
-}
 </script>
 </body>
 </html>
