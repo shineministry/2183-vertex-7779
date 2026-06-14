@@ -88,7 +88,7 @@ try {
 
     // Category icon map for dark sidebar
     const CAT_ICONS = {
-        'HOME': '🏠', 'Guardian': '👥', 'Visa': '✈️', 'Finance': '💰',
+        'HOME': '🏠', 'PROFILE': '👤', 'Guardian': '👥', 'Visa': '✈️', 'Finance': '💰',
         'School': '🎓', 'Personal': '👤', 'Residence': '🏡', 'Church': '✝️',
         'Education': '📚', 'Identity': '🪪', 'Legal': '⚖️', 'Financial': '💳',
         'Ministry': '🕊️', 'Medical': '🏥', 'Insurance': '🛡️', 'Tax': '📋',
@@ -99,23 +99,17 @@ try {
         return CAT_ICONS[cat] || CAT_ICONS[Object.keys(CAT_ICONS).find(k => cat.toLowerCase().includes(k.toLowerCase()))] || '📁';
     }
 
-    // ── Inject HOME profile item first ──
-    const homeLi = document.createElement('li');
-    homeLi.innerHTML = `<span style="font-size:15px;">🏠</span><span>HOME</span>`;
-    homeLi.onclick = () => {
-        document.querySelectorAll('#cat-list li')
-            .forEach(el => el.classList.remove('active'));
-        homeLi.classList.add('active');
-        renderFiles([], 'HOME');
-    };
-    list.appendChild(homeLi);
-
     categories.forEach(cat => {
         const li = document.createElement('li');
         const icon = getCatIcon(cat);
         li.innerHTML = `<span style="font-size:15px;">${icon}</span><span>${cat}</span>`;
 
         li.onclick = () => {
+            if (cat === "PROFILE") {
+    showProfile();
+    return;
+}
+
             document.querySelectorAll('#cat-list li')
                 .forEach(el => el.classList.remove('active'));
             li.classList.add('active');
@@ -140,8 +134,8 @@ try {
     });
 
     // Auto-click HOME first
-    homeLi.classList.add('active');
-    homeLi.click();
+    const firstCategory = list.querySelector('li');
+if (firstCategory) firstCategory.click();
 
 } catch (e) {
 
@@ -677,13 +671,11 @@ const vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "A
 const dropdownVal = document.getElementById("member-select").value;
 
 // Admin uses dropdown; other modes use their assigned member
-const member = (vaultMode === "ADMIN")
-    ? (dropdownVal || "shineil")
-    : (modeToMember[vaultMode] || dropdownVal || "shineil");
+const member =
+document.getElementById('member-select')?.value || 'shineil';
 
-const p =
-profiles[member]
-|| profiles.shineil;
+const profile =
+profiles[member] || profiles.shineil;
 
 
 grid.innerHTML=`
