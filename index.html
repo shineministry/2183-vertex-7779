@@ -3388,6 +3388,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const categoryName = getCleanCategoryName(li);
       if (categoryName.toUpperCase() === CATEGORY_HOME_LABEL) {
         li.style.display = 'none';
+         li.style.cssText = 'display:none !important;';
         li.classList.remove('active');
         return;
       }
@@ -3493,8 +3494,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     setTimeout(refresh, 800);
-    setTimeout(refresh, 1600);
-    setTimeout(refresh, 3000);
+setTimeout(refresh, 1600);
+setTimeout(refresh, 3000);
+setTimeout(refresh, 5000);
 
     document.getElementById('member-select')?.addEventListener('change', function() {
       setTimeout(refresh, 250);
