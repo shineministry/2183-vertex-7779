@@ -678,13 +678,11 @@ const vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "A
 const dropdownVal = document.getElementById("member-select").value;
 
 // Admin uses dropdown; other modes use their assigned member
-const member = (vaultMode === "ADMIN")
-    ? (dropdownVal || "shineil")
-    : (modeToMember[vaultMode] || dropdownVal || "shineil");
+const member =
+document.getElementById('member-select')?.value || 'shineil';
 
-const p =
-profiles[member]
-|| profiles.shineil;
+const profile =
+profiles[member] || profiles.shineil;
 
 
 grid.innerHTML=`
