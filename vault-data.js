@@ -939,6 +939,36 @@ visibleFiles.forEach(file=>{
 
 }
 
+function renderProfile(memberKey) {
+
+    const profile = profiles[memberKey];
+
+    if (!profile) return;
+
+    document.getElementById("profile-avatar").innerHTML = "👤";
+
+    document.getElementById("profile-name").textContent =
+        profile.name || "";
+
+    document.getElementById("profile-role").textContent =
+        profile.role || "";
+
+    document.getElementById("profile-details").innerHTML = `
+        <div><b>Personal</b><br>${profile.personal || "-"}</div>
+        <div><b>Contact</b><br>${profile.contact || "-"}</div>
+        <div><b>Education</b><br>${profile.education || "-"}</div>
+        <div><b>Skills</b><br>${profile.skills || "-"}</div>
+        <div><b>Languages</b><br>${profile.languages || "-"}</div>
+        <div><b>Achievements</b><br>${profile.achievements || "-"}</div>
+        <div><b>Experience</b><br>${profile.experience || "-"}</div>
+        <div><b>Projects</b><br>${profile.projects || "-"}</div>
+        <div><b>Goals</b><br>${profile.goals || "-"}</div>
+        <div><b>Faith</b><br>${profile.faith || "-"}</div>
+        <div><b>About</b><br>${profile.about || "-"}</div>
+        <div><b>Hobbies</b><br>${profile.hobbies || "-"}</div>
+    `;
+}
+
 async function unifiedSearch(){
 
     const query =
@@ -1079,3 +1109,25 @@ async function unifiedSearch(){
     });
 
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const memberSelect =
+        document.getElementById("member-select");
+
+    if (!memberSelect) return;
+
+    renderProfile(memberSelect.value === "all"
+        ? "shineil"
+        : memberSelect.value);
+
+    memberSelect.addEventListener("change", () => {
+
+        const selected =
+            memberSelect.value === "all"
+            ? "shineil"
+            : memberSelect.value;
+
+        renderProfile(selected);
+    });
+});
