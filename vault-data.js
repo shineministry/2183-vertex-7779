@@ -449,6 +449,10 @@ function buildHomeDashboard(){
     `;
 }
 
+/* =========================
+   FILES
+========================= */
+
 function renderFiles(
 files,
 category){
@@ -674,16 +678,16 @@ const vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "A
 const dropdownVal = document.getElementById("member-select").value;
 
 // Admin uses dropdown; other modes use their assigned member
-const member =
-document.getElementById('member-select')?.value || 'shineil';
+const member = (vaultMode === "ADMIN")
+    ? (dropdownVal || "shineil")
+    : (modeToMember[vaultMode] || dropdownVal || "shineil");
 
-const profile =
-profiles[member] || profiles.shineil;
+const p =
+profiles[member]
+|| profiles.shineil;
 
 
 grid.innerHTML=`
-
-${buildHomeDashboard()}
 
 <div style="
 grid-column:1/-1;
@@ -691,7 +695,6 @@ background:white;
 border:1px solid var(--border);
 border-radius:24px;
 padding:35px;">
-
 
 <div style="
 display:flex;
