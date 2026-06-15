@@ -674,14 +674,11 @@ const modeToMember = {
     "ADMIN": null
 };
 
-const vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
-const dropdownVal = document.getElementById("member-select").value;
-
-const vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
+const _vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
 const dropdownVal = document.getElementById("member-select")?.value || "shineil";
-const member = (vaultMode === "ADMIN")
+const member = (_vaultMode === "ADMIN")
     ? (dropdownVal || "shineil")
-    : (modeToMember[vaultMode] || dropdownVal || "shineil");
+    : (modeToMember[_vaultMode] || dropdownVal || "shineil");
 
 const profile =
 profiles[member] || profiles.shineil;
