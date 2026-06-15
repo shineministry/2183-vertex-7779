@@ -677,9 +677,11 @@ const modeToMember = {
 const vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
 const dropdownVal = document.getElementById("member-select").value;
 
-// Admin uses dropdown; other modes use their assigned member
-const member =
-document.getElementById('member-select')?.value || 'shineil';
+const vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
+const dropdownVal = document.getElementById("member-select")?.value || "shineil";
+const member = (vaultMode === "ADMIN")
+    ? (dropdownVal || "shineil")
+    : (modeToMember[vaultMode] || dropdownVal || "shineil");
 
 const profile =
 profiles[member] || profiles.shineil;
@@ -941,35 +943,37 @@ visibleFiles.forEach(file=>{
 }
 
 function renderProfile(memberKey) {
-
     const profile = profiles[memberKey];
-
     if (!profile) return;
 
-    document.getElementById("profile-avatar").innerHTML = "👤";
+    const card = document.getElementById("profile-card");
+    if (!card) return;
 
-    document.getElementById("profile-name").textContent =
-        profile.name || "";
-
-    document.getElementById("profile-role").textContent =
-        profile.role || "";
-
-    document.getElementById("profile-details").innerHTML = `
-        <div><b>Personal</b><br>${profile.personal || "-"}</div>
-        <div><b>Contact</b><br>${profile.contact || "-"}</div>
-        <div><b>Education</b><br>${profile.education || "-"}</div>
-        <div><b>Skills</b><br>${profile.skills || "-"}</div>
-        <div><b>Languages</b><br>${profile.languages || "-"}</div>
-        <div><b>Achievements</b><br>${profile.achievements || "-"}</div>
-        <div><b>Experience</b><br>${profile.experience || "-"}</div>
-        <div><b>Projects</b><br>${profile.projects || "-"}</div>
-        <div><b>Goals</b><br>${profile.goals || "-"}</div>
-        <div><b>Faith</b><br>${profile.faith || "-"}</div>
-        <div><b>About</b><br>${profile.about || "-"}</div>
-        <div><b>Hobbies</b><br>${profile.hobbies || "-"}</div>
-    `;
+    card.innerHTML = `
+    <div style="background:white;border:1px solid var(--border);border-radius:24px;padding:35px;color:#0f172a;">
+      <div style="display:flex;gap:25px;flex-wrap:wrap;margin-bottom:30px;">
+        <img src="${profile.image}" style="width:150px;height:150px;border-radius:24px;object-fit:cover;" onerror="this.style.display='none'">
+        <div>
+          <h1 style="color:var(--accent);margin:0 0 8px;">${profile.name}</h1>
+          <div style="color:#64748b;">${profile.role}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;">
+        <div class="profile-box"><h3>Personal Details</h3>${profile.personal || '-'}</div>
+        <div class="profile-box"><h3>Contact</h3>${profile.contact || '-'}</div>
+        <div class="profile-box"><h3>Education</h3>${profile.education || '-'}</div>
+        <div class="profile-box"><h3>Skills</h3>${profile.skills || '-'}</div>
+        <div class="profile-box"><h3>Languages</h3>${profile.languages || '-'}</div>
+        <div class="profile-box"><h3>Achievements</h3>${profile.achievements || '-'}</div>
+        <div class="profile-box"><h3>Experience</h3>${profile.experience || '-'}</div>
+        <div class="profile-box"><h3>Projects</h3>${profile.projects || '-'}</div>
+        <div class="profile-box"><h3>Future Goals</h3>${profile.goals || '-'}</div>
+        <div class="profile-box"><h3>Faith / Ministry</h3>${profile.faith || '-'}</div>
+      </div>
+      <div style="margin-top:25px;background:#eff6ff;padding:24px;border-radius:18px;"><h3>About Me</h3>${profile.about || '-'}</div>
+      <div style="margin-top:25px;background:#f8fafc;padding:24px;border-radius:18px;"><h3>Hobbies &amp; Interests</h3>${profile.hobbies || '-'}</div>
+    </div>`;
 }
-
 async function unifiedSearch(){
 
     const query =
@@ -1112,23 +1116,24 @@ async function unifiedSearch(){
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-
-    const memberSelect =
-        document.getElementById("member-select");
-
+    const memberSelect = document.getElementById("member-select");
     if (!memberSelect) return;
 
-    renderProfile(memberSelect.value === "all"
-        ? "shineil"
-        : memberSelect.value);
+    function getProfileMember() {
+        const mode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
+        const modeMap = {
+            "SHINEIL": "shineil", "KEVIN": "brother",
+            "KEVIN_PARENTS": "brother", "SHINEIL_PARENTS": "shineil",
+            "PARENTS": "father", "OFFICIAL": "shineil", "ADMIN": null
+        };
+        if (mode !== "ADMIN") return modeMap[mode] || "shineil";
+        const val = memberSelect.value;
+        return (val === "all") ? "shineil" : val;
+    }
+
+    renderProfile(getProfileMember());
 
     memberSelect.addEventListener("change", () => {
-
-        const selected =
-            memberSelect.value === "all"
-            ? "shineil"
-            : memberSelect.value;
-
-        renderProfile(selected);
+        renderProfile(getProfileMember());
     });
 });
