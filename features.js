@@ -1187,9 +1187,9 @@ async function checkDocExpiryReminders(){
 function vaultPostInit(){
    // ── Hide member dropdown for non-ADMIN modes ──
     const mode = sessionStorage.getItem("vaultMode");
-    const memberSelectWrap = document.getElementById('member-select')?.parentElement;
-    if (mode !== "ADMIN" && memberSelectWrap) {
-        memberSelectWrap.style.display = "none";
+    const memberSelectWrap = document.getElementById('sidebar-controls-wrap');
+if (mode !== "ADMIN" && memberSelectWrap) {
+    memberSelectWrap.style.display = "none";
     }
 
     renderPinnedSection();
