@@ -73,10 +73,10 @@ try {
 
     const list = document.getElementById('cat-list');
 list.innerHTML = `
-  <li id="nav-home" onclick="switchPage('home')" style="font-weight:700;">
+  <li id="nav-home" onclick="selectVaultCategory('HOME')" style="font-weight:700;">
     <span style="font-size:15px;">🏠</span><span>HOME</span>
   </li>
-  <li id="nav-profile" onclick="switchPage('profile')" style="font-weight:700;">
+  <li id="nav-profile" onclick="selectVaultCategory('PROFILE')" style="font-weight:700;">
     <span style="font-size:15px;">👤</span><span>PROFILE</span>
   </li>
 `;
