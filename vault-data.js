@@ -107,57 +107,31 @@ list.innerHTML = `
     }
 
     categories.forEach(cat => {
-           if (cat === 'HOME' || cat === 'PROFILE') return; // skip, already injected above
-        const li = document.createElement('li');
-        const icon = getCatIcon(cat);
-        li.innerHTML = `<span style="font-size:15px;">${icon}</span><span>${cat}</span>`;
+    if (cat === 'HOME' || cat === 'PROFILE') return;
+    const li = document.createElement('li');
+    const icon = getCatIcon(cat);
+    li.innerHTML = `<span style="font-size:15px;">${icon}</span><span>${cat}</span>`;
+    li.onclick = () => {
+        document.querySelectorAll('#cat-list li')
+            .forEach(el => el.classList.remove('active'));
+        switchPage('files');
+        li.classList.add('active');
+        const selectedMember =
+            document.getElementById('member-select')?.value || 'all';
+        let filteredFiles = data[cat] || [];
+        if (selectedMember !== 'all') {
+            filteredFiles = filteredFiles.filter(file =>
+                Array.isArray(file.members)
+                    ? file.members.includes(selectedMember)
+                    : (file.member === selectedMember || !file.member)
+            );
+        }
+        renderFiles(filteredFiles, cat);
+    };
+    list.appendChild(li);
+});
 
-        li.onclick = () => {
-    document.querySelectorAll('#cat-list li')
-        .forEach(el => el.classList.remove('active'));
-    switchPage('files');
-    li.classList.add('active');
-
-    const selectedMember =
-        document.getElementById('member-select')?.value || 'all';
-
-    let filteredFiles = data[cat] || [];
-
-    if (selectedMember !== 'all') {
-        filteredFiles = filteredFiles.filter(file =>
-            Array.isArray(file.members)
-                ? file.members.includes(selectedMember)
-                : (file.member === selectedMember || !file.member)
-        );
-    }
-
-    renderFiles(filteredFiles, cat);
-};
-
-            document.querySelectorAll('#cat-list li')
-                .forEach(el => el.classList.remove('active'));
-            li.classList.add('active');
-
-            const selectedMember =
-                document.getElementById('member-select')?.value || 'all';
-
-            let filteredFiles = data[cat] || [];
-
-            if (selectedMember !== 'all') {
-                filteredFiles = filteredFiles.filter(file =>
-                    Array.isArray(file.members)
-                        ? file.members.includes(selectedMember)
-                        : (file.member === selectedMember || !file.member)
-                );
-            }
-
-            renderFiles(filteredFiles, cat);
-        };
-
-        list.appendChild(li);
-    });
-
-    // Auto-click HOME first
+// Auto-click HOME first
 const homeLi = [...list.querySelectorAll('li')].find(li => li.innerText.trim().includes('HOME'));
 if (homeLi) homeLi.click();
 else if (list.querySelector('li')) list.querySelector('li').click();
