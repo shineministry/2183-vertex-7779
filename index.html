@@ -3376,12 +3376,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     Array.from(list.querySelectorAll('li')).forEach(li => {
       const categoryName = getCleanCategoryName(li);
-      if (categoryName.toUpperCase() === CATEGORY_HOME_LABEL) {
-        li.style.display = 'none';
-         li.style.cssText = 'display:none !important;';
-        li.classList.remove('active');
-        return;
-      }
+      if (categoryName.toUpperCase() === CATEGORY_HOME_LABEL && li.id !== 'nav-home') {
+    li.style.display = 'none';
+    li.classList.remove('active');
+    return;
+}
 
       if (li.dataset.filesPageHooked === '1') return;
       li.dataset.filesPageHooked = '1';
