@@ -107,6 +107,7 @@ list.innerHTML = `
     }
 
     categories.forEach(cat => {
+           if (cat === 'HOME' || cat === 'PROFILE') return; // skip, already injected above
         const li = document.createElement('li');
         const icon = getCatIcon(cat);
         li.innerHTML = `<span style="font-size:15px;">${icon}</span><span>${cat}</span>`;
