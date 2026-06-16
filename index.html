@@ -3392,6 +3392,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function selectVaultCategory(categoryName) {
+    if (categoryName === 'HOME') { switchPage('home'); return; }
+    if (categoryName === 'PROFILE') { switchPage('profile'); return; }
+
     const data = getVaultData();
     const files = filterFilesForMember(data[categoryName] || []);
 
@@ -3405,7 +3408,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof renderFiles === 'function') {
       renderFiles(files, categoryName);
     }
-  }
+}
 
   function updateHomeStats() {
     const entries = getCategoryEntries();
