@@ -113,13 +113,26 @@ list.innerHTML = `
         li.innerHTML = `<span style="font-size:15px;">${icon}</span><span>${cat}</span>`;
 
         li.onclick = () => {
-            if (cat === "PROFILE") {
     document.querySelectorAll('#cat-list li')
         .forEach(el => el.classList.remove('active'));
+    switchPage('files');
     li.classList.add('active');
-    showProfile();
-    return;
-}
+
+    const selectedMember =
+        document.getElementById('member-select')?.value || 'all';
+
+    let filteredFiles = data[cat] || [];
+
+    if (selectedMember !== 'all') {
+        filteredFiles = filteredFiles.filter(file =>
+            Array.isArray(file.members)
+                ? file.members.includes(selectedMember)
+                : (file.member === selectedMember || !file.member)
+        );
+    }
+
+    renderFiles(filteredFiles, cat);
+};
 
             document.querySelectorAll('#cat-list li')
                 .forEach(el => el.classList.remove('active'));
