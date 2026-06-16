@@ -137,8 +137,9 @@ try {
     });
 
     // Auto-click HOME first
-    const firstCategory = list.querySelector('li');
-if (firstCategory) firstCategory.click();
+const homeLi = [...list.querySelectorAll('li')].find(li => li.innerText.trim().includes('HOME'));
+if (homeLi) homeLi.click();
+else if (list.querySelector('li')) list.querySelector('li').click();
 
 } catch (e) {
 
