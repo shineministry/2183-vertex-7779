@@ -660,14 +660,14 @@ hobbies:`Add`
    if(category==="HOME"){
 
 // For non-admin modes the dropdown is hidden, so derive member from VAULT_MODE
-const modeToMember = {
-    "SHINEIL": "shineil",
-    "KEVIN": "brother",
-    "KEVIN_PARENTS": "brother",
-    "SHINEIL_PARENTS": "shineil",
-    "PARENTS": "father",
-    "OFFICIAL": "shineil",
-    "ADMIN": null
+const modeToMembers = {
+    SHINEIL: ["shineil"],
+    KEVIN: ["brother"],
+    KEVIN_PARENTS: ["brother", "father", "mother"],
+    SHINEIL_PARENTS: ["shineil", "father", "mother"],
+    PARENTS: ["father", "mother"],
+    OFFICIAL: ["shineil", "father", "mother", "brother"],
+    ADMIN: null
 };
 
 const _vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
