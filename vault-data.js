@@ -670,15 +670,25 @@ const modeToMembers = {
     ADMIN: null
 };
 
-const _vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
-const dropdownVal = document.getElementById("member-select")?.value || "shineil";
-const member = (_vaultMode === "ADMIN")
-    ? (dropdownVal || "shineil")
-    : (modeToMember[_vaultMode] || dropdownVal || "shineil");
+// ADD THIS HERE
+const _vaultMode =
+    window.VAULT_MODE ||
+    sessionStorage.getItem("vaultMode") ||
+    "ADMIN";
 
-const profile =
-profiles[member] || profiles.shineil;
+const allowedMembers = modeToMembers[_vaultMode];
 
+const memberSelect =
+    document.getElementById("member-select");
+
+if (memberSelect && _vaultMode !== "ADMIN" && allowedMembers) {
+    [...memberSelect.options].forEach(option => {
+        option.hidden =
+            !allowedMembers.includes(option.value);
+    });
+
+    memberSelect.value = allowedMembers[0];
+}
 
 grid.innerHTML=`
 
