@@ -72,7 +72,14 @@ try {
     allFilesData = data;
 
     const list = document.getElementById('cat-list');
-    list.innerHTML = "";
+list.innerHTML = `
+  <li id="nav-home" onclick="switchPage('home')" style="font-weight:700;">
+    <span style="font-size:15px;">🏠</span><span>HOME</span>
+  </li>
+  <li id="nav-profile" onclick="switchPage('profile')" style="font-weight:700;">
+    <span style="font-size:15px;">👤</span><span>PROFILE</span>
+  </li>
+`;
 
     const mode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "VIEWER";
     const currentMember = document.getElementById('member-select')?.value || 'all';
