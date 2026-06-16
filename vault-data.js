@@ -940,8 +940,12 @@ visibleFiles.forEach(file=>{
 }
 
 function renderProfile(memberKey) {
-    const profile = profiles[memberKey];
-    if (!profile) return;
+    const profile = (typeof profiles !== 'undefined' ? profiles[memberKey] : null);
+    if (!profile) {
+        console.warn('[renderProfile] profiles not ready or key not found:', memberKey);
+        setTimeout(() => renderProfile(memberKey), 500);
+        return;
+    }
 
     const card = document.getElementById("profile-card");
     if (!card) return;
