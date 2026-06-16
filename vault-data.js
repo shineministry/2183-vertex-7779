@@ -1131,6 +1131,9 @@ document.addEventListener("DOMContentLoaded", () => {
     renderProfile(getProfileMember());
 
     memberSelect.addEventListener("change", () => {
-        renderProfile(getProfileMember());
-    });
+    document.querySelectorAll('#cat-list li').forEach(el => el.classList.remove('active'));
+    document.getElementById('nav-profile')?.classList.add('active');
+    switchPage('profile');
+    renderProfile(getProfileMember());
+});
 });
