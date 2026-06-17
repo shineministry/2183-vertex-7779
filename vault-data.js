@@ -942,7 +942,6 @@ function renderProfile(memberKey) {
     (typeof profiles !== 'undefined'
         ? profiles[memberKey]
         : null);
-    const profile = (typeof profiles !== 'undefined' ? profiles[memberKey] : null);
     if (!profile) {
         console.warn('[renderProfile] profiles not ready or key not found:', memberKey);
         setTimeout(() => renderProfile(memberKey), 500);
