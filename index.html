@@ -1142,22 +1142,22 @@ style="display:none;">
                 </div>
 
                 <!-- MEMBER SNAPSHOT -->
-                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;">
+                <div id="home-member-snapshot" style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;">
                     <div style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;border-bottom:1px solid #f1f5f9;padding-bottom:8px;">👥 Family Members</div>
                     <div style="display:flex;flex-direction:column;gap:9px;">
-                        <div onclick="document.getElementById('member-select').value='shineil';document.getElementById('member-select').dispatchEvent(new Event('change'));switchPage('files')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;border:1px solid #e2e8f0;cursor:pointer;background:#f8fafc;">
+                        <div onclick="openMemberProfileGuarded('shineil')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;border:1px solid #e2e8f0;cursor:pointer;background:#f8fafc;">
                             <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#4f46e5);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;">S</div>
                             <div><div style="font-size:12px;font-weight:700;color:#0f172a;">Shineil Mathias</div><div style="font-size:10px;color:#64748b;">Primary Owner</div></div>
                         </div>
-                        <div onclick="document.getElementById('member-select').value='brother';document.getElementById('member-select').dispatchEvent(new Event('change'));switchPage('files')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;border:1px solid #e2e8f0;cursor:pointer;background:#f8fafc;">
+                        <div onclick="openMemberProfileGuarded('brother')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;border:1px solid #e2e8f0;cursor:pointer;background:#f8fafc;">
                             <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#059669,#0891b2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;">K</div>
                             <div><div style="font-size:12px;font-weight:700;color:#0f172a;">Kevin Mathias</div><div style="font-size:10px;color:#64748b;">Brother</div></div>
                         </div>
-                        <div onclick="document.getElementById('member-select').value='father';document.getElementById('member-select').dispatchEvent(new Event('change'));switchPage('files')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;border:1px solid #e2e8f0;cursor:pointer;background:#f8fafc;">
+                        <div onclick="openMemberProfileGuarded('father')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;border:1px solid #e2e8f0;cursor:pointer;background:#f8fafc;">
                             <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#d97706,#dc2626);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;">S</div>
                             <div><div style="font-size:12px;font-weight:700;color:#0f172a;">Stephen Mathias</div><div style="font-size:10px;color:#64748b;">Father</div></div>
                         </div>
-                        <div onclick="document.getElementById('member-select').value='mother';document.getElementById('member-select').dispatchEvent(new Event('change'));switchPage('files')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;border:1px solid #e2e8f0;cursor:pointer;background:#f8fafc;">
+                        <div onclick="openMemberProfileGuarded('mother')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;border:1px solid #e2e8f0;cursor:pointer;background:#f8fafc;">
                             <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#be185d,#9b5de5);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;">K</div>
                             <div><div style="font-size:12px;font-weight:700;color:#0f172a;">Kanchan Mathias</div><div style="font-size:10px;color:#64748b;">Mother</div></div>
                         </div>
@@ -1202,14 +1202,6 @@ style="display:none;">
 
             <!-- ===================== PROFILE PAGE ===================== -->
             <div id="page-profile" style="display:none;">
-               <div style="
-    background:#fff;
-    border-radius:16px;
-    padding:20px;
-    width:100%;
-    box-sizing:border-box;
-    overflow:hidden;
-  ">
 
             <!-- Dynamic profile from Index 18 — updates on dropdown change -->
             <div id="profile-card" style="
