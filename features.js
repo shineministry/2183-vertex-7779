@@ -1235,7 +1235,6 @@ if (sel) {
     if (mode === "PARENTS") sel.value = "father";
 }
    // ── Hide member dropdown for non-ADMIN modes ──
-    const mode = sessionStorage.getItem("vaultMode");
 const memberSelectWrap = document.getElementById('sidebar-controls-wrap');
 
 const multiMemberModes = [
@@ -1245,7 +1244,8 @@ const multiMemberModes = [
     "KEVIN_PARENTS"
 ];
 
-if (!multiMemberModes.includes(mode) && memberSelectWrap) {
+   const currentMode = sessionStorage.getItem("vaultMode");
+if (!multiMemberModes.includes(currentMode) && memberSelectWrap) {
     memberSelectWrap.style.display = "none";
 }
 
