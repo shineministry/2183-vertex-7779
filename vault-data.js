@@ -936,6 +936,12 @@ visibleFiles.forEach(file=>{
 }
 
 function renderProfile(memberKey) {
+   memberKey = memberKey || "shineil";
+
+    const profile =
+    (typeof profiles !== 'undefined'
+        ? profiles[memberKey]
+        : null);
     const profile = (typeof profiles !== 'undefined' ? profiles[memberKey] : null);
     if (!profile) {
         console.warn('[renderProfile] profiles not ready or key not found:', memberKey);
@@ -1146,7 +1152,6 @@ function openMemberProfileGuarded(memberKey) {
     const sel = document.getElementById('member-select');
     if (sel) {
         sel.value = memberKey;
-        sel.dispatchEvent(new Event('change'));
     }
     switchPage('files');
 }
@@ -1160,9 +1165,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const sel =
     document.getElementById("member-select");
 
-    if (sel && sel.value !== "all") {
-        return sel.value;
-    }
+    if (sel?.value?.trim() && sel.value !== "all") {
+    return sel.value;
+}
 
     const mode =
     window.VAULT_MODE ||
