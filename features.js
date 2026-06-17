@@ -1186,8 +1186,49 @@ async function checkDocExpiryReminders(){
 // Post-init hook: called at end of onCaptchaSuccess after initVault()
 function vaultPostInit(){
    const mode = sessionStorage.getItem("vaultMode");
+
 const sel = document.getElementById("member-select");
 
+const members = {
+
+ADMIN: ["shineil","brother","father","mother","official"],
+
+OFFICIAL: ["official"],
+
+PARENTS: ["father","mother"],
+
+SHINEIL_PARENTS: ["shineil","father","mother"],
+
+KEVIN_PARENTS: ["brother","father","mother"],
+
+KEVIN: ["brother"],
+
+SHINEIL: ["shineil"]
+
+}[mode] || ["shineil"];
+
+const labels = {
+
+shineil: "SHINEIL MATHIAS",
+
+brother: "KEVIN MATHIAS",
+
+father: "STEPHEN MATHIAS",
+
+mother: "KANCHAN MATHIAS",
+
+official: "OFFICIAL DOCUMENTS"
+
+};
+
+sel.innerHTML = members
+
+.map(m => `<option value="${m}">${labels[m]}</option>`)
+
+.join("");
+
+sel.dispatchEvent(new Event("change"));
+   
 if (sel) {
     if (mode === "SHINEIL_PARENTS") sel.value = "shineil";
     if (mode === "KEVIN_PARENTS") sel.value = "brother";
