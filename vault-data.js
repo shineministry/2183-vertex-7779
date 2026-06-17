@@ -660,35 +660,25 @@ hobbies:`Add`
    if(category==="HOME"){
 
 // For non-admin modes the dropdown is hidden, so derive member from VAULT_MODE
-const modeToMembers = {
-    SHINEIL: ["shineil"],
-    KEVIN: ["brother"],
-    KEVIN_PARENTS: ["brother", "father", "mother"],
-    SHINEIL_PARENTS: ["shineil", "father", "mother"],
-    PARENTS: ["father", "mother"],
-    OFFICIAL: ["shineil", "father", "mother", "brother"],
-    ADMIN: null
+const modeToMember = {
+    "SHINEIL": "shineil",
+    "KEVIN": "brother",
+    "KEVIN_PARENTS": "brother",
+    "SHINEIL_PARENTS": "shineil",
+    "PARENTS": "father",
+    "OFFICIAL": "shineil",
+    "ADMIN": null
 };
 
-// ADD THIS HERE
-const _vaultMode =
-    window.VAULT_MODE ||
-    sessionStorage.getItem("vaultMode") ||
-    "ADMIN";
+const _vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
+const dropdownVal = document.getElementById("member-select")?.value || "shineil";
+const member = (_vaultMode === "ADMIN")
+    ? (dropdownVal || "shineil")
+    : (modeToMember[_vaultMode] || dropdownVal || "shineil");
 
-const allowedMembers = modeToMembers[_vaultMode];
+const profile =
+profiles[member] || profiles.shineil;
 
-const memberSelect =
-    document.getElementById("member-select");
-
-if (memberSelect && _vaultMode !== "ADMIN" && allowedMembers) {
-    [...memberSelect.options].forEach(option => {
-        option.hidden =
-            !allowedMembers.includes(option.value);
-    });
-
-    memberSelect.value = allowedMembers[0];
-}
 
 grid.innerHTML=`
 
@@ -1122,18 +1112,60 @@ async function unifiedSearch(){
 
 }
 
+// ── Mode → allowed member keys (mirrors backend MODE_MEMBERS in worker.js) ──
+// Frontend member keys map to backend member ids as: shineil, brother, father, mother
+const VAULT_MODE_ALLOWED_MEMBERS = {
+    ADMIN:           ["shineil", "brother", "father", "mother"],
+    OFFICIAL:        ["shineil"],
+    PARENTS:         ["father", "mother"],
+    SHINEIL_PARENTS: ["shineil", "father", "mother"],
+    KEVIN_PARENTS:   ["brother", "father", "mother"],
+    KEVIN:           ["brother"],
+    SHINEIL:         ["shineil"]
+};
+
+function getCurrentVaultMode() {
+    return window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
+}
+
+function isMemberAllowedForCurrentMode(memberKey) {
+    const mode = getCurrentVaultMode();
+    const allowed = VAULT_MODE_ALLOWED_MEMBERS[mode] || [];
+    return allowed.includes(memberKey);
+}
+
+// Called by the HOME page's "Family Members" shortcuts. Unlike the old
+// inline onclick handlers, this checks authorization before opening any
+// profile — closes the leak where a non-admin user could view another
+// member's profile by clicking a HOME shortcut even with the dropdown hidden.
+function openMemberProfileGuarded(memberKey) {
+    if (!isMemberAllowedForCurrentMode(memberKey)) {
+        console.warn('[Vault] Blocked profile access for unauthorized member:', memberKey);
+        return;
+    }
+    const sel = document.getElementById('member-select');
+    if (sel) {
+        sel.value = memberKey;
+        sel.dispatchEvent(new Event('change'));
+    }
+    switchPage('files');
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const memberSelect = document.getElementById("member-select");
     if (!memberSelect) return;
 
     function getProfileMember() {
-        const mode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
-        const modeMap = {
-            "SHINEIL": "shineil", "KEVIN": "brother",
-            "KEVIN_PARENTS": "brother", "SHINEIL_PARENTS": "shineil",
-            "PARENTS": "father", "OFFICIAL": "shineil", "ADMIN": null
-        };
-        if (mode !== "ADMIN") return modeMap[mode] || "shineil";
+        const mode = getCurrentVaultMode();
+        if (mode !== "ADMIN") {
+            const allowed = VAULT_MODE_ALLOWED_MEMBERS[mode] || ["shineil"];
+            // Single-member modes (SHINEIL, KEVIN) always resolve to their one
+            // member. Multi-member modes (PARENTS, SHINEIL_PARENTS, etc.) use
+            // the dropdown's current value only if it's within the allowed set.
+            const val = memberSelect.value;
+            if (allowed.length === 1) return allowed[0];
+            return allowed.includes(val) ? val : allowed[0];
+        }
         const val = memberSelect.value;
         return (val === "all") ? "shineil" : val;
     }
