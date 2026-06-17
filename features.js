@@ -1185,12 +1185,28 @@ async function checkDocExpiryReminders(){
 
 // Post-init hook: called at end of onCaptchaSuccess after initVault()
 function vaultPostInit(){
+   const mode = sessionStorage.getItem("vaultMode");
+const sel = document.getElementById("member-select");
+
+if (sel) {
+    if (mode === "SHINEIL_PARENTS") sel.value = "shineil";
+    if (mode === "KEVIN_PARENTS") sel.value = "brother";
+    if (mode === "PARENTS") sel.value = "father";
+}
    // ── Hide member dropdown for non-ADMIN modes ──
     const mode = sessionStorage.getItem("vaultMode");
-    const memberSelectWrap = document.getElementById('sidebar-controls-wrap');
-if (mode !== "ADMIN" && memberSelectWrap) {
+const memberSelectWrap = document.getElementById('sidebar-controls-wrap');
+
+const multiMemberModes = [
+    "ADMIN",
+    "PARENTS",
+    "SHINEIL_PARENTS",
+    "KEVIN_PARENTS"
+];
+
+if (!multiMemberModes.includes(mode) && memberSelectWrap) {
     memberSelectWrap.style.display = "none";
-    }
+}
 
     renderPinnedSection();
     setTimeout(checkDocExpiryReminders, 2000);
