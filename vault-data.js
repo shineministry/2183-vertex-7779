@@ -1156,19 +1156,30 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!memberSelect) return;
 
     function getProfileMember() {
-        const mode = getCurrentVaultMode();
-        if (mode !== "ADMIN") {
-            const allowed = VAULT_MODE_ALLOWED_MEMBERS[mode] || ["shineil"];
-            // Single-member modes (SHINEIL, KEVIN) always resolve to their one
-            // member. Multi-member modes (PARENTS, SHINEIL_PARENTS, etc.) use
-            // the dropdown's current value only if it's within the allowed set.
-            const val = memberSelect.value;
-            if (allowed.length === 1) return allowed[0];
-            return allowed.includes(val) ? val : allowed[0];
-        }
-        const val = memberSelect.value;
-        return (val === "all") ? "shineil" : val;
+
+    const sel =
+    document.getElementById("member-select");
+
+    if (sel && sel.value !== "all") {
+        return sel.value;
     }
+
+    const mode =
+    window.VAULT_MODE ||
+    sessionStorage.getItem("vaultMode") ||
+    "ADMIN";
+
+    const modeMap = {
+        SHINEIL: "shineil",
+        KEVIN: "brother",
+        PARENTS: "father",
+        SHINEIL_PARENTS: "shineil",
+        KEVIN_PARENTS: "brother",
+        OFFICIAL: "official"
+    };
+
+    return modeMap[mode] || "shineil";
+}
 
     renderProfile(getProfileMember());
 
