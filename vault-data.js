@@ -833,7 +833,20 @@ border-radius:18px;">
 return;
 }
    
-    grid.innerHTML = "";
+    grid.innerHTML = `
+       <div style="
+    grid-column:1/-1;
+    background:#f8fafc;
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:14px 18px;
+    margin-bottom:18px;
+    color:#64748b;
+    line-height:1.6;
+    font-size:14px;">
+    ${getCatSummary(category)}
+</div>
+   `;
 
     const visibleFiles =
 window.LITE_MODE
