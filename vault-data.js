@@ -114,7 +114,11 @@ list.innerHTML = `
     if (typeof selectVaultCategory === 'function') {
         selectVaultCategory(cat);
     }
-};
+    };
+       
+list.appendChild(li);
+
+});
 
 // Auto-click HOME first
 const homeLi = [...list.querySelectorAll('li')].find(li => li.innerText.trim().includes('HOME'));
