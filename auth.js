@@ -623,6 +623,14 @@ async function submitTOTP() {
     window.VAULT_MODE = result.mode;
     sessionStorage.setItem("vaultMode", result.mode);
 
+       // Derive vaultUser from mode for notification targeting
+const _modeUserMap = {
+    SHINEIL: 'shineil', KEVIN: 'brother', OFFICIAL: 'official',
+    PARENTS: 'father', SHINEIL_PARENTS: 'shineil',
+    KEVIN_PARENTS: 'brother', ADMIN: 'shineil'
+};
+sessionStorage.setItem('vaultUser', _modeUserMap[result.mode] || 'all');
+
     if (window.VAULT_MODE !== "ADMIN") {
         const shareGear = document.getElementById("share-gear");
         if (shareGear) shareGear.style.display = "none";
@@ -1442,7 +1450,16 @@ async function showStep2() {
                                 renderFiles(window.allFilesData[firstCat], firstCat);
                             }
                         }
-
+                       // Set vaultUser for notification targeting in offline mode
+const _omUserMap = {
+    SHINEIL: 'shineil', KEVIN: 'brother', OFFICIAL: 'official',
+    PARENTS: 'father', SHINEIL_PARENTS: 'shineil',
+    KEVIN_PARENTS: 'brother', ADMIN: 'shineil'
+};
+const _omMode = sessionStorage.getItem('vaultMode') || '';
+if (!sessionStorage.getItem('vaultUser')) {
+    sessionStorage.setItem('vaultUser', _omUserMap[_omMode] || 'all');
+}
                         vaultPostInit();
                         startSessionTimer();
                         startInactivityMonitor();
@@ -1563,6 +1580,14 @@ async function showStep2() {
 
             window.VAULT_MODE = result.mode;
             sessionStorage.setItem("vaultMode", result.mode);
+
+           // Derive vaultUser from mode for notification targeting
+const _modeUserMap = {
+    SHINEIL: 'shineil', KEVIN: 'brother', OFFICIAL: 'official',
+    PARENTS: 'father', SHINEIL_PARENTS: 'shineil',
+    KEVIN_PARENTS: 'brother', ADMIN: 'shineil'
+};
+sessionStorage.setItem('vaultUser', _modeUserMap[result.mode] || 'all');
 
             if (window.VAULT_MODE !== "ADMIN") {
                 const shareGear = document.getElementById("share-gear");
