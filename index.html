@@ -3122,6 +3122,10 @@ function switchPage(page) {
       navHome.style.background    = 'transparent';
       navHome.style.border        = '1px solid transparent';
       navHome.style.color         = '#94a3b8';
+       document.getElementById('page-profile').style.display = '';
+  if (typeof renderProfile === 'function' && typeof getCurrentVaultMember === 'function') {
+    renderProfile(getCurrentVaultMember());
+  }
     } else {
       navHome.style.background    = 'transparent';
       navHome.style.border        = '1px solid transparent';
@@ -3374,7 +3378,13 @@ return document.getElementById('member-select')?.value || 'all';
 
   function selectVaultCategory(categoryName) {
     if (categoryName === 'HOME') { switchPage('home'); return; }
-    if (categoryName === 'PROFILE') { switchPage('profile'); return; }
+    if (categoryName === 'PROFILE') {
+  switchPage('profile');
+  if (typeof renderProfile === 'function' && typeof getCurrentVaultMember === 'function') {
+    renderProfile(getCurrentVaultMember());
+  }
+  return;
+}
 
     const data = getVaultData();
     const files = filterFilesForMember(data[categoryName] || []);
