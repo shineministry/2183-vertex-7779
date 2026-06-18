@@ -1226,14 +1226,17 @@ sel.innerHTML = members
 .map(m => `<option value="${m}">${labels[m]}</option>`)
 
 .join("");
-
-sel.dispatchEvent(new Event("change"));
    
 if (sel) {
     if (mode === "SHINEIL_PARENTS") sel.value = "shineil";
-    if (mode === "KEVIN_PARENTS") sel.value = "brother";
-    if (mode === "PARENTS") sel.value = "father";
+           if (mode === "KEVIN_PARENTS")   sel.value = "brother";
+           if (mode === "PARENTS")         sel.value = "father";
+           if (mode === "SHINEIL")         sel.value = "shineil";
+           if (mode === "KEVIN")           sel.value = "brother";
+           if (mode === "OFFICIAL")        sel.value = "official";
 }
+   sel.dispatchEvent(new Event("change"));
+
    // ── Hide member dropdown for non-ADMIN modes ──
 const memberSelectWrap = document.getElementById('sidebar-controls-wrap');
 
@@ -1279,6 +1282,24 @@ if (!multiMemberModes.includes(currentMode) && memberSelectWrap) {
         if (activeLi) activeLi.click();
     });
 }
+
+function getCurrentVaultMember() {
+  const sel = document.getElementById('member-select');
+  if (sel && sel.value && sel.value !== 'all') return sel.value;
+
+  const mode = window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN';
+  const map = {
+    SHINEIL: 'shineil',
+    KEVIN: 'brother',
+    OFFICIAL: 'official',
+    PARENTS: 'father',
+    SHINEIL_PARENTS: 'shineil',
+    KEVIN_PARENTS: 'brother',
+    ADMIN: null  // ADMIN reads from dropdown, already handled above
+  };
+  return map[mode] || 'shineil';
+}
+window.getCurrentVaultMember = getCurrentVaultMember;
 
 // ═══════════════════════════════════════════════════════════════
 //  VAULT NOTIFICATIONS SYSTEM
