@@ -3327,7 +3327,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const m = getCurrentVaultMember();
   return m || 'all';
 }
-return document.getElementById('member-select')?.value || 'all';
+if (typeof getCurrentVaultMember === 'function') {
+    const m = getCurrentVaultMember();
+    if (m) return m;
+}
+return document.getElementById('member-select')?.value || 'all';  
   }
 
   function filterFilesForMember(files) {
