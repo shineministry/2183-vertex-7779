@@ -1,6 +1,33 @@
 /* =========================
    INIT VAULT
 ========================= */
+function getVisibleMembers() {
+  switch(window.VAULT_MODE) {
+    case "ADMIN":
+      return [selectedMember];
+
+    case "SHINEIL":
+      return ["shineil"];
+
+    case "KEVIN":
+      return ["brother"];
+
+    case "OFFICIAL":
+      return ["official"];
+
+    case "PARENTS":
+      return ["father", "mother"];
+
+    case "SHINEIL_PARENTS":
+      return ["shineil", "father", "mother"];
+
+    case "KEVIN_PARENTS":
+      return ["brother", "father", "mother"];
+
+    default:
+      return [];
+  }
+}
 
 async function initVault() {
 try {
@@ -659,22 +686,10 @@ hobbies:`Add`
 
    if(category==="HOME"){
 
-// For non-admin modes the dropdown is hidden, so derive member from VAULT_MODE
-const modeToMember = {
-    "SHINEIL": "shineil",
-    "KEVIN": "brother",
-    "KEVIN_PARENTS": "brother",
-    "SHINEIL_PARENTS": "shineil",
-    "PARENTS": "father",
-    "OFFICIAL": "shineil",
-    "ADMIN": null
-};
 
 const _vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
 const dropdownVal = document.getElementById("member-select")?.value || "shineil";
-const member = (_vaultMode === "ADMIN")
-    ? (dropdownVal || "shineil")
-    : (modeToMember[_vaultMode] || dropdownVal || "shineil");
+const member = getVisibleMembers()[0];
 
 const profile =
 profiles[member] || profiles.shineil;
@@ -1130,18 +1145,6 @@ async function unifiedSearch(){
 
 }
 
-// ── Mode → allowed member keys (mirrors backend MODE_MEMBERS in worker.js) ──
-// Frontend member keys map to backend member ids as: shineil, brother, father, mother
-const VAULT_MODE_ALLOWED_MEMBERS = {
-    ADMIN:           ["shineil", "brother", "father", "mother"],
-    OFFICIAL:        ["shineil"],
-    PARENTS:         ["father", "mother"],
-    SHINEIL_PARENTS: ["shineil", "father", "mother"],
-    KEVIN_PARENTS:   ["brother", "father", "mother"],
-    KEVIN:           ["brother"],
-    SHINEIL:         ["shineil"]
-};
-
 function getCurrentVaultMode() {
     return window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
 }
@@ -1185,15 +1188,6 @@ document.addEventListener("DOMContentLoaded", () => {
     window.VAULT_MODE ||
     sessionStorage.getItem("vaultMode") ||
     "ADMIN";
-
-    const modeMap = {
-        SHINEIL: "shineil",
-        KEVIN: "brother",
-        PARENTS: "father",
-        SHINEIL_PARENTS: "shineil",
-        KEVIN_PARENTS: "brother",
-        OFFICIAL: "official"
-    };
 
     return modeMap[mode] || "shineil";
 }
