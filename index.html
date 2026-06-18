@@ -3156,30 +3156,26 @@ function refreshHomePage() {
   setTimeout(function() {
     try {
       // Total files count
-      const fileGrid = document.getElementById('file-grid');
-      const fileCards = fileGrid ? fileGrid.querySelectorAll('.file-card,.doc-card,[class*="card"]') : [];
       const statFiles = document.getElementById('home-stat-files');
-      if (statFiles) {
-        // Try window.vaultFiles if defined by vault-data.js
-        if (window.VAULT_FILES && Array.isArray(window.VAULT_FILES)) {
-          statFiles.textContent = window.VAULT_FILES.length;
-        } else if (fileCards.length > 0) {
-          statFiles.textContent = fileCards.length;
-        } else {
-          statFiles.textContent = '—';
-        }
-      }
+if (statFiles && typeof filterFilesForMember === 'function' && typeof getCategoryEntries === 'function') {
+    const total = getCategoryEntries().reduce((sum, [, files]) => sum + filterFilesForMember(files).length, 0);
+    statFiles.textContent = String(total);
+}
 
       // Categories count
-      const catList = document.getElementById('cat-list');
-      const catItems = catList ? catList.querySelectorAll('li') : [];
       const statCats = document.getElementById('home-stat-cats');
-      if (statCats) statCats.textContent = catItems.length > 0 ? catItems.length : '—';
+if (statCats && typeof getCategoryEntries === 'function') {
+    statCats.textContent = String(getCategoryEntries().length);
+}
 
       // Pinned count
-      const pinnedKeys = Object.keys(localStorage).filter(k => k.startsWith('pinned-'));
       const statPinned = document.getElementById('home-stat-pinned');
-      if (statPinned) statPinned.textContent = pinnedKeys.length;
+if (statPinned) {
+    try {
+        const pinned = JSON.parse(localStorage.getItem('vaultPinned') || '[]');
+        statPinned.textContent = String(Array.isArray(pinned) ? pinned.length : 0);
+    } catch(e) { statPinned.textContent = '0'; }
+}
 
     } catch(e) {}
 
@@ -3226,8 +3222,8 @@ function buildHomeRecentFiles() {
   if (!container) return;
 
   // Pull recent from sessionStorage/localStorage if vault-ui logs them
-  const recentRaw = localStorage.getItem('vault-recent-files');
-  let recent = [];
+const recentRaw = localStorage.getItem('recentFiles');
+   let recent = [];
   try { recent = recentRaw ? JSON.parse(recentRaw) : []; } catch(e) { recent = []; }
 
   if (!recent.length) {
@@ -3265,8 +3261,9 @@ function buildHomePinned() {
   const section = document.getElementById('home-pinned-section');
   const grid    = document.getElementById('home-pinned-grid');
   if (!section || !grid) return;
-  const pinnedKeys = Object.keys(localStorage).filter(k => k.startsWith('pinned-'));
-  if (!pinnedKeys.length) { section.style.display = 'none'; return; }
+  let pinnedDocs = [];
+try { pinnedDocs = JSON.parse(localStorage.getItem('vaultPinned') || '[]'); } catch(e) {}
+if (!pinnedDocs.length) { section.style.display = 'none'; return; }
   section.style.display = '';
   // Clone pinned items from the main pinned-grid if it has content
   const mainGrid = document.getElementById('pinned-grid');
@@ -3283,11 +3280,11 @@ function buildHomePinned() {
   window.openFile = function(name) {
     try {
       let recent = [];
-      try { recent = JSON.parse(localStorage.getItem('vault-recent-files') || '[]'); } catch(e) {}
+      try { recent = JSON.parse(localStorage.getItem('recentFiles') || '[]'); } catch(e) {}
       recent = recent.filter(f => (typeof f === 'object' ? f.name : f) !== name);
       recent.unshift({ name: name, time: new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) + ' today' });
       if (recent.length > 10) recent = recent.slice(0, 10);
-      localStorage.setItem('vault-recent-files', JSON.stringify(recent));
+      localStorage.setItem('recentFiles', JSON.stringify(recent));
     } catch(e) {}
     if (typeof _origOpen === 'function') return _origOpen.apply(this, arguments);
   };
@@ -3410,10 +3407,24 @@ return document.getElementById('member-select')?.value || 'all';
     if (statFiles) statFiles.textContent = String(totalFiles);
     if (statCats) statCats.textContent = String(entries.length);
     if (statPinned) {
-      statPinned.textContent = String(
-        Object.keys(localStorage).filter(k => k.startsWith('pinned-')).length
-      );
-    }
+    try {
+        const pinned = JSON.parse(localStorage.getItem('vaultPinned') || '[]');
+        statPinned.textContent = String(Array.isArray(pinned) ? pinned.length : 0);
+    } catch(e) { statPinned.textContent = '0'; }
+}
+     const statStorage = document.getElementById('home-stat-storage');
+if (statStorage) {
+    try {
+        if (navigator.storage && navigator.storage.estimate) {
+            navigator.storage.estimate().then(est => {
+                const mb = ((est.usage || 0) / 1048576).toFixed(1);
+                statStorage.textContent = mb + ' MB';
+            });
+        } else {
+            statStorage.textContent = 'N/A';
+        }
+    } catch(e) { statStorage.textContent = 'N/A'; }
+}
   }
 
   function buildFixedHomeCatOverview() {
@@ -3480,6 +3491,8 @@ window._repairRefresh = refresh;
     });
   });
 
+   window._getCategoryEntries = getCategoryEntries;
+window._filterFilesForMember = filterFilesForMember;
   window.selectVaultCategory = selectVaultCategory;
 })();
 </script>
