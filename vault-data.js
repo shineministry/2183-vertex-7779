@@ -111,19 +111,10 @@ list.innerHTML = `
     const icon = getCatIcon(cat);
     li.innerHTML = `<span style="font-size:15px;">${icon}</span><span>${cat}</span>`;
     li.onclick = () => {
-        document.querySelectorAll('#cat-list li')
-            .forEach(el => el.classList.remove('active'));
-        switchPage('files');
-        li.classList.add('active');
-        if (typeof selectVaultCategory === 'function') {
-    selectVaultCategory(cat);
-} else {
-    renderFiles(data[cat] || [], cat);
-}
-        renderFiles(filteredFiles, cat);
-    };
-    list.appendChild(li);
-});
+    if (typeof selectVaultCategory === 'function') {
+        selectVaultCategory(cat);
+    }
+};
 
 // Auto-click HOME first
 const homeLi = [...list.querySelectorAll('li')].find(li => li.innerText.trim().includes('HOME'));
