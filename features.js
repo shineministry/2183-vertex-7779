@@ -1255,8 +1255,8 @@ if (!multiMemberModes.includes(currentMode) && memberSelectWrap) {
     renderPinnedSection();
     setTimeout(checkDocExpiryReminders, 2000);
     // Load notifications and show badge/bubble
-    initVaultNotifications().catch(() => {});
-
+setTimeout(() => initVaultNotifications().catch(() => {}), 400);
+   
     // ── Pre-cache vault docs into IndexedDB for offline access ──
     // Runs after a short delay so it doesn't compete with the initial render
     setTimeout(async () => {
