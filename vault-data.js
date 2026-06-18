@@ -1012,3 +1012,4 @@ memberSelect.addEventListener("change", () => {
     switchPage('profile');
     renderProfile(getProfileMember());
 });
+}); // <-- THIS MUST EXIST
