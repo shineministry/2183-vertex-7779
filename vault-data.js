@@ -1,33 +1,6 @@
 /* =========================
    INIT VAULT
 ========================= */
-function getVisibleMembers() {
-  switch(window.VAULT_MODE) {
-    case "ADMIN":
-      return [selectedMember];
-
-    case "SHINEIL":
-      return ["shineil"];
-
-    case "KEVIN":
-      return ["brother"];
-
-    case "OFFICIAL":
-      return ["official"];
-
-    case "PARENTS":
-      return ["father", "mother"];
-
-    case "SHINEIL_PARENTS":
-      return ["shineil", "father", "mother"];
-
-    case "KEVIN_PARENTS":
-      return ["brother", "father", "mother"];
-
-    default:
-      return [];
-  }
-}
 
 async function initVault() {
 try {
@@ -479,200 +452,6 @@ function buildHomeDashboard(){
 function renderFiles(
 files,
 category){
-
-   const profiles = {
-
-shineil:{
-image:"profile.png",
-name:"SHINEIL KEITH MATHIAS",
-role:"Founder of SHINE MINISTRY • Student • Public Speaker • Digital Creator",
-
-personal:`
-<b>Full Name:</b> Shineil Keith Mathias<br>
-<b>Date of Birth:</b> 7 March 2010<br>
-<b>Gender:</b> Male<br>
-<b>Nationality:</b> Indian<br>
-<b>Location:</b> Khandala, Pune
-`,
-
-contact:`
-<b>Phone:</b> +91 8605586173<br>
-<b>Email:</b> shinumaths989@gmail.com<br>
-<b>Website:</b> shine-ministry.com<br>
-<b>Instagram:</b> @shinu_vordenker_7
-`,
-
-education:`
-Don Bosco High School<br>
-2020–2026<br>
-Secondary Education
-`,
-
-skills:`
-• Public Speaking<br>
-• Leadership<br>
-• Mathematics<br>
-• Web Editing
-`,
-
-languages:`
-English — Fluent<br>
-Hindi — Fluent<br>
-German — Basic
-`,
-
-achievements:`
-• Green House Captain<br>
-• Debate Awards<br>
-• Student Recognition
-`,
-
-experience:`
-Founder — SHINE MINISTRY<br>
-Digital Projects<br>
-Leadership Activities
-`,
-
-projects:`
-Secure Vault<br>
-SHINE MINISTRY<br>
-PDF Systems
-`,
-
-goals:`
-Technology<br>
-Education<br>
-Leadership
-`,
-
-faith:`
-Founder of SHINE MINISTRY<br>
-Christian Service
-`,
-
-about:`
-Student with strong communication,
-leadership and ministry interests.
-`,
-
-hobbies:`
-Debating, technology,
-public speaking, reading
-`
-},
-
-
-
-brother:{
-
-image:"ProfileK.png",
-name:"KEVIN SHREESH MATHIAS",
-role:"Bartender • Hospitality",
-
-personal:`
-<b>Name:</b> Kevin Shreesh Mathias<br>
-<b>Location:</b> Pune<br>
-<b>Industry:</b> Hospitality
-`,
-
-contact:`
-Add Number<br>
-Add Email
-`,
-
-education:`
-Guardian School — SSC<br>
-IHM Mumbai<br>
-Flair Mania Bartending Academy
-`,
-
-skills:`
-• Bartending<br>
-• Customer Service<br>
-• POS<br>
-• Inventory
-`,
-
-languages:`
-English<br>
-Hindi
-`,
-
-achievements:`
-Assistant Bartender — Bombay Cartel<br>
-Assistant Bartender — Janwani
-`,
-
-experience:`
-2023–2025 Bombay Cartel<br>
-Present — Janwani
-`,
-
-projects:`
-Hospitality Training<br>
-Service Experience
-`,
-
-goals:`
-Career Growth<br>
-Hospitality Industry
-`,
-
-faith:`-`,
-
-about:`
-Hospitality professional with
-bartending and customer service experience.
-`,
-
-hobbies:`
-Service industry,
-teamwork,
-food & beverage
-`
-},
-
-
-
-father:{
-image:"ProfileSt.png",
-name:"STEPHEN CONDRAD MATHIAS",
-role:"Father",
-personal:`Add`,
-contact:`+91 99216 68744, +91 93707 50143`,
-education:`Add`,
-skills:`Add`,
-languages:`English, Hindi, Konkani, Tulu, Kannada`,
-achievements:`Add`,
-experience:`Add`,
-projects:`Add`,
-goals:`Add`,
-faith:`Roman Catholic`,
-about:`Add`,
-hobbies:`Add`
-},
-
-
-
-mother:{
-image:"mother.png",
-name:"KANCHAN MATHIAS",
-role:"Mother",
-personal:`Add`,
-contact:`Add`,
-education:`Add`,
-skills:`Add`,
-languages:`Add`,
-achievements:`Add`,
-experience:`Add`,
-projects:`Add`,
-goals:`Add`,
-faith:`Add`,
-about:`Add`,
-hobbies:`Add`
-}
-
-};
    
    currentCategory = category;
 
@@ -686,10 +465,22 @@ hobbies:`Add`
 
    if(category==="HOME"){
 
+// For non-admin modes the dropdown is hidden, so derive member from VAULT_MODE
+const modeToMember = {
+    "SHINEIL": "shineil",
+    "KEVIN": "brother",
+    "KEVIN_PARENTS": "brother",
+    "SHINEIL_PARENTS": "shineil",
+    "PARENTS": "father",
+    "OFFICIAL": "shineil",
+    "ADMIN": null
+};
 
 const _vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
 const dropdownVal = document.getElementById("member-select")?.value || "shineil";
-const member = getVisibleMembers()[0];
+const member = (_vaultMode === "ADMIN")
+    ? (dropdownVal || "shineil")
+    : (modeToMember[_vaultMode] || dropdownVal || "shineil");
 
 const profile =
 profiles[member] || profiles.shineil;
@@ -710,7 +501,7 @@ gap:25px;
 flex-wrap:wrap;
 margin-bottom:30px;">
 
-<img src="${p.image}"
+<img src="${profile.image}"
 style="
 width:150px;
 height:150px;
@@ -722,14 +513,14 @@ object-fit:cover;">
 <h1 style="
 color:var(--accent);">
 
-${p.name}
+${profile.name}
 
 </h1>
 
 <div style="
 color:var(--muted);">
 
-${p.role}
+${profile.role}
 
 </div>
 
@@ -746,52 +537,52 @@ gap:20px;">
 
 <div class="profile-box">
 <h3>Personal Details</h3>
-${p.personal}
+${profile.personal}
 </div>
 
 <div class="profile-box">
 <h3>Contact</h3>
-${p.contact}
+${profile.contact}
 </div>
 
 <div class="profile-box">
 <h3>Education</h3>
-${p.education}
+${profile.education}
 </div>
 
 <div class="profile-box">
 <h3>Skills</h3>
-${p.skills}
+${profile.skills}
 </div>
 
 <div class="profile-box">
 <h3>Languages</h3>
-${p.languages}
+${profile.languages}
 </div>
 
 <div class="profile-box">
 <h3>Achievements</h3>
-${p.achievements}
+${profile.achievements}
 </div>
 
 <div class="profile-box">
 <h3>Experience</h3>
-${p.experience}
+${profile.experience}
 </div>
 
 <div class="profile-box">
 <h3>Projects</h3>
-${p.projects}
+${profile.projects}
 </div>
 
 <div class="profile-box">
 <h3>Future Goals</h3>
-${p.goals}
+${profile.goals}
 </div>
 
 <div class="profile-box">
 <h3>Faith / Ministry</h3>
-${p.faith}
+${profile.faith}
 </div>
 
 </div>
@@ -806,7 +597,7 @@ border-radius:18px;">
 
 <h3>About Me</h3>
 
-${p.about}
+${profile.about}
 
 </div>
 
@@ -820,7 +611,7 @@ border-radius:18px;">
 
 <h3>Hobbies & Interests</h3>
 
-${p.hobbies}
+${profile.hobbies}
 
 </div>
 
@@ -1145,6 +936,18 @@ async function unifiedSearch(){
 
 }
 
+// ── Mode → allowed member keys (mirrors backend MODE_MEMBERS in worker.js) ──
+// Frontend member keys map to backend member ids as: shineil, brother, father, mother
+const VAULT_MODE_ALLOWED_MEMBERS = {
+    ADMIN:           ["shineil", "brother", "father", "mother"],
+    OFFICIAL:        ["shineil"],
+    PARENTS:         ["father", "mother"],
+    SHINEIL_PARENTS: ["shineil", "father", "mother"],
+    KEVIN_PARENTS:   ["brother", "father", "mother"],
+    KEVIN:           ["brother"],
+    SHINEIL:         ["shineil"]
+};
+
 function getCurrentVaultMode() {
     return window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
 }
@@ -1188,6 +991,15 @@ document.addEventListener("DOMContentLoaded", () => {
     window.VAULT_MODE ||
     sessionStorage.getItem("vaultMode") ||
     "ADMIN";
+
+    const modeMap = {
+        SHINEIL: "shineil",
+        KEVIN: "brother",
+        PARENTS: "father",
+        SHINEIL_PARENTS: "shineil",
+        KEVIN_PARENTS: "brother",
+        OFFICIAL: "official"
+    };
 
     return modeMap[mode] || "shineil";
 }
