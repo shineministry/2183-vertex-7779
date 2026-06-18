@@ -3101,40 +3101,39 @@ function switchPage(page) {
     document.getElementById('page-files').style.display = '';
   } else if (page === 'profile') {
     document.getElementById('page-profile').style.display = '';
-  }
-
-  // Update sidebar nav highlight
-  const navHome    = document.getElementById('nav-home');
-  const navProfile = document.getElementById('nav-profile');
-
-  if (navHome && navProfile) {
-    if (page === 'home') {
-      navHome.style.background    = 'rgba(37,99,235,0.22)';
-      navHome.style.border        = '1px solid rgba(37,99,235,0.35)';
-      navHome.style.color         = '#e2e8f0';
-      navProfile.style.background = 'transparent';
-      navProfile.style.border     = '1px solid transparent';
-      navProfile.style.color      = '#94a3b8';
-    } else if (page === 'profile') {
-      navProfile.style.background = 'rgba(37,99,235,0.22)';
-      navProfile.style.border     = '1px solid rgba(37,99,235,0.35)';
-      navProfile.style.color      = '#e2e8f0';
-      navHome.style.background    = 'transparent';
-      navHome.style.border        = '1px solid transparent';
-      navHome.style.color         = '#94a3b8';
-       document.getElementById('page-profile').style.display = '';
-  if (typeof renderProfile === 'function' && typeof getCurrentVaultMember === 'function') {
-    renderProfile(getCurrentVaultMember());
-  }
-    } else {
-      navHome.style.background    = 'transparent';
-      navHome.style.border        = '1px solid transparent';
-      navHome.style.color         = '#94a3b8';
-      navProfile.style.background = 'transparent';
-      navProfile.style.border     = '1px solid transparent';
-      navProfile.style.color      = '#94a3b8';
+    if (typeof renderProfile === 'function' && typeof getCurrentVaultMember === 'function') {
+        renderProfile(getCurrentVaultMember());
     }
-  }
+}
+
+// Update sidebar nav highlight
+const navHome    = document.getElementById('nav-home');
+const navProfile = document.getElementById('nav-profile');
+
+if (navHome && navProfile) {
+    if (page === 'home') {
+        navHome.style.background    = 'rgba(37,99,235,0.22)';
+        navHome.style.border        = '1px solid rgba(37,99,235,0.35)';
+        navHome.style.color         = '#e2e8f0';
+        navProfile.style.background = 'transparent';
+        navProfile.style.border     = '1px solid transparent';
+        navProfile.style.color      = '#94a3b8';
+    } else if (page === 'profile') {
+        navProfile.style.background = 'rgba(37,99,235,0.22)';
+        navProfile.style.border     = '1px solid rgba(37,99,235,0.35)';
+        navProfile.style.color      = '#e2e8f0';
+        navHome.style.background    = 'transparent';
+        navHome.style.border        = '1px solid transparent';
+        navHome.style.color         = '#94a3b8';
+    } else {
+        navHome.style.background    = 'transparent';
+        navHome.style.border        = '1px solid transparent';
+        navHome.style.color         = '#94a3b8';
+        navProfile.style.background = 'transparent';
+        navProfile.style.border     = '1px solid transparent';
+        navProfile.style.color      = '#94a3b8';
+    }
+}
 
   // Category list always stays visible in sidebar
 }
@@ -3365,20 +3364,13 @@ return document.getElementById('member-select')?.value || 'all';
     if (!list) return;
 
     Array.from(list.querySelectorAll('li')).forEach(li => {
-      const categoryName = getCleanCategoryName(li);
-      if (categoryName.toUpperCase() === CATEGORY_HOME_LABEL && li.id !== 'nav-home') {
-    li.style.display = 'none';
-    li.classList.remove('active');
-    return;
-}
-
-      if (li.dataset.filesPageHooked === '1') return;
-      li.dataset.filesPageHooked = '1';
-      li.addEventListener('click', function() {
-        switchPage('files');
-      }, true);
+        const categoryName = getCleanCategoryName(li);
+        if (categoryName.toUpperCase() === CATEGORY_HOME_LABEL && li.id !== 'nav-home') {
+            li.style.display = 'none';
+            li.classList.remove('active');
+        }
     });
-  }
+}
 
   function selectVaultCategory(categoryName) {
     if (categoryName === 'HOME') { switchPage('home'); return; }
@@ -3481,10 +3473,7 @@ return document.getElementById('member-select')?.value || 'all';
       buildFixedHomeCatOverview();
     };
 
-    setTimeout(refresh, 800);
-setTimeout(refresh, 1600);
-setTimeout(refresh, 3000);
-setTimeout(refresh, 5000);
+window._repairRefresh = refresh;
 
     document.getElementById('member-select')?.addEventListener('change', function() {
       setTimeout(refresh, 250);
