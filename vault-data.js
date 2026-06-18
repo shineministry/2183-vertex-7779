@@ -972,16 +972,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!memberSelect) return;
 
     function getProfileMember() {
-  if (typeof getCurrentVaultMember === 'function') return getCurrentVaultMember() || 'shineil';
-  const sel = document.getElementById('member-select');
-  if (sel?.value?.trim() && sel.value !== 'all') return sel.value;
-  return 'shineil';
-}
+
+    if (typeof getCurrentVaultMember === 'function') {
+        return getCurrentVaultMember() || 'shineil';
+    }
 
     const mode =
-    window.VAULT_MODE ||
-    sessionStorage.getItem("vaultMode") ||
-    "ADMIN";
+        window.VAULT_MODE ||
+        sessionStorage.getItem("vaultMode") ||
+        "ADMIN";
 
     const modeMap = {
         SHINEIL: "shineil",
@@ -989,18 +988,27 @@ document.addEventListener("DOMContentLoaded", () => {
         PARENTS: "father",
         SHINEIL_PARENTS: "shineil",
         KEVIN_PARENTS: "brother",
-        OFFICIAL: "official"
+        OFFICIAL: "shineil"
     };
+
+    const sel = document.getElementById('member-select');
+
+    if (sel?.value?.trim() && sel.value !== 'all') {
+        return sel.value;
+    }
 
     return modeMap[mode] || "shineil";
 }
 
-    renderProfile(getProfileMember());
+   renderProfile(getProfileMember());
 
-    memberSelect.addEventListener("change", () => {
-    document.querySelectorAll('#cat-list li').forEach(el => el.classList.remove('active'));
-    document.getElementById('nav-profile')?.classList.add('active');
+memberSelect.addEventListener("change", () => {
+    document.querySelectorAll('#cat-list li')
+        .forEach(el => el.classList.remove('active'));
+
+    document.getElementById('nav-profile')
+        ?.classList.add('active');
+
     switchPage('profile');
     renderProfile(getProfileMember());
-});
 });
