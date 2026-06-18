@@ -82,7 +82,6 @@ list.innerHTML = `
 `;
 
     const mode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "VIEWER";
-    const currentMember = document.getElementById('member-select')?.value || 'all';
 
     // Backend already filters by mode — show ALL returned categories.
     // The frontend should NOT re-filter here; trust the backend.
