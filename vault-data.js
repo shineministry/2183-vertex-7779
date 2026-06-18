@@ -116,16 +116,11 @@ list.innerHTML = `
             .forEach(el => el.classList.remove('active'));
         switchPage('files');
         li.classList.add('active');
-        const selectedMember =
-            document.getElementById('member-select')?.value || 'all';
-        let filteredFiles = data[cat] || [];
-        if (selectedMember !== 'all') {
-            filteredFiles = filteredFiles.filter(file =>
-                Array.isArray(file.members)
-                    ? file.members.includes(selectedMember)
-                    : (file.member === selectedMember || !file.member)
-            );
-        }
+        if (typeof selectVaultCategory === 'function') {
+    selectVaultCategory(cat);
+} else {
+    renderFiles(data[cat] || [], cat);
+}
         renderFiles(filteredFiles, cat);
     };
     list.appendChild(li);
@@ -762,10 +757,14 @@ function renderProfile(memberKey) {
         ? profiles[memberKey]
         : null);
     if (!profile) {
-        console.warn('[renderProfile] profiles not ready or key not found:', memberKey);
-        setTimeout(() => renderProfile(memberKey), 500);
-        return;
-    }
+  const card = document.getElementById('profile-card');
+  if (card) card.innerHTML = `<div style="padding:30px;text-align:center;color:#64748b;">
+    <div style="font-size:48px;margin-bottom:12px;">👤</div>
+    <div style="font-weight:700;font-size:16px;">No profile data for "${memberKey}"</div>
+    <div style="font-size:13px;margin-top:8px;">Add this member to the profiles object in vault-data.js</div>
+  </div>`;
+  return;
+}
 
     const card = document.getElementById("profile-card");
     if (!card) return;
@@ -979,12 +978,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!memberSelect) return;
 
     function getProfileMember() {
-
-    const sel =
-    document.getElementById("member-select");
-
-    if (sel?.value?.trim() && sel.value !== "all") {
-    return sel.value;
+  if (typeof getCurrentVaultMember === 'function') return getCurrentVaultMember() || 'shineil';
+  const sel = document.getElementById('member-select');
+  if (sel?.value?.trim() && sel.value !== 'all') return sel.value;
+  return 'shineil';
 }
 
     const mode =
