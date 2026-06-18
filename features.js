@@ -1264,6 +1264,10 @@ setTimeout(() => initVaultNotifications().catch(() => {}), 400);
         await preCacheVaultDocs(allFilesData).catch(e => console.warn('[Offline] Pre-cache error:', e));
       }
     }, 3000);
+   
+   setTimeout(() => {
+    if (typeof window._repairRefresh === 'function') window._repairRefresh();
+}, 500);
 
     // ── Member filter: read URL param ──
     const urlParams = new URLSearchParams(window.location.search);
