@@ -114,7 +114,9 @@ async function savePMEntry() {
   const username = document.getElementById('pm-username').value.trim();
   const password = document.getElementById('pm-password').value.trim();
   const notes    = document.getElementById('pm-notes').value.trim();
+  const member   = document.getElementById('pm-member')?.value || '';
   if (!site || !password) { alert('Site and password are required.'); return; }
+  if (!member) { alert('Please select which member this password is for.'); return; }
 
   // Verify we actually have an auth token before attempting the save
   const headers = await getAuthHeaders();
@@ -125,7 +127,7 @@ async function savePMEntry() {
 
   // Save to IndexedDB immediately (offline-first) so it's never lost
   const localId = Date.now().toString();
-  await idbSavePMEntry({ id: localId, site, username, password, notes, _pendingSync: true })
+  await idbSavePMEntry({ id: localId, site, username, password, notes, member, _pendingSync: true })
     .catch(e => console.warn('[PM] Local IDB save failed:', e));
 
   // Clear form right away — data is safe in IDB
@@ -133,13 +135,15 @@ async function savePMEntry() {
   document.getElementById('pm-username').value = '';
   document.getElementById('pm-password').value = '';
   document.getElementById('pm-notes').value    = '';
+  const memberSel = document.getElementById('pm-member');
+  if (memberSel) memberSel.value = '';
 
   // Then try to sync to server
   try {
     const res = await fetch(`${WORKER_URL}/passwords`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ site, username, password, notes })
+      body: JSON.stringify({ site, username, password, notes, member })
     });
 
     // Read body once – may be JSON or empty
@@ -162,10 +166,10 @@ async function savePMEntry() {
     const serverId = data.id || localId;
     if (serverId !== localId) {
       await idbDeletePMEntry(localId).catch(() => {});
-      await idbSavePMEntry({ id: serverId, site, username, password, notes }).catch(() => {});
+      await idbSavePMEntry({ id: serverId, site, username, password, notes, member }).catch(() => {});
     } else {
       // Clear the pending-sync flag
-      await idbSavePMEntry({ id: localId, site, username, password, notes }).catch(() => {});
+      await idbSavePMEntry({ id: localId, site, username, password, notes, member }).catch(() => {});
     }
 
     renderPMList();
@@ -1399,9 +1403,9 @@ async function initVaultNotifications() {
 function _showNotifBubbleQueue(notes, idx = 0) {
   if (idx >= notes.length) return;
   _showNotifWelcomeBubble(notes, idx);
-  const delay = 6000; // each toast shows for 6s before the next floats in
+  const delay = 6000; // each bubble shows for 6s before the next floats in
   setTimeout(() => {
-    dismissNotifToast();
+    dismissNotifBubble();
     setTimeout(() => _showNotifBubbleQueue(notes, idx + 1), 300);
   }, delay);
 }
@@ -1421,63 +1425,40 @@ function _updateNotifBadge(count) {
 }
 
 function _showNotifWelcomeBubble(notes, idx = 0) {
+  const bubble = document.getElementById('notifWelcomeBubble');
+  if (!bubble) return;
+  const preview = document.getElementById('bubbleNotifPreview');
   const current = notes[idx];
-  if (!current) return;
-  // Remove any previous notification toast
-  const old = document.getElementById('notif-toast');
-  if (old) old.remove();
-
-  const toast = document.createElement('div');
-  toast.id = 'notif-toast';
-  toast.onclick = () => { dismissNotifToast(); toggleNotifications(); };
-  toast.innerHTML =
-    '<div style="display:flex;align-items:flex-start;gap:10px;">' +
-      '<span style="font-size:22px;flex-shrink:0;">' + (current.type === 'global' ? '📢' : '🎯') + '</span>' +
-      '<div style="flex:1;min-width:0;">' +
-        '<div id="notif-toast-title" style="font-size:13px;font-weight:800;color:#f8fafc;"></div>' +
-        '<div id="notif-toast-body" style="font-size:11px;color:#cbd5e1;margin-top:2px;line-height:1.4;"></div>' +
-        (notes.length > 1 ? '<div id="notif-toast-progress" style="margin-top:4px;font-size:10px;color:#64748b;text-align:right;"></div>' : '') +
-      '</div>' +
-      '<button id="notif-toast-dismiss" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:14px;padding:2px;flex-shrink:0;" aria-label="Dismiss">✕</button>' +
-    '</div>';
-  Object.assign(toast.style, {
-    position:'fixed', bottom:'20px', right:'20px', zIndex:'999999',
-    background:'linear-gradient(135deg,#1e3a8a,#0f172a)',
-    border:'1px solid rgba(255,255,255,.15)',
-    borderRadius:'14px', padding:'14px 18px',
-    minWidth:'280px', maxWidth:'360px',
-    boxShadow:'0 10px 40px rgba(15,23,42,.4)',
-    fontFamily:'system-ui,sans-serif', cursor:'pointer',
-    opacity:'0', transform:'translateY(12px) scale(.96)',
-    transition:'opacity .3s ease, transform .3s ease'
-  });
-  document.body.appendChild(toast);
-
-  document.getElementById('notif-toast-title').textContent = current.title || 'Admin Notification';
-  document.getElementById('notif-toast-body').textContent = (current.body || '').substring(0, 120) + ((current.body||'').length > 120 ? '…' : '');
-  const progress = document.getElementById('notif-toast-progress');
-  if (progress) progress.textContent = `${idx + 1} / ${notes.length}`;
-
-  const dismiss = document.getElementById('notif-toast-dismiss');
-  if (dismiss) {
-    dismiss.onclick = (e) => { e.stopPropagation(); dismissNotifToast(); };
+  if (preview && current) {
+    preview.innerHTML = `<strong style="color:#f8fafc;">${escHtml(current.title || 'Admin Notification')}</strong><br><span style="color:#cbd5e1;">${escHtml((current.body || '').substring(0, 80))}${(current.body||'').length > 80 ? '…' : ''}</span>`;
   }
-
-  // Trigger fade-in
-  requestAnimationFrame(() => { toast.style.opacity = '1'; toast.style.transform = 'translateY(0) scale(1)'; });
+  // Show progress indicator when there are multiple queued notifications
+  let progress = document.getElementById('bubbleNotifProgress');
+  if (notes.length > 1) {
+    if (!progress) {
+      progress = document.createElement('div');
+      progress.id = 'bubbleNotifProgress';
+      progress.style.cssText = 'margin-top:6px;font-size:10px;color:#94a3b8;text-align:right;';
+      bubble.appendChild(progress);
+    }
+    progress.textContent = `${idx + 1} / ${notes.length}`;
+    progress.style.display = 'block';
+  } else if (progress) {
+    progress.style.display = 'none';
+  }
+  bubble.style.display = 'block';
+  bubble.style.opacity = '1';
+  bubble.style.transform = 'none';
+  bubble.style.animation = 'notifBubblePop .35s cubic-bezier(.34,1.56,.64,1)';
 }
 
-function dismissNotifToast() {
-  const toast = document.getElementById('notif-toast');
-  if (toast) {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateY(12px) scale(.96)';
-    setTimeout(() => { if (toast.parentNode) toast.remove(); }, 300);
-  }
+function dismissNotifBubble() {
+  const bubble = document.getElementById('notifWelcomeBubble');
+  if (bubble) { bubble.style.opacity='0'; bubble.style.transform='scale(.92)'; bubble.style.transition='.2s'; setTimeout(() => bubble.style.display='none', 200); }
 }
 
 function openNotifBubble() {
-  dismissNotifToast();
+  dismissNotifBubble();
   toggleNotifications();
 }
 
@@ -1488,7 +1469,7 @@ function toggleNotifications() {
   panel.style.display = isOpen ? 'none' : 'block';
   if (!isOpen) {
     _renderNotifPanel();
-    dismissNotifToast();
+    dismissNotifBubble();
   }
 }
 
