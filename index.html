@@ -518,6 +518,9 @@ h1 {
     .form-group label { font-size:9px; margin-bottom:4px; }
     .options-grid { grid-template-columns:1fr !important; }
     .step-card h2 { font-size:16px; }
+    #offline-progress { padding:8px 10px !important; }
+    #offline-progress-text { font-size:11px !important; }
+    #offline-progress-label { font-size:9px !important; }
     .custom-checkbox span { font-size:11px; }
     .custom-radio span { font-size:11px; }
     #page-home h2 { font-size:17px !important; }
@@ -3286,10 +3289,10 @@ function buildHomeMembers() {
   const statMember = document.getElementById('home-stat-members');
 
   const MEMBER_META = {
-    shineil: { initial:'S', name:'Shineil Mathias', role:'Primary Owner', bg:'linear-gradient(135deg,#2563eb,#4f46e5)' },
-    brother: { initial:'K', name:'Kevin Mathias',    role:'Brother',       bg:'linear-gradient(135deg,#059669,#0891b2)' },
-    father:  { initial:'S', name:'Stephen Mathias',  role:'Father',        bg:'linear-gradient(135deg,#d97706,#dc2626)' },
-    mother:  { initial:'K', name:'Kanchan Mathias',  role:'Mother',        bg:'linear-gradient(135deg,#be185d,#9b5de5)' }
+    shineil: { initial:'S', name:'Shineil Mathias', role:'Primary Owner', bg:'linear-gradient(135deg,#2563eb,#4f46e5)', img:'profile.png' },
+    brother: { initial:'K', name:'Kevin Mathias',    role:'Brother',       bg:'linear-gradient(135deg,#059669,#0891b2)', img:'ProfileK.png' },
+    father:  { initial:'S', name:'Stephen Mathias',  role:'Father',        bg:'linear-gradient(135deg,#d97706,#dc2626)', img:'ProfileSt.png' },
+    mother:  { initial:'K', name:'Kanchan Mathias',  role:'Mother',        bg:'linear-gradient(135deg,#be185d,#9b5de5)', img:'mother.png' }
   };
 
   const mode = typeof getCurrentVaultMode === 'function'
@@ -3310,7 +3313,8 @@ function buildHomeMembers() {
   list.innerHTML = visible.map(key => {
     const m = MEMBER_META[key];
     return `<div onclick="openMemberProfileGuarded('${key}')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;border:1px solid #e2e8f0;cursor:pointer;background:#f8fafc;">
-      <div style="width:30px;height:30px;border-radius:50%;${m.bg};display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;">${m.initial}</div>
+      <img src="${m.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" style="width:30px;height:30px;border-radius:50%;object-fit:cover;">
+      <div style="display:none;width:30px;height:30px;border-radius:50%;${m.bg};align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;">${m.initial}</div>
       <div><div style="font-size:12px;font-weight:700;color:#0f172a;">${m.name}</div><div style="font-size:10px;color:#64748b;">${m.role}</div></div>
     </div>`;
   }).join('');
