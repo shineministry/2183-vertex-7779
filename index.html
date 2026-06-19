@@ -518,9 +518,6 @@ h1 {
     .form-group label { font-size:9px; margin-bottom:4px; }
     .options-grid { grid-template-columns:1fr !important; }
     .step-card h2 { font-size:16px; }
-    #offline-progress { padding:8px 10px !important; }
-    #offline-progress-text { font-size:11px !important; }
-    #offline-progress-label { font-size:9px !important; }
     .custom-checkbox span { font-size:11px; }
     .custom-radio span { font-size:11px; }
     #page-home h2 { font-size:17px !important; }
@@ -617,18 +614,6 @@ h1 {
                 <button onclick="requestPasskeyAccess()" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer;">
                     🔑 USE HARDWARE SECURITY PASSKEY
                 </button>
-                <div id="offline-progress" style="display:none;padding:10px 14px;border-radius:10px;background:linear-gradient(135deg,#eef2ff,#e0e7ff);border:1px solid #c7d2fe;">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span id="offline-progress-icon" style="font-size:16px;">💾</span>
-                        <div style="flex:1;min-width:0;">
-                            <div style="font-size:12px;font-weight:700;color:#4338ca;" id="offline-progress-text">Preparing site for offline access...</div>
-                            <div style="margin-top:5px;height:5px;border-radius:3px;background:#c7d2fe;overflow:hidden;">
-                                <div id="offline-progress-bar" style="height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,#6366f1,#4f46e5);transition:width .3s;"></div>
-                            </div>
-                            <div style="font-size:10px;color:#6366f1;margin-top:3px;font-weight:600;" id="offline-progress-label">0 / 0</div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <div class="login-footer-links">
@@ -1320,7 +1305,7 @@ style="display:none;">
    
 <script>
 (function () {
-    const FIX_VERSION = '20260610-offlinefix5';
+    const FIX_VERSION = '20260610-offlinefix6';
     window.SHINE_OFFLINE_FIX_VERSION = FIX_VERSION;
 
     if ('caches' in window && localStorage.getItem('shine_offline_fix_cache') !== FIX_VERSION) {
@@ -1346,11 +1331,11 @@ style="display:none;">
 
 <script src="sha256.js"></script> 
 
-<script src="offline-auth.js?v=20260610-offlinefix5"></script>
+<script src="offline-auth.js?v=20260610-offlinefix6"></script>
    
-<script src="auth.js?v=20260610-offlinefix5"></script>
+<script src="auth.js?v=20260610-offlinefix6"></script>
    
-<script src="session.js?v=20260610-offlinefix5"></script>
+<script src="session.js?v=20260610-offlinefix6"></script>
 
 <script src="vault-data.js"></script>
 
