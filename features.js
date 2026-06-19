@@ -854,6 +854,13 @@ async function preCacheVaultDocs(filesData) {
  * Wire up your logout button: <button onclick="vaultLogout()">Logout</button>
  */
 async function vaultLogout() {
+  clearTimeout(inactivityTimer);
+  if (typeof _sessionTimerInterval !== 'undefined' && _sessionTimerInterval) {
+      clearInterval(_sessionTimerInterval);
+      _sessionTimerInterval = null;
+  }
+  _inactivityMonitorAttached = false;
+
   // 1. Clear all vault session keys
   sessionStorage.removeItem('vaultSessionToken');
   sessionStorage.removeItem('vaultSession');
@@ -1280,11 +1287,15 @@ setTimeout(() => initVaultNotifications().catch(() => {}), 400);
         }
     }
 
-    // ── Member filter: re-render current category on dropdown change ──
-    document.getElementById('member-select')?.addEventListener('change', () => {
-        const activeLi = document.querySelector('#cat-list li.active');
-        if (activeLi) activeLi.click();
-    });
+    // ── Member filter: re-render current category on dropdown change (once) ──
+    const selEl = document.getElementById('member-select');
+    if (selEl && !selEl.dataset.vaultListenerAttached) {
+        selEl.dataset.vaultListenerAttached = '1';
+        selEl.addEventListener('change', () => {
+            const activeLi = document.querySelector('#cat-list li.active');
+            if (activeLi) activeLi.click();
+        });
+    }
 }
 
 function getCurrentVaultMember() {

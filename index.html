@@ -486,6 +486,43 @@ h1 {
         margin-bottom: 12px; 
     }
 }
+
+@media (max-width: 640px) {
+    #step1.overlay { padding: 16px 10px; }
+    .login-wrapper { padding: 20px 14px; }
+    .login-wrapper .header-section { margin-bottom: 16px; }
+    .login-wrapper h1 { font-size: 18px; }
+    .login-wrapper .subtitle { font-size: 11px; }
+    .input-wrapper input { padding: 10px 12px; font-size: 13px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { font-size: 10px; }
+    .options-grid { grid-template-columns: 1fr 1fr !important; gap: 6px !important; }
+    .security-modes .radio-group { flex-direction:column; gap:6px; }
+    .security-modes .custom-radio { font-size:11px; padding:6px 10px; }
+    .header-section .main-logo-container { width:44px; height:44px; font-size:22px; }
+    #step3 .step-card { padding:24px 16px; }
+    .btn-primary { padding:10px 16px; font-size:11px; }
+    #page-home .stat-card-row { grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:8px; }
+    .home-two-col { grid-template-columns:1fr !important; }
+    .home-three-col { grid-template-columns:1fr !important; }
+    .options-grid { grid-template-columns:1fr 1fr; gap:6px; }
+}
+
+@media (max-width: 480px) {
+    #step1.overlay { padding: 12px 8px; }
+    .login-wrapper { padding: 16px 10px; border-radius:14px; }
+    .login-wrapper h1 { font-size: 16px; }
+    .header-section .main-logo-container { width:38px; height:38px; font-size:18px; }
+    .input-wrapper input { padding: 8px 10px; font-size:12px; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { font-size:9px; margin-bottom:4px; }
+    .options-grid { grid-template-columns:1fr !important; }
+    .step-card h2 { font-size:16px; }
+    .custom-checkbox span { font-size:11px; }
+    .custom-radio span { font-size:11px; }
+    #page-home h2 { font-size:17px !important; }
+}
+
 .profile-box {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -500,6 +537,9 @@ h1 {
     text-transform: uppercase;
     letter-spacing: .5px;
 }
+.keypad-btn { background:rgba(255,255,255,0.08); border:1px solid var(--border-color); color:var(--text-main); padding:18px; border-radius:10px; font-size:20px; font-weight:700; cursor:pointer; transition:0.15s; }
+.keypad-btn:active { transform:scale(0.92); background:rgba(255,255,255,0.15); }
+.keypad-btn:hover { background:rgba(255,255,255,0.12); }
 </style>
 
    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -509,6 +549,18 @@ h1 {
 
 <!-- OFFLINE BANNER -->
 <div id="offline-banner">⚡ You are offline — Vault is running from cache (Cloudflare R2)</div>
+<div id="cache-progress-toast" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;background:#0f172a;border:1px solid #334155;border-radius:12px;padding:14px 20px;min-width:280px;box-shadow:0 10px 40px rgba(0,0,0,.4);">
+    <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:18px;">💾</span>
+        <div style="flex:1;">
+            <div style="font-size:12px;font-weight:700;color:#f8fafc;" id="cache-progress-text">Caching offline data…</div>
+            <div style="margin-top:6px;height:6px;border-radius:3px;background:#1e293b;overflow:hidden;">
+                <div id="cache-progress-bar" style="height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,#2563eb,#7c3aed);transition:width .3s;"></div>
+            </div>
+            <div style="font-size:10px;color:#94a3b8;margin-top:4px;" id="cache-progress-label">0 / 0</div>
+        </div>
+    </div>
+</div>
 
 <!-- HOVER PREVIEW TOOLTIP -->
 <div class="preview-tooltip" id="previewTooltip">
@@ -564,14 +616,14 @@ h1 {
                     <div class="strength-bar" id="meter2"></div>
                     <div class="strength-bar" id="meter3"></div>
                 </div>
-                <div style="font-size:10px; color:var(--text-muted); text-align:right; margin-top:4px; cursor:pointer;" onclick="alert('Launching Virtual Input Array Matrix...')">
+                <div style="font-size:10px; color:var(--text-muted); text-align:right; margin-top:4px; cursor:pointer;" onclick="openKeypad()">
                     ⌨️ Use Virtual Protection Keypad
                 </div>
             </div>
 
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <button class="btn-primary" id="submitBtn" onclick="showStep2()">CONTINUE SECURELY</button>
-                <button onclick="alert('Connecting encrypted hardware security token...')" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer;">
+                <button onclick="requestPasskeyAccess()" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer;">
                     🔑 USE HARDWARE SECURITY PASSKEY
                 </button>
             </div>
@@ -624,6 +676,35 @@ h1 {
 </div>
 
 <script>
+    let _keypadValue = '';
+
+    function openKeypad() {
+        _keypadValue = document.getElementById('vault-pass').value;
+        document.getElementById('keypad-display').textContent = _keypadValue.replace(/./g, '●') || '🔢';
+        document.getElementById('virtual-keypad-overlay').style.display = 'flex';
+    }
+
+    function closeKeypad() {
+        document.getElementById('virtual-keypad-overlay').style.display = 'none';
+    }
+
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.keypad-btn');
+        if (!btn) return;
+        const key = btn.dataset.key;
+        if (key === 'clear') { _keypadValue = ''; }
+        else if (key === 'backspace') { _keypadValue = _keypadValue.slice(0, -1); }
+        else { _keypadValue += key; }
+        document.getElementById('keypad-display').textContent = _keypadValue.replace(/./g, '●') || '🔢';
+    });
+
+    document.getElementById('keypad-confirm')?.addEventListener('click', function() {
+        document.getElementById('vault-pass').value = _keypadValue;
+        document.getElementById('vault-pass').dispatchEvent(new Event('input'));
+        testPassStrength();
+        closeKeypad();
+    });
+
     function togglePassView() {
         const pField = document.getElementById("vault-pass");
         const eyeIcon = document.getElementById("toggleEye");
@@ -666,6 +747,29 @@ h1 {
         display.textContent = `${mins}:${secs < 10 ? '0' + secs : secs} mins remaining`;
     }, 1000);
 </script>
+
+<div id="virtual-keypad-overlay" class="overlay" style="display:none;">
+    <div class="step-card" style="max-width:320px;">
+        <h2>Virtual Keypad</h2>
+        <div style="text-align:center; margin:16px 0; font-size:28px; font-weight:700; letter-spacing:4px; min-height:48px; background:rgba(255,255,255,0.05); border-radius:8px; padding:8px;" id="keypad-display"></div>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+            <button class="keypad-btn" data-key="1">1</button>
+            <button class="keypad-btn" data-key="2">2</button>
+            <button class="keypad-btn" data-key="3">3</button>
+            <button class="keypad-btn" data-key="4">4</button>
+            <button class="keypad-btn" data-key="5">5</button>
+            <button class="keypad-btn" data-key="6">6</button>
+            <button class="keypad-btn" data-key="7">7</button>
+            <button class="keypad-btn" data-key="8">8</button>
+            <button class="keypad-btn" data-key="9">9</button>
+            <button class="keypad-btn" data-key="clear" style="background:var(--danger);">Clear</button>
+            <button class="keypad-btn" data-key="0">0</button>
+            <button class="keypad-btn" data-key="backspace" style="background:#f59e0b;">Backspace</button>
+        </div>
+        <button id="keypad-confirm" class="btn-primary" style="margin-top:16px; width:100%;">Confirm</button>
+        <button onclick="closeKeypad()" style="margin-top:8px; width:100%; border:none; background:transparent; color:var(--text-muted); cursor:pointer; font-size:12px;">Cancel</button>
+    </div>
+</div>
 
 <!-- =========================
      STEP 2
@@ -868,7 +972,7 @@ style="display:none;">
      DASHBOARD
 ========================= -->
 
-<div id="vault-dashboard">
+<div id="vault-dashboard" style="display:none;">
 
 <div class="passport-navbar">
 
@@ -1062,13 +1166,13 @@ style="display:none;">
                 </div>
                 <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center;">
                     <div style="font-size:26px;">👥</div>
-                    <div style="font-size:22px;font-weight:800;color:#0f172a;">4</div>
+                    <div style="font-size:22px;font-weight:800;color:#0f172a;" id="home-stat-members">—</div>
                     <div style="font-size:11px;color:#64748b;font-weight:600;margin-top:2px;">Members</div>
                 </div>
             </div>
 
             <!-- TWO COLUMN ROW: Recent Files + Category Overview -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;">
+            <div class="home-two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;">
 
                 <!-- RECENT FILE HISTORY -->
                 <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;">
@@ -1090,7 +1194,7 @@ style="display:none;">
             </div>
 
             <!-- SECOND ROW: Quick Actions + Vault Status + Access Log Preview -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:22px;">
+            <div class="home-three-col" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:22px;">
 
                 <!-- QUICK ACTIONS -->
                 <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;">
@@ -1119,27 +1223,10 @@ style="display:none;">
                     </div>
                 </div>
 
-                <!-- MEMBER SNAPSHOT -->
+                <!-- MEMBER SNAPSHOT (populated dynamically) -->
                 <div id="home-member-snapshot" style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;">
                     <div style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;border-bottom:1px solid #f1f5f9;padding-bottom:8px;">👥 Family Members</div>
-                    <div style="display:flex;flex-direction:column;gap:9px;">
-                        <div onclick="openMemberProfileGuarded('shineil')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;border:1px solid #e2e8f0;cursor:pointer;background:#f8fafc;">
-                            <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#4f46e5);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;">S</div>
-                            <div><div style="font-size:12px;font-weight:700;color:#0f172a;">Shineil Mathias</div><div style="font-size:10px;color:#64748b;">Primary Owner</div></div>
-                        </div>
-                        <div onclick="openMemberProfileGuarded('brother')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;border:1px solid #e2e8f0;cursor:pointer;background:#f8fafc;">
-                            <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#059669,#0891b2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;">K</div>
-                            <div><div style="font-size:12px;font-weight:700;color:#0f172a;">Kevin Mathias</div><div style="font-size:10px;color:#64748b;">Brother</div></div>
-                        </div>
-                        <div onclick="openMemberProfileGuarded('father')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;border:1px solid #e2e8f0;cursor:pointer;background:#f8fafc;">
-                            <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#d97706,#dc2626);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;">S</div>
-                            <div><div style="font-size:12px;font-weight:700;color:#0f172a;">Stephen Mathias</div><div style="font-size:10px;color:#64748b;">Father</div></div>
-                        </div>
-                        <div onclick="openMemberProfileGuarded('mother')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;border:1px solid #e2e8f0;cursor:pointer;background:#f8fafc;">
-                            <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#be185d,#9b5de5);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;">K</div>
-                            <div><div style="font-size:12px;font-weight:700;color:#0f172a;">Kanchan Mathias</div><div style="font-size:10px;color:#64748b;">Mother</div></div>
-                        </div>
-                    </div>
+                    <div id="home-member-list" style="display:flex;flex-direction:column;gap:9px;"></div>
                 </div>
 
             </div>
@@ -1492,7 +1579,7 @@ class="watermark">
      SHARE MODAL
 ========================= -->
 <div id="shareModal" class="modal">
-    <div class="share-modal-inner">
+    <div class="share-modal-inner" style="overflow-y:auto;max-height:85vh;">
         <div class="modal-header">
             <strong>🔗 SECURE SHARE LINK</strong>
             <button onclick="closeShareModal()" class="btn-close-modal">CLOSE</button>
@@ -3188,7 +3275,45 @@ if (statPinned) {
     // Pinned on home
     buildHomePinned();
 
+    buildHomeMembers();
   }, 300);
+}
+
+function buildHomeMembers() {
+  const list = document.getElementById('home-member-list');
+  if (!list) return;
+
+  const statMember = document.getElementById('home-stat-members');
+
+  const MEMBER_META = {
+    shineil: { initial:'S', name:'Shineil Mathias', role:'Primary Owner', bg:'linear-gradient(135deg,#2563eb,#4f46e5)' },
+    brother: { initial:'K', name:'Kevin Mathias',    role:'Brother',       bg:'linear-gradient(135deg,#059669,#0891b2)' },
+    father:  { initial:'S', name:'Stephen Mathias',  role:'Father',        bg:'linear-gradient(135deg,#d97706,#dc2626)' },
+    mother:  { initial:'K', name:'Kanchan Mathias',  role:'Mother',        bg:'linear-gradient(135deg,#be185d,#9b5de5)' }
+  };
+
+  const mode = typeof getCurrentVaultMode === 'function'
+    ? getCurrentVaultMode()
+    : window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN';
+
+  const allowed = (VAULT_MODE_ALLOWED_MEMBERS && VAULT_MODE_ALLOWED_MEMBERS[mode]) || [];
+
+  const visible = Object.keys(MEMBER_META).filter(k => allowed.includes(k));
+
+  if (statMember) statMember.textContent = String(visible.length);
+
+  if (!visible.length) {
+    list.innerHTML = '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:14px 0;">No members available for this mode.</div>';
+    return;
+  }
+
+  list.innerHTML = visible.map(key => {
+    const m = MEMBER_META[key];
+    return `<div onclick="openMemberProfileGuarded('${key}')" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;border:1px solid #e2e8f0;cursor:pointer;background:#f8fafc;">
+      <div style="width:30px;height:30px;border-radius:50%;${m.bg};display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;">${m.initial}</div>
+      <div><div style="font-size:12px;font-weight:700;color:#0f172a;">${m.name}</div><div style="font-size:10px;color:#64748b;">${m.role}</div></div>
+    </div>`;
+  }).join('');
 }
 
 function buildHomeCatOverview() {

@@ -19,30 +19,19 @@
  *  network fetch — no stale authenticated shell is served.
  */
 
-const CACHE = "online-vault-v7";   // bump this string to force a full cache refresh
+const CACHE = "online-vault-v8";   // bump this string to force a full cache refresh
 
 const BACKEND_HOST = "backend.shinumaths989.workers.dev";
 
-// Assets pre-cached at install time (app shell)
+// Assets pre-cached at install time (app shell) — only files that exist on origin
 const PRECACHE_URLS = [
   "/",
   "/index.html",
-  "/favicon.png",
   "/auth.js",
   "/offline-auth.js",
-  "/pdf.min.js",
-  "/pdf.worker.min.js",
-  "/profile.png",
   "/features.js",
-  "/ProfileSt.png",
-  "/ProfileK.png",
-  "/datetime.js",
-  "/pdfjs-init.js",
-  "/security.js",
   "/session.js",
-  "/sha256.js",
   "/startup.js",
-  "/style.css",
   "/vault-data.js",
   "/viewer.js",
   "/vault-ui.js"
@@ -147,8 +136,8 @@ self.addEventListener("fetch", function(event) {
     return;
   }
 
-  // Auth scripts should update immediately after offline-login fixes.
-  if (["/auth.js", "/offline-auth.js", "/sw.js"].includes(url.pathname)) {
+  // SW script — always network-first for updates
+  if (url.pathname === "/sw.js") {
     event.respondWith(networkFirst(request));
     return;
   }

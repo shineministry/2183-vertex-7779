@@ -1,13 +1,16 @@
 /* =========================
-   START SESSION
-========================= */
+    START SESSION (idempotent)
+======================== */
+let _sessionTimerInterval = null;
+
 function startSessionTimer(){
+    if (_sessionTimerInterval) return;
 
     const timer =
     document.getElementById(
     'session-timer');
 
-    setInterval(()=>{
+    _sessionTimerInterval = setInterval(()=>{
 
         sessionSeconds--;
 
@@ -18,7 +21,7 @@ function startSessionTimer(){
         const secs =
         sessionSeconds % 60;
 
-        timer.textContent =
+        if (timer) timer.textContent =
         `${mins}:${secs<10?'0':''}${secs}`;
 
         if(sessionSeconds<=0){
@@ -31,11 +34,17 @@ function startSessionTimer(){
 
 }
 
+    },1000);
+
+}
+
 /* =========================
-   INACTIVITY
-========================= */
+   INACTIVITY (idempotent, uses addEventListener)
+======================== */
+let _inactivityMonitorAttached = false;
 
 function startInactivityMonitor(){
+    if (_inactivityMonitorAttached) return;
 
     const reset = ()=>{
 
@@ -51,11 +60,11 @@ function startInactivityMonitor(){
 
     };
 
-    window.onclick = reset;
+    ["click","mousemove","keydown","touchstart","scroll"].forEach(evt =>
+        document.addEventListener(evt, reset, { passive: true })
+    );
 
-    window.onmousemove = reset;
-
-    window.onkeydown = reset;
+    _inactivityMonitorAttached = true;
 
     reset();
 
@@ -63,6 +72,13 @@ function startInactivityMonitor(){
 
 /* ========================= LOGOUT ========================= */
 async function logout(message="") {
+ clearTimeout(inactivityTimer);
+ if (typeof _sessionTimerInterval !== 'undefined' && _sessionTimerInterval) {
+     clearInterval(_sessionTimerInterval);
+     _sessionTimerInterval = null;
+ }
+ _inactivityMonitorAttached = false;
+
  if (message) {
  alert(message);
  }

@@ -178,6 +178,15 @@ function notifyBackendLogout(reason = "Logged out.") {
 function logoutVault( reason = "Logged out." ) {
 
     clearTimeout( inactivityTimer );
+    if (typeof _sessionTimerInterval !== 'undefined' && _sessionTimerInterval) {
+        clearInterval(_sessionTimerInterval);
+        _sessionTimerInterval = null;
+    }
+    if (typeof _forceLogoutInterval !== 'undefined' && _forceLogoutInterval) {
+        clearInterval(_forceLogoutInterval);
+        _forceLogoutInterval = null;
+    }
+    _inactivityMonitorAttached = false;
 
     notifyBackendLogout(reason);
 
@@ -1993,10 +2002,13 @@ hideCurtain(200);
 
 }
 
+let _forceLogoutInterval = null;
+
       async function listenForForceLogout(){
+    if (_forceLogoutInterval) return;
 
     // Poll the Worker every 15 seconds to check if admin force-logged this session out
-    setInterval(async ()=>{
+    _forceLogoutInterval = setInterval(async ()=>{
 
         try{
 

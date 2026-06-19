@@ -15,6 +15,8 @@ document.addEventListener('visibilitychange', () => {
     document.getElementById(
     'vault-dashboard');
 
+    if(!dash) return;
+
     if(document.hidden){
 
         dash.style.filter =

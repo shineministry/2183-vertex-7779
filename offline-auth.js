@@ -171,6 +171,32 @@ async function syncOfflineAuth() {
     }
 }
 
+// ── Progress notification helpers ─────────────────────────────────────
+let _cacheProgressToastTimer = null;
+
+function _showCacheProgress() {
+    const el = document.getElementById('cache-progress-toast');
+    if (el) el.style.display = '';
+}
+
+function _updateCacheProgress(current, total) {
+    const bar = document.getElementById('cache-progress-bar');
+    const label = document.getElementById('cache-progress-label');
+    if (bar) bar.style.width = total > 0 ? `${(current / total) * 100}%` : '0%';
+    if (label) label.textContent = `${current} / ${total}`;
+}
+
+function _hideCacheProgress() {
+    const el = document.getElementById('cache-progress-toast');
+    if (el) {
+        // Keep visible briefly so user sees completion, then fade
+        clearTimeout(_cacheProgressToastTimer);
+        _cacheProgressToastTimer = setTimeout(() => {
+            el.style.display = 'none';
+        }, 3000);
+    }
+}
+
 // ── syncAllMembersOffline: fetch & cache ALL 7 modes ──────────────────────
 async function syncAllMembersOffline() {
     const token = sessionStorage.getItem('vaultSessionToken') ||
@@ -185,6 +211,10 @@ async function syncAllMembersOffline() {
         console.warn('[OfflineAuth] syncAllMembersOffline: offline, skipping.');
         return { synced: 0, failed: [] };
     }
+
+    _showCacheProgress();
+    _updateCacheProgress(0, 0);
+    document.getElementById('cache-progress-text').textContent = 'Syncing offline credentials…';
 
     console.log('[OfflineAuth] Fetching all member credentials for offline caching...');
 
@@ -211,9 +241,12 @@ async function syncAllMembersOffline() {
         }
 
         members = data.members;
+        _updateCacheProgress(0, members.length);
 
     } catch (fetchErr) {
         console.warn('[OfflineAuth] /sync-offline-members failed:', fetchErr.message);
+        document.getElementById('cache-progress-text').textContent = '⚠️ Sync failed: ' + fetchErr.message;
+        _hideCacheProgress();
         return { synced: 0, failed: [], error: fetchErr.message };
     }
 
@@ -223,6 +256,7 @@ async function syncAllMembersOffline() {
     for (const m of members) {
         if (!m.mode || !m.passwordHash) {
             console.warn('[OfflineAuth] Skipping member with missing mode/passwordHash:', m.mode);
+            _updateCacheProgress(synced + failed.length + 1, members.length);
             continue;
         }
         try {
@@ -233,12 +267,18 @@ async function syncAllMembersOffline() {
                 token:        m.token  || ''
             });
             synced++;
+            _updateCacheProgress(synced + failed.length, members.length);
+            document.getElementById('cache-progress-text').textContent = `Cached: ${m.mode}`;
             console.log(`[OfflineAuth] ✓ Cached mode: ${m.mode}`);
         } catch (saveErr) {
             console.warn(`[OfflineAuth] ✗ Failed to cache mode ${m.mode}:`, saveErr.message);
             failed.push(m.mode);
+            _updateCacheProgress(synced + failed.length, members.length);
         }
     }
+
+    document.getElementById('cache-progress-text').textContent = `✓ Offline cache ready (${synced}/${members.length})`;
+    _hideCacheProgress();
 
     console.log(`[OfflineAuth] All-member sync done — ${synced}/${members.length} stored.${failed.length ? ' Failed: ' + failed.join(', ') : ''}`);
     return { synced, failed };
