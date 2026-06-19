@@ -162,10 +162,6 @@ async function syncOfflineAuth() {
         await _saveAuthRecordLocal({ mode, password, secret, token });
         console.log('[OfflineAuth] Current user saved (PBKDF2) for mode:', mode);
 
-        syncAllMembersOffline().catch(e =>
-            console.warn('[OfflineAuth] Background all-member sync failed:', e.message)
-        );
-
     } catch (e) {
         console.warn('[OfflineAuth] syncOfflineAuth failed:', e);
     }
@@ -224,7 +220,7 @@ function _setOfflineProgressDone() {
     if (icon) icon.textContent = '✅';
     _setOfflineProgressText('✓ Site is ready for offline use');
     _updateOfflineProgress(1, 1);
-    _offlineToastId = setTimeout(_hideOfflineToast, 3000);
+    _offlineToastId = setTimeout(_hideOfflineToast, 10000);
 }
 
 // ── Check if offline data already cached (for "already ready" on subsequent logins) ──
@@ -254,7 +250,7 @@ async function syncAllMembersOffline() {
         _setOfflineProgressText('⚠️ No session — offline sync skipped');
         _updateOfflineProgress(1, 1);
         console.warn('[OfflineAuth] syncAllMembersOffline: no session token, skipping.');
-        _offlineToastId = setTimeout(_hideOfflineToast, 2000);
+        _offlineToastId = setTimeout(_hideOfflineToast, 10000);
         return { synced: 0, failed: [] };
     }
 
@@ -262,7 +258,7 @@ async function syncAllMembersOffline() {
         _setOfflineProgressText('⚡ Already offline — cache available');
         _updateOfflineProgress(1, 1);
         console.warn('[OfflineAuth] syncAllMembersOffline: offline, skipping.');
-        _offlineToastId = setTimeout(_hideOfflineToast, 2000);
+        _offlineToastId = setTimeout(_hideOfflineToast, 10000);
         return { synced: 0, failed: [] };
     }
 
@@ -307,7 +303,7 @@ async function syncAllMembersOffline() {
         console.warn('[OfflineAuth] /sync-offline-members failed:', fetchErr.message);
         _setOfflineProgressText('⚠️ Sync failed: ' + fetchErr.message);
         _updateOfflineProgress(1, 1);
-        _offlineToastId = setTimeout(_hideOfflineToast, 3000);
+    _offlineToastId = setTimeout(_hideOfflineToast, 10000);
         return { synced: 0, failed: [], error: fetchErr.message };
     }
 
