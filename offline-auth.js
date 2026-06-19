@@ -212,7 +212,7 @@ async function _isOfflineDataCached() {
             req.onerror   = () => rej(req.error);
         });
         return count > 0;
-    } catch { return false; }
+    } catch (e) { return false; }
 }
 
 // ── syncAllMembersOffline: fetch & cache ALL 7 modes ──────────────────────
@@ -427,7 +427,8 @@ function _showOfflineError(msg) {
         existing.classList.remove('shake');
         void existing.offsetWidth; // force reflow
         existing.classList.add('shake');
-        existing.querySelector('.offline-err-msg').textContent = msg;
+        const errMsg = existing.querySelector('.offline-err-msg');
+        if (errMsg) errMsg.textContent = msg;
         return;
     }
 
