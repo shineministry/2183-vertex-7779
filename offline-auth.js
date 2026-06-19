@@ -171,34 +171,60 @@ async function syncOfflineAuth() {
     }
 }
 
-// ── Progress helpers (targets inline bar inside step1 login wrapper) ──
+// ── Progress helpers (creates a floating toast, always visible) ──
+let _offlineToastId = null;
+
 function _showOfflineProgress() {
-    const el = document.getElementById('offline-progress');
-    if (el) el.style.display = '';
+    _hideOfflineToast();
+    const toast = document.createElement('div');
+    toast.id = 'offline-toast';
+    toast.innerHTML =
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+            '<span id="offline-toast-icon" style="font-size:20px;">💾</span>' +
+            '<div style="flex:1;min-width:0;">' +
+                '<div id="offline-toast-text" style="font-size:13px;font-weight:700;color:#4338ca;"></div>' +
+                '<div style="margin-top:6px;height:6px;border-radius:3px;background:#c7d2fe;overflow:hidden;">' +
+                    '<div id="offline-toast-bar" style="height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,#6366f1,#4f46e5);transition:width .3s;"></div>' +
+                '</div>' +
+                '<div id="offline-toast-label" style="font-size:11px;color:#6366f1;margin-top:3px;font-weight:600;">0 / 0</div>' +
+            '</div>' +
+        '</div>';
+    Object.assign(toast.style, {
+        position:'fixed', bottom:'20px', right:'20px', zIndex:'999999',
+        background:'linear-gradient(135deg,#eef2ff,#e0e7ff)',
+        border:'1px solid #c7d2fe', borderRadius:'12px',
+        padding:'14px 18px', minWidth:'280px', maxWidth:'360px',
+        boxShadow:'0 4px 20px rgba(0,0,0,0.15)',
+        fontFamily:'system-ui,sans-serif', display:''
+    });
+    document.body.appendChild(toast);
+}
+
+function _hideOfflineToast() {
+    const old = document.getElementById('offline-toast');
+    if (old) old.remove();
+    if (_offlineToastId) { clearTimeout(_offlineToastId); _offlineToastId = null; }
 }
 
 function _updateOfflineProgress(current, total) {
-    const bar = document.getElementById('offline-progress-bar');
-    const label = document.getElementById('offline-progress-label');
+    const bar = document.getElementById('offline-toast-bar');
+    const label = document.getElementById('offline-toast-label');
     const pct = total > 0 ? Math.round((current / total) * 100) : 0;
     if (bar) bar.style.width = `${pct}%`;
     if (label) label.textContent = `${current} / ${total} — ${pct}%`;
 }
 
 function _setOfflineProgressText(text) {
-    const el = document.getElementById('offline-progress-text');
+    const el = document.getElementById('offline-toast-text');
     if (el) el.textContent = text;
 }
 
 function _setOfflineProgressDone() {
-    const icon = document.getElementById('offline-progress-icon');
+    const icon = document.getElementById('offline-toast-icon');
     if (icon) icon.textContent = '✅';
     _setOfflineProgressText('✓ Site is ready for offline use');
     _updateOfflineProgress(1, 1);
-    setTimeout(() => {
-        const el = document.getElementById('offline-progress');
-        if (el) el.style.display = 'none';
-    }, 3000);
+    _offlineToastId = setTimeout(_hideOfflineToast, 3000);
 }
 
 // ── Check if offline data already cached (for "already ready" on subsequent logins) ──
@@ -220,8 +246,6 @@ async function syncAllMembersOffline() {
     _showOfflineProgress();
     _setOfflineProgressText('Preparing site for offline access...');
     _updateOfflineProgress(0, 0);
-    const icon = document.getElementById('offline-progress-icon');
-    if (icon) icon.textContent = '💾';
 
     const token = sessionStorage.getItem('vaultSessionToken') ||
                   sessionStorage.getItem('vaultSession') || '';
@@ -230,7 +254,7 @@ async function syncAllMembersOffline() {
         _setOfflineProgressText('⚠️ No session — offline sync skipped');
         _updateOfflineProgress(1, 1);
         console.warn('[OfflineAuth] syncAllMembersOffline: no session token, skipping.');
-        setTimeout(() => { const el = document.getElementById('offline-progress'); if (el) el.style.display = 'none'; }, 2000);
+        _offlineToastId = setTimeout(_hideOfflineToast, 2000);
         return { synced: 0, failed: [] };
     }
 
@@ -238,7 +262,7 @@ async function syncAllMembersOffline() {
         _setOfflineProgressText('⚡ Already offline — cache available');
         _updateOfflineProgress(1, 1);
         console.warn('[OfflineAuth] syncAllMembersOffline: offline, skipping.');
-        setTimeout(() => { const el = document.getElementById('offline-progress'); if (el) el.style.display = 'none'; }, 2000);
+        _offlineToastId = setTimeout(_hideOfflineToast, 2000);
         return { synced: 0, failed: [] };
     }
 
@@ -247,9 +271,7 @@ async function syncAllMembersOffline() {
     if (alreadyCached) {
         _setOfflineProgressText('✓ Site is ready for offline use');
         _updateOfflineProgress(1, 1);
-        const icon2 = document.getElementById('offline-progress-icon');
-        if (icon2) icon2.textContent = '✅';
-        setTimeout(() => { const el = document.getElementById('offline-progress'); if (el) el.style.display = 'none'; }, 2500);
+        _setOfflineProgressDone();
         console.log('[OfflineAuth] Offline data already cached — skipping sync.');
         return { synced: 0, failed: [], skipped: true };
     }
@@ -285,7 +307,7 @@ async function syncAllMembersOffline() {
         console.warn('[OfflineAuth] /sync-offline-members failed:', fetchErr.message);
         _setOfflineProgressText('⚠️ Sync failed: ' + fetchErr.message);
         _updateOfflineProgress(1, 1);
-        setTimeout(() => { const el = document.getElementById('offline-progress'); if (el) el.style.display = 'none'; }, 3000);
+        _offlineToastId = setTimeout(_hideOfflineToast, 3000);
         return { synced: 0, failed: [], error: fetchErr.message };
     }
 
