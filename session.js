@@ -50,7 +50,7 @@ function startInactivityMonitor(){
         inactivityTimer =
         setTimeout(()=>{
 
-            logoutVault("Logged out due to inactivity.")
+            logoutVault("Your session has expired.")
 
         },120000);
 
