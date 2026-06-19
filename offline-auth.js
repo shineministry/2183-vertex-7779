@@ -207,12 +207,16 @@ async function syncAllMembersOffline() {
         return { synced: 0, failed: [] };
     }
 
+    _showCacheProgress();
+
     if (!navigator.onLine) {
+        document.getElementById('cache-progress-text').textContent = '⚡ Offline — cache already available';
+        _updateCacheProgress(1, 1);
+        _hideCacheProgress();
         console.warn('[OfflineAuth] syncAllMembersOffline: offline, skipping.');
         return { synced: 0, failed: [] };
     }
 
-    _showCacheProgress();
     _updateCacheProgress(0, 0);
     document.getElementById('cache-progress-text').textContent = 'Syncing offline credentials…';
 
