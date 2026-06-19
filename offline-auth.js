@@ -198,7 +198,9 @@ function _showOfflineProgress() {
 
 function _hideOfflineToast() {
     const old = document.getElementById('offline-toast');
-    if (old) old.remove();
+    if (!old) return;
+    old.style.animation = 'toastFadeOut .25s ease forwards';
+    setTimeout(() => { if (old.parentNode) old.remove(); }, 260);
     if (_offlineToastId) { clearTimeout(_offlineToastId); _offlineToastId = null; }
 }
 
