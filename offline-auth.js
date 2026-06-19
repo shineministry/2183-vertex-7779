@@ -171,54 +171,61 @@ async function syncOfflineAuth() {
     }
 }
 
-// ── Progress notification helpers ─────────────────────────────────────
-let _cacheProgressToastTimer = null;
-
-function _showCacheProgress() {
-    const el = document.getElementById('cache-progress-toast');
+// ── Progress helpers (targets inline bar inside step1 login wrapper) ──
+function _showOfflineProgress() {
+    const el = document.getElementById('offline-progress');
     if (el) el.style.display = '';
 }
 
-function _updateCacheProgress(current, total) {
-    const bar = document.getElementById('cache-progress-bar');
-    const label = document.getElementById('cache-progress-label');
+function _updateOfflineProgress(current, total) {
+    const bar = document.getElementById('offline-progress-bar');
+    const label = document.getElementById('offline-progress-label');
     if (bar) bar.style.width = total > 0 ? `${(current / total) * 100}%` : '0%';
     if (label) label.textContent = `${current} / ${total}`;
 }
 
-function _hideCacheProgress() {
-    const el = document.getElementById('cache-progress-toast');
-    if (el) {
-        // Keep visible briefly so user sees completion, then fade
-        clearTimeout(_cacheProgressToastTimer);
-        _cacheProgressToastTimer = setTimeout(() => {
-            el.style.display = 'none';
-        }, 3000);
-    }
+function _setOfflineProgressText(text) {
+    const el = document.getElementById('offline-progress-text');
+    if (el) el.textContent = text;
+}
+
+function _setOfflineProgressDone() {
+    const icon = document.getElementById('offline-progress-icon');
+    if (icon) icon.textContent = '✅';
+    _setOfflineProgressText('✓ Site is ready for offline use');
+    _updateOfflineProgress(1, 1);
+    setTimeout(() => {
+        const el = document.getElementById('offline-progress');
+        if (el) el.style.display = 'none';
+    }, 3000);
 }
 
 // ── syncAllMembersOffline: fetch & cache ALL 7 modes ──────────────────────
 async function syncAllMembersOffline() {
+    _showOfflineProgress();
+    _setOfflineProgressText('Preparing site for offline access...');
+    _updateOfflineProgress(0, 0);
+    const icon = document.getElementById('offline-progress-icon');
+    if (icon) icon.textContent = '💾';
+
     const token = sessionStorage.getItem('vaultSessionToken') ||
                   sessionStorage.getItem('vaultSession') || '';
 
     if (!token) {
+        _setOfflineProgressText('⚠️ No session — offline sync skipped');
+        _updateOfflineProgress(1, 1);
         console.warn('[OfflineAuth] syncAllMembersOffline: no session token, skipping.');
+        setTimeout(() => { const el = document.getElementById('offline-progress'); if (el) el.style.display = 'none'; }, 2000);
         return { synced: 0, failed: [] };
     }
-
-    _showCacheProgress();
 
     if (!navigator.onLine) {
-        document.getElementById('cache-progress-text').textContent = '⚡ Offline — cache already available';
-        _updateCacheProgress(1, 1);
-        _hideCacheProgress();
+        _setOfflineProgressText('⚡ Already offline — cache available');
+        _updateOfflineProgress(1, 1);
         console.warn('[OfflineAuth] syncAllMembersOffline: offline, skipping.');
+        setTimeout(() => { const el = document.getElementById('offline-progress'); if (el) el.style.display = 'none'; }, 2000);
         return { synced: 0, failed: [] };
     }
-
-    _updateCacheProgress(0, 0);
-    document.getElementById('cache-progress-text').textContent = 'Syncing offline credentials…';
 
     console.log('[OfflineAuth] Fetching all member credentials for offline caching...');
 
@@ -245,12 +252,13 @@ async function syncAllMembersOffline() {
         }
 
         members = data.members;
-        _updateCacheProgress(0, members.length);
+        _updateOfflineProgress(0, members.length);
 
     } catch (fetchErr) {
         console.warn('[OfflineAuth] /sync-offline-members failed:', fetchErr.message);
-        document.getElementById('cache-progress-text').textContent = '⚠️ Sync failed: ' + fetchErr.message;
-        _hideCacheProgress();
+        _setOfflineProgressText('⚠️ Sync failed: ' + fetchErr.message);
+        _updateOfflineProgress(1, 1);
+        setTimeout(() => { const el = document.getElementById('offline-progress'); if (el) el.style.display = 'none'; }, 3000);
         return { synced: 0, failed: [], error: fetchErr.message };
     }
 
@@ -260,7 +268,7 @@ async function syncAllMembersOffline() {
     for (const m of members) {
         if (!m.mode || !m.passwordHash) {
             console.warn('[OfflineAuth] Skipping member with missing mode/passwordHash:', m.mode);
-            _updateCacheProgress(synced + failed.length + 1, members.length);
+            _updateOfflineProgress(synced + failed.length + 1, members.length);
             continue;
         }
         try {
@@ -271,18 +279,17 @@ async function syncAllMembersOffline() {
                 token:        m.token  || ''
             });
             synced++;
-            _updateCacheProgress(synced + failed.length, members.length);
-            document.getElementById('cache-progress-text').textContent = `Cached: ${m.mode}`;
+            _updateOfflineProgress(synced + failed.length, members.length);
+            _setOfflineProgressText(`Caching: ${m.mode}`);
             console.log(`[OfflineAuth] ✓ Cached mode: ${m.mode}`);
         } catch (saveErr) {
             console.warn(`[OfflineAuth] ✗ Failed to cache mode ${m.mode}:`, saveErr.message);
             failed.push(m.mode);
-            _updateCacheProgress(synced + failed.length, members.length);
+            _updateOfflineProgress(synced + failed.length, members.length);
         }
     }
 
-    document.getElementById('cache-progress-text').textContent = `✓ Offline cache ready (${synced}/${members.length})`;
-    _hideCacheProgress();
+    _setOfflineProgressDone();
 
     console.log(`[OfflineAuth] All-member sync done — ${synced}/${members.length} stored.${failed.length ? ' Failed: ' + failed.join(', ') : ''}`);
     return { synced, failed };
