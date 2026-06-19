@@ -34,10 +34,6 @@ function startSessionTimer(){
 
 }
 
-    },1000);
-
-}
-
 /* =========================
    INACTIVITY (idempotent, uses addEventListener)
 ======================== */
