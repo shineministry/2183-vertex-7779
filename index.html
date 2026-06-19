@@ -1330,7 +1330,7 @@ style="display:none;">
    
 <script>
 (function () {
-    const FIX_VERSION = '20260610-offlinefix8';
+    const FIX_VERSION = '20260610-offlinefix10';
     window.SHINE_OFFLINE_FIX_VERSION = FIX_VERSION;
 
     if ('caches' in window && localStorage.getItem('shine_offline_fix_cache') !== FIX_VERSION) {
@@ -1356,11 +1356,11 @@ style="display:none;">
 
 <script src="sha256.js"></script> 
 
-<script src="offline-auth.js?v=20260610-offlinefix8"></script>
+<script src="offline-auth.js?v=20260610-offlinefix10"></script>
    
-<script src="auth.js?v=20260610-offlinefix8"></script>
+<script src="auth.js?v=20260610-offlinefix10"></script>
    
-<script src="session.js?v=20260610-offlinefix8"></script>
+<script src="session.js?v=20260610-offlinefix10"></script>
 
 <script src="vault-data.js"></script>
 
@@ -2890,6 +2890,13 @@ Scan QR to open secure link
         </div>
         <div class="pm-strength" id="pm-strength-bar"></div>
         <input class="pm-inp" type="text" id="pm-notes" placeholder="Notes (optional)" style="margin-top:10px;">
+        <select id="pm-member" class="pm-inp" style="margin-top:8px;">
+          <option value="">— For which member? —</option>
+          <option value="shineil">SHINEIL MATHIAS</option>
+          <option value="brother">KEVIN MATHIAS</option>
+          <option value="father">STEPHEN MATHIAS</option>
+          <option value="mother">KANCHAN MATHIAS</option>
+        </select>
         <button class="pm-save-btn" style="margin-top:12px;" onclick="savePMEntry()">💾 SAVE PASSWORD</button>
       </div>
 
@@ -3044,7 +3051,6 @@ function toggleEntryReveal(id) {
 }
 
 /* ======== Override renderPMList for richer UI ======== */
-const _origRenderPMList = typeof renderPMList === 'function' ? renderPMList : null;
 async function renderPMList() {
   const container = document.getElementById('pm-entries-container');
   const countNum = document.getElementById('pm-count-num');
@@ -3054,11 +3060,56 @@ async function renderPMList() {
   try {
     const allEntries = await loadPMEntries().catch(() => []);
     const query = (document.getElementById('pm-search')?.value || '').toLowerCase();
+
+    // Filter by current mode's allowed members
+    const mode = (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');
+    const allowedMembers = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined'
+      ? VAULT_MODE_ALLOWED_MEMBERS[mode]
+      : null) || ['shineil','brother','father','mother'];
+    const filtered = allEntries.filter(e => {
+      if (!e.member) return false;
+      return allowedMembers.includes(e.member);
+    });
+
     const entries = query
-      ? allEntries.filter(e => (e.site||'').toLowerCase().includes(query) || (e.username||'').toLowerCase().includes(query))
-      : allEntries;
+      ? filtered.filter(e => (e.site||'').toLowerCase().includes(query) || (e.username||'').toLowerCase().includes(query))
+      : filtered;
 
     if (countNum) countNum.textContent = entries.length + ' saved';
+
+    // Build member filter tabs for multi-member modes
+    const memberFilter = document.getElementById('pm-member-filter');
+    const memberLabels = { shineil:'SHINEIL', brother:'KEVIN', father:'STEPHEN', mother:'KANCHAN' };
+    if (allowedMembers.length > 1) {
+      if (!memberFilter) {
+        const hdr = document.querySelector('.pm-entries-header');
+        if (hdr) {
+          const wrap = document.createElement('div');
+          wrap.id = 'pm-member-filter';
+          wrap.style.cssText = 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;';
+          hdr.after(wrap);
+        }
+      }
+      if (memberFilter) {
+        memberFilter.innerHTML = allowedMembers.map(m =>
+          `<button class="pm-member-tab" data-member="${m}" style="padding:4px 10px;border:1px solid #cbd5e1;border-radius:8px;background:transparent;cursor:pointer;font-size:11px;font-weight:600;color:#475569;transition:.15s;">${memberLabels[m] || m}</button>`
+        ).join('');
+        memberFilter.querySelectorAll('.pm-member-tab').forEach(btn => {
+          btn.onclick = () => {
+            memberFilter.querySelectorAll('.pm-member-tab').forEach(b => {
+              b.style.background = 'transparent'; b.style.color = '#475569';
+            });
+            btn.style.background = '#2563eb'; btn.style.color = '#fff';
+            const memberKey = btn.dataset.member;
+            renderPMListFiltered(memberKey);
+          };
+        });
+      }
+    } else if (memberFilter) {
+      memberFilter.remove();
+    }
+    window._pmAllowedMembers = allowedMembers;
+
     container.innerHTML = '';
 
     if (!entries || entries.length === 0) {
@@ -3078,6 +3129,7 @@ async function renderPMList() {
       card.className = 'pm-entry-card';
       const icon = getSiteIcon(entry.site);
       const pwMasked = '••••••••••';
+      const memberLabel = memberLabels[entry.member] || entry.member || '';
       card.innerHTML = `
         <div class="pm-entry-top">
           <div class="pm-entry-favicon">${icon}</div>
@@ -3096,6 +3148,7 @@ async function renderPMList() {
           <button id="pw-reveal-btn-${entry.id}" class="pm-reveal-btn" onclick="toggleEntryReveal('${entry.id}')">👁️ Show</button>
         </div>
         ${entry.notes ? `<div class="pm-notes-row">📝 ${escapeHTML(entry.notes)}</div>` : ''}
+        <div class="pm-notes-row" style="color:#6366f1;font-weight:600;">👤 ${escapeHTML(memberLabel)}</div>
       `;
       container.appendChild(card);
     });
@@ -3103,6 +3156,70 @@ async function renderPMList() {
     console.error(err);
     container.innerHTML = '<div class="pm-empty" style="color:#ef4444;">❌ Error loading passwords.</div>';
   }
+}
+
+function renderPMListFiltered(memberKey) {
+  const container = document.getElementById('pm-entries-container');
+  const countNum = document.getElementById('pm-count-num');
+  if (!container) return;
+
+  loadPMEntries().catch(() => []).then(allEntries => {
+    const allowed = window._pmAllowedMembers || ['shineil','brother','father','mother'];
+    const query = (document.getElementById('pm-search')?.value || '').toLowerCase();
+    const filtered = allEntries.filter(e => {
+      if (!e.member) return false;
+      if (memberKey && e.member !== memberKey) return false;
+      return allowed.includes(e.member);
+    });
+    const entries = query
+      ? filtered.filter(e => (e.site||'').toLowerCase().includes(query) || (e.username||'').toLowerCase().includes(query))
+      : filtered;
+
+    if (countNum) countNum.textContent = entries.length + ' saved';
+    container.innerHTML = '';
+
+    if (!entries || entries.length === 0) {
+      container.innerHTML = '<div class="pm-empty">🔐 No passwords for this member.</div>';
+      return;
+    }
+
+    const memberLabels = { shineil:'SHINEIL MATHIAS', brother:'KEVIN MATHIAS', father:'STEPHEN MATHIAS', mother:'KANCHAN MATHIAS' };
+    const siteIcons = {'google':'🌐','gmail':'📧','github':'🐙','facebook':'👤','twitter':'🐦','instagram':'📷','amazon':'📦','netflix':'🎬','spotify':'🎵','apple':'🍎','microsoft':'💻','linkedin':'💼','youtube':'▶️','whatsapp':'💬','bank':'🏦','paypal':'💳'};
+    function getSiteIcon(site) {
+      const s = (site||'').toLowerCase();
+      for(const k of Object.keys(siteIcons)) { if(s.includes(k)) return siteIcons[k]; }
+      return '🔑';
+    }
+
+    entries.forEach(entry => {
+      const card = document.createElement('div');
+      card.className = 'pm-entry-card';
+      const icon = getSiteIcon(entry.site);
+      const pwMasked = '••••••••••';
+      const memberLabel = memberLabels[entry.member] || entry.member || '';
+      card.innerHTML = `
+        <div class="pm-entry-top">
+          <div class="pm-entry-favicon">${icon}</div>
+          <div class="pm-entry-info">
+            <div class="pm-entry-site">${escapeHTML(entry.site)}</div>
+            <div class="pm-entry-user">${escapeHTML(entry.username || 'No username')}</div>
+          </div>
+          <div class="pm-entry-actions">
+            <button class="pm-act-btn" onclick="copyPMPassword('${entry.id}')" title="Copy password">📋 Copy</button>
+            <button class="pm-act-btn pm-act-del" onclick="deletePMEntry('${entry.id}')" title="Delete">🗑️</button>
+          </div>
+        </div>
+        <div class="pm-pw-reveal-row">
+          <span id="pw-dots-${entry.id}" class="pw-dots">${pwMasked}</span>
+          <span id="pw-actual-${entry.id}" class="pw-actual">${escapeHTML(entry.password || '')}</span>
+          <button id="pw-reveal-btn-${entry.id}" class="pm-reveal-btn" onclick="toggleEntryReveal('${entry.id}')">👁️ Show</button>
+        </div>
+        ${entry.notes ? `<div class="pm-notes-row">📝 ${escapeHTML(entry.notes)}</div>` : ''}
+        <div class="pm-notes-row" style="color:#6366f1;font-weight:600;">👤 ${escapeHTML(memberLabel)}</div>
+      `;
+      container.appendChild(card);
+    });
+  });
 }
 
 /* ======== Vault Modes ======== */
@@ -3171,7 +3288,7 @@ function setVaultMode(id) {
 /* ============================================================
    HOME / PROFILE / FILES PAGE SWITCHER
    ============================================================ */
-let _currentPage = 'home';
+let _currentPage = null;
 
 const VAULT_TIPS = [
   'Use the Compare tool (⚖️) to view two documents side by side — great for verifying document versions.',
@@ -3189,10 +3306,10 @@ function switchPage(page) {
   const prev = _currentPage;
   _currentPage = page;
 
-  const prevEl = document.getElementById('page-' + prev);
+  const prevEl = prev ? document.getElementById('page-' + prev) : null;
   const nextEl = document.getElementById('page-' + page);
 
-  // Fade out current page
+  // Fade out current page (skip on first ever call)
   if (prevEl) {
     prevEl.classList.remove('fade-in');
     prevEl.classList.add('fade-out');
@@ -3237,7 +3354,7 @@ function switchPage(page) {
         active.style.color      = '#e2e8f0';
       }
     }
-  }, 200);
+  }, prevEl ? 200 : 0);
 }
 
 function refreshHomePage() {
