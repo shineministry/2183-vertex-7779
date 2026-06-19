@@ -373,31 +373,53 @@ function updateZoomButtonUI() {
     zoomOutBtn.style.cursor  = currentZoom <= 0.1  ? "not-allowed" : "pointer";
 }
 
+// ─── ZOOM WITH SMOOTH TRANSITION ──────────────────────────────
+async function _zoomTo(newZoom, savedPage) {
+    const oldZoom = currentZoom;
+
+    if (window.LITE_MODE || !isDesktop) {
+        currentZoom = newZoom;
+        updateZoomButtonUI();
+        await renderAllPages();
+        scrollToPage(savedPage);
+        return;
+    }
+
+    const wrap = document.getElementById('pdf-canvas-wrapper');
+    if (wrap && oldZoom > 0) {
+        const ratio = newZoom / oldZoom;
+        wrap.style.transition = 'transform 0.2s ease';
+        wrap.style.transformOrigin = 'top left';
+        wrap.style.transform = `scale(${ratio})`;
+        await new Promise(r => setTimeout(r, 220));
+    }
+
+    currentZoom = newZoom;
+    updateZoomButtonUI();
+    await renderAllPages();
+    if (wrap) {
+        wrap.style.transition = 'none';
+        wrap.style.transform = '';
+    }
+    scrollToPage(savedPage);
+}
+
 zoomInBtn.onclick = async () => {
     if (!isDesktop || currentZoom >= 10.0) return;
     const savedPage = getCurrentVisiblePage();
-    currentZoom = +(currentZoom + 0.25).toFixed(2);
-    updateZoomButtonUI();
-    await renderAllPages();
-    scrollToPage(savedPage);
+    await _zoomTo(+(currentZoom + 0.25).toFixed(2), savedPage);
 };
 
 zoomOutBtn.onclick = async () => {
     if (!isDesktop || currentZoom <= 0.1) return;
     const savedPage = getCurrentVisiblePage();
-    currentZoom = +(currentZoom - 0.25).toFixed(2);
-    updateZoomButtonUI();
-    await renderAllPages();
-    scrollToPage(savedPage);
+    await _zoomTo(+(currentZoom - 0.25).toFixed(2), savedPage);
 };
 
 zoomResetBtn.onclick = async () => {
     if (!isDesktop) return;
     const savedPage = getCurrentVisiblePage();
-    currentZoom = getInitialZoom();
-    updateZoomButtonUI();
-    await renderAllPages();
-    scrollToPage(savedPage);
+    await _zoomTo(getInitialZoom(), savedPage);
 };
 
 // ─── BUTTON STYLING ──────────────────────────────────────────
@@ -455,12 +477,15 @@ function getCurrentVisiblePage() {
 
 // Helper: scroll so that page N is at the top of the view
 function scrollToPage(pageNum) {
-    requestAnimationFrame(() => {
-        const el = document.getElementById('page-' + pageNum);
-        if (!el) return;
-        const toolbarH = toolbar.offsetHeight || 52;
-        container.scrollTop = el.offsetTop - toolbarH - 10;
-    });
+    const el = document.getElementById('page-' + pageNum);
+    if (!el) return;
+    const toolbarH = toolbar.offsetHeight || 52;
+    const top = el.offsetTop - toolbarH - 10;
+    if (window.LITE_MODE) {
+        container.scrollTop = top;
+    } else {
+        container.scrollTo({ top, behavior: 'smooth' });
+    }
 }
 
 // Pinch-to-zoom support — desktop only (mobile uses native browser pinch)
