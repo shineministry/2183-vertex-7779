@@ -82,6 +82,31 @@ href="favicon.png">
     to { transform: translateY(0); opacity: 1; }
 }
 
+/* Page transition: fade in/out */
+.page-container {
+    transition: opacity .25s ease;
+}
+.page-container.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+.page-container.fade-in {
+    opacity: 1;
+}
+
+/* Floating toast fade in/out */
+@keyframes toastFadeIn {
+    from { opacity: 0; transform: translateY(12px) scale(.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastFadeOut {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(12px) scale(.96); }
+}
+#offline-toast {
+    animation: toastFadeIn .3s ease forwards;
+}
+
 /* Base Body Framework Overhaul (Guards against Viewport Clipping) */
 #step1.overlay {
     background-color: var(--bg-dark) !important;
@@ -1117,7 +1142,7 @@ style="display:none;">
             </div>
 
             <!-- ===================== HOME PAGE ===================== -->
-            <div id="page-home">
+            <div id="page-home" class="page-container">
 
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:22px;">
                 <div>
@@ -1237,7 +1262,7 @@ style="display:none;">
             </div><!-- end #page-home -->
 
             <!-- ===================== FILES PAGE ===================== -->
-            <div id="page-files" style="display:none;">
+            <div id="page-files" class="page-container" style="display:none;">
             <h2 id="cat-title">Vault Ready To Use</h2>
             <br>
             <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
@@ -1254,7 +1279,7 @@ style="display:none;">
             </div><!-- end #page-files -->
 
             <!-- ===================== PROFILE PAGE ===================== -->
-            <div id="page-profile" style="display:none;">
+            <div id="page-profile" class="page-container" style="display:none;">
 
             <!-- Dynamic profile from Index 18 — updates on dropdown change -->
             <div id="profile-card" style="
@@ -1305,7 +1330,7 @@ style="display:none;">
    
 <script>
 (function () {
-    const FIX_VERSION = '20260610-offlinefix7';
+    const FIX_VERSION = '20260610-offlinefix8';
     window.SHINE_OFFLINE_FIX_VERSION = FIX_VERSION;
 
     if ('caches' in window && localStorage.getItem('shine_offline_fix_cache') !== FIX_VERSION) {
@@ -1331,11 +1356,11 @@ style="display:none;">
 
 <script src="sha256.js"></script> 
 
-<script src="offline-auth.js?v=20260610-offlinefix7"></script>
+<script src="offline-auth.js?v=20260610-offlinefix8"></script>
    
-<script src="auth.js?v=20260610-offlinefix7"></script>
+<script src="auth.js?v=20260610-offlinefix8"></script>
    
-<script src="session.js?v=20260610-offlinefix7"></script>
+<script src="session.js?v=20260610-offlinefix8"></script>
 
 <script src="vault-data.js"></script>
 
@@ -3160,57 +3185,59 @@ const VAULT_TIPS = [
 ];
 
 function switchPage(page) {
+  if (_currentPage === page) return;
+  const prev = _currentPage;
   _currentPage = page;
 
-  // Hide all pages
-  document.getElementById('page-home').style.display    = 'none';
-  document.getElementById('page-files').style.display   = 'none';
-  document.getElementById('page-profile').style.display = 'none';
+  const prevEl = document.getElementById('page-' + prev);
+  const nextEl = document.getElementById('page-' + page);
 
-  // Show the requested page
-  if (page === 'home') {
-    document.getElementById('page-home').style.display = '';
-     document.querySelectorAll('#cat-list li').forEach(el => el.classList.remove('active'));
-    refreshHomePage();
-  } else if (page === 'files') {
-    document.getElementById('page-files').style.display = '';
-  } else if (page === 'profile') {
-    document.getElementById('page-profile').style.display = '';
-    if (typeof renderProfile === 'function' && typeof getCurrentVaultMember === 'function') {
-        renderProfile(getCurrentVaultMember());
+  // Fade out current page
+  if (prevEl) {
+    prevEl.classList.remove('fade-in');
+    prevEl.classList.add('fade-out');
+  }
+
+  setTimeout(() => {
+    // Hide all pages
+    ['home', 'files', 'profile'].forEach(p => {
+      const el = document.getElementById('page-' + p);
+      if (el) el.style.display = 'none';
+    });
+
+    // Show and fade in the requested page
+    if (nextEl) {
+      nextEl.style.display = '';
+      nextEl.classList.remove('fade-out');
+      nextEl.classList.add('fade-in');
     }
-}
 
-// Update sidebar nav highlight
-const navHome    = document.getElementById('nav-home');
-const navProfile = document.getElementById('nav-profile');
-
-if (navHome && navProfile) {
     if (page === 'home') {
-        navHome.style.background    = 'rgba(37,99,235,0.22)';
-        navHome.style.border        = '1px solid rgba(37,99,235,0.35)';
-        navHome.style.color         = '#e2e8f0';
-        navProfile.style.background = 'transparent';
-        navProfile.style.border     = '1px solid transparent';
-        navProfile.style.color      = '#94a3b8';
+      document.querySelectorAll('#cat-list li').forEach(el => el.classList.remove('active'));
+      refreshHomePage();
     } else if (page === 'profile') {
-        navProfile.style.background = 'rgba(37,99,235,0.22)';
-        navProfile.style.border     = '1px solid rgba(37,99,235,0.35)';
-        navProfile.style.color      = '#e2e8f0';
-        navHome.style.background    = 'transparent';
-        navHome.style.border        = '1px solid transparent';
-        navHome.style.color         = '#94a3b8';
-    } else {
-        navHome.style.background    = 'transparent';
-        navHome.style.border        = '1px solid transparent';
-        navHome.style.color         = '#94a3b8';
-        navProfile.style.background = 'transparent';
-        navProfile.style.border     = '1px solid transparent';
-        navProfile.style.color      = '#94a3b8';
+      if (typeof renderProfile === 'function' && typeof getCurrentVaultMember === 'function') {
+        renderProfile(getCurrentVaultMember());
+      }
     }
-}
 
-  // Category list always stays visible in sidebar
+    // Update sidebar nav highlight
+    const navHome    = document.getElementById('nav-home');
+    const navProfile = document.getElementById('nav-profile');
+    if (navHome && navProfile) {
+      [navHome, navProfile].forEach(el => {
+        el.style.background = 'transparent';
+        el.style.border     = '1px solid transparent';
+        el.style.color      = '#94a3b8';
+      });
+      const active = page === 'home' ? navHome : page === 'profile' ? navProfile : null;
+      if (active) {
+        active.style.background = 'rgba(37,99,235,0.22)';
+        active.style.border     = '1px solid rgba(37,99,235,0.35)';
+        active.style.color      = '#e2e8f0';
+      }
+    }
+  }, 200);
 }
 
 function refreshHomePage() {
