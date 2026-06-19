@@ -219,6 +219,14 @@ function logoutVault( reason = "Logged out." ) {
 
 function resetInactivityTimer() {
 
+  // Set up event listeners on first call (only after login)
+  if (!window._inactivityTimerInitialized) {
+    window._inactivityTimerInitialized = true;
+    ["mousemove","mousedown","keypress","scroll","touchstart"].forEach(evt =>
+      document.addEventListener(evt, resetInactivityTimer)
+    );
+  }
+
   clearTimeout(
     inactivityTimer
   );
@@ -227,27 +235,12 @@ function resetInactivityTimer() {
     setTimeout(() => {
 
       logoutVault(
-        "Logged out due to inactivity (2 minutes)."
+        "Your session has expired."
       );
 
     }, 2 * 60 * 1000);
 }
 
-[
-  "mousemove",
-  "mousedown",
-  "keypress",
-  "scroll",
-  "touchstart"
-].forEach(event => {
-
-  document.addEventListener(
-    event,
-    resetInactivityTimer
-  );
-
-});
-   
 /* =========================
    CLOCK
 ========================= */
