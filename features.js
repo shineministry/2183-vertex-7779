@@ -1271,7 +1271,16 @@ setTimeout(() => initVaultNotifications().catch(() => {}), 400);
         await preCacheVaultDocs(allFilesData).catch(e => console.warn('[Offline] Pre-cache error:', e));
       }
     }, 3000);
-   
+
+   // ── Sync all member credentials for offline login ──
+   setTimeout(() => {
+       if (typeof syncAllMembersOffline === 'function') {
+           syncAllMembersOffline().catch(e =>
+               console.warn('[OfflineAuth] Background all-member sync failed:', e.message)
+           );
+       }
+   }, 1000);
+
    setTimeout(() => {
     if (typeof window._repairRefresh === 'function') window._repairRefresh();
 }, 500);
