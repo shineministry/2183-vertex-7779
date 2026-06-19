@@ -180,8 +180,9 @@ function _showOfflineProgress() {
 function _updateOfflineProgress(current, total) {
     const bar = document.getElementById('offline-progress-bar');
     const label = document.getElementById('offline-progress-label');
-    if (bar) bar.style.width = total > 0 ? `${(current / total) * 100}%` : '0%';
-    if (label) label.textContent = `${current} / ${total}`;
+    const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+    if (bar) bar.style.width = `${pct}%`;
+    if (label) label.textContent = `${current} / ${total} — ${pct}%`;
 }
 
 function _setOfflineProgressText(text) {
@@ -198,6 +199,20 @@ function _setOfflineProgressDone() {
         const el = document.getElementById('offline-progress');
         if (el) el.style.display = 'none';
     }, 3000);
+}
+
+// ── Check if offline data already cached (for "already ready" on subsequent logins) ──
+async function _isOfflineDataCached() {
+    try {
+        const db = await _openAuthDB();
+        const count = await new Promise((res, rej) => {
+            const req = db.transaction('vault_auth', 'readonly')
+                          .objectStore('vault_auth').count();
+            req.onsuccess = () => res(req.result);
+            req.onerror   = () => rej(req.error);
+        });
+        return count > 0;
+    } catch { return false; }
 }
 
 // ── syncAllMembersOffline: fetch & cache ALL 7 modes ──────────────────────
@@ -225,6 +240,18 @@ async function syncAllMembersOffline() {
         console.warn('[OfflineAuth] syncAllMembersOffline: offline, skipping.');
         setTimeout(() => { const el = document.getElementById('offline-progress'); if (el) el.style.display = 'none'; }, 2000);
         return { synced: 0, failed: [] };
+    }
+
+    // On subsequent logins, skip re-fetch and show "already ready"
+    const alreadyCached = await _isOfflineDataCached();
+    if (alreadyCached) {
+        _setOfflineProgressText('✓ Site is ready for offline use');
+        _updateOfflineProgress(1, 1);
+        const icon2 = document.getElementById('offline-progress-icon');
+        if (icon2) icon2.textContent = '✅';
+        setTimeout(() => { const el = document.getElementById('offline-progress'); if (el) el.style.display = 'none'; }, 2500);
+        console.log('[OfflineAuth] Offline data already cached — skipping sync.');
+        return { synced: 0, failed: [], skipped: true };
     }
 
     console.log('[OfflineAuth] Fetching all member credentials for offline caching...');
