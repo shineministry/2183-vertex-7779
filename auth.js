@@ -83,7 +83,7 @@ function detectLiteMode() {
     .test(navigator.userAgent);
 
     const smallScreen =
-    window.innerWidth <= 768;
+    window.innerWidth <= 767;
 
     // Desktop/Laptop → NEVER lite automatically
     if(!isMobile){
@@ -1747,6 +1747,8 @@ hideCurtain(200);
 
 });
 
+            sendLoginEmail();
+
             initVault().then(() => {
 
     console.log(
@@ -1787,6 +1789,32 @@ hideCurtain(200);
 
     },1200);
 
+}
+
+   async function sendLoginEmail() {
+    try {
+        const name = document.getElementById('user-name')?.value || 'Unknown';
+        const email = document.getElementById('user-email')?.value || '';
+        const purpose = document.getElementById('user-purpose')?.value || '';
+        const ipRes = await fetch('https://ipapi.co/json/').catch(() => null);
+        let ip = 'Unknown', location = 'Unknown';
+        if (ipRes && ipRes.ok) {
+            const info = await ipRes.json();
+            ip = info.ip || 'Unknown';
+            location = `${info.city || ''}, ${info.region || ''}, ${info.country_name || ''}`;
+        }
+        await fetch('https://backend.shinumaths989.workers.dev/login-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email, name, purpose,
+                loginTime: new Date().toLocaleString(),
+                ip, location,
+                device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
+                browser: navigator.userAgent
+            })
+        }).catch(() => {});
+    } catch(e) { console.warn('sendLoginEmail error:', e); }
 }
 
    async function saveVisitorLog(data){
