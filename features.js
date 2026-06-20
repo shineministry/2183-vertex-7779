@@ -1232,21 +1232,21 @@ official: "OFFICIAL DOCUMENTS"
 
 };
 
-sel.innerHTML = members
+if (sel) {
+  sel.innerHTML = members
 
 .map(m => `<option value="${m}">${labels[m]}</option>`)
 
 .join("");
-   
-if (sel) {
+
     if (mode === "SHINEIL_PARENTS") sel.value = "shineil";
-           if (mode === "KEVIN_PARENTS")   sel.value = "brother";
-           if (mode === "PARENTS")         sel.value = "father";
-           if (mode === "SHINEIL")         sel.value = "shineil";
-           if (mode === "KEVIN")           sel.value = "brother";
-           if (mode === "OFFICIAL")        sel.value = "official";
+    if (mode === "KEVIN_PARENTS")   sel.value = "brother";
+    if (mode === "PARENTS")         sel.value = "father";
+    if (mode === "SHINEIL")         sel.value = "shineil";
+    if (mode === "KEVIN")           sel.value = "brother";
+    if (mode === "OFFICIAL")        sel.value = "official";
 }
-   sel.dispatchEvent(new Event("change"));
+   if (sel) sel.dispatchEvent(new Event("change"));
 
    // ── Hide member dropdown for non-ADMIN modes ──
 const memberSelectWrap = document.getElementById('sidebar-controls-wrap');
@@ -1378,6 +1378,29 @@ async function idbMarkNotifRead(id) {
 
 // Called by vaultPostInit — loads notifications and shows badge + bubble
 async function initVaultNotifications() {
+  // Try to sync from server first (fails silently if endpoint doesn't exist)
+  let serverNotifs = [];
+  try {
+    const res = await fetch(`${WORKER_URL}/get-notifications`, {
+      headers: await getAuthHeaders()
+    });
+    if (res.ok) {
+      serverNotifs = await res.json();
+      // Cache server notifications into local IDB, preserving read status
+      const local = await idbGetNotifications();
+      const localIds = new Set(local.map(n => n.id));
+      const db = await openNotifIDB();
+      const tx = db.transaction('vault_notifications', 'readwrite');
+      const store = tx.objectStore('vault_notifications');
+      for (const n of serverNotifs) {
+        // Only add if not already stored locally
+        if (!localIds.has(n.id)) store.add({ ...n, read: false });
+      }
+    }
+  } catch {
+    // Server endpoint not available — use local IDB only
+  }
+
   const all = await idbGetNotifications();
   const currentUser = sessionStorage.getItem('vaultUser') || 'all';
   // Filter: show Global or targeted to this user
@@ -1474,8 +1497,9 @@ function toggleNotifications() {
 }
 
 async function _renderNotifPanel() {
-  const listEl = document.getElementById('notifList');
-  if (!listEl) return;
+  try {
+    const listEl = document.getElementById('notifList');
+    if (!listEl) return;
   const all = await idbGetNotifications();
   const currentUser = sessionStorage.getItem('vaultUser') || 'all';
   const relevant = all.filter(n => {
@@ -1504,6 +1528,9 @@ async function _renderNotifPanel() {
       </div>
     </div>
   `).join('');
+  } catch (e) {
+    if (listEl) listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px;">⚠️ Could not load notifications</div>';
+  }
 }
 
 function escHtml(str) {
