@@ -2878,27 +2878,29 @@ Recommended:
       function buildHomeCatOverview() {
         const container = document.getElementById('home-cat-overview');
         if (!container) return;
-        const catList = document.getElementById('cat-list');
-        if (!catList) return;
-        const items = catList.querySelectorAll('li');
-        if (!items.length) {
+        const vaultData = window.allFilesData || (typeof allFilesData !== 'undefined' ? allFilesData : {});
+        const entries = Object.entries(vaultData).filter(([name, files]) => String(name || '').trim().toUpperCase() !== 'HOME' && Array.isArray(files));
+        if (!entries.length) {
           container.innerHTML = '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:12px 0;">No categories loaded yet.</div>';
           return;
         }
         const colors = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626','#0891b2','#be185d'];
-        let html = '';
-        Array.from(items).slice(0, 8).forEach((li, i) => {
-          const name = li.textContent.trim().replace(/\(\d+\)/,'').trim();
-          const match = li.textContent.match(/\((\d+)\)/);
-          const count = match ? match[1] : '?';
-          const color = colors[i % colors.length];
-          html += `
-            <div onclick="li.click();switchPage('files')" style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;border:1px solid #f1f5f9;cursor:pointer;background:#f8fafc;transition:background .1s;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#f8fafc'">
-              <span style="font-size:12px;font-weight:700;color:#0f172a;">${name}</span>
-              <span style="background:${color};color:#fff;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;">${count}</span>
-            </div>`;
+        container.innerHTML = '';
+        entries.slice(0, 8).forEach(([name, files], i) => {
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;border:1px solid #f1f5f9;cursor:pointer;background:#f8fafc;transition:background .1s;';
+          row.onmouseover = () => { row.style.background = '#eff6ff'; };
+          row.onmouseout = () => { row.style.background = '#f8fafc'; };
+          row.onclick = () => selectVaultCategory(name);
+          const label = document.createElement('span');
+          label.style.cssText = 'font-size:12px;font-weight:700;color:#0f172a;';
+          label.textContent = name;
+          const badge = document.createElement('span');
+          badge.style.cssText = `background:${colors[i % colors.length]};color:#fff;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;`;
+          badge.textContent = String(files.length);
+          row.append(label, badge);
+          container.appendChild(row);
         });
-        container.innerHTML = html || '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:12px 0;">No categories found.</div>';
       }
 
       function buildHomeRecentFiles() {
