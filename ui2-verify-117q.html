@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self'; form-action 'self';">
     <title>Secure Information Portal</title>
     <style>
         :root {
@@ -69,7 +70,8 @@
         }
 
         input[type="text"],
-        input[type="date"] {
+        input[type="date"],
+        select {
             width: 100%;
             padding: 11px 14px;
             border: 2px solid var(--border-color);
@@ -79,7 +81,12 @@
             transition: all 0.3s ease;
         }
 
-        input:focus {
+        select {
+            background: #fff;
+            cursor: pointer;
+        }
+
+        input:focus, select:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.15);
         }
@@ -158,11 +165,22 @@
             transform: translateY(0);
         }
 
+        .password-entry {
+            margin: 12px 0;
+        }
+
+        .password-entry .password-label {
+            font-size: 13px;
+            color: #276749;
+            font-weight: 600;
+        }
+
         .password-value {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             color: #22543d;
+            word-break: break-all;
         }
     </style>
 </head>
@@ -172,18 +190,26 @@
         <div id="formContent" class="fade-out-target">
             <h2>Profile Verification</h2>
             <p class="subtitle">Shineil Mathias - Internal Record Check</p>
-            
+
             <form id="profileForm" onsubmit="handleSubmit(event)" novalidate>
-                
+
                 <div class="form-group">
-                    <label for="name">Full Name</label>
+                    <label for="verifyType">Select Verification Type</label>
+                    <select id="verifyType" onchange="onTypeChange()">
+                        <option value="school">School</option>
+                        <option value="embassy">Embassy</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="name" id="nameLabel">Full Name</label>
                     <input type="text" id="name" placeholder="Enter full name" autocomplete="off" required>
                     <div class="error-message" id="nameError">Verification failed.</div>
                 </div>
 
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="text" id="email" placeholder="Enter school email" autocomplete="off" required>
+                    <input type="text" id="email" placeholder="Enter email" autocomplete="off" required>
                     <div class="error-message" id="emailError">Verification failed.</div>
                 </div>
 
@@ -209,7 +235,7 @@
                 <div class="section-title">Internal Security Verification</div>
 
                 <div class="form-group">
-                    <label for="loaDate">Date Letter of Accommodation was Emailed</label>
+                    <label for="loaDate" id="dateLabel">Date Letter of Accommodation was Emailed</label>
                     <input type="date" id="loaDate" required>
                     <div class="error-message" id="loaDateError">Verification failed.</div>
                 </div>
@@ -219,67 +245,112 @@
         </div>
 
         <div class="password-display" id="passwordBox">
-            <div style="font-size: 12px; color: #276749; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Access Granted</div>
-            <div class="password-value">Mfyi2019wIbSC#Honour</div>
+            <div style="font-size: 12px; color: #276749; font-weight: bold; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Access Granted</div>
+            <div id="passwordEntries"></div>
         </div>
     </div>
 
     <script>
-        // Target Verification Values
-        const validNames = ["peter porenta", "roman neumayer"];
-        const validEmails = ["roman.neumayer@herzjesugym.at", "peter.porenta@herzjesugym.at", "direktion@herzjesugym.at"];
-        const validCity = "salzburg";
-        const validCountry = "austria";
-        const validDob = "2010-03-07";
-        const validLoaDate = "2026-03-25"; // Standard HTML5 YYYY-MM-DD formatting for 25.03.2026
+        function sanitize(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function onTypeChange() {
+            const type = document.getElementById('verifyType').value;
+            const nameLabel = document.getElementById('nameLabel');
+            const dateLabel = document.getElementById('dateLabel');
+            const nameInput = document.getElementById('name');
+            const dateInput = document.getElementById('loaDate');
+            const emailLabel = document.querySelector('label[for="email"]');
+
+            if (type === 'embassy') {
+                nameLabel.textContent = 'Name of Embassy';
+                nameInput.placeholder = 'Enter embassy name';
+                dateLabel.textContent = 'Date of Appointment at Embassy';
+                dateInput.placeholder = '';
+                emailLabel.textContent = 'Embassy Email Address';
+            } else {
+                nameLabel.textContent = 'Full Name';
+                nameInput.placeholder = 'Enter full name';
+                dateLabel.textContent = 'Date Letter of Accommodation was Emailed';
+                dateInput.placeholder = '';
+                emailLabel.textContent = 'Email Address';
+            }
+
+            // Clear errors on type switch
+            document.querySelectorAll('.error-message').forEach(e => e.style.display = 'none');
+            document.querySelectorAll('input').forEach(i => i.classList.remove('invalid'));
+        }
 
         function handleSubmit(event) {
             event.preventDefault();
 
             const fields = ['name', 'email', 'city', 'country', 'dob', 'loaDate'];
-            let isValid = true;
-
-            const data = {};
+            const data = { type: document.getElementById('verifyType').value };
             fields.forEach(f => {
                 const el = document.getElementById(f);
-                data[f] = { el: el, val: el.value.trim().toLowerCase(), err: document.getElementById(`${f}Error`) };
+                data[f] = el.value.trim();
             });
 
-            // Perform Checks
-            if (!validNames.includes(data.name.val)) { toggle(data.name, false); isValid = false; } else { toggle(data.name, true); }
-            if (!validEmails.includes(data.email.val)) { toggle(data.email, false); isValid = false; } else { toggle(data.email, true); }
-            if (data.city.val !== validCity) { toggle(data.city, false); isValid = false; } else { toggle(data.city, true); }
-            if (data.country.val !== validCountry) { toggle(data.country, false); isValid = false; } else { toggle(data.country, true); }
-            if (document.getElementById('dob').value !== validDob) { toggle(data.dob, false); isValid = false; } else { toggle(data.dob, true); }
-            if (document.getElementById('loaDate').value !== validLoaDate) { toggle(data.loaDate, false); isValid = false; } else { toggle(data.loaDate, true); }
+            fetch('/verify-identity', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (!res.success) {
+                    alert('Verification service error. Please try again.');
+                    return;
+                }
+                const { checks } = res;
+                let isValid = true;
+                fields.forEach(f => {
+                    const el = document.getElementById(f);
+                    const err = document.getElementById(f + 'Error');
+                    if (!checks[f]) {
+                        el.classList.add('invalid');
+                        err.style.display = 'block';
+                        isValid = false;
+                    } else {
+                        el.classList.remove('invalid');
+                        err.style.display = 'none';
+                    }
+                });
+                if (isValid) {
+                    const formContent = document.getElementById('formContent');
+                    const passwordBox = document.getElementById('passwordBox');
+                    const passwordEntries = document.getElementById('passwordEntries');
 
-            if (isValid) {
-                const formContent = document.getElementById('formContent');
-                const passwordBox = document.getElementById('passwordBox');
+                    if (res.passwords) {
+                        passwordEntries.innerHTML = '';
+                        if (Array.isArray(res.passwords)) {
+                            res.passwords.forEach(function(pw) {
+                                const div = document.createElement('div');
+                                div.className = 'password-entry';
+                                div.innerHTML = '<div class="password-label">' + sanitize(pw.label) + '</div><div class="password-value">' + sanitize(pw.value) + '</div>';
+                                passwordEntries.appendChild(div);
+                            });
+                        }
+                    }
 
-                formContent.classList.add('hide-animation');
-                setTimeout(() => {
-                    formContent.style.display = 'none';
-                    passwordBox.classList.add('show');
-                }, 500);
-            }
-        }
-
-        function toggle(fieldObj, isCorrect) {
-            if (!isCorrect) {
-                fieldObj.el.classList.add('invalid');
-                fieldObj.err.style.display = 'block';
-            } else {
-                fieldObj.el.classList.remove('invalid');
-                fieldObj.err.style.display = 'none';
-            }
+                    formContent.classList.add('hide-animation');
+                    setTimeout(() => {
+                        formContent.style.display = 'none';
+                        passwordBox.classList.add('show');
+                    }, 500);
+                }
+            })
+            .catch(function() { alert('Could not reach verification service.'); });
         }
 
         // Auto-remove error states on input
-        ['name', 'email', 'city', 'country', 'dob', 'loaDate'].forEach(id => {
+        ['name', 'email', 'city', 'country', 'dob', 'loaDate'].forEach(function(id) {
             document.getElementById(id).addEventListener('input', function() {
                 this.classList.remove('invalid');
-                document.getElementById(`${id}Error`).style.display = 'none';
+                document.getElementById(id + 'Error').style.display = 'none';
             });
         });
     </script>
