@@ -539,7 +539,7 @@ button{
 .brand-full{ display:inline; }
 .brand-short{ display:none; }
 
-@media screen and (max-width:768px){
+@media screen and (max-width:767px){
     .brand-full{ display:none; }
     .brand-short{ display:inline; }
 }
@@ -1054,7 +1054,7 @@ button{
    (ANDROID + IPHONE)
 ========================= */
 
-@media screen and (max-width:768px){
+@media screen and (max-width:767px){
 
     html,
     body{
@@ -1072,7 +1072,7 @@ button{
     .nav-auth-mobile{
         display:flex !important;
     }
-   
+    
     #vault-dashboard{
         height:100dvh;
         overflow:hidden;
