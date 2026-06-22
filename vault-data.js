@@ -79,6 +79,9 @@ list.innerHTML = `
   <li id="nav-profile" onclick="selectVaultCategory('PROFILE')" style="font-weight:700;">
     <span style="font-size:15px;">👤</span><span>PROFILE</span>
   </li>
+  <li id="nav-photos" onclick="selectVaultCategory('PHOTOS')" style="font-weight:700;">
+    <span style="font-size:15px;">📸</span><span>PHOTOS</span>
+  </li>
 `;
 
     const mode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "VIEWER";
@@ -106,7 +109,7 @@ list.innerHTML = `
     }
 
     categories.forEach(cat => {
-    if (cat === 'HOME' || cat === 'PROFILE') return;
+    if (cat === 'HOME' || cat === 'PROFILE' || cat === 'PHOTOS') return;
     const li = document.createElement('li');
     const icon = getCatIcon(cat);
     li.innerHTML = `<span style="font-size:15px;">${icon}</span><span>${cat}</span>`;
@@ -442,7 +445,7 @@ function renderFiles(
 files,
 category){
    
-   currentCategory = category;
+    currentCategory = category;
 
     document.getElementById(
     'cat-title').textContent =
@@ -451,6 +454,9 @@ category){
     const grid =
     document.getElementById(
     'file-grid');
+
+    // Remove photo-grid class when showing regular files
+    if (grid) grid.classList.remove('photo-grid');
 
    if(category==="HOME"){
 
@@ -741,6 +747,157 @@ visibleFiles.forEach(file=>{
 
     });
 
+}
+
+/* =========================
+   PHOTOS GALLERY
+   Scan all categories for image files and render a Google Photos-style grid
+   with a lightbox viewer.
+========================= */
+
+const IMAGE_EXTS = ['jpg','jpeg','png','gif','webp','bmp'];
+
+function isImageFile(file) {
+    const name = (file.name || file.file || '').toLowerCase();
+    return IMAGE_EXTS.some(ext => name.endsWith('.' + ext));
+}
+
+function getAllPhotos() {
+    const photos = [];
+    Object.keys(allFilesData).forEach(cat => {
+        const files = allFilesData[cat];
+        if (!Array.isArray(files)) return;
+        files.forEach(f => {
+            if (isImageFile(f)) {
+                photos.push({ ...f, category: cat });
+            }
+        });
+    });
+    return photos;
+}
+
+function renderPhotos() {
+    document.getElementById('cat-title').textContent = 'Photos';
+    const grid = document.getElementById('file-grid');
+    if (grid) grid.classList.add('photo-grid');
+    const photos = getAllPhotos();
+    const countEl = document.getElementById('photo-count');
+    if (countEl) countEl.textContent = photos.length + ' photo(s)';
+
+    grid.innerHTML = '';
+    if (photos.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;background:white;border-radius:20px;"><div style="font-size:48px;margin-bottom:12px;">📸</div><div style="font-weight:700;font-size:16px;color:#64748b;">No photos found</div><div style="font-size:13px;color:#94a3b8;margin-top:6px;">Upload images to the vault to see them here.</div></div>';
+        return;
+    }
+
+    // Build photo thumbnails - Google Photos style square grid
+    photos.forEach((file, index) => {
+        const card = document.createElement('div');
+        card.className = 'photo-card';
+        card.dataset.index = index;
+        card.innerHTML = '<div class="photo-thumb"><div class="photo-loading"></div></div>';
+        card.onclick = () => openPhotoViewer(photos, index);
+        grid.appendChild(card);
+
+        // Decrypt and render thumbnail on the fly
+        renderPhotoThumb(card.querySelector('.photo-thumb'), file, index);
+    });
+
+    // Store photos for lightbox
+    window._galleryPhotos = photos;
+}
+
+async function renderPhotoThumb(container, file, index) {
+    try {
+        const vaultSessionToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
+        if (!vaultSessionToken) return;
+
+        const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '');
+        let buffer;
+
+        // Try IndexedDB cache first
+        if (typeof idbGetDoc === 'function') {
+            const cached = await idbGetDoc(docKey).catch(() => null);
+            if (cached) buffer = cached;
+        }
+
+        if (!buffer) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            try {
+                const res = await fetch('https://backend.shinumaths989.workers.dev/docs/' + docKey, {
+                    headers: { 'Authorization': 'Bearer ' + vaultSessionToken },
+                    signal: controller.signal
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                buffer = await res.arrayBuffer();
+                if (typeof idbSaveDoc === 'function') {
+                    idbSaveDoc(docKey, buffer).catch(() => {});
+                }
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        if (!buffer) return;
+
+        // Decrypt
+        const decrypted = await decryptBuffer(buffer);
+        if (!decrypted) return;
+
+        // Create blob URL and set as thumbnail background
+        const mime = getImageMime(file);
+        const blob = new Blob([decrypted], { type: mime });
+        const url = URL.createObjectURL(blob);
+        container.innerHTML = '';
+        const img = document.createElement('img');
+        img.className = 'photo-img';
+        img.src = url;
+        img.loading = 'lazy';
+        img.dataset.blobUrl = url;
+        container.appendChild(img);
+    } catch (e) {
+        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:12px;">⚠️</div>';
+    }
+}
+
+function getImageMime(file) {
+    const name = (file.name || '').toLowerCase();
+    if (name.endsWith('.png')) return 'image/png';
+    if (name.endsWith('.gif')) return 'image/gif';
+    if (name.endsWith('.webp')) return 'image/webp';
+    if (name.endsWith('.bmp')) return 'image/bmp';
+    return 'image/jpeg';
+}
+
+async function decryptBuffer(buffer) {
+    try {
+        const settingsLength = new Uint32Array(buffer.slice(0, 4))[0];
+        if (settingsLength === 0 || settingsLength > buffer.byteLength - 32) return null;
+        const settingsBytes = buffer.slice(4, 4 + settingsLength);
+        const settings = JSON.parse(new TextDecoder().decode(settingsBytes));
+
+        const salt = buffer.slice(4 + settingsLength, 4 + settingsLength + 16);
+        const iv = buffer.slice(4 + settingsLength + 16, 4 + settingsLength + 16 + 12);
+        const encryptedData = buffer.slice(4 + settingsLength + 16 + 12);
+
+        const passwordHash = await sha256Bytes(window.masterPassword);
+        const keyMaterial = await crypto.subtle.importKey('raw', passwordHash, 'PBKDF2', false, ['deriveKey']);
+        const key = await crypto.subtle.deriveKey({
+            name: 'PBKDF2',
+            salt: new Uint8Array(salt),
+            iterations: settings.iterations,
+            hash: settings.hash
+        }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+
+        return await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(iv) }, key, encryptedData);
+    } catch (e) {
+        return null;
+    }
+}
+
+function sha256Bytes(str) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(h => new Uint8Array(h));
 }
 
 function renderProfile(memberKey) {
