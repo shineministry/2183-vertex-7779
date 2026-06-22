@@ -31,6 +31,26 @@ displayName){
         localStorage.setItem('recentFiles', JSON.stringify(filtered.slice(0, 15)));
     }catch(e){}
 
+    // If this is an image file, open in photo lightbox instead of PDF viewer
+    if (displayName) {
+        const lower = displayName.toLowerCase();
+        const imgExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+        if (imgExts.some(ext => lower.endsWith(ext))) {
+            // Find the photo in allFilesData
+            if (window._galleryPhotos && Array.isArray(window._galleryPhotos)) {
+                const idx = window._galleryPhotos.findIndex(p => (p.file === path.replace(/^\/docs\/|^docs\//, '')) || p.name === displayName);
+                if (idx >= 0) {
+                    openPhotoViewer(window._galleryPhotos, idx);
+                    return;
+                }
+            }
+            // Fallback: construct a single-photo gallery
+            const file = { file: path.replace(/^\/docs\/|^docs\//, ''), name: displayName };
+            openPhotoViewer([file], 0);
+            return;
+        }
+    }
+
     if(!window.masterPassword){
 
  const savedSecret =
@@ -827,10 +847,6 @@ function closeModal(){
     'modal').style.display =
     'none';
 
-    document.getElementById(
-    'watermark').style.display =
-    'none';
-
     if(currentBlobUrl){
 
         URL.revokeObjectURL(
@@ -876,3 +892,159 @@ function(e){
 e.preventDefault();
     }
 };
+
+/* =========================
+   PHOTO LIGHTBOX VIEWER
+========================= */
+
+let _lightboxPhotos = [];
+let _lightboxIndex = -1;
+
+function openPhotoViewer(photos, index) {
+    _lightboxPhotos = photos;
+    _lightboxIndex = index;
+
+    const overlay = document.getElementById('photo-lightbox');
+    if (!overlay) return;
+    overlay.style.display = 'flex';
+
+    updateLightboxImage();
+    updateLightboxNav();
+}
+
+function closePhotoViewer() {
+    const overlay = document.getElementById('photo-lightbox');
+    if (overlay) overlay.style.display = 'none';
+    _lightboxPhotos = [];
+    _lightboxIndex = -1;
+    // Revoke blob URLs
+    document.querySelectorAll('#lightbox-img-container img').forEach(img => {
+        if (img.dataset.blobUrl) URL.revokeObjectURL(img.dataset.blobUrl);
+    });
+    document.getElementById('lightbox-img-container').innerHTML = '';
+}
+
+function prevPhoto(e) {
+    if (e) e.stopPropagation();
+    if (_lightboxIndex > 0) {
+        _lightboxIndex--;
+        updateLightboxImage();
+        updateLightboxNav();
+    }
+}
+
+function nextPhoto(e) {
+    if (e) e.stopPropagation();
+    if (_lightboxIndex < _lightboxPhotos.length - 1) {
+        _lightboxIndex++;
+        updateLightboxImage();
+        updateLightboxNav();
+    }
+}
+
+function updateLightboxNav() {
+    const prevBtn = document.getElementById('lightbox-prev');
+    const nextBtn = document.getElementById('lightbox-next');
+    const counter = document.getElementById('lightbox-counter');
+    if (prevBtn) prevBtn.style.display = _lightboxIndex > 0 ? '' : 'none';
+    if (nextBtn) nextBtn.style.display = _lightboxIndex < _lightboxPhotos.length - 1 ? '' : 'none';
+    if (counter) counter.textContent = `${_lightboxIndex + 1} / ${_lightboxPhotos.length}`;
+}
+
+async function updateLightboxImage() {
+    const container = document.getElementById('lightbox-img-container');
+    const caption = document.getElementById('lightbox-caption');
+    if (!container || _lightboxIndex < 0 || _lightboxIndex >= _lightboxPhotos.length) return;
+
+    const file = _lightboxPhotos[_lightboxIndex];
+    if (caption) caption.textContent = file.name || 'Photo';
+
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">Loading...</div>';
+
+    try {
+        const vaultSessionToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
+        if (!vaultSessionToken) return;
+
+        const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '');
+        let buffer;
+
+        if (typeof idbGetDoc === 'function') {
+            const cached = await idbGetDoc(docKey).catch(() => null);
+            if (cached) buffer = cached;
+        }
+
+        if (!buffer) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+            try {
+                const res = await fetch('https://backend.shinumaths989.workers.dev/docs/' + docKey, {
+                    headers: { 'Authorization': 'Bearer ' + vaultSessionToken },
+                    signal: controller.signal
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                buffer = await res.arrayBuffer();
+                if (typeof idbSaveDoc === 'function') {
+                    idbSaveDoc(docKey, buffer).catch(() => {});
+                }
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        if (!buffer) {
+            container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Failed to load photo</div>';
+            return;
+        }
+
+        // Decrypt
+        const settingsLength = new Uint32Array(buffer.slice(0, 4))[0];
+        if (settingsLength === 0 || settingsLength > buffer.byteLength - 32) {
+            container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Corrupted file</div>';
+            return;
+        }
+        const settingsBytes = buffer.slice(4, 4 + settingsLength);
+        const settings = JSON.parse(new TextDecoder().decode(settingsBytes));
+        const salt = buffer.slice(4 + settingsLength, 4 + settingsLength + 16);
+        const iv = buffer.slice(4 + settingsLength + 16, 4 + settingsLength + 16 + 12);
+        const encryptedData = buffer.slice(4 + settingsLength + 16 + 12);
+
+        const masterPw = window.masterPassword || sessionStorage.getItem('vault_session_secret');
+        if (!masterPw) {
+            container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Session not unlocked</div>';
+            return;
+        }
+        const passwordHash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(masterPw)));
+        const keyMaterial = await crypto.subtle.importKey('raw', passwordHash, 'PBKDF2', false, ['deriveKey']);
+        const key = await crypto.subtle.deriveKey({
+            name: 'PBKDF2',
+            salt: new Uint8Array(salt),
+            iterations: settings.iterations,
+            hash: settings.hash
+        }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+        const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(iv) }, key, encryptedData);
+
+        const name = (file.name || '').toLowerCase();
+        let mime = 'image/jpeg';
+        if (name.endsWith('.png')) mime = 'image/png';
+        else if (name.endsWith('.gif')) mime = 'image/gif';
+        else if (name.endsWith('.webp')) mime = 'image/webp';
+        else if (name.endsWith('.bmp')) mime = 'image/bmp';
+
+        const blob = new Blob([decrypted], { type: mime });
+        const url = URL.createObjectURL(blob);
+
+        container.innerHTML = `<img src="${url}" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,.3);" data-blob-url="${url}" alt="${file.name || ''}">`;
+
+    } catch (e) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Error: ' + e.message + '</div>';
+    }
+}
+
+// Keyboard navigation for lightbox
+document.addEventListener('keydown', function(e) {
+    const overlay = document.getElementById('photo-lightbox');
+    if (!overlay || overlay.style.display !== 'flex') return;
+    if (e.key === 'Escape') closePhotoViewer();
+    if (e.key === 'ArrowLeft') prevPhoto();
+    if (e.key === 'ArrowRight') nextPhoto();
+});
