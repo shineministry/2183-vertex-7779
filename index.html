@@ -516,15 +516,19 @@ Recommended:
           box-shadow: none;
         }
 
-        /* Framework Footer Branding Signature */
+        /* Watermark overlay inside PDF render area */
         .watermark {
+          position: absolute;
+          bottom: 20px;
+          left: 0;
+          right: 0;
           font-size: 10px;
           font-weight: 700;
           letter-spacing: 2px;
           color: rgba(15, 23, 42, 0.25);
           text-align: center;
-          margin-top: auto;
-          padding-top: 16px;
+          pointer-events: none;
+          z-index: 5;
         }
 
         /* ==========================================================   BREAKPOINTS (Responsive Scaling Constraints)========================================================== */
@@ -1061,7 +1065,14 @@ Recommended:
             <div id="profile-role" style="font-size:13px;color:#94a3b8;margin-bottom:16px;"></div>
             <div id="profile-details" style="display:flex;flex-direction:column;gap:8px;font-size:13px;"></div>
           </div>
-        </div><!-- end #page-profile -->
+        </div><!-- end #page-profile --> <!-- ===================== PHOTOS PAGE ===================== -->
+        <div id="page-photos" class="page-container" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+            <h2 id="cat-title" style="margin:0;font-size:20px;font-weight:800;color:#0f172a;">📸 Photos</h2>
+            <div style="font-size:12px;color:#64748b;" id="photo-count"></div>
+          </div>
+          <div id="file-grid" class="file-grid photo-grid"></div>
+        </div><!-- end #page-photos -->
       </main>
     </div>
   </div>
@@ -1070,9 +1081,21 @@ Recommended:
       <div class="modal-header"> <strong id="modal-title">Document</strong> <button onclick="closeModal()" class="btn-close-modal">CLOSE</button> </div>
       <div id="pdf-viewer-layout"> <!-- LEFT SIDEBAR -->
         <div id="pdf-sidebar"></div> <!-- RIGHT PDF AREA -->
-        <div id="pdf-render-container"></div>
+        <div id="pdf-render-container">
+          <div id="watermark" class="watermark">AUTHORIZED ACCESS • SHINEIL KEITH MATHIAS</div>
+        </div>
       </div>
     </div>
+  </div> <!-- ===================== PHOTO LIGHTBOX ===================== -->
+  <div id="photo-lightbox">
+    <div class="lightbox-toolbar">
+      <span class="lightbox-counter" id="lightbox-counter">1 / 1</span>
+      <span class="lightbox-caption" id="lightbox-caption">Photo</span>
+      <button class="lightbox-close" onclick="closePhotoViewer()">✕</button>
+    </div>
+    <button class="lightbox-nav-btn" id="lightbox-prev" onclick="prevPhoto(event)">‹</button>
+    <button class="lightbox-nav-btn" id="lightbox-next" onclick="nextPhoto(event)">›</button>
+    <div id="lightbox-img-container"></div>
   </div>
   <script>
     (function() {
@@ -1104,7 +1127,6 @@ Recommended:
   <script src="features.js"></script>
   <script src="https://www.google.com/recaptcha/api.js" defer></script>
   <script src="vault-ui.js"></script>
-  <divid="watermark"class="watermark"> AUTHORIZED ACCESS • SHINEIL KEITH MATHIAS</div>
     <div id="logModal" class="modal">
       <div class="modal-content">
         <div class="modal-header"> <strong> ACCESS LOGS </strong> <button onclick="closeLogs()" style="            border:none;            background:var(--danger);            color:white;            padding:10px 16px;            border-radius:10px;            font-weight:bold;            cursor:pointer;"> CLOSE </button> </div>
@@ -2743,7 +2765,7 @@ Recommended:
 
         setTimeout(() => {
           // Hide all pages
-          ['home', 'files', 'profile'].forEach(p => {
+          ['home', 'files', 'profile', 'photos'].forEach(p => {
             const el = document.getElementById('page-' + p);
             if (el) el.style.display = 'none';
           });
@@ -2767,13 +2789,14 @@ Recommended:
           // Update sidebar nav highlight
           const navHome    = document.getElementById('nav-home');
           const navProfile = document.getElementById('nav-profile');
-          if (navHome && navProfile) {
-            [navHome, navProfile].forEach(el => {
+          const navPhotos  = document.getElementById('nav-photos');
+          if (navHome && navProfile && navPhotos) {
+            [navHome, navProfile, navPhotos].forEach(el => {
               el.style.background = 'transparent';
               el.style.border     = '1px solid transparent';
               el.style.color      = '#94a3b8';
             });
-            const active = page === 'home' ? navHome : page === 'profile' ? navProfile : null;
+            const active = page === 'home' ? navHome : page === 'profile' ? navProfile : page === 'photos' ? navPhotos : null;
             if (active) {
               active.style.background = 'rgba(37,99,235,0.22)';
               active.style.border     = '1px solid rgba(37,99,235,0.35)';
@@ -3045,6 +3068,16 @@ Recommended:
           }
           if (categoryName === 'PROFILE') {
             switchPage('profile');
+            return;
+          }
+          if (categoryName === 'PHOTOS') {
+            switchPage('photos');
+            document.querySelectorAll('#cat-list li').forEach(li => {
+              li.classList.toggle('active', li.id === 'nav-photos');
+            });
+            if (typeof renderPhotos === 'function') {
+              renderPhotos();
+            }
             return;
           }
           const data = getVaultData();
