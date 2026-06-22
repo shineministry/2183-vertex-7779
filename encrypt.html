@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PDF Encryptor</title>
+<title>Encryptor</title>
 
 <style>
 
@@ -197,13 +197,13 @@ body::after{
     </div>
 
     <div class="subtitle">
-        Encrypt PDFs or upgrade old .enc files
+        Encrypt PDFs, Images or upgrade old .enc files
     </div>
 
     <label class="file-box">
 
         <div class="file-label">
-            📁 Select PDF / ENC Files
+            📁 Select PDF, Image or ENC Files
         </div>
 
         <div class="file-info" id="fileInfo">
@@ -213,7 +213,7 @@ body::after{
         <input
             type="file"
             id="file"
-            accept=".pdf,.enc"
+            accept=".pdf,.enc,.jpg,.jpeg,.png,.gif,.webp,.bmp"
             multiple
             onchange="updateFileInfo()"
         >
@@ -463,7 +463,7 @@ if(file.name.endsWith(".enc")){
 
     a.download =
         file.name.replace(
-            ".pdf",
+            /\.(pdf|jpg|jpeg|png|gif|webp|bmp)$/i,
             ".enc"
         );
 }
