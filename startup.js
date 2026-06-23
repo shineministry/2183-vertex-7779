@@ -141,14 +141,14 @@ function runDupeScan(){
 function exportVaultConfig(){
     const cfg = {
         exportedAt: new Date().toISOString(),
-        vaultName: document.querySelector('.brand-title')?.textContent || 'FORTRESS ONLINE VAULT',
+        vaultName: (function(){ const el = document.querySelector('.brand-title'); return el ? el.textContent : ''; })() || 'FORTRESS ONLINE VAULT',
         tabTitle: document.title,
         accentColor: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),
         liteMode: window.LITE_MODE,
         settings: {
-            rememberMember: document.getElementById('rememberMemberToggle')?.checked,
-            autoSync: document.getElementById('autoSyncToggle')?.checked,
-            devMode: document.getElementById('devModeToggle')?.checked
+            rememberMember: (document.getElementById('rememberMemberToggle') || {}).checked,
+            autoSync: (document.getElementById('autoSyncToggle') || {}).checked,
+            devMode: (document.getElementById('devModeToggle') || {}).checked
         }
     };
     const blob = new Blob([JSON.stringify(cfg, null, 2)], {type:'application/json'});
