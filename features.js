@@ -114,7 +114,7 @@ async function savePMEntry() {
   const username = document.getElementById('pm-username').value.trim();
   const password = document.getElementById('pm-password').value.trim();
   const notes    = document.getElementById('pm-notes').value.trim();
-  const member   = document.getElementById('pm-member')?.value || '';
+  const pmMemberEl = document.getElementById('pm-member'); const member   = (pmMemberEl ? pmMemberEl.value : '') || '';
   if (!site || !password) { alert('Site and password are required.'); return; }
   if (!member) { alert('Please select which member this password is for.'); return; }
 
