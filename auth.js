@@ -1793,9 +1793,9 @@ hideCurtain(200);
 
    async function sendLoginEmail() {
     try {
-        const name = document.getElementById('user-name')?.value || 'Unknown';
-        const email = document.getElementById('user-email')?.value || '';
-        const purpose = document.getElementById('user-purpose')?.value || '';
+        const name = (document.getElementById('user-name') || {}).value || 'Unknown';
+        const email = (document.getElementById('user-email') || {}).value || '';
+        const purpose = (document.getElementById('user-purpose') || {}).value || '';
         const ipRes = await fetch('https://ipapi.co/json/').catch(() => null);
         let ip = 'Unknown', location = 'Unknown';
         if (ipRes && ipRes.ok) {
