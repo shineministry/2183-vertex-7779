@@ -1092,7 +1092,8 @@ button{
         width:100%;
         height:auto;
         max-height:110px;
-        overflow:hidden;
+        overflow:visible;  ← allows dropdown to escape
+        overflow-x:hidden; ← still prevents horizontal scroll
         border-right:none;
         border-bottom:1px solid var(--border);
         padding:10px;
@@ -1221,7 +1222,26 @@ button{
     input,
     select,
     textarea{
-        font-size:16px !important;
+        font-size:16px !important; /* prevents iOS auto-zoom */
+    }
+    .file-card, .doc-card { font-size: 13px !important; }
+    #cat-title { font-size: 15px !important; }
+    .timer-text { font-size: 12px !important; }
+    p, span, label, li { font-size: 13px; }
+}
+
+/* TABLET: 768px–1024px — keep vertical sidebar, compress nav */
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+    .sidebar {
+        width: 200px !important;
+        padding: 16px 10px !important;
+    }
+    .btn-outline, .btn-solid, .btn-logout {
+        font-size: 10px !important;
+        padding: 6px 10px !important;
+    }
+    .content-view {
+        padding: 20px !important;
     }
 }
 
@@ -2603,7 +2623,8 @@ button{
 }
 
 /* ── 5. MOBILE: sidebar becomes horizontal scrollable pill bar ── */
-@media (max-width: 900px) {
+/* AFTER */
+@media (max-width: 767px) {
   .sidebar {
     width: 100% !important;
     height: auto !important;
@@ -2698,7 +2719,7 @@ button{
 }
 
 /* Hide brand on mobile horizontal scroll */
-@media (max-width: 900px) {
+@media (max-width: 767px) {
   .sidebar-fortress-brand { display: none !important; }
 }
 
