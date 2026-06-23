@@ -472,7 +472,7 @@ const modeToMember = {
 };
 
 const _vaultMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "ADMIN";
-const dropdownVal = document.getElementById("member-select")?.value || "shineil";
+const dropdownEl = document.getElementById("member-select"); const dropdownVal = (dropdownEl ? dropdownEl.value : '') || "shineil";
 const member = (_vaultMode === "ADMIN")
     ? (dropdownVal || "shineil")
     : (modeToMember[_vaultMode] || dropdownVal || "shineil");
@@ -1150,7 +1150,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const sel = document.getElementById('member-select');
 
-    if (sel?.value?.trim() && sel.value !== 'all') {
+    if (sel && sel.value && sel.value.trim() && sel.value !== 'all') {
         return sel.value;
     }
 
@@ -1163,8 +1163,7 @@ memberSelect.addEventListener("change", () => {
     document.querySelectorAll('#cat-list li')
         .forEach(el => el.classList.remove('active'));
 
-    document.getElementById('nav-profile')
-        ?.classList.add('active');
+    const navProfile = document.getElementById('nav-profile'); if (navProfile) navProfile.classList.add('active');
 
     switchPage('profile');
     renderProfile(getProfileMember());
