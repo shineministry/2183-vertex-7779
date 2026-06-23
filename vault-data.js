@@ -812,12 +812,12 @@ async function renderPhotoThumb(container, file, index) {
         const vaultSessionToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
         if (!vaultSessionToken) return;
 
-        const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '');
+        const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '').replace(/^\/photos\/|^photos\//, '');
         let buffer;
 
         // Try IndexedDB cache first
         if (typeof idbGetDoc === 'function') {
-            const cached = await idbGetDoc(docKey).catch(() => null);
+            const cached = await idbGetDoc('photos/' + docKey).catch(() => null);
             if (cached) buffer = cached;
         }
 
@@ -825,14 +825,14 @@ async function renderPhotoThumb(container, file, index) {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000);
             try {
-                const res = await fetch('https://backend.shinumaths989.workers.dev/docs/' + docKey, {
+                const res = await fetch('https://backend.shinumaths989.workers.dev/photos/' + docKey, {
                     headers: { 'Authorization': 'Bearer ' + vaultSessionToken },
                     signal: controller.signal
                 });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 buffer = await res.arrayBuffer();
                 if (typeof idbSaveDoc === 'function') {
-                    idbSaveDoc(docKey, buffer).catch(() => {});
+                    idbSaveDoc('photos/' + docKey, buffer).catch(() => {});
                 }
             } finally {
                 clearTimeout(timeoutId);
