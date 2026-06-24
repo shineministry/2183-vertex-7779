@@ -778,7 +778,7 @@ function getAllPhotos() {
 
 function renderPhotos() {
     document.getElementById('cat-title').textContent = 'Photos';
-    const grid = document.getElementById('file-grid');
+    const grid = document.getElementById('photos-grid');
     if (grid) grid.classList.add('photo-grid');
     const photos = getAllPhotos();
     const countEl = document.getElementById('photo-count');
@@ -810,18 +810,16 @@ function renderPhotos() {
 async function renderPhotoThumb(container, file, index) {
     try {
         const vaultSessionToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
-        if (!vaultSessionToken) return;
-
         const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '').replace(/^\/photos\/|^photos\//, '');
         let buffer;
 
-        // Try IndexedDB cache first
+        // Try IndexedDB cache first — works without a token
         if (typeof idbGetDoc === 'function') {
             const cached = await idbGetDoc('photos/' + docKey).catch(() => null);
             if (cached) buffer = cached;
         }
 
-        if (!buffer) {
+        if (!buffer && vaultSessionToken) {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000);
             try {
