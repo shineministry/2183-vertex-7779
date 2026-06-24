@@ -2,7 +2,7 @@
    FEATURE 1: E2E ENCRYPTION
    (AES-256-GCM already used in
    openSecureFile – badge shown in
-   navbar. No additional JS needed.)
+   navbar. No additional JS needed)
 ========================= */
 
 // ============ PASSWORD MANAGER ============
