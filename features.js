@@ -1194,8 +1194,24 @@ async function checkDocExpiryReminders(){
     }
 }
 
+function saveTrustDevice() {
+  const cb = document.getElementById('trust-device');
+  if (cb && cb.checked) {
+    const mode = sessionStorage.getItem('vaultMode') || 'ADMIN';
+    const modeToMember = { SHINEIL:'shineil', KEVIN:'brother', PARENTS:'father', SHINEIL_PARENTS:'shineil', KEVIN_PARENTS:'brother', OFFICIAL:'official', ADMIN:'shineil' };
+    const member = modeToMember[mode] || 'shineil';
+    localStorage.setItem('vaultTrustInfo', JSON.stringify({
+      member,
+      user: (document.getElementById('user-name')?.value || '').trim(),
+      pass: (document.getElementById('vault-pass')?.value || '').trim(),
+      expiry: Date.now() + 14 * 86400000
+    }));
+  }
+}
+
 // Post-init hook: called at end of onCaptchaSuccess after initVault()
 function vaultPostInit(){
+  saveTrustDevice();
    const mode = sessionStorage.getItem("vaultMode");
 
 const sel = document.getElementById("member-select");
