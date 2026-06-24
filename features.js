@@ -1402,8 +1402,7 @@ async function initVaultNotifications() {
   }
 
   const all = await idbGetNotifications();
-  const currentUser = sessionStorage.getItem('vaultUser') || 'all';
-  // Filter: show Global or targeted to this user
+const currentUser = sessionStorage.getItem('vaultUser') || sessionStorage.getItem('vaultMode') || 'all';  // Filter: show Global or targeted to this user
   const relevant = all.filter(n => {
     if (n.type === 'global') return true;
     if (n.type === 'targeted') {
