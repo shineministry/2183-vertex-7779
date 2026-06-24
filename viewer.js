@@ -82,29 +82,26 @@ displayName){
         throw new Error("Missing vault session token. Please log in again.");
     }
 
-    // Extract filename key (e.g. "docs/abc.enc" → "abc.enc")
-    const docKey = path.replace(/^\/docs\/|^docs\//, '');
+    const docKey = path.replace(/^\/docs\/|^docs\//, '').replace(/^\/photos\/|^photos\//, '');
+    const isPhoto = /^(?:\/)?photos\//.test(path.replace(/^\/docs\/|^docs\//, ''));
+    const fetchPath = isPhoto ? 'photos/' + docKey : path;
 
     let buffer;
 
-    // ── Offline-first: if we already have it cached, use it immediately ──────
-    // This avoids a slow/hanging fetch when offline and ensures instant open
-    // for previously-viewed docs regardless of connectivity.
     if (typeof idbGetDoc === 'function') {
-        const precached = await idbGetDoc(docKey).catch(() => null);
+        const precached = await idbGetDoc(isPhoto ? 'photos/' + docKey : path.replace(/^\/docs\/|^docs\//, '')).catch(() => null);
         if (precached) {
             buffer = precached;
         }
     }
 
     if (!buffer) {
-        // ── Network fetch with timeout so it fails fast when offline ─────────
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000);
             let res;
             try {
-                res = await fetch("https://backend.shinumaths989.workers.dev/" + path, {
+                res = await fetch("https://backend.shinumaths989.workers.dev/" + fetchPath, {
                     headers: { "Authorization": "Bearer " + vaultSessionToken },
                     signal: controller.signal
                 });
@@ -965,11 +962,11 @@ async function updateLightboxImage() {
         const vaultSessionToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
         if (!vaultSessionToken) return;
 
-        const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '');
+        const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '').replace(/^\/photos\/|^photos\//, '');
         let buffer;
 
         if (typeof idbGetDoc === 'function') {
-            const cached = await idbGetDoc(docKey).catch(() => null);
+            const cached = await idbGetDoc('photos/' + docKey).catch(() => null);
             if (cached) buffer = cached;
         }
 
@@ -977,14 +974,14 @@ async function updateLightboxImage() {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
             try {
-                const res = await fetch('https://backend.shinumaths989.workers.dev/docs/' + docKey, {
+                const res = await fetch('https://backend.shinumaths989.workers.dev/photos/' + docKey, {
                     headers: { 'Authorization': 'Bearer ' + vaultSessionToken },
                     signal: controller.signal
                 });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 buffer = await res.arrayBuffer();
                 if (typeof idbSaveDoc === 'function') {
-                    idbSaveDoc(docKey, buffer).catch(() => {});
+                    idbSaveDoc('photos/' + docKey, buffer).catch(() => {});
                 }
             } finally {
                 clearTimeout(timeoutId);
@@ -996,7 +993,7 @@ async function updateLightboxImage() {
             return;
         }
 
-        // Decrypt
+        // Decrypt (if encrypted). If plain image, skip.
         const settingsLength = new Uint32Array(buffer.slice(0, 4))[0];
         if (settingsLength === 0 || settingsLength > buffer.byteLength - 32) {
             container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Corrupted file</div>';
