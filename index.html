@@ -3466,37 +3466,67 @@ Recommended:
         window.goToDashboard = function() {
           const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
           if (!trust || !trust.member) { showLogin(); return; }
-          const existingSession = sessionStorage.getItem('vaultSession') || sessionStorage.getItem('vaultSessionToken');
           document.getElementById('landing').classList.add('hidden');
           document.getElementById('landDropdown').classList.remove('open');
-          if (existingSession && typeof allFilesData !== 'undefined' && allFilesData) {
-            const dash = document.getElementById('vault-dashboard');
-            if (dash && dash.style.display !== 'flex') {
-              dash.style.display = 'flex';
-              dash.classList.add('dashboard-enter');
-            }
+          // Restore auth state from trust info
+          window.masterPassword = trust.pass || '';
+          masterPassword = window.masterPassword;
+          sessionStorage.setItem('vault_session_secret', window.masterPassword);
+          const memberToMode = { shineil:'ADMIN', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
+          window.VAULT_MODE = sessionStorage.getItem('vaultMode') || memberToMode[trust.member] || 'ADMIN';
+          sessionStorage.setItem('vaultMode', window.VAULT_MODE);
+          // Derive vaultUser from mode
+          const modeUserMap = { SHINEIL:'shineil', KEVIN:'brother', OFFICIAL:'official', PARENTS:'father', SHINEIL_PARENTS:'shineil', KEVIN_PARENTS:'brother', ADMIN:'shineil' };
+          sessionStorage.setItem('vaultUser', modeUserMap[window.VAULT_MODE] || trust.member || 'all');
+
+          const existingSession = sessionStorage.getItem('vaultSession') || sessionStorage.getItem('vaultSessionToken');
+          if (existingSession && typeof initVault === 'function') {
+            initVault().then(() => {
+              const dash = document.getElementById('vault-dashboard');
+              if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
+              if (typeof startSessionTimer === 'function') startSessionTimer();
+              if (typeof startInactivityMonitor === 'function') startInactivityMonitor();
+              if (typeof vaultPostInit === 'function') vaultPostInit();
+            }).catch(() => { _vaultFallbackToIDB(); });
             return;
           }
-          if (existingSession) {
-            document.getElementById('step1').style.display = '';
-            if (typeof initVault === 'function') {
-              initVault().then(() => {
-                document.getElementById('step1').style.display = 'none';
-                const dash = document.getElementById('vault-dashboard');
-                if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
-                if (typeof vaultPostInit === 'function') vaultPostInit();
-              }).catch(() => {
-                // fallback to login
-                showLogin();
-              });
-            }
-            return;
-          }
-          document.getElementById('user-name').value = trust.user || '';
-          document.getElementById('vault-pass').value = trust.pass || '';
-          document.getElementById('keep-session').checked = true;
-          if (typeof showStep2 === 'function') showStep2();
+          // No session — try loading from IndexedDB directly
+          _vaultFallbackToIDB();
         };
+        async function _vaultFallbackToIDB() {
+          try {
+            if (typeof idbGetVaultMeta !== 'function') { showLogin(); return; }
+            const cached = await idbGetVaultMeta();
+            if (!cached || !Object.keys(cached).length) { showLogin(); return; }
+            window.allFilesData = cached;
+            // Build sidebar (same logic as initVault)
+            const list = document.getElementById('cat-list');
+            if (!list) { showLogin(); return; }
+            list.innerHTML = '<li id="nav-home" onclick="selectVaultCategory(\'HOME\')" style="font-weight:700;"><span style="font-size:15px;">🏠</span><span>HOME</span></li><li id="nav-profile" onclick="selectVaultCategory(\'PROFILE\')" style="font-weight:700;"><span style="font-size:15px;">👤</span><span>PROFILE</span></li><li id="nav-photos" onclick="selectVaultCategory(\'PHOTOS\')" style="font-weight:700;"><span style="font-size:15px;">📸</span><span>PHOTOS</span></li>';
+            const categories = Object.keys(cached).filter(c => c !== 'HOME' && c !== 'PROFILE' && c !== 'PHOTOS');
+            const catIcons = { 'Guardian':'👥','Visa':'✈️','Finance':'💰','School':'🎓','Personal':'👤','Residence':'🏡','Church':'✝️','Education':'📚','Identity':'🪪','Legal':'⚖️','Financial':'💳','Ministry':'🕊️','Medical':'🏥','Insurance':'🛡️','Tax':'📋','Property':'🏠','Vehicle':'🚗','Travel':'🌍','Work':'💼','Bank':'🏦','Documents':'📄','Certificates':'🏅' };
+            categories.forEach(cat => {
+              const li = document.createElement('li');
+              const iconKey = Object.keys(catIcons).find(k => cat.toLowerCase().includes(k.toLowerCase()));
+              const icon = catIcons[cat] || (iconKey ? catIcons[iconKey] : '📁');
+              li.innerHTML = '<span style="font-size:15px;">' + icon + '</span><span>' + cat + '</span>';
+              li.onclick = () => { if (typeof selectVaultCategory === 'function') selectVaultCategory(cat); };
+              list.appendChild(li);
+            });
+            const dash = document.getElementById('vault-dashboard');
+            if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
+            // Auto-click HOME
+            const homeLi = [...list.querySelectorAll('li')].find(li => li.innerText.trim().includes('HOME'));
+            if (homeLi) homeLi.click();
+            else if (list.querySelector('li')) list.querySelector('li').click();
+            if (typeof startSessionTimer === 'function') startSessionTimer();
+            if (typeof startInactivityMonitor === 'function') startInactivityMonitor();
+            if (typeof vaultPostInit === 'function') vaultPostInit();
+          } catch (e) {
+            console.warn('[Trust] IDB fallback failed:', e);
+            showLogin();
+          }
+        }
         window.logoutTrust = function() {
           localStorage.removeItem('vaultTrustInfo');
           location.reload();
