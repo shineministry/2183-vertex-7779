@@ -732,16 +732,270 @@ Recommended:
         }
       </style>
       <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+      <style>
+        /* ── LANDING PAGE ── */
+        #landing {
+          position: fixed; inset: 0; z-index: 9000;
+          background: #f8fafc;
+          overflow-y: auto;
+          font-family: 'Inter', system-ui, sans-serif;
+        }
+        #landing.hidden { display: none; }
+
+        .land-header {
+          position: sticky; top: 0; z-index: 10;
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 16px 32px;
+          background: rgba(248,250,252,.8);
+          backdrop-filter: blur(14px);
+          border-bottom: 1px solid #e2e8f0;
+          transition: .2s;
+        }
+        .land-header.scrolled { box-shadow: 0 4px 20px rgba(0,0,0,.04); }
+        .land-title { font-size: 20px; font-weight: 900; color: #0f172a; letter-spacing: .5px; display: flex; align-items: center; gap: 10px; }
+        .land-title span { background: linear-gradient(135deg,#2563eb,#06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .land-user-btn {
+          width: 44px; height: 44px; border-radius: 50%;
+          border: 2px solid #e2e8f0; background: #fff;
+          cursor: pointer; font-size: 18px;
+          display: flex; align-items: center; justify-content: center;
+          transition: .2s; position: relative;
+          box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        }
+        .land-user-btn:hover { border-color: #2563eb; box-shadow: 0 4px 16px rgba(37,99,235,.15); }
+        .land-user-btn.has-trust { border-color: #22c55e; background: #f0fdf4; }
+
+        .land-dropdown {
+          position: absolute; top: calc(100% + 10px); right: 0;
+          width: 280px; background: #fff; border-radius: 16px;
+          border: 1px solid #e2e8f0; box-shadow: 0 16px 48px rgba(15,23,42,.1);
+          padding: 16px; display: none; z-index: 20;
+          animation: landDropIn .25s ease;
+        }
+        .land-dropdown.open { display: block; }
+        @keyframes landDropIn { from { opacity:0; transform:translateY(-8px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+        .land-dropdown .dd-user { display:flex; align-items:center; gap:10px; padding-bottom:12px; border-bottom:1px solid #f1f5f9; margin-bottom:12px; }
+        .land-dropdown .dd-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#2563eb,#06b6d4); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:15px; }
+        .land-dropdown .dd-name { font-weight:700; font-size:14px; color:#0f172a; }
+        .land-dropdown .dd-mode { font-size:11px; color:#64748b; }
+        .land-dropdown .dd-btn {
+          width:100%; padding:12px; border-radius:12px; border:none;
+          font-weight:800; font-size:13px; cursor:pointer; transition:.2s;
+          display:flex; align-items:center; justify-content:center; gap:8px;
+        }
+        .land-dropdown .dd-btn.primary { background:linear-gradient(135deg,#2563eb,#06b6d4); color:#fff; box-shadow:0 4px 14px rgba(37,99,235,.25); }
+        .land-dropdown .dd-btn.primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(37,99,235,.35); }
+        .land-dropdown .dd-btn.secondary { background:#f1f5f9; color:#475569; margin-top:8px; }
+        .land-dropdown .dd-btn.secondary:hover { background:#e2e8f0; }
+        .land-dropdown .dd-footer { margin-top:12px; padding-top:12px; border-top:1px solid #f1f5f9; font-size:11px; color:#94a3b8; text-align:center; line-height:1.6; }
+
+        /* ── HERO ── */
+        .land-hero {
+          text-align: center; padding: 80px 24px 60px;
+          position: relative; overflow: hidden;
+        }
+        .land-hero::before {
+          content: ''; position: absolute; inset: 0;
+          background: radial-gradient(ellipse at 20% 50%, rgba(37,99,235,.08) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 20%, rgba(6,182,212,.06) 0%, transparent 50%),
+                      radial-gradient(ellipse at 50% 80%, rgba(37,99,235,.04) 0%, transparent 50%);
+          pointer-events: none;
+        }
+        .land-hero h1 {
+          font-size: clamp(2.2rem, 6vw, 4rem); font-weight: 900;
+          background: linear-gradient(135deg,#0f172a 30%,#2563eb,#06b6d4);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+          background-clip: text; line-height: 1.15; margin-bottom: 16px;
+          position: relative; animation: landFadeUp .6s ease;
+        }
+        .land-hero p {
+          font-size: clamp(1rem, 2vw, 1.2rem); color: #64748b;
+          max-width: 640px; margin: 0 auto 32px; line-height: 1.7;
+          animation: landFadeUp .6s ease .1s both;
+        }
+        .land-hero .land-cta {
+          display: inline-flex; align-items: center; gap: 10px;
+          padding: 16px 36px; border-radius: 16px; border: none;
+          background: linear-gradient(135deg,#2563eb,#06b6d4);
+          color: #fff; font-weight: 800; font-size: 16px;
+          cursor: pointer; transition: .2s;
+          box-shadow: 0 8px 30px rgba(37,99,235,.3);
+          animation: landFadeUp .6s ease .2s both;
+        }
+        .land-hero .land-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(37,99,235,.4); }
+        .land-hero .land-cta:active { transform: scale(.97); }
+
+        /* ── FEATURES ── */
+        .land-features { max-width: 1100px; margin: 0 auto; padding: 20px 24px 60px; }
+        .land-features h2 {
+          text-align: center; font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 900;
+          color: #0f172a; margin-bottom: 40px;
+        }
+        .land-features h2 span { background: linear-gradient(135deg,#2563eb,#06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .land-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .land-card {
+          background: #fff; border: 1px solid #e2e8f0; border-radius: 20px;
+          padding: 28px 24px; transition: .25s;
+          animation: landFadeUp .5s ease both;
+        }
+        .land-card:hover { border-color: #bfdbfe; box-shadow: 0 8px 30px rgba(37,99,235,.08); transform: translateY(-3px); }
+        .land-card .lc-icon { font-size: 32px; margin-bottom: 12px; }
+        .land-card .lc-title { font-weight: 800; font-size: 16px; color: #0f172a; margin-bottom: 6px; }
+        .land-card .lc-desc { font-size: 13px; color: #64748b; line-height: 1.6; }
+
+        /* ── SECURITY BANNER ── */
+        .land-banner {
+          max-width: 1100px; margin: 0 auto 40px; padding: 0 24px;
+        }
+        .land-banner-inner {
+          background: linear-gradient(135deg,#0f172a,#1e3a8a);
+          border-radius: 24px; padding: 36px 32px; text-align: center;
+          color: #f8fafc;
+        }
+        .land-banner-inner h3 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+        .land-banner-inner p { font-size: 13px; color: #94a3b8; max-width: 560px; margin: 0 auto; line-height: 1.6; }
+        .land-badge-row { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-top: 20px; }
+        .land-badge { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #93c5fd; }
+
+        @keyframes landFadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+
+        .land-card:nth-child(1) { animation-delay:.05s; }
+        .land-card:nth-child(2) { animation-delay:.1s; }
+        .land-card:nth-child(3) { animation-delay:.15s; }
+        .land-card:nth-child(4) { animation-delay:.2s; }
+        .land-card:nth-child(5) { animation-delay:.25s; }
+        .land-card:nth-child(6) { animation-delay:.3s; }
+        .land-card:nth-child(7) { animation-delay:.35s; }
+        .land-card:nth-child(8) { animation-delay:.4s; }
+
+        /* ── FLOATING ORBS ── */
+        .land-orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+        .land-orb {
+          position: absolute; border-radius: 50%; opacity: .12;
+          animation: orbFloat 12s ease-in-out infinite;
+        }
+        .land-orb:nth-child(1) { width: 300px; height: 300px; background: radial-gradient(circle,#3b82f6,transparent); top: -5%; left: -5%; animation-delay:0s; }
+        .land-orb:nth-child(2) { width: 200px; height: 200px; background: radial-gradient(circle,#06b6d4,transparent); bottom: -3%; right: -3%; animation-delay:-4s; }
+        .land-orb:nth-child(3) { width: 150px; height: 150px; background: radial-gradient(circle,#8b5cf6,transparent); top: 40%; right: 10%; animation-delay:-8s; }
+        @keyframes orbFloat { 0%,100% { transform:translate(0,0) scale(1); } 33% { transform:translate(30px,-30px) scale(1.05); } 66% { transform:translate(-20px,20px) scale(.95); } }
+
+        @media(max-width:640px) {
+          .land-header { padding: 12px 16px; }
+          .land-title { font-size: 16px; }
+          .land-hero { padding: 50px 16px 40px; }
+          .land-features { padding: 10px 16px 40px; }
+          .land-card { padding: 20px 18px; }
+          .land-banner-inner { padding: 24px 20px; border-radius: 18px; }
+          .land-dropdown { width: 260px; right: -10px; }
+        }
+      </style>
 </head>
 
-<body><!-- OFFLINE BANNER -->
+<body>
+<!-- ── LANDING PAGE ── -->
+<div id="landing">
+  <div class="land-orbs"><div class="land-orb"></div><div class="land-orb"></div><div class="land-orb"></div></div>
+  <div class="land-header" id="landHeader">
+    <div class="land-title">🔐 <span>ONLINE VAULT</span></div>
+    <div style="position:relative;">
+      <button class="land-user-btn" id="landUserBtn" onclick="toggleLandDropdown()">👤</button>
+      <div class="land-dropdown" id="landDropdown">
+        <div id="dd-signed-in" style="display:none;">
+          <div class="dd-user">
+            <div class="dd-avatar" id="ddAvatar">👤</div>
+            <div><div class="dd-name" id="ddName">Member</div><div class="dd-mode" id="ddMode">Trusted Device</div></div>
+          </div>
+          <button class="dd-btn primary" onclick="goToDashboard()">🚀 Go to Dashboard</button>
+          <button class="dd-btn secondary" onclick="logoutTrust()">🔓 Sign Out</button>
+        </div>
+        <div id="dd-signed-out">
+          <div class="dd-user">
+            <div class="dd-avatar">🔐</div>
+            <div><div class="dd-name">Welcome</div><div class="dd-mode">Not logged in</div></div>
+          </div>
+          <button class="dd-btn primary" onclick="showLogin()">🔑 Login to Vault</button>
+          <button class="dd-btn secondary" onclick="toggleLandDropdown()">✕ Close</button>
+        </div>
+        <div class="dd-footer">🔒 AES-256 Encrypted · Secure Document Vault</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="land-hero">
+    <h1>Your Fortress for<br>Secure Digital Documents</h1>
+    <p>The Online Vault is a fully encrypted document management platform — store, view, share, and organize your most sensitive files with military-grade protection. No data leaves your control.</p>
+    <button class="land-cta" onclick="showLogin()">🔑 Access Your Vault →</button>
+  </div>
+
+  <div class="land-features">
+    <h2>Everything You Need in <span>One Secure Place</span></h2>
+    <div class="land-grid">
+      <div class="land-card" style="animation-delay:.05s">
+        <div class="lc-icon">🔐</div>
+        <div class="lc-title">AES-256 Encryption</div>
+        <div class="lc-desc">Every document is encrypted with AES-256-GCM before storage. Your password is hashed with PBKDF2 — not even we can read your files.</div>
+      </div>
+      <div class="land-card" style="animation-delay:.1s">
+        <div class="lc-icon">📂</div>
+        <div class="lc-title">Multi-Category Organization</div>
+        <div class="lc-desc">Organize documents into categories like Identity, Finance, Medical, Education, Legal, and more. Find anything instantly with live search.</div>
+      </div>
+      <div class="land-card" style="animation-delay:.15s">
+        <div class="lc-icon">👥</div>
+        <div class="lc-title">Family Member Profiles</div>
+        <div class="lc-desc">Store documents for the whole family — each member gets their own profile, file set, and password manager entries, all in one vault.</div>
+      </div>
+      <div class="land-card" style="animation-delay:.2s">
+        <div class="lc-icon">📄</div>
+        <div class="lc-title">Built-in PDF Viewer</div>
+        <div class="lc-desc">View PDFs directly in your browser with a secure, encrypted streaming viewer. No downloads, no third-party apps required.</div>
+      </div>
+      <div class="land-card" style="animation-delay:.25s">
+        <div class="lc-icon">🔗</div>
+        <div class="lc-title">Secure Share Links</div>
+        <div class="lc-desc">Generate time-limited, password-protected share links for any document. AES-256 encrypted end-to-end with auto-expiry.</div>
+      </div>
+      <div class="land-card" style="animation-delay:.3s">
+        <div class="lc-icon">📴</div>
+        <div class="lc-title">Offline Access</div>
+        <div class="lc-desc">Documents are cached locally for offline viewing. Access your vault even without internet — perfect for travel or low-connectivity areas.</div>
+      </div>
+      <div class="land-card" style="animation-delay:.35s">
+        <div class="lc-icon">🔑</div>
+        <div class="lc-title">Password Manager</div>
+        <div class="lc-desc">Built-in encrypted password manager per family member. Store, generate, and autofill credentials securely within the vault.</div>
+      </div>
+      <div class="land-card" style="animation-delay:.4s">
+        <div class="lc-icon">⚖️</div>
+        <div class="lc-title">Document Compare & More</div>
+        <div class="lc-desc">Compare two documents side by side, pin favourites, track access logs, and personalize with themes, animations, and 40+ advanced settings.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="land-banner">
+    <div class="land-banner-inner">
+      <h3>🛡️ Military-Grade Protection</h3>
+      <p>Your data is encrypted before it leaves your device. We use AES-256-GCM, PBKDF2 key derivation, and SHA-256 hashing — the same standards used by banks and governments worldwide.</p>
+      <div class="land-badge-row">
+        <span class="land-badge">🔒 AES-256-GCM</span>
+        <span class="land-badge">🛡️ PBKDF2 + SHA-256</span>
+        <span class="land-badge">🌐 Cloudflare R2 Backend</span>
+        <span class="land-badge">📴 Offline Cache Support</span>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ── END LANDING ── -->
+
+<!-- OFFLINE BANNER -->
   <div id="offline-banner">⚡ You are offline — Vault is running from cache (Cloudflare R2)</div><!-- HOVER PREVIEW TOOLTIP -->
   <div class="preview-tooltip" id="previewTooltip"> <canvas id="previewCanvas"></canvas>
     <div class="preview-tooltip-label" id="previewLabel"></div>
   </div><!-- COMPARE PICKER BAR -->
   <div id="compare-bar"> <span id="compare-bar-text">📂 Select 2 documents to compare</span> <button id="compare-bar-open" onclick="openCompareModal()">Compare Now</button> <button id="compare-bar-clear" onclick="clearCompare()">✕ Clear</button></div>
   <div id="white-curtain"></div><!-- =========================     STEP 1========================= -->
-  <div id="step1" class="overlay">
+  <div id="step1" class="overlay" style="display:none;">
     <div class="login-wrapper">
       <div class="header-section">
         <div class="main-logo-container">🔐</div>
@@ -3187,6 +3441,89 @@ Recommended:
         window.selectVaultCategory = selectVaultCategory;
 
         // ── Refresh Vault (preserves current page/category/member) ──
+        // ── Landing page auth helpers ──
+        window.toggleLandDropdown = function() {
+          const d = document.getElementById('landDropdown');
+          d.classList.toggle('open');
+        };
+        document.addEventListener('click', function(e) {
+          const btn = document.getElementById('landUserBtn');
+          const d = document.getElementById('landDropdown');
+          if (d && d.classList.contains('open') && btn && !btn.contains(e.target) && !d.contains(e.target)) {
+            d.classList.remove('open');
+          }
+        });
+        window.showLogin = function() {
+          document.getElementById('landing').classList.add('hidden');
+          document.getElementById('step1').style.display = '';
+          document.getElementById('landDropdown').classList.remove('open');
+          // focus username field
+          setTimeout(() => {
+            const el = document.getElementById('user-name');
+            if (el) el.focus();
+          }, 300);
+        };
+        window.goToDashboard = function() {
+          const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
+          if (!trust || !trust.member) { showLogin(); return; }
+          const existingSession = sessionStorage.getItem('vaultSession') || sessionStorage.getItem('vaultSessionToken');
+          document.getElementById('landing').classList.add('hidden');
+          document.getElementById('landDropdown').classList.remove('open');
+          if (existingSession && typeof allFilesData !== 'undefined' && allFilesData) {
+            const dash = document.getElementById('vault-dashboard');
+            if (dash && dash.style.display !== 'flex') {
+              dash.style.display = 'flex';
+              dash.classList.add('dashboard-enter');
+            }
+            return;
+          }
+          if (existingSession) {
+            document.getElementById('step1').style.display = '';
+            if (typeof initVault === 'function') {
+              initVault().then(() => {
+                document.getElementById('step1').style.display = 'none';
+                const dash = document.getElementById('vault-dashboard');
+                if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
+                if (typeof vaultPostInit === 'function') vaultPostInit();
+              }).catch(() => {
+                // fallback to login
+                showLogin();
+              });
+            }
+            return;
+          }
+          document.getElementById('user-name').value = trust.user || '';
+          document.getElementById('vault-pass').value = trust.pass || '';
+          document.getElementById('keep-session').checked = true;
+          if (typeof showStep2 === 'function') showStep2();
+        };
+        window.logoutTrust = function() {
+          localStorage.removeItem('vaultTrustInfo');
+          location.reload();
+        };
+        function checkTrustDevice() {
+          const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
+          if (trust && trust.expiry > Date.now()) {
+            const btn = document.getElementById('landUserBtn');
+            if (btn) {
+              btn.textContent = (trust.member || '👤').charAt(0).toUpperCase();
+              btn.classList.add('has-trust');
+            }
+            document.getElementById('dd-avatar').textContent = (trust.member || '👤').charAt(0).toUpperCase();
+            const nameMap = { shineil:'Shineil Mathias', brother:'Kevin Mathias', father:'Stephen Mathias', mother:'Kanchan Mathias', official:'Official' };
+            document.getElementById('ddName').textContent = nameMap[trust.member] || trust.member || 'Member';
+            document.getElementById('ddMode').textContent = '🔓 Trusted Device (expires ' + new Date(trust.expiry).toLocaleDateString() + ')';
+            document.getElementById('dd-signed-in').style.display = '';
+            document.getElementById('dd-signed-out').style.display = 'none';
+          }
+        }
+        checkTrustDevice();
+        // Sticky header shadow on scroll
+        document.addEventListener('scroll', function() {
+          const h = document.getElementById('landHeader');
+          if (h) h.classList.toggle('scrolled', window.scrollY > 20);
+        }, { passive: true });
+
         window.refreshVault = async function refreshVault() {
           const btn = document.querySelector('[data-tip="Refresh Vault"]');
           if (btn) { btn.textContent = '⏳'; btn.style.pointerEvents = 'none'; }
