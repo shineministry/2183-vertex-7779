@@ -3505,11 +3505,23 @@ Recommended:
           const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
           if (trust && trust.expiry > Date.now()) {
             const btn = document.getElementById('landUserBtn');
+            const imgSrc = (typeof profiles !== 'undefined' && profiles[trust.member]) ? profiles[trust.member].image : null;
             if (btn) {
-              btn.textContent = (trust.member || '👤').charAt(0).toUpperCase();
+              if (imgSrc) {
+                btn.innerHTML = '<img src="' + imgSrc + '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+              } else {
+                btn.textContent = (trust.member || '👤').charAt(0).toUpperCase();
+              }
               btn.classList.add('has-trust');
             }
-            document.getElementById('ddAvatar').textContent = (trust.member || '👤').charAt(0).toUpperCase();
+            const ddAvatar = document.getElementById('ddAvatar');
+            if (ddAvatar) {
+              if (imgSrc) {
+                ddAvatar.innerHTML = '<img src="' + imgSrc + '" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+              } else {
+                ddAvatar.textContent = (trust.member || '👤').charAt(0).toUpperCase();
+              }
+            }
             const nameMap = { shineil:'Shineil Mathias', brother:'Kevin Mathias', father:'Stephen Mathias', mother:'Kanchan Mathias', official:'Official' };
             document.getElementById('ddName').textContent = nameMap[trust.member] || trust.member || 'Member';
             document.getElementById('ddMode').textContent = '🔓 Trusted Device (expires ' + new Date(trust.expiry).toLocaleDateString() + ')';
