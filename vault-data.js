@@ -779,8 +779,10 @@ function getAllPhotos() {
 function renderPhotos() {
     document.getElementById('cat-title').textContent = 'Photos';
     const grid = document.getElementById('photos-grid');
-    if (grid) grid.classList.add('photo-grid');
-    const photos = getAllPhotos();
+    if (!grid) { console.warn('[Photos] #photos-grid not found'); return; }
+    grid.classList.add('photo-grid');
+    let photos = [];
+    try { photos = getAllPhotos(); } catch (e) { console.warn('[Photos] getAllPhotos error:', e); }
     const countEl = document.getElementById('photo-count');
     if (countEl) countEl.textContent = photos.length + ' photo(s)';
 
