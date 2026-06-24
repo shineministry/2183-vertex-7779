@@ -3509,7 +3509,7 @@ Recommended:
               btn.textContent = (trust.member || '👤').charAt(0).toUpperCase();
               btn.classList.add('has-trust');
             }
-            document.getElementById('dd-avatar').textContent = (trust.member || '👤').charAt(0).toUpperCase();
+            document.getElementById('ddAvatar').textContent = (trust.member || '👤').charAt(0).toUpperCase();
             const nameMap = { shineil:'Shineil Mathias', brother:'Kevin Mathias', father:'Stephen Mathias', mother:'Kanchan Mathias', official:'Official' };
             document.getElementById('ddName').textContent = nameMap[trust.member] || trust.member || 'Member';
             document.getElementById('ddMode').textContent = '🔓 Trusted Device (expires ' + new Date(trust.expiry).toLocaleDateString() + ')';
