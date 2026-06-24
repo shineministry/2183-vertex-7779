@@ -831,7 +831,7 @@ async function preCacheVaultDocs(filesData) {
       if (existing) { console.log(`[Offline cache] Already cached: ${f.file}`); continue; }
     }
     try {
-      const res = await fetch(`${WORKER_URL}/docs/${f.file}`, { headers: authHeaders });
+      const res = await fetch(`${WORKER_URL}/photos/${f.file}`, { headers: authHeaders });
       if (res.ok) {
         const buf = await res.arrayBuffer();
         if (typeof idbSaveDoc === 'function') await idbSaveDoc(f.file, buf);
@@ -1402,7 +1402,8 @@ async function initVaultNotifications() {
   }
 
   const all = await idbGetNotifications();
-const currentUser = sessionStorage.getItem('vaultUser') || sessionStorage.getItem('vaultMode') || 'all';  // Filter: show Global or targeted to this user
+  const currentUser = sessionStorage.getItem('vaultUser') || 'all';
+  // Filter: show Global or targeted to this user
   const relevant = all.filter(n => {
     if (n.type === 'global') return true;
     if (n.type === 'targeted') {
@@ -1452,7 +1453,9 @@ function _showNotifWelcomeBubble(notes, idx = 0) {
   const preview = document.getElementById('bubbleNotifPreview');
   const current = notes[idx];
   if (preview && current) {
-    preview.innerHTML = `<strong style="color:#f8fafc;">${escHtml(current.title || 'Admin Notification')}</strong><br><span style="color:#cbd5e1;">${escHtml((current.body || '').substring(0, 80))}${(current.body||'').length > 80 ? '…' : ''}</span>`;
+    const pCls = current.priority || 'info';
+    const pEmojis = { info:'ℹ️', warning:'⚠️', urgent:'🔴' };
+    preview.innerHTML = `<strong style="color:#f8fafc;">${pEmojis[pCls]||'ℹ️'} ${escHtml(current.title || 'Admin Notification')}</strong><br><span style="color:#cbd5e1;">${escHtml((current.body || '').substring(0, 80))}${(current.body||'').length > 80 ? '…' : ''}</span>`;
   }
   // Show progress indicator when there are multiple queued notifications
   let progress = document.getElementById('bubbleNotifProgress');
@@ -1514,19 +1517,27 @@ async function _renderNotifPanel() {
     listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px;">No notifications yet</div>';
     return;
   }
-  listEl.innerHTML = relevant.map(n => `
+  listEl.innerHTML = relevant.map(n => {
+    const pCls = n.priority || 'info';
+    const pColors = { info: {bg:'rgba(59,130,246,.2)',c:'#93c5fd'}, warning: {bg:'rgba(245,158,11,.2)',c:'#fcd34d'}, urgent: {bg:'rgba(239,68,68,.2)',c:'#fca5a5'} };
+    const pc = pColors[pCls] || pColors.info;
+    return `
     <div id="notif-item-${n.id}" onclick="markNotifRead(${n.id})" style="padding:10px 12px;border-radius:10px;margin-bottom:6px;cursor:pointer;background:${n.read ? 'transparent' : 'rgba(59,130,246,.07)'};border:1px solid ${n.read ? 'transparent' : 'rgba(59,130,246,.15)'};transition:.2s;">
       <div style="display:flex;align-items:flex-start;gap:8px;">
         <span style="font-size:18px;flex-shrink:0;">${n.type === 'global' ? '📢' : '🎯'}</span>
         <div style="flex:1;min-width:0;">
           <div style="font-weight:${n.read ? '600' : '800'};font-size:13px;color:#0f172a;margin-bottom:2px;">${escHtml(n.title||'Notification')}</div>
           <div style="font-size:12px;color:#475569;line-height:1.5;">${escHtml(n.body||'')}</div>
-          <div style="font-size:10px;color:#94a3b8;margin-top:4px;">${n.type === 'global' ? '🌐 Global' : '🎯 Targeted'} · ${n.timestamp ? new Date(n.timestamp).toLocaleString() : ''}</div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:800;background:${pc.bg};color:${pc.c};">${pCls.toUpperCase()}</span>
+            <span>${n.type === 'global' ? '🌐 Global' : '🎯 ' + escHtml(n.targets || 'Targeted')}</span>
+            <span>${n.timestamp ? new Date(n.timestamp).toLocaleString() : ''}</span>
+          </div>
         </div>
         ${!n.read ? '<span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;flex-shrink:0;margin-top:4px;"></span>' : ''}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
   } catch (e) {
     if (listEl) listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px;">⚠️ Could not load notifications</div>';
   }
