@@ -508,15 +508,28 @@ async function publishNotification() {
   btn.disabled = true; btn.textContent = '⏳ Publishing…';
 
   try {
-    await saveNotif({
+    const notifId = 'notif_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const notif = {
+      id:        notifId,
       type:      selectedType,
       targets:   selectedType === 'targeted' ? [...selectedUsers].join(',') : 'all',
       title,
       body,
       priority:  selectedPriority,
       timestamp: Date.now(),
-      read:      false
-    });
+      read:      false,
+      _key:      notifId
+    };
+    await saveNotif(notif);
+
+    // Sync to worker so all devices see it
+    try {
+      await fetch('https://backend.shinumaths989.workers.dev/save-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(notif)
+      });
+    } catch (_) { /* worker sync is best-effort */ }
 
     // Reset form
     document.getElementById('notif-title').value = '';
