@@ -2,7 +2,7 @@
    FEATURE 1: E2E ENCRYPTION
    (AES-256-GCM already used in
    openSecureFile – badge shown in
-   navbar. No additional JS needed)
+   navbar. No additional JS needed.)
 ========================= */
 
 // ============ PASSWORD MANAGER ============
@@ -769,16 +769,17 @@ async function idbSyncPMEntries(serverEntries) {
 //   idbGetVaultMeta()                  — returns file list | null
 
 async function fetchVaultDocWithOfflineFallback(filename) {
-  const url     = `${WORKER_URL}/docs/${filename}`;
+  const isPhoto = filename.startsWith('photos/') || filename.startsWith('/photos/');
+  const endpoint = isPhoto ? '/photos/' : '/docs/';
+  const cleanName = filename.replace(/^(?:\/)?(?:photos|docs)\//, '');
+  const url = `${WORKER_URL}${endpoint}${cleanName}`;
   const headers = { Authorization: (await getAuthHeaders()).Authorization };
 
-  // ── IDB-first: if already cached, return immediately ────────────────────
   if (typeof idbGetDoc === 'function') {
     const precached = await idbGetDoc(filename).catch(() => null);
     if (precached) return precached;
   }
 
-  // ── Network fetch with 8-second timeout so offline fails fast ───────────
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -1401,16 +1402,19 @@ async function initVaultNotifications() {
       headers: await getAuthHeaders()
     });
     if (res.ok) {
-      serverNotifs = await res.json();
-      // Cache server notifications into local IDB, preserving read status
+      const data = await res.json();
+      serverNotifs = data.notifications || [];
+      // Merge server notifications into local IDB, preserving read status
       const local = await idbGetNotifications();
-      const localIds = new Set(local.map(n => n.id));
+      const localKeys = new Set(local.map(n => n._key || (n.title + '|' + n.timestamp)));
       const db = await openNotifIDB();
       const tx = db.transaction('vault_notifications', 'readwrite');
       const store = tx.objectStore('vault_notifications');
       for (const n of serverNotifs) {
-        // Only add if not already stored locally
-        if (!localIds.has(n.id)) store.add({ ...n, read: false });
+        const key = n._key || (n.title + '|' + n.timestamp);
+        if (!localKeys.has(key)) {
+          store.add({ ...n, read: false });
+        }
       }
     }
   } catch {
