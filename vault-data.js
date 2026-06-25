@@ -1158,14 +1158,4 @@ document.addEventListener("DOMContentLoaded", () => {
 }
 
    renderProfile(getProfileMember());
-
-memberSelect.addEventListener("change", () => {
-    document.querySelectorAll('#cat-list li')
-        .forEach(el => el.classList.remove('active'));
-
-    const navProfile = document.getElementById('nav-profile'); if (navProfile) navProfile.classList.add('active');
-
-    switchPage('profile');
-    renderProfile(getProfileMember());
-});
 }); // <-- THIS MUST EXIST
