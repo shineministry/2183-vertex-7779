@@ -960,8 +960,8 @@ function renderPinnedSection(){
         const chip = document.createElement('div');
         chip.className = 'pinned-chip';
         chip.innerHTML = `📄 ${file.name} <span style="color:#ef4444;font-size:14px;margin-left:4px;" title="Unpin">✕</span>`;
-        chip.onclick = ()=> openSecureFile("docs/" + file.file, file.name);
-        chip.querySelector('span').onclick = (e)=>{
+chip.onclick = ()=> openSecureFile((file.category === 'PHOTOS' ? "photos/" : "docs/") + file.file, file.name);
+       chip.querySelector('span').onclick = (e)=>{
             e.stopPropagation();
             pinnedDocs = pinnedDocs.filter(p => p.file !== file.file);
             savePinned();
@@ -1203,8 +1203,8 @@ function saveTrustDevice() {
     const member = modeToMember[mode] || 'shineil';
     const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
     const existing = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
-    // Keep existing token so same one is reused across sessions
-    const savedToken = (existing && existing.token) ? existing.token : token;
+    // Always save the current session token (tokens expire after 1 hour, so reusing old ones causes 401)
+    const savedToken = token || (existing && existing.token) || '';
     localStorage.setItem('vaultTrustInfo', JSON.stringify({
       member,
       user: (document.getElementById('user-name')?.value || '').trim(),
