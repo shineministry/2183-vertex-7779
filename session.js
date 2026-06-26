@@ -44,6 +44,7 @@ function startSessionTimer(){
    Consolidated from auth.js resetInactivityTimer + session.js startInactivityMonitor
 ======================== */
 let _inactivityMonitorAttached = false;
+let inactivityTimer;
 
 function resetInactivityTimer() {
     clearTimeout(inactivityTimer);
