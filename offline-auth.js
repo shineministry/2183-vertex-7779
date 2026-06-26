@@ -6,7 +6,7 @@
    stored in IndexedDB (vaultOfflineDB). No server required after
    first online login.
 
-   ALL 7 VAULT MODES are cached on the device after the first
+   ALL 7 VAULT MODES MEMBERS are cached on the device after the first
    online login by any member. Every one device can then authenticate
    any of the 7 modes fully offline.
 
