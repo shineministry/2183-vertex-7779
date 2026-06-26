@@ -887,6 +887,10 @@ async function runAIIndexingOnLogin() {
 }
 
 async function decryptVaultFile(arrayBuffer) {
+  // If masterPassword isn't set yet, wait for the trusted session restore
+  if (!window.masterPassword && window._trustSessionReady) {
+    await window._trustSessionReady;
+  }
   // Read settings length (first 4 bytes)
   const settingsLength = new Uint32Array(arrayBuffer.slice(0, 4))[0];
 
