@@ -252,7 +252,6 @@ async function requestPasskeyAccess() {
                     // Inject the decrypted master password dynamically 
                     masterPassword = data.secret;
                     window.masterPassword = data.secret;
-                    sessionStorage.setItem("vault_session_secret", data.secret);
                     
                     // Route to legal screen to keep pipeline consistent
                     document.getElementById('passkey-wait').style.display = 'none';
