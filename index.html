@@ -3463,7 +3463,7 @@ Recommended:
             if (el) el.focus();
           }, 300);
         };
-        window.goToDashboard = function() {
+        window.goToDashboard = async function() {
           const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
           if (!trust || !trust.member) { showLogin(); return; }
           document.getElementById('landing').classList.add('hidden');
@@ -3473,9 +3473,11 @@ Recommended:
             sessionStorage.setItem('vaultSessionToken', trust.token);
             sessionStorage.setItem('vaultSession', trust.token);
           }
-          // Restore master password from offline auth in IDB
+          // Restore master password from offline auth in IDB — await it
+          // so window.masterPassword is set before initVault starts,
+          // preventing blank photo thumbnails that fail to decrypt.
           if (typeof restoreTrustSession === 'function') {
-            restoreTrustSession().catch(() => {});
+            try { await restoreTrustSession(); } catch (e) { console.warn('[goToDashboard] restoreTrustSession failed:', e); }
           }
           const memberToMode = { shineil:'ADMIN', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
           window.VAULT_MODE = sessionStorage.getItem('vaultMode') || memberToMode[trust.member] || 'ADMIN';
