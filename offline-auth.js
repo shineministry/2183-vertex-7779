@@ -108,7 +108,7 @@ async function _saveAuthRecordLocal({ mode, password, secret, token }) {
     return new Promise((res, rej) => {
         const tx = db.transaction('vault_auth', 'readwrite');
         tx.objectStore('vault_auth').put({
-            id:           mode,
+            id:           mode + '-pbkdf2',
             passwordHash,
             salt,
             algo:         'pbkdf2-sha256-200k',
@@ -129,7 +129,7 @@ async function _saveAuthRecordFromServerHash({ mode, passwordHash, secret, token
     return new Promise((res, rej) => {
         const tx = db.transaction('vault_auth', 'readwrite');
         tx.objectStore('vault_auth').put({
-            id:           mode,
+            id:           mode + '-sha256',
             passwordHash,
             algo:         'sha256-server',
             secret:       String(secret || ''),
@@ -147,8 +147,7 @@ async function _saveAuthRecordFromServerHash({ mode, passwordHash, secret, token
 async function syncOfflineAuth() {
     try {
         const password = window._pendingAuthPass || '';
-        const secret   = sessionStorage.getItem('vault_session_secret') ||
-                         window.masterPassword || '';
+        const secret   = window.masterPassword || '';
         const token    = sessionStorage.getItem('vaultSessionToken') ||
                          sessionStorage.getItem('vaultSession') || '';
         const mode     = sessionStorage.getItem('vaultMode') ||
@@ -229,14 +228,24 @@ function _setOfflineProgressDone() {
 async function _isOfflineDataCached() {
     try {
         const db = await _openAuthDB();
-        const count = await new Promise((res, rej) => {
-            const req = db.transaction('vault_auth', 'readonly')
-                          .objectStore('vault_auth').count();
-            req.onsuccess = () => res(req.result);
+        const row = await new Promise((res, rej) => {
+            const req = db.transaction('vault_meta', 'readonly')
+                          .objectStore('vault_meta').get('offlineSyncComplete');
+            req.onsuccess = () => res(req.result || null);
             req.onerror   = () => rej(req.error);
         });
-        return count > 0;
+        return !!row;
     } catch (e) { return false; }
+}
+
+async function _markOfflineSyncComplete() {
+    try {
+        const db = await _openAuthDB();
+        const tx = db.transaction('vault_meta', 'readwrite');
+        tx.objectStore('vault_meta').put({ key: 'offlineSyncComplete', value: true, savedAt: Date.now() });
+    } catch (e) {
+        console.warn('[OfflineAuth] Failed to mark sync complete:', e);
+    }
 }
 
 // ── syncAllMembersOffline: fetch & cache ALL 7 modes ──────────────────────
@@ -337,6 +346,7 @@ async function syncAllMembersOffline() {
     }
 
     _setOfflineProgressDone();
+    _markOfflineSyncComplete();
 
     console.log(`[OfflineAuth] All-member sync done — ${synced}/${members.length} stored.${failed.length ? ' Failed: ' + failed.join(', ') : ''}`);
     return { synced, failed };
@@ -398,11 +408,14 @@ function _restoreSession(record, passwordFallback) {
     const secret = record.secret || String(passwordFallback || '');
     window.masterPassword = String(secret);
     window.VAULT_MODE     = record.mode || record.id;
-    sessionStorage.setItem('vault_session_secret', window.masterPassword);
     sessionStorage.setItem('vaultMode', window.VAULT_MODE);
     if (record.token) {
         sessionStorage.setItem('vaultSessionToken', record.token);
         sessionStorage.setItem('vaultSession',      record.token);
+    } else {
+        const offlineToken = 'offline-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+        sessionStorage.setItem('vaultSessionToken', offlineToken);
+        sessionStorage.setItem('vaultSession',      offlineToken);
     }
 }
 
@@ -548,6 +561,41 @@ async function idbGetVaultMeta() {
     } catch (e) {
         console.warn('[OfflineAuth] idbGetVaultMeta failed:', e);
         return null;
+    }
+}
+
+// ── Trust device session restore ──────────────────────────────────────────
+async function restoreTrustSession() {
+    try {
+        const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
+        if (!trust || !trust.member) return false;
+        const modeToId = { shineil:'SHINEIL', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
+        const mode = sessionStorage.getItem('vaultMode') || modeToId[trust.member] || 'ADMIN';
+        const db = await _openAuthDB();
+        const allRecords = await new Promise((res, rej) => {
+            const req = db.transaction('vault_auth', 'readonly')
+                          .objectStore('vault_auth').getAll();
+            req.onsuccess = () => res(req.result || []);
+            req.onerror   = () => rej(req.error);
+        });
+        const record = allRecords.find(r => r.mode === mode && r.secret) || allRecords[0];
+        if (record && record.secret) {
+            _restoreSession(record, '');
+            return true;
+        }
+        return false;
+    } catch (e) {
+        console.warn('[OfflineAuth] restoreTrustSession failed:', e);
+        return false;
+    }
+}
+
+function _isTrustDevice() {
+    try {
+        const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
+        return trust && trust.expiry > Date.now();
+    } catch(e) {
+        return false;
     }
 }
 
