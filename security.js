@@ -1,5 +1,5 @@
 /* =========================
-   SCREENSHOT PROTECTION
+   SCREENSHOT PROTECTION SITE
 ========================= */
 
 function triggerScreenProtection(){
