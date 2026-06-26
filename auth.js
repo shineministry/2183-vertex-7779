@@ -1,5 +1,5 @@
 /* =========================
-   GLOBAL VARIABLES SITET
+   GLOBAL VARIABLES SITE
 ========================= */
 var masterPassword = "";
 
@@ -18,7 +18,6 @@ let sessionSeconds = 3600;
    let failedAttempts = 0;
 let lockUntil = 0;
 
-   let inactivityTimer;
 let currentBlobUrl = null;
 let currentDecryptedPdf = null;
    
@@ -215,35 +214,6 @@ function logoutVault( reason = "Logged out." ) {
 
     // Hard refresh to completely clear window context
     location.reload(true);
-}
-
-function resetInactivityTimer() {
-
-  // Set up event listeners on first call (only after login)
-  if (!window._inactivityTimerInitialized) {
-    window._inactivityTimerInitialized = true;
-    ["mousemove","mousedown","keypress","scroll","touchstart"].forEach(evt =>
-      document.addEventListener(evt, resetInactivityTimer)
-    );
-  }
-
-  clearTimeout(
-    inactivityTimer
-  );
-
-  inactivityTimer =
-    setTimeout(() => {
-
-      if (typeof _isTrustDevice === 'function' && _isTrustDevice()) {
-        resetInactivityTimer();
-        return;
-      }
-
-      logoutVault(
-        "Your session has expired."
-      );
-
-    }, 2 * 60 * 1000);
 }
 
 /* =========================
@@ -615,12 +585,12 @@ async function submitTOTP() {
     sessionStorage.setItem("vaultSessionToken", result.sessionToken);
     sessionStorage.setItem("vaultSession",       result.sessionToken);
 
-    resetInactivityTimer();
-
     window.masterPassword = result.secret ? String(result.secret) : String(pass || "");
 
     window.VAULT_MODE = result.mode;
     sessionStorage.setItem("vaultMode", result.mode);
+
+    resetInactivityTimer();
 
        // Derive vaultUser from mode for notification targeting
 const _modeUserMap = {
@@ -1572,12 +1542,12 @@ if (!sessionStorage.getItem('vaultUser')) {
             sessionStorage.setItem("vaultSessionToken", result.sessionToken);
             sessionStorage.setItem("vaultSession",       result.sessionToken);
 
-            resetInactivityTimer();
-
             window.masterPassword = result.secret ? String(result.secret) : String(pass || "");
 
             window.VAULT_MODE = result.mode;
             sessionStorage.setItem("vaultMode", result.mode);
+
+            resetInactivityTimer();
 
            // Derive vaultUser from mode for notification targeting
 const _modeUserMap = {
