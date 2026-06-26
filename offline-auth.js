@@ -312,7 +312,10 @@ async function syncAllMembersOffline() {
 
     } catch (fetchErr) {
         console.warn('[OfflineAuth] /sync-offline-members failed:', fetchErr.message);
-        _setOfflineProgressText('⚠️ Sync failed: ' + fetchErr.message);
+        const is401 = fetchErr.message.includes('401') || fetchErr.message.includes('Unauthorized');
+        _setOfflineProgressText(is401
+            ? '🔑 Session expired — log in again to enable offline access'
+            : '⚠️ Sync failed: ' + fetchErr.message);
         _updateOfflineProgress(1, 1);
     _offlineToastId = setTimeout(_hideOfflineToast, 10000);
         return { synced: 0, failed: [], error: fetchErr.message };
