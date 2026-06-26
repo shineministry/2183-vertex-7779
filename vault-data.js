@@ -766,7 +766,7 @@ function getAllPhotos() {
         const files = allFilesData[cat];
         if (!Array.isArray(files)) return;
         files.forEach(f => {
-            if (isImageFile(f)) {
+            if (cat === 'PHOTOS' || isImageFile(f)) {
                 photos.push({ ...f, category: cat });
             }
         });
