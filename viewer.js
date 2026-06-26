@@ -53,24 +53,11 @@ displayName){
 
     if(!window.masterPassword){
 
- const savedSecret =
- sessionStorage.getItem(
- "vault_session_secret"
+ alert(
+ "Session not unlocked. Please log in again."
  );
 
- if(savedSecret){
-
-  window.masterPassword =
-  savedSecret;
-
- } else {
-
-  alert(
-  "Session not unlocked. Please log in again."
-  );
-
-  return;
- }
+ return;
 }
 
     try {
@@ -1005,11 +992,11 @@ async function updateLightboxImage() {
         const iv = buffer.slice(4 + settingsLength + 16, 4 + settingsLength + 16 + 12);
         const encryptedData = buffer.slice(4 + settingsLength + 16 + 12);
 
-        const masterPw = window.masterPassword || sessionStorage.getItem('vault_session_secret');
-        if (!masterPw) {
+        if (!window.masterPassword) {
             container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Session not unlocked</div>';
             return;
         }
+        const masterPw = window.masterPassword;
         const passwordHash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(masterPw)));
         const keyMaterial = await crypto.subtle.importKey('raw', passwordHash, 'PBKDF2', false, ['deriveKey']);
         const key = await crypto.subtle.deriveKey({
