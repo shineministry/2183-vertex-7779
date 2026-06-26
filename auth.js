@@ -234,6 +234,11 @@ function resetInactivityTimer() {
   inactivityTimer =
     setTimeout(() => {
 
+      if (typeof _isTrustDevice === 'function' && _isTrustDevice()) {
+        resetInactivityTimer();
+        return;
+      }
+
       logoutVault(
         "Your session has expired."
       );
@@ -246,13 +251,6 @@ function resetInactivityTimer() {
 ========================= */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Automatically retrieve the master password if the user is already authenticated
-    const savedSecret = sessionStorage.getItem("vault_session_secret");
-    if (savedSecret) {
-        masterPassword = savedSecret;
-        window.masterPassword = savedSecret;
-    }
-
     updateClock();
     setInterval(updateClock, 1000);
 });
@@ -620,7 +618,6 @@ async function submitTOTP() {
     resetInactivityTimer();
 
     window.masterPassword = result.secret ? String(result.secret) : String(pass || "");
-    if (result.secret) sessionStorage.setItem("vault_session_secret", result.secret);
 
     window.VAULT_MODE = result.mode;
     sessionStorage.setItem("vaultMode", result.mode);
@@ -1578,7 +1575,6 @@ if (!sessionStorage.getItem('vaultUser')) {
             resetInactivityTimer();
 
             window.masterPassword = result.secret ? String(result.secret) : String(pass || "");
-            if (result.secret) sessionStorage.setItem("vault_session_secret", result.secret);
 
             window.VAULT_MODE = result.mode;
             sessionStorage.setItem("vaultMode", result.mode);
