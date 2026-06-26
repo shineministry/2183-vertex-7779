@@ -1201,10 +1201,14 @@ function saveTrustDevice() {
     const mode = sessionStorage.getItem('vaultMode') || 'ADMIN';
     const modeToMember = { SHINEIL:'shineil', KEVIN:'brother', PARENTS:'father', SHINEIL_PARENTS:'shineil', KEVIN_PARENTS:'brother', OFFICIAL:'official', ADMIN:'shineil' };
     const member = modeToMember[mode] || 'shineil';
+    const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
+    const existing = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
+    // Keep existing token so same one is reused across sessions
+    const savedToken = (existing && existing.token) ? existing.token : token;
     localStorage.setItem('vaultTrustInfo', JSON.stringify({
       member,
       user: (document.getElementById('user-name')?.value || '').trim(),
-      pass: (document.getElementById('vault-pass')?.value || '').trim(),
+      token: savedToken,
       expiry: Date.now() + 14 * 86400000
     }));
   }
