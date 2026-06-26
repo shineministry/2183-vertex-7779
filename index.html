@@ -3482,7 +3482,7 @@ Recommended:
             if (el) el.focus();
           }, 300);
         };
-        window.goToDashboard = async function() {
+        window.goToDashboard = function() {
           const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
           if (!trust || !trust.member) { showLogin(); return; }
           document.getElementById('landing').classList.add('hidden');
@@ -3492,11 +3492,21 @@ Recommended:
             sessionStorage.setItem('vaultSessionToken', trust.token);
             sessionStorage.setItem('vaultSession', trust.token);
           }
-          // Restore master password from offline auth in IDB — await it
-          // so window.masterPassword is set before initVault starts,
-          // preventing blank photo thumbnails that fail to decrypt.
+          // Restore master password from offline auth in IDB (fire-and-forget).
+          // decryptBuffer() below waits for the _trustSessionReady promise
+          // before attempting decryption, so photos render correctly even
+          // when the session hasn't finished restoring yet.
+          window._trustSessionReady = new Promise(resolve => {
+            window._resolveTrustSession = resolve;
+          });
           if (typeof restoreTrustSession === 'function') {
-            try { await restoreTrustSession(); } catch (e) { console.warn('[goToDashboard] restoreTrustSession failed:', e); }
+            restoreTrustSession().then(() => {
+              if (typeof window._resolveTrustSession === 'function') window._resolveTrustSession();
+            }).catch(() => {
+              if (typeof window._resolveTrustSession === 'function') window._resolveTrustSession();
+            });
+          } else {
+            window._resolveTrustSession();
           }
           const memberToMode = { shineil:'ADMIN', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
           window.VAULT_MODE = sessionStorage.getItem('vaultMode') || memberToMode[trust.member] || 'ADMIN';
