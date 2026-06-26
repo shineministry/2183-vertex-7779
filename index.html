@@ -3468,10 +3468,15 @@ Recommended:
           if (!trust || !trust.member) { showLogin(); return; }
           document.getElementById('landing').classList.add('hidden');
           document.getElementById('landDropdown').classList.remove('open');
-          // Restore auth state from trust info
-          window.masterPassword = trust.pass || '';
-          masterPassword = window.masterPassword;
-          sessionStorage.setItem('vault_session_secret', window.masterPassword);
+          // Restore token from trust info (same token reused)
+          if (trust.token) {
+            sessionStorage.setItem('vaultSessionToken', trust.token);
+            sessionStorage.setItem('vaultSession', trust.token);
+          }
+          // Restore master password from offline auth in IDB
+          if (typeof restoreTrustSession === 'function') {
+            restoreTrustSession().catch(() => {});
+          }
           const memberToMode = { shineil:'ADMIN', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
           window.VAULT_MODE = sessionStorage.getItem('vaultMode') || memberToMode[trust.member] || 'ADMIN';
           sessionStorage.setItem('vaultMode', window.VAULT_MODE);
