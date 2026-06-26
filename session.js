@@ -1,5 +1,5 @@
 /* =========================
-    START SESSION (idempotent)
+    START SESSION SITE (idempotent)
 ======================== */
 let _sessionTimerInterval = null;
 
