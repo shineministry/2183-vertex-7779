@@ -1,10 +1,15 @@
 /* =========================
-    START SESSION SITE (idempotent)
+    START SESSION (idempotent)
 ======================== */
 let _sessionTimerInterval = null;
 
 function startSessionTimer(){
     if (_sessionTimerInterval) return;
+    if (window.VAULT_MODE === 'ADMIN') {
+        const timer = document.getElementById('session-timer');
+        if (timer) timer.style.display = 'none';
+        return;
+    }
 
     const timer =
     document.getElementById(
@@ -36,39 +41,28 @@ function startSessionTimer(){
 
 /* =========================
    INACTIVITY (idempotent, uses addEventListener)
+   Consolidated from auth.js resetInactivityTimer + session.js startInactivityMonitor
 ======================== */
 let _inactivityMonitorAttached = false;
+
+function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    if (window.VAULT_MODE === 'ADMIN') return;
+    inactivityTimer = setTimeout(() => {
+        logoutVault("Your session has expired.");
+    }, 120000);
+}
 
 function startInactivityMonitor(){
     if (_inactivityMonitorAttached) return;
 
-    const reset = ()=>{
-
-        clearTimeout(
-        inactivityTimer);
-
-        inactivityTimer =
-        setTimeout(()=>{
-
-            if (typeof _isTrustDevice === 'function' && _isTrustDevice()) {
-                reset();
-                return;
-            }
-
-            logoutVault("Your session has expired.")
-
-        },120000);
-
-    };
-
-    ["click","mousemove","keydown","touchstart","scroll"].forEach(evt =>
-        document.addEventListener(evt, reset, { passive: true })
+    // Merge events from both legacy implementations
+    ["click","mousemove","mousedown","keydown","keypress","touchstart","scroll"].forEach(evt =>
+        document.addEventListener(evt, resetInactivityTimer, { passive: true })
     );
 
     _inactivityMonitorAttached = true;
-
-    reset();
-
+    resetInactivityTimer();
 }
 
 /* ========================= LOGOUT ========================= */
