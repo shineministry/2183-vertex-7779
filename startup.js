@@ -1,5 +1,5 @@
 /* =========================
-   STARTUP
+   STARTUP SITE
 ========================= */
 
 document.addEventListener('DOMContentLoaded', () => {
