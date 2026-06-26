@@ -1263,7 +1263,7 @@ if (sel) {
     if (mode === "KEVIN")           sel.value = "brother";
     if (mode === "OFFICIAL")        sel.value = "official";
 }
-   if (sel) sel.dispatchEvent(new Event("change"));
+   if (sel) setTimeout(() => sel.dispatchEvent(new Event("change")), 0);
 
    // ── Hide member dropdown for non-ADMIN modes ──
 const memberSelectWrap = document.getElementById('sidebar-controls-wrap');
