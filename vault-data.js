@@ -20,8 +20,8 @@ try {
     let data = {};
     try {
         const res = await fetch(
-            "https://backend.shinumaths989.workers.dev/files.json",
-            { headers: { "Authorization": "Bearer " + sessionToken } }
+            "https://backend.shinumaths989.workers.dev/files.json?_t=" + Date.now(),
+            { headers: { "Authorization": "Bearer " + sessionToken }, cache: "no-store" }
         );
 
         // 🛡️ Firewall / backend errors
