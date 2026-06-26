@@ -9,7 +9,7 @@ Passkey / approval reachability abroad depends mainly on:-
 1. Firebase regional availability
 2. Cloudflare Worker routing
 3. Internet/firewall restrictions
-4. Browser notification/backgrounds sync permissions
+4. Browser notification/background sync permissions
 
 Recommended:
 - Use Firebase Blaze plan
@@ -994,7 +994,19 @@ Recommended:
     <div class="preview-tooltip-label" id="previewLabel"></div>
   </div><!-- COMPARE PICKER BAR -->
   <div id="compare-bar"> <span id="compare-bar-text">📂 Select 2 documents to compare</span> <button id="compare-bar-open" onclick="openCompareModal()">Compare Now</button> <button id="compare-bar-clear" onclick="clearCompare()">✕ Clear</button></div>
-  <div id="white-curtain"></div><!-- =========================     STEP 1========================= -->
+  <div id="white-curtain"></div>
+  <!-- =========================     TRUSTED LOADING OVERLAY ========================= -->
+  <div id="trusted-loading" style="display:none;position:fixed;inset:0;z-index:90000;background:#f8fafc;flex-direction:column;align-items:center;justify-content:center;font-family:'Inter',system-ui,sans-serif;">
+    <div style="text-align:center;max-width:400px;padding:24px;">
+      <div style="font-size:48px;margin-bottom:20px;">🔐</div>
+      <div style="font-size:20px;font-weight:900;color:#0f172a;margin-bottom:8px;">Preparing Your Vault</div>
+      <div style="font-size:13px;color:#64748b;margin-bottom:28px;line-height:1.5;">We're securely loading your encrypted documents and personal data. This should only take a moment.</div>
+      <div style="width:100%;height:8px;border-radius:4px;background:#e2e8f0;overflow:hidden;">
+        <div id="trusted-loading-bar" style="height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#2563eb,#06b6d4);transition:width .4s ease;"></div>
+      </div>
+      <div id="trusted-loading-status" style="font-size:12px;color:#94a3b8;margin-top:10px;font-weight:600;">Initializing secure session...</div>
+    </div>
+  </div><!-- =========================     STEP 1========================= -->
   <div id="step1" class="overlay" style="display:none;">
     <div class="login-wrapper">
       <div class="header-section">
@@ -3473,6 +3485,8 @@ Recommended:
           if (e.target === this) closeFeedbackModal();
         });
         window.showLogin = function() {
+          const loadingEl = document.getElementById('trusted-loading');
+          if (loadingEl) loadingEl.style.display = 'none';
           document.getElementById('landing').classList.add('hidden');
           document.getElementById('step1').style.display = '';
           document.getElementById('landDropdown').classList.remove('open');
@@ -3482,52 +3496,83 @@ Recommended:
             if (el) el.focus();
           }, 300);
         };
-        window.goToDashboard = function() {
+        window.goToDashboard = async function() {
           const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
           if (!trust || !trust.member) { showLogin(); return; }
+          // Show loading overlay
           document.getElementById('landing').classList.add('hidden');
           document.getElementById('landDropdown').classList.remove('open');
-          // Restore token from trust info (same token reused)
+          const loadingEl = document.getElementById('trusted-loading');
+          const loadingBar = document.getElementById('trusted-loading-bar');
+          const loadingStatus = document.getElementById('trusted-loading-status');
+          loadingEl.style.display = 'flex';
+          const setProgress = (pct, msg) => {
+            if (loadingBar) loadingBar.style.width = pct + '%';
+            if (loadingStatus) loadingStatus.textContent = msg;
+          };
+          setProgress(5, 'Restoring secure session...');
+
+          // Restore token from trust info
           if (trust.token) {
             sessionStorage.setItem('vaultSessionToken', trust.token);
             sessionStorage.setItem('vaultSession', trust.token);
           }
-          // Restore master password from offline auth in IDB (fire-and-forget).
-          // decryptBuffer() below waits for the _trustSessionReady promise
-          // before attempting decryption, so photos render correctly even
-          // when the session hasn't finished restoring yet.
+
+          // Set up the trust session ready promise (decryptBuffer waits on it)
           window._trustSessionReady = new Promise(resolve => {
             window._resolveTrustSession = resolve;
           });
-          if (typeof restoreTrustSession === 'function') {
-            restoreTrustSession().then(() => {
-              if (typeof window._resolveTrustSession === 'function') window._resolveTrustSession();
-            }).catch(() => {
-              if (typeof window._resolveTrustSession === 'function') window._resolveTrustSession();
-            });
-          } else {
-            window._resolveTrustSession();
-          }
+
+          // Set VAULT_MODE
           const memberToMode = { shineil:'ADMIN', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
           window.VAULT_MODE = sessionStorage.getItem('vaultMode') || memberToMode[trust.member] || 'ADMIN';
           sessionStorage.setItem('vaultMode', window.VAULT_MODE);
-          // Derive vaultUser from mode
           const modeUserMap = { SHINEIL:'shineil', KEVIN:'brother', OFFICIAL:'official', PARENTS:'father', SHINEIL_PARENTS:'shineil', KEVIN_PARENTS:'brother', ADMIN:'shineil' };
           sessionStorage.setItem('vaultUser', modeUserMap[window.VAULT_MODE] || trust.member || 'all');
 
-          const existingSession = sessionStorage.getItem('vaultSession') || sessionStorage.getItem('vaultSessionToken');
-          if (existingSession && typeof initVault === 'function') {
-            initVault().then(() => {
-              const dash = document.getElementById('vault-dashboard');
-              if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
-              if (typeof startSessionTimer === 'function') startSessionTimer();
-              if (typeof startInactivityMonitor === 'function') startInactivityMonitor();
-              if (typeof vaultPostInit === 'function') vaultPostInit();
-            }).catch(() => { _vaultFallbackToIDB(); });
-            return;
+          try {
+            // Await session restore
+            try {
+              if (typeof restoreTrustSession === 'function') {
+                await restoreTrustSession();
+              }
+            } finally {
+              // Always resolve the promise so decryptBuffer won't hang
+              if (typeof window._resolveTrustSession === 'function') window._resolveTrustSession();
+            }
+            setProgress(40, 'Loading file catalogue...');
+
+            // Load vault data
+            const existingSession = sessionStorage.getItem('vaultSession') || sessionStorage.getItem('vaultSessionToken');
+            if (existingSession && typeof initVault === 'function') {
+              try {
+                await initVault();
+              } catch (e) {
+                console.warn('[goToDashboard] initVault failed, falling back to IDB cache:', e);
+                await _vaultFallbackToIDB();
+              }
+            } else {
+              await _vaultFallbackToIDB();
+            }
+
+            setProgress(80, 'Finalizing setup...');
+
+            // Show dashboard
+            setProgress(95, 'Opening vault...');
+            const dash = document.getElementById('vault-dashboard');
+            if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
+            if (typeof startSessionTimer === 'function') startSessionTimer();
+            if (typeof startInactivityMonitor === 'function') startInactivityMonitor();
+            if (typeof vaultPostInit === 'function') vaultPostInit();
+            setProgress(100, 'Ready!');
+          } catch (e) {
+            console.warn('[goToDashboard] Fatal error during vault load:', e);
+            try { await _vaultFallbackToIDB(); } catch (e2) {}
+            const dash = document.getElementById('vault-dashboard');
+            if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
           }
-          // No session — try loading from IndexedDB directly
-          _vaultFallbackToIDB();
+
+          setTimeout(() => { loadingEl.style.display = 'none'; }, 400);
         };
         async function _vaultFallbackToIDB() {
           try {
