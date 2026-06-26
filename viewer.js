@@ -1,5 +1,5 @@
 /* =========================
-   INDEXED DB HELPER
+   INDEXED DB HELPER SITE
 ========================= */
 
 function openVaultDB() {
