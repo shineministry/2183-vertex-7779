@@ -712,13 +712,11 @@ visibleFiles.forEach(file=>{
         `;
 
         card.onclick = ()=>{
-
-            openSecureFile(
-                "docs/" + file.file,
-                file.name
-            );
-
-        };
+    openSecureFile(
+        (file.category === 'PHOTOS' ? "photos/" : "docs/") + file.file,
+        file.name
+    );
+};
 
 // HOVER QUICK PREVIEW
         card.addEventListener('mouseenter', (e) => {
@@ -1072,13 +1070,11 @@ async function unifiedSearch(){
         `;
 
         card.onclick = ()=>{
-
-            openSecureFile(
-                "docs/" + file.file,
-                file.name
-            );
-
-        };
+    openSecureFile(
+        (file.category === 'PHOTOS' ? "photos/" : "docs/") + file.file,
+        file.name
+    );
+};
 
         grid.appendChild(card);
 
