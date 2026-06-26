@@ -497,7 +497,6 @@ function switchTab(tab) {
 async function publishNotification() {
   const title = document.getElementById('notif-title').value.trim();
   const body  = document.getElementById('notif-body').value.trim();
-
   if (!title) { shake('notif-title'); return; }
   if (!body)  { shake('notif-body');  return; }
   if (selectedType === 'targeted' && selectedUsers.size === 0) {
@@ -510,37 +509,35 @@ async function publishNotification() {
   try {
     const notifId = 'notif_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
     const notif = {
-      id:        notifId,
-      type:      selectedType,
-      targets:   selectedType === 'targeted' ? [...selectedUsers].join(',') : 'all',
-      title,
-      body,
-      priority:  selectedPriority,
-      timestamp: Date.now(),
-      read:      false,
-      _key:      notifId
+      id: notifId, type: selectedType,
+      targets: selectedType === 'targeted' ? [...selectedUsers].join(',') : 'all',
+      title, body, priority: selectedPriority,
+      timestamp: Date.now(), read: false, _key: notifId
     };
+
+    // Push to backend FIRST — this is the part that makes other devices see it
+    const res = await fetch('https://backend.shinumaths989.workers.dev/save-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(notif)
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`Backend sync failed (${res.status}): ${errText}`);
+    }
+
+    // Only cache locally after the backend confirms
     await saveNotif(notif);
 
-    // Sync to worker so all devices see it
-    try {
-      await fetch('https://backend.shinumaths989.workers.dev/save-notification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(notif)
-      });
-    } catch (_) { /* worker sync is best-effort */ }
-
-    // Reset form
     document.getElementById('notif-title').value = '';
     document.getElementById('notif-body').value  = '';
     selectedUsers.clear();
     document.querySelectorAll('.user-chip').forEach(c => c.classList.remove('active'));
 
-    showToast('✅ Notification published!', '#22c55e');
+    showToast('✅ Published to all devices', '#22c55e');
     loadPublished();
-  } catch(e) {
-    showToast('❌ Failed: ' + e.message, '#ef4444');
+  } catch (e) {
+    showToast('❌ Sync failed — other devices won\'t see this: ' + e.message, '#ef4444');
   } finally {
     btn.disabled = false; btn.textContent = '📤 Publish Notification';
   }
