@@ -103,6 +103,7 @@ async function _sha256Legacy(text) {
 async function _saveAuthRecordLocal({ mode, password, secret, token }) {
     const salt         = _randomSalt();
     const passwordHash = await _pbkdf2Hash(password, salt);
+    const loginHash    = await _sha256AuthHash(password);
     const db           = await _openAuthDB();
 
     return new Promise((res, rej) => {
@@ -110,6 +111,7 @@ async function _saveAuthRecordLocal({ mode, password, secret, token }) {
         tx.objectStore('vault_auth').put({
             id:           mode + '-pbkdf2',
             passwordHash,
+            loginHash,
             salt,
             algo:         'pbkdf2-sha256-200k',
             secret:       String(secret || password),
@@ -248,14 +250,28 @@ async function _markOfflineSyncComplete() {
     }
 }
 
-// ── Silent re-auth: use cached password to get a fresh session token ─────
-async function _silentReAuth(password) {
+// ── Silent re-auth: use stored SHA-256 login hash to get a fresh session token ─────
+async function _silentReAuth() {
     try {
-        const hash = await _sha256AuthHash(password);
+        const db = await _openAuthDB();
+        const allRecords = await new Promise((res, rej) => {
+            const req = db.transaction('vault_auth', 'readonly')
+                          .objectStore('vault_auth').getAll();
+            req.onsuccess = () => res(req.result || []);
+            req.onerror   = () => rej(req.error);
+        });
+
+        // Find a pbkdf2 record that has a loginHash stored
+        const record = allRecords.find(r => r.algo === 'pbkdf2-sha256-200k' && r.loginHash);
+        if (!record || !record.loginHash) {
+            console.warn('[OfflineAuth] _silentReAuth: no stored login hash found');
+            return null;
+        }
+
         const res = await fetch(`${_WORKER_URL}/get-secret`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ hash })
+            body: JSON.stringify({ hash: record.loginHash })
         });
         if (!res.ok) return null;
         const data = await res.json();
@@ -332,9 +348,9 @@ async function syncAllMembersOffline(_retried) {
         console.warn('[OfflineAuth] /sync-offline-members failed:', fetchErr.message);
         const is401 = fetchErr.message.includes('401') || fetchErr.message.includes('Unauthorized');
 
-        // If unauthorized (and not already a retry), try to silently re-authenticate using cached password
-        if (is401 && !_retried && window.masterPassword) {
-            const newToken = await _silentReAuth(window.masterPassword);
+        // If unauthorized (and not already a retry), try to silently re-authenticate using stored login hash
+        if (is401 && !_retried) {
+            const newToken = await _silentReAuth();
             if (newToken) {
                 sessionStorage.setItem('vaultSessionToken', newToken);
                 sessionStorage.setItem('vaultSession', newToken);
