@@ -6,8 +6,8 @@
    stored in IndexedDB (vaultOfflineDB). No server required after
    first online login.
 
-   ALL 7 VAULT MODES MEMBERS are cached on the device after the first
-   online login by any member. Every one device can then authenticate
+   ALL 7 VAULT MODES are cached on the device after the first
+   online login by any member. Every device can then authenticate
    any of the 7 modes fully offline.
 
    Algo types stored in vault_auth:
@@ -248,8 +248,26 @@ async function _markOfflineSyncComplete() {
     }
 }
 
+// ── Silent re-auth: use cached password to get a fresh session token ─────
+async function _silentReAuth(password) {
+    try {
+        const hash = await _sha256AuthHash(password);
+        const res = await fetch(`${_WORKER_URL}/get-secret`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ hash })
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.sessionToken || null;
+    } catch (e) {
+        console.warn('[OfflineAuth] _silentReAuth failed:', e.message);
+        return null;
+    }
+}
+
 // ── syncAllMembersOffline: fetch & cache ALL 7 modes ──────────────────────
-async function syncAllMembersOffline() {
+async function syncAllMembersOffline(_retried) {
     _showOfflineProgress();
     _setOfflineProgressText('Preparing site for offline access...');
     _updateOfflineProgress(0, 0);
@@ -313,6 +331,19 @@ async function syncAllMembersOffline() {
     } catch (fetchErr) {
         console.warn('[OfflineAuth] /sync-offline-members failed:', fetchErr.message);
         const is401 = fetchErr.message.includes('401') || fetchErr.message.includes('Unauthorized');
+
+        // If unauthorized (and not already a retry), try to silently re-authenticate using cached password
+        if (is401 && !_retried && window.masterPassword) {
+            const newToken = await _silentReAuth(window.masterPassword);
+            if (newToken) {
+                sessionStorage.setItem('vaultSessionToken', newToken);
+                sessionStorage.setItem('vaultSession', newToken);
+                console.log('[OfflineAuth] Re-authenticated, retrying sync...');
+                // Retry the sync with the fresh token (pass _retried=true to prevent loops)
+                return await syncAllMembersOffline(true);
+            }
+        }
+
         _setOfflineProgressText(is401
             ? '🔑 Session expired — log in again to enable offline access'
             : '⚠️ Sync failed: ' + fetchErr.message);
