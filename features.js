@@ -1399,8 +1399,9 @@ async function initVaultNotifications() {
   let serverNotifs = [];
   try {
     const res = await fetch(`${WORKER_URL}/get-notifications`, {
-      headers: await getAuthHeaders()
-    });
+  method: 'POST',
+  headers: await getAuthHeaders()
+});
     if (res.ok) {
       const data = await res.json();
       serverNotifs = data.notifications || [];
