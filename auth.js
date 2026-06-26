@@ -1578,23 +1578,14 @@ sessionStorage.setItem('vaultUser', _modeUserMap[result.mode] || 'all');
             window._pendingAuthHash   = null;
 
             // Transition to Step 2 (Legal Declaration)
-            showCurtain();
-            if (step1) {
-                step1.style.pointerEvents = "none";
-                step1.style.opacity = "0";
-                step1.style.transition = "opacity 0.3s ease";
-                setTimeout(() => {
-                    step1.style.display = "none";
-                    const step2 = document.getElementById("step2");
-                    if (step2) { step2.style.display = "flex"; step2.style.opacity = "1"; }
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    hideCurtain(150);
-                }, 300);
-            } else {
-                const step2 = document.getElementById("step2");
-                if (step2) { step2.style.display = "flex"; step2.style.opacity = "1"; }
-                hideCurtain(150);
-            }
+showCurtain();
+setTimeout(() => {
+    if (step1) step1.style.display = "none";
+    const step2 = document.getElementById("step2");
+    if (step2) { step2.style.display = "flex"; step2.style.opacity = "1"; }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    hideCurtain(350);
+}, 350);
         }
 
     } catch (e) {
