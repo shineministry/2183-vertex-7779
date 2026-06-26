@@ -50,6 +50,11 @@ function startInactivityMonitor(){
         inactivityTimer =
         setTimeout(()=>{
 
+            if (typeof _isTrustDevice === 'function' && _isTrustDevice()) {
+                reset();
+                return;
+            }
+
             logoutVault("Your session has expired.")
 
         },120000);
