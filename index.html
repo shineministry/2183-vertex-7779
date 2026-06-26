@@ -6,7 +6,7 @@
 <!--
 NOTE:
 Passkey / approval reachability abroad depends mainly on:-
-1. Firebase regional availability everywhere
+1. Firebase regional availability
 2. Cloudflare Worker routing
 3. Internet/firewall restrictions
 4. Browser notification/background sync permissions
@@ -1201,10 +1201,10 @@ Recommended:
         <div class="nav-brand">
           <div class="brand-title"> <span class="brand-full">FORTRESS ONLINE VAULT</span> <span class="brand-short">🔐 F.O.V</span> </div>
         </div> <!-- RIGHT: DESKTOP BUTTONS (hidden on mobile) -->
-        <div class="nav-auth nav-auth-desktop"> <button id="vaultModesNavBtn" class="btn-outline" onclick="openVaultModes()">⚡ MODES</button> <button class="btn-outline icon-btn" data-tip="Favourites" onclick="showPinned()">⭐</button> <button class="btn-outline icon-btn" data-tip="Compare Documents" onclick="startCompareMode()" id="compareNavBtn">⚖️</button> <button class="btn-outline icon-btn" data-tip="Access Log" onclick="openLogs()">📋</button> <button class="btn-outline icon-btn" data-tip="Password Manager" onclick="openPasswordManager()">🔑</button> <button class="btn-solid icon-btn" data-tip="Emergency Contact" onclick="openEmergencyContact()">🆘</button> <button class="icon-btn" data-tip="Vault AI Assistant" onclick="openAIChat()" style="width:42px;height:42px;padding:0;border:none;border-radius:10px;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 2px 10px rgba(124,77,255,0.35);transition:transform .15s;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">✦</button> <button class="btn-outline icon-btn" data-tip="Refresh Vault" onclick="refreshVault()" style="font-size:13px;font-weight:700;">🔄</button><button class="btn-logout icon-btn" data-tip="Logout" onclick="logoutVault('Logged out successfully.')">🔓</button> </div> <!-- RIGHT: MOBILE BUTTONS (hidden on desktop) -->
+        <div class="nav-auth nav-auth-desktop"> <button id="vaultModesNavBtn" class="btn-outline" onclick="openVaultModes()">⚡ MODES</button> <button class="btn-outline icon-btn" data-tip="Favourites" onclick="showPinned()">⭐</button> <button class="btn-outline icon-btn" data-tip="Compare Documents" onclick="startCompareMode()" id="compareNavBtn">⚖️</button> <button class="btn-outline icon-btn" data-tip="Access Log" onclick="openLogs()">📋</button> <button class="btn-outline icon-btn" data-tip="Password Manager" onclick="openPasswordManager()">🔑</button> <button class="btn-solid icon-btn" data-tip="Emergency Contact" onclick="openEmergencyContact()">🆘</button> <button class="icon-btn" data-tip="Vault AI Assistant" onclick="openAIChat()" style="width:42px;height:42px;padding:0;border:none;border-radius:10px;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 2px 10px rgba(124,77,255,0.35);transition:transform .15s;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">✦</button> <button class="btn-outline icon-btn" data-tip="Refresh Vault" onclick="refreshVault()" style="font-size:13px;font-weight:700;">🔄</button><button class="btn-outline icon-btn" data-tip="Feedback" onclick="openFeedbackModal()" style="font-size:13px;font-weight:700;">💬</button><button class="btn-logout icon-btn" data-tip="Logout" onclick="logoutVault('Logged out successfully.')">🔓</button> </div> <!-- RIGHT: MOBILE BUTTONS (hidden on desktop) -->
         <div class="nav-auth-mobile"> <button class="nav-icon-btn" onclick="toggleNotifications()" title="Notifications" style="font-size:16px;">🔔</button> <button class="nav-icon-btn nav-emergency-btn" onclick="openEmergencyContact()" title="Emergency Contact">🆘</button> <button onclick="openAIChat()" title="Vault AI" style="width:38px;height:38px;border:none;border-radius:50%;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(124,77,255,0.4);flex-shrink:0;">✦</button> <button class="nav-icon-btn nav-logout-btn" onclick="logoutVault('Logged out successfully.')" title="Logout">🔓</button> <button class="nav-icon-btn nav-menu-btn" onclick="toggleMobileMenu()" title="More options" id="mobileMenuBtn">☰</button> </div>
       </div> <!-- MOBILE DROPDOWN MENU -->
-      <div id="mobile-nav-menu" class="mobile-nav-menu"> <button id="vaultModesMobileBtn" onclick="openVaultModes();toggleMobileMenu()">⚡ Vault Modes</button> <button onclick="showPinned();toggleMobileMenu()">⭐ Favourites</button> <button onclick="openPasswordManager();toggleMobileMenu()">🔑 Passwords</button> <button onclick="startCompareMode();toggleMobileMenu()" id="compareNavBtn">⚖️ Compare</button> <button onclick="openLogs();toggleMobileMenu()">📋 Access Log</button> <button onclick="refreshVault();toggleMobileMenu()">🔄 Refresh Vault</button> </div>
+      <div id="mobile-nav-menu" class="mobile-nav-menu"> <button id="vaultModesMobileBtn" onclick="openVaultModes();toggleMobileMenu()">⚡ Vault Modes</button> <button onclick="showPinned();toggleMobileMenu()">⭐ Favourites</button> <button onclick="openPasswordManager();toggleMobileMenu()">🔑 Passwords</button> <button onclick="startCompareMode();toggleMobileMenu()" id="compareNavBtn">⚖️ Compare</button> <button onclick="openLogs();toggleMobileMenu()">📋 Access Log</button> <button onclick="openFeedbackModal();toggleMobileMenu()">💬 Feedback</button> <button onclick="refreshVault();toggleMobileMenu()">🔄 Refresh Vault</button> </div>
     </div>
     <div class="main-container">
       <aside class="sidebar">
@@ -1413,6 +1413,15 @@ Recommended:
           <div> <strong>Phone:</strong> +91 8605586173 </div>
           <div> <strong>Email:</strong> shinumaths989@gmail.com </div>
           <div> <strong>Location:</strong> Maharashtra, India </div>
+        </div>
+      </div>
+    </div>
+    <!-- =========================     FEEDBACK MODAL ========================= -->
+    <div id="feedbackModal" class="modal">
+      <div class="modal-content" style="max-width:700px;height:90%;">
+        <div class="modal-header"> <strong> 💬 FEEDBACK & SUGGESTIONS </strong> <button onclick="closeFeedbackModal()" style="border:none;background:var(--danger);color:white;padding:10px 16px;border-radius:10px;font-weight:bold;cursor:pointer;">CLOSE</button> </div>
+        <div style="flex:1;overflow:hidden;background:#f8fafc;">
+          <iframe src="https://forms.gle/Pv5LTq7APgFj98rp6" style="width:100%;height:100%;border:none;" allowfullscreen loading="lazy"></iframe>
         </div>
       </div>
     </div>
@@ -3453,6 +3462,16 @@ Recommended:
             d.classList.remove('open');
           }
         });
+        window.openFeedbackModal = function() {
+          document.getElementById('feedbackModal').style.display = 'block';
+        };
+        window.closeFeedbackModal = function() {
+          document.getElementById('feedbackModal').style.display = 'none';
+        };
+        // Close feedback modal on backdrop click
+        document.getElementById('feedbackModal').addEventListener('click', function(e) {
+          if (e.target === this) closeFeedbackModal();
+        });
         window.showLogin = function() {
           document.getElementById('landing').classList.add('hidden');
           document.getElementById('step1').style.display = '';
@@ -3589,8 +3608,9 @@ Recommended:
             try {
               const token = sessionStorage.getItem('vaultSession');
               if (token) {
-                const res = await fetch('https://backend.shinumaths989.workers.dev/files.json', {
-                  headers: { Authorization: 'Bearer ' + token }
+                const res = await fetch('https://backend.shinumaths989.workers.dev/files.json?_t=' + Date.now(), {
+                  headers: { Authorization: 'Bearer ' + token },
+                  cache: 'no-store'
                 });
                 if (res.ok) {
                   const raw = await res.json();
