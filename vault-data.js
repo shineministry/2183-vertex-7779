@@ -870,6 +870,10 @@ function getImageMime(file) {
 
 async function decryptBuffer(buffer) {
     try {
+        // If masterPassword isn't set yet, wait for the trusted session restore
+        if (!window.masterPassword && window._trustSessionReady) {
+            await window._trustSessionReady;
+        }
         const settingsLength = new Uint32Array(buffer.slice(0, 4))[0];
         if (settingsLength === 0 || settingsLength > buffer.byteLength - 32) return null;
         const settingsBytes = buffer.slice(4, 4 + settingsLength);
