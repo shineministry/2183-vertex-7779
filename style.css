@@ -539,7 +539,7 @@ button{
 .brand-full{ display:inline; }
 .brand-short{ display:none; }
 
-@media screen and (max-width:767px){
+@media screen and (max-width:767.98px){
     .brand-full{ display:none; }
     .brand-short{ display:inline; }
 }
@@ -1054,7 +1054,7 @@ button{
    (ANDROID + IPHONE)
 ========================= */
 
-@media screen and (max-width:767px){
+@media screen and (max-width:767.98px){
 
     html,
     body{
@@ -1230,11 +1230,39 @@ button{
     p, span, label, li { font-size: 13px; }
 }
 
-/* TABLET: 768px–1024px — keep vertical sidebar, compress nav */
-@media screen and (min-width: 768px) and (max-width: 1024px) {
+/* TABLET: 768px–1199px — keep vertical sidebar, desktop nav */
+@media screen and (min-width: 768px) and (max-width: 1199px) {
     .sidebar {
         width: 200px !important;
+        height: 100% !important;1
+        max-height: none !important;
+        flex-direction: column !important;
         padding: 16px 10px !important;
+        background: linear-gradient(160deg,#0f172a,#1e3a5f) !important;
+        border-right: 1px solid var(--border) !important;
+        border-bottom: none !important;
+        overflow: visible !important;
+    }
+    .main-container {
+        flex-direction: row !important;
+    }
+    #cat-list {
+        display: block !important;
+        overflow-x: visible !important;
+        overflow-y: auto !important;
+    }
+    #cat-list li {
+        white-space: normal !important;
+        border-radius: 10px !important;
+        padding: 10px 14px !important;
+        font-size: 13px !important;
+        flex-shrink: unset !important;
+    }
+    .nav-auth-desktop {
+        display: flex !important;
+    }
+    .nav-auth-mobile {
+        display: none !important;
     }
     .btn-outline, .btn-solid, .btn-logout {
         font-size: 10px !important;
@@ -1737,7 +1765,7 @@ button{
     overflow: auto;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
     .lightbox-nav-btn {
         width: 40px;
         height: 40px;
@@ -2624,7 +2652,7 @@ button{
 
 /* ── 5. MOBILE: sidebar becomes horizontal scrollable pill bar ── */
 /* AFTER */
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   .sidebar {
     width: 100% !important;
     height: auto !important;
@@ -2719,7 +2747,7 @@ button{
 }
 
 /* Hide brand on mobile horizontal scroll */
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   .sidebar-fortress-brand { display: none !important; }
 }
 
