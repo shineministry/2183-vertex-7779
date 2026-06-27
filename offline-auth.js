@@ -633,6 +633,19 @@ async function restoreTrustSession() {
             _restoreSession(record, '');
             return true;
         }
+        // Fallback: use secret stored in trust info (set by saveTrustDevice)
+        if (trust.secret) {
+            window.masterPassword = String(trust.secret);
+            window.VAULT_MODE = mode;
+            sessionStorage.setItem('vaultMode', window.VAULT_MODE);
+            if (trust.token) {
+                sessionStorage.setItem('vaultSessionToken', trust.token);
+                sessionStorage.setItem('vaultSession', trust.token);
+            }
+            console.log('[OfflineAuth] Trust session restored from vaultTrustInfo.secret');
+            return true;
+        }
+        console.warn('[OfflineAuth] restoreTrustSession: no secret found in IDB or trust info');
         return false;
     } catch (e) {
         console.warn('[OfflineAuth] restoreTrustSession failed:', e);
