@@ -1430,35 +1430,25 @@ Recommended:
     </div>
     <!-- =========================     STATUS MODAL ========================= -->
     <div id="statusModal" class="modal">
-      <div class="modal-content" style="max-width:600px;">
-        <div class="modal-header"> <strong>📊 VAULT STATUS</strong> <button onclick="closeStatusModal()" style="border:none;background:var(--danger);color:white;padding:10px 16px;border-radius:10px;font-weight:bold;cursor:pointer;">CLOSE</button> </div>
-        <div class="status-dashboard" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
-          <div class="status-row" style="display:flex;align-items:center;gap:12px;">
-            <div style="flex:1;font-weight:700;font-size:13px;">🔐 Vault Session</div>
-            <div style="width:140px;height:8px;border-radius:4px;background:#e2e8f0;overflow:hidden;"><div id="stat-session-bar" style="height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#22c55e,#16a34a);transition:width .5s;"></div></div>
-            <div id="stat-session-label" style="font-size:12px;color:#64748b;min-width:70px;text-align:right;">Checking...</div>
+      <div class="modal-content" style="max-width:680px;">
+        <div class="modal-header" style="background:linear-gradient(135deg,#0f172a,#1e293b);color:#f8fafc;padding:16px 20px;border-radius:24px 24px 0 0;display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:22px;">🔐</span>
+            <strong style="font-size:15px;letter-spacing:.3px;">VAULT SYSTEM STATUS</strong>
           </div>
-          <div class="status-row" style="display:flex;align-items:center;gap:12px;">
-            <div style="flex:1;font-weight:700;font-size:13px;">📡 Backend Connection</div>
-            <div style="width:140px;height:8px;border-radius:4px;background:#e2e8f0;overflow:hidden;"><div id="stat-backend-bar" style="height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#22c55e,#16a34a);transition:width .5s;"></div></div>
-            <div id="stat-backend-label" style="font-size:12px;color:#64748b;min-width:70px;text-align:right;">Checking...</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button id="statusRefreshBtn" onclick="_updateStatusDashboard()" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#f8fafc;font-size:11px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
+            <button onclick="closeStatusModal()" style="padding:8px 14px;border-radius:8px;border:none;background:rgba(239,68,68,.7);color:white;font-size:12px;font-weight:700;cursor:pointer;">✕ CLOSE</button>
           </div>
-          <div class="status-row" style="display:flex;align-items:center;gap:12px;">
-            <div style="flex:1;font-weight:700;font-size:13px;">💾 Offline Cache</div>
-            <div style="width:140px;height:8px;border-radius:4px;background:#e2e8f0;overflow:hidden;"><div id="stat-cache-bar" style="height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#22c55e,#16a34a);transition:width .5s;"></div></div>
-            <div id="stat-cache-label" style="font-size:12px;color:#64748b;min-width:70px;text-align:right;">Checking...</div>
-          </div>
-          <div class="status-row" style="display:flex;align-items:center;gap:12px;">
-            <div style="flex:1;font-weight:700;font-size:13px;">🔑 Encryption Ready</div>
-            <div style="width:140px;height:8px;border-radius:4px;background:#e2e8f0;overflow:hidden;"><div id="stat-encrypt-bar" style="height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#22c55e,#16a34a);transition:width .5s;"></div></div>
-            <div id="stat-encrypt-label" style="font-size:12px;color:#64748b;min-width:70px;text-align:right;">Checking...</div>
-          </div>
-          <div class="status-row" style="display:flex;align-items:center;gap:12px;">
-            <div style="flex:1;font-weight:700;font-size:13px;">📄 Files Loaded</div>
-            <div style="width:140px;height:8px;border-radius:4px;background:#e2e8f0;overflow:hidden;"><div id="stat-files-bar" style="height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#22c55e,#16a34a);transition:width .5s;"></div></div>
-            <div id="stat-files-label" style="font-size:12px;color:#64748b;min-width:70px;text-align:right;">Checking...</div>
-          </div>
-          <div style="margin-top:8px;padding:12px;border-radius:10px;background:#f8fafc;text-align:center;font-size:12px;color:#64748b;" id="stat-version">🔒 FORTRESS ONLINE VAULT · AES-256-GCM · Session: <span id="stat-mode-label">-</span></div>
+        </div>
+        <div style="overflow-y:auto;flex:1;padding:16px 20px 20px;">
+          <!-- Overall Status Banner -->
+          <div id="overall-status-banner" style="padding:14px 18px;border-radius:14px;margin-bottom:16px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;color:#166534;"> 🟢 <span>All Systems Operational</span> </div>
+          <!-- Components -->
+          <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase;">Components</div>
+          <div id="status-components" style="display:flex;flex-direction:column;gap:4px;"></div>
+          <!-- Version footer -->
+          <div style="margin-top:14px;padding:10px 12px;border-radius:10px;background:#f1f5f9;text-align:center;font-size:11px;color:#64748b;"> FORTRESS ONLINE VAULT · AES-256-GCM · Session: <span id="stat-mode-label">-</span> · <span id="stat-version-label">v202606</span> </div>
         </div>
       </div>
     </div>
@@ -3526,11 +3516,41 @@ Recommended:
         document.getElementById('feedbackModal').addEventListener('click', function(e) {
           if (e.target === this) closeFeedbackModal();
         });
+        // ── Status component definitions (28 total) ──
+        const STATUS_COMPONENTS = [
+          { id:'auth', icon:'🔐', label:'Authentication', check:async()=>{let o=!!window.masterPassword||!!sessionStorage.getItem('vaultSession');return{state:o?'operational':'major',labelText:o?'Verified':'Not authenticated',detail:o?'Master password and session present':'Login required'}}},
+          { id:'backend', icon:'📡', label:'Backend', check:async()=>{let r=await _checkBackend();return{state:r.ok?'operational':'major',labelText:r.ok?'Online ('+r.status+')':'Offline',detail:r.ok?'Worker reachable':r.error||'No connection'}}},
+          { id:'ai', icon:'🤖', label:'Artificial Intelligence', check:async()=>{let o=typeof window.handleAI==='function'||typeof window.openAIChat==='function';return{state:o?'operational':'degraded',labelText:o?'Available':'Unavailable',detail:o?'AI assistant ready':'AI module not loaded'}}},
+          { id:'session', icon:'⏱️', label:'Vault Session', check:async()=>{let t=sessionStorage.getItem('vaultSession');return{state:t?'operational':'major',labelText:t?'Active':'None',detail:t?'Token present':'No session token'}}},
+          { id:'encryption', icon:'🔑', label:'Encryption', check:async()=>{let o=!!window.masterPassword;return{state:o?'operational':'major',labelText:o?'Ready':'Missing key',detail:o?'AES-256-GCM key loaded':'Master password not set'}}},
+          { id:'cache', icon:'💾', label:'Offline Cache', check:async()=>{try{let m=typeof idbGetVaultMeta==='function'?await idbGetVaultMeta():null;return{state:m?'operational':'degraded',labelText:m?'Cached':'Empty',detail:m?'IDB meta found':'No cached file list'}}catch(e){return{state:'major',labelText:'Error',detail:e.message}}}},
+          { id:'favourites', icon:'⭐', label:'Favourites', check:async()=>{try{let p=JSON.parse(localStorage.getItem('vaultPinned')||'[]');return{state:Array.isArray(p)?'operational':'degraded',labelText:(p.length||0)+' pinned',detail:Array.isArray(p)?'Pins loaded':'No pins data'}}catch(e){return{state:'degraded',labelText:'Error',detail:e.message}}}},
+          { id:'compare', icon:'⚖️', label:'Compare Documents', check:async()=>{let o=typeof startCompareMode==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Compare module loaded':'Feature not loaded'}}},
+          { id:'logs', icon:'📋', label:'Access Logs', check:async()=>{let o=typeof openLogs==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Log viewer available':'Log module not loaded'}}},
+          { id:'pm', icon:'🔑', label:'Password Manager', check:async()=>{let o=typeof openPasswordManager==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'PM module loaded':'Password manager not loaded'}}},
+          { id:'emergency', icon:'🆘', label:'Emergency Contact', check:async()=>{let o=typeof openEmergencyContact==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Emergency module loaded':'Not loaded'}}},
+          { id:'feedback', icon:'💬', label:'Feedback', check:async()=>{let o=typeof openFeedbackModal==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Feedback form ready':'Not loaded'}}},
+          { id:'refresh', icon:'🔄', label:'Hard Refresh', check:async()=>{let o=typeof refreshVault==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Refresh function available':'Not loaded'}}},
+          { id:'files', icon:'📄', label:'Files Loaded', check:async()=>{let d=window.allFilesData||{};let k=Object.keys(d);return{state:k.length>0?'operational':'degraded',labelText:k.length+' categories',detail:k.length>0?k.join(', '):'No files loaded'}}},
+          { id:'logout', icon:'🚪', label:'Logout', check:async()=>{let o=typeof logoutVault==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Logout function available':'Not loaded'}}},
+          { id:'sw', icon:'⚡', label:'Service Worker', check:async()=>{let o='serviceWorker'in navigator&&!!navigator.serviceWorker.controller;return{state:o?'operational':'degraded',labelText:o?'Registered':'Not registered',detail:o?'SW active for offline':navigator.onLine?'No service worker':'Offline mode'}}},
+          { id:'sharing', icon:'🔗', label:'Secure Link Sharing', check:async()=>{let o=typeof generateShareLink==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Share module loaded':'Not loaded'}}},
+          { id:'sha256', icon:'🔒', label:'SHA256', check:async()=>{let o=typeof crypto.subtle?.digest==='function';return{state:o?'operational':'major',labelText:o?'Available':'Unsupported',detail:o?'Web Crypto SHA-256 ready':'Browser lacks support'}}},
+          { id:'security', icon:'🛡️', label:'Security', check:async()=>{let o=typeof window.securityAlert==='function'||typeof window.sendSecurityAlert==='function';return{state:o?'operational':'degraded',labelText:o?'Armed':'Unavailable',detail:o?'Security monitor active':'Module not loaded'}}},
+          { id:'notif', icon:'🔔', label:'Notification', check:async()=>{try{let n=typeof idbGetNotifications==='function'?await idbGetNotifications():[];return{state:Array.isArray(n)?'operational':'degraded',labelText:(n.length||0)+' messages',detail:Array.isArray(n)?'Notification system ready':'Not loaded'}}catch(e){return{state:'degraded',labelText:'Error',detail:e.message}}}},
+          { id:'datetime', icon:'📅', label:'Date and Time', check:async()=>{let e=document.getElementById('passport-datetime');let o=e&&e.textContent&&!e.textContent.includes('Loading');return{state:o?'operational':'degraded',labelText:o?'Synced':'Pending',detail:o?e.textContent:'DateTime not loaded'}}},
+          { id:'pdf', icon:'📕', label:'PDF.js', check:async()=>{let o=typeof pdfjsLib?.getDocument==='function';return{state:o?'operational':'degraded',labelText:o?'Loaded':'Unavailable',detail:o?'PDF renderer ready':'PDF.js not loaded'}}},
+          { id:'startup', icon:'🚀', label:'Session Startup', check:async()=>{let o=typeof startSessionTimer==='function'&&typeof startInactivityMonitor==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Pending',detail:o?'Timer and monitor active':'Startup modules not loaded'}}},
+          { id:'offline', icon:'📴', label:'Offline Authentication', check:async()=>{let o=typeof offlineLogin==='function'||typeof restoreTrustSession==='function';return{state:o?'operational':'degraded',labelText:o?'Available':'Unavailable',detail:o?'Offline auth module ready':'Not loaded'}}},
+          { id:'design', icon:'🎨', label:'Design and Animation', check:async()=>{let o=!window.LITE_MODE;return{state:'operational',labelText:o?'Animated':'Lite mode',detail:o?'Full animations enabled':'Lite mode active'}}},
+          { id:'preview', icon:'👁️', label:'Quick Preview', check:async()=>{let o=typeof openPreview==='function'||typeof showPreview==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Preview module loaded':'Not loaded'}}},
+          { id:'decrypt', icon:'🔓', label:'Decryption', check:async()=>{let o=typeof decryptBuffer==='function';return{state:o?'operational':'major',labelText:o?'Ready':'Missing',detail:o?'Decrypt function available':'Crypto module not loaded'}}},
+          { id:'mobile', icon:'📱', label:'Mobile Responsiveness', check:async()=>{let o=typeof toggleMobileMenu==='function';return{state:o?'operational':'degraded',labelText:o?'Adaptive':'Fixed',detail:o?'Responsive layout active':'Mobile menu not loaded'}}},
+        ];
         window.openStatusModal = function() {
           const modal = document.getElementById('statusModal');
           if (modal) modal.style.display = 'flex';
-          // Refresh status bars
-          _updateAllStatusBars();
+          _updateStatusDashboard();
         };
         window.closeStatusModal = function() {
           animateCloseModal('statusModal');
@@ -3538,41 +3558,77 @@ Recommended:
         document.getElementById('statusModal').addEventListener('click', function(e) {
           if (e.target === this) closeStatusModal();
         });
-        async function _updateAllStatusBars() {
-          const sessionToken = sessionStorage.getItem('vaultSession') || '';
+        async function _updateStatusDashboard() {
           const mode = window.VAULT_MODE || sessionStorage.getItem('vaultMode') || '-';
-          document.getElementById('stat-mode-label').textContent = mode;
-          // Session status
-          _setBar('stat-session-bar', 'stat-session-label', sessionToken ? 100 : 0, sessionToken ? '✓ Active' : '✗ None');
-          // Backend check
-          const backendOk = await _checkBackend(sessionToken);
-          _setBar('stat-backend-bar', 'stat-backend-label', backendOk ? 100 : 0, backendOk ? '✓ Online' : '✗ Offline');
-          // Cache check
-          let cacheOk = false;
-          try { const m = typeof idbGetVaultMeta === 'function' ? await idbGetVaultMeta() : null; cacheOk = !!m; } catch(e) {}
-          _setBar('stat-cache-bar', 'stat-cache-label', cacheOk ? 100 : 0, cacheOk ? '✓ Cached' : '✗ Empty');
-          // Encryption check
-          const encOk = !!window.masterPassword;
-          _setBar('stat-encrypt-bar', 'stat-encrypt-label', encOk ? 100 : 0, encOk ? '✓ Ready' : '✗ Missing');
-          // Files check
-          const filesOk = window.allFilesData && Object.keys(window.allFilesData).length > 0;
-          _setBar('stat-files-bar', 'stat-files-label', filesOk ? 100 : 0, filesOk ? Object.keys(window.allFilesData).length + ' cats' : '✗ None');
+          const el = document.getElementById('stat-mode-label');
+          if (el) el.textContent = mode;
+          const versionEl = document.getElementById('stat-version-label');
+          if (versionEl) versionEl.textContent = window.SHINE_AUTH_VERSION || 'v202606';
+          const container = document.getElementById('status-components');
+          if (!container) return;
+          container.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">⏳ Checking all systems...</div>';
+          const results = [];
+          let worst = 'operational';
+          const order = { operational:0, degraded:1, partial:2, major:3, maintenance:4 };
+          for (const comp of STATUS_COMPONENTS) {
+            try {
+              const r = await comp.check();
+              r.id = comp.id; r.icon = comp.icon; r.label = comp.label;
+              results.push(r);
+              if (order[r.state] > order[worst]) worst = r.state;
+            } catch(e) {
+              results.push({ id:comp.id, icon:comp.icon, label:comp.label, state:'major', labelText:'Error', detail:e.message });
+              worst = 'major';
+            }
+          }
+          // Update overall banner
+          const banner = document.getElementById('overall-status-banner');
+          if (banner) {
+            const bannerMap = {
+              operational:{ emoji:'🟢', bg:'linear-gradient(135deg,#f0fdf4,#dcfce7)', border:'#86efac', color:'#166534', text:'All Systems Operational' },
+              degraded:{ emoji:'🟡', bg:'linear-gradient(135deg,#fefce8,#fef9c3)', border:'#facc15', color:'#854d0e', text:'Partial System Outage' },
+              partial:{ emoji:'🟠', bg:'linear-gradient(135deg,#fff7ed,#ffedd5)', border:'#fb923c', color:'#9a3412', text:'Partial System Outage' },
+              major:{ emoji:'🔴', bg:'linear-gradient(135deg,#fef2f2,#fecaca)', border:'#f87171', color:'#991b1b', text:'Major Service Outage' },
+              maintenance:{ emoji:'🔵', bg:'linear-gradient(135deg,#eff6ff,#dbeafe)', border:'#60a5fa', color:'#1e40af', text:'Under Maintenance' }
+            };
+            const m = bannerMap[worst] || bannerMap.operational;
+            banner.style.background = m.bg;
+            banner.style.borderColor = m.border;
+            banner.style.color = m.color;
+            banner.innerHTML = m.emoji + ' <span>' + m.text + '</span>';
+          }
+          // Build component rows
+          container.innerHTML = results.map(r => {
+            const stateColors = { operational:'#22c55e', degraded:'#eab308', partial:'#fb923c', major:'#ef4444', maintenance:'#3b82f6' };
+            const stateBg = { operational:'#f0fdf4', degraded:'#fefce8', partial:'#fff7ed', major:'#fef2f2', maintenance:'#eff6ff' };
+            const c = stateColors[r.state] || '#94a3b8';
+            const b = stateBg[r.state] || '#f8fafc';
+            const badge = { operational:'🟢', degraded:'🟡', partial:'🟠', major:'🔴', maintenance:'🔵' }[r.state] || '⚪';
+            const statTxt = { operational:'Operational', degraded:'Degraded', partial:'Partial Outage', major:'Major Outage', maintenance:'Maintenance' }[r.state] || 'Unknown';
+            return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:'+b+';border:1px solid '+(r.state==='operational'?'#e2e8f0':c+'44')+';transition:background .2s;">'
+              +'<span style="font-size:14px;width:22px;text-align:center;">'+r.icon+'</span>'
+              +'<span style="flex:1;font-weight:700;font-size:12px;color:#0f172a;">'+escHtml(r.label)+'</span>'
+              +'<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:'+c+'18;color:'+c+';font-weight:700;white-space:nowrap;">'+badge+' '+statTxt+'</span>'
+              +'<span style="font-size:11px;color:#64748b;max-width:180px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" title="'+escHtml(r.detail||'')+'">'+escHtml(r.labelText||r.detail||'')+'</span>'
+              +'</div>';
+          }).join('');
         }
-        function _setBar(barId, labelId, pct, text) {
-          const bar = document.getElementById(barId);
-          const lbl = document.getElementById(labelId);
-          if (bar) bar.style.width = pct + '%';
-          if (lbl) lbl.textContent = text;
+        function _statusBadge(state) {
+          const map = { operational:'🟢', degraded:'🟡', partial:'🟠', major:'🔴', maintenance:'🔵' };
+          return map[state] || '⚪';
         }
-        async function _checkBackend(token) {
-          if (!token) return false;
+        function _statusText(state) {
+          const map = { operational:'Operational', degraded:'Degraded', partial:'Partial Outage', major:'Major Outage', maintenance:'Maintenance' };
+          return map[state] || 'Unknown';
+        }
+        async function _checkBackend() {
           try {
             const c = new AbortController();
             const t = setTimeout(() => c.abort(), 5000);
-            const r = await fetch('https://backend.shinumaths989.workers.dev/ping', { signal: c.signal });
+            const r = await fetch('https://backend.shinumaths989.workers.dev/', { signal: c.signal });
             clearTimeout(t);
-            return r.ok;
-          } catch(e) { return false; }
+            return { ok: r.ok, status: r.status };
+          } catch(e) { return { ok: false, status: 0, error: e.message }; }
         }
         window.showLogin = function() {
           const loadingEl = document.getElementById('trusted-loading');
@@ -3646,18 +3702,35 @@ Recommended:
 
           window._trustSessionReady = new Promise(resolve => { window._resolveTrustSession = resolve; });
 
-          const memberToMode = { shineil:'ADMIN', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
-          window.VAULT_MODE = sessionStorage.getItem('vaultMode') || memberToMode[trust.member] || 'ADMIN';
+          // NOTE: this mapping must match offline-auth.js's modeToId table.
+          // 'shineil' -> 'SHINEIL' here (not 'ADMIN') so that restoreTrustSession()
+          // looks up the IndexedDB record actually saved under that mode.
+          const memberToMode = { shineil:'SHINEIL', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
+          window.VAULT_MODE = memberToMode[trust.member] || sessionStorage.getItem('vaultMode') || 'ADMIN';
           sessionStorage.setItem('vaultMode', window.VAULT_MODE);
           const modeUserMap = { SHINEIL:'shineil', KEVIN:'brother', OFFICIAL:'official', PARENTS:'father', SHINEIL_PARENTS:'shineil', KEVIN_PARENTS:'brother', ADMIN:'shineil' };
           sessionStorage.setItem('vaultUser', modeUserMap[window.VAULT_MODE] || trust.member || 'all');
 
+          let _trustRestored = false;
           try {
             try {
-              if (typeof restoreTrustSession === 'function') await restoreTrustSession();
+              if (typeof restoreTrustSession === 'function') _trustRestored = await restoreTrustSession();
             } finally {
               if (typeof window._resolveTrustSession === 'function') window._resolveTrustSession();
             }
+
+            // If we couldn't recover a decryption secret, don't render a
+            // vault that will fail on every file open with "Session not
+            // unlocked." Force a real login instead — same as a hard refresh
+            // with no trust cookie would do.
+            if (!_trustRestored && !window.masterPassword) {
+              console.warn('[goToDashboard] Trust restore did not yield a usable session. Falling back to login.');
+              loadingEl.style.display = 'none';
+              localStorage.removeItem('vaultTrustInfo');
+              showLogin();
+              return;
+            }
+
             setProgress(40, 'Loading file catalogue...');
 
             const existingSession = sessionStorage.getItem('vaultSession') || sessionStorage.getItem('vaultSessionToken');
