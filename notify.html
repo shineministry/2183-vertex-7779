@@ -515,29 +515,33 @@ async function publishNotification() {
       timestamp: Date.now(), read: false, _key: notifId
     };
 
-    // Push to backend FIRST — this is the part that makes other devices see it
-    const res = await fetch('https://backend.shinumaths989.workers.dev/save-notification', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(notif)
-    });
-    if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      throw new Error(`Backend sync failed (${res.status}): ${errText}`);
-    }
-
-    // Only cache locally after the backend confirms
+    // Always save locally first — visible on this device regardless of backend
     await saveNotif(notif);
+
+    // Push to backend — makes other devices see it
+    try {
+      const res = await fetch('https://backend.shinumaths989.workers.dev/save-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(notif)
+      });
+      if (res.ok) {
+        showToast('✅ Published to all devices', '#22c55e');
+      } else {
+        const errText = await res.text().catch(() => '');
+        showToast('⚠️ Saved locally but backend sync failed: ' + errText, '#f59e0b');
+      }
+    } catch (e) {
+      showToast('⚠️ Saved locally but backend unreachable: ' + e.message, '#f59e0b');
+    }
 
     document.getElementById('notif-title').value = '';
     document.getElementById('notif-body').value  = '';
     selectedUsers.clear();
     document.querySelectorAll('.user-chip').forEach(c => c.classList.remove('active'));
-
-    showToast('✅ Published to all devices', '#22c55e');
     loadPublished();
   } catch (e) {
-    showToast('❌ Sync failed — other devices won\'t see this: ' + e.message, '#ef4444');
+    showToast('❌ Failed to save notification: ' + e.message, '#ef4444');
   } finally {
     btn.disabled = false; btn.textContent = '📤 Publish Notification';
   }
