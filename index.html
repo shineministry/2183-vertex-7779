@@ -20,6 +20,60 @@ Recommended:
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <script>
+    // ── TEMPORARY ON-SCREEN ERROR OVERLAY ──────────────────────────────────
+    // Purpose: some devices (tablets, etc.) don't have easy DevTools access.
+    // This catches any uncaught error or unhandled promise rejection and
+    // shows it directly on the page, so the actual error text can be read
+    // off the screen and reported back. Safe to remove later once the
+    // underlying bug(s) are confirmed fixed — it does not affect normal
+    // operation when there are no errors.
+    (function () {
+      let _errors = [];
+      let _box = null;
+
+      function _ensureBox() {
+        if (_box) return _box;
+        _box = document.createElement('div');
+        _box.id = '_diagErrorBox';
+        _box.style.cssText = [
+          'position:fixed', 'bottom:0', 'left:0', 'right:0', 'max-height:40vh',
+          'overflow-y:auto', 'background:#7f1d1d', 'color:#fff',
+          'font:12px/1.5 monospace', 'padding:10px 12px', 'z-index:999999',
+          'white-space:pre-wrap', 'word-break:break-word',
+          'border-top:3px solid #ef4444', 'box-shadow:0 -4px 20px rgba(0,0,0,.4)'
+        ].join(';');
+        document.documentElement.appendChild(_box);
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕ Dismiss';
+        closeBtn.style.cssText = 'position:sticky;top:0;float:right;background:#fff;color:#7f1d1d;border:none;border-radius:6px;padding:4px 10px;font-weight:700;cursor:pointer;margin-bottom:6px;';
+        closeBtn.onclick = function () { _box.remove(); _box = null; };
+        _box.appendChild(closeBtn);
+        return _box;
+      }
+
+      function _report(label, detail) {
+        _errors.push(label + ': ' + detail);
+        const box = _ensureBox();
+        const line = document.createElement('div');
+        line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + label + ': ' + detail;
+        box.appendChild(line);
+      }
+
+      window.addEventListener('error', function (e) {
+        const msg = e.message || (e.error && e.error.message) || 'Unknown error';
+        const where = (e.filename ? e.filename.split('/').pop() : '?') + ':' + e.lineno;
+        _report('JS Error', msg + '  (' + where + ')');
+      });
+
+      window.addEventListener('unhandledrejection', function (e) {
+        const msg = (e.reason && (e.reason.message || e.reason)) || 'Unknown rejection';
+        _report('Unhandled Promise Rejection', msg);
+      });
+
+      window._getDiagErrors = function () { return _errors.slice(); };
+    })();
+  </script>
   <script src="/pdf.min.js" onerror="var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';document.head.appendChild(s);"></script>
   <script src="pdfjs-init.js"></script>
   <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -3575,7 +3629,7 @@ Recommended:
           { id:'startup', icon:'🚀', label:'Session Startup', check:async()=>{let o=typeof startSessionTimer==='function'&&typeof startInactivityMonitor==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Pending',detail:o?'Timer and monitor active':'Startup modules not loaded'}}},
           { id:'offline', icon:'📴', label:'Offline Authentication', check:async()=>{let o=typeof offlineLogin==='function'||typeof restoreTrustSession==='function';return{state:o?'operational':'degraded',labelText:o?'Available':'Unavailable',detail:o?'Offline auth module ready':'Not loaded'}}},
           { id:'design', icon:'🎨', label:'Design and Animation', check:async()=>{let o=!window.LITE_MODE;return{state:'operational',labelText:o?'Animated':'Lite mode',detail:o?'Full animations enabled':'Lite mode active'}}},
-          { id:'preview', icon:'👁️', label:'Quick Preview', check:async()=>{let o=typeof openPreview==='function'||typeof showPreview==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Preview module loaded':'Not loaded'}}},
+          { id:'preview', icon:'👁️', label:'Quick Preview', check:async()=>{let o=typeof startHoverPreview==='function'&&typeof getPreviewBitmap==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Preview module loaded':'Not loaded'}}},
           { id:'decrypt', icon:'🔓', label:'Decryption', check:async()=>{let o=typeof decryptBuffer==='function';return{state:o?'operational':'major',labelText:o?'Ready':'Missing',detail:o?'Decrypt function available':'Crypto module not loaded'}}},
           { id:'mobile', icon:'📱', label:'Mobile Responsiveness', check:async()=>{let o=typeof toggleMobileMenu==='function';return{state:o?'operational':'degraded',labelText:o?'Adaptive':'Fixed',detail:o?'Responsive layout active':'Mobile menu not loaded'}}},
         ];
@@ -3657,9 +3711,25 @@ Recommended:
           try {
             const c = new AbortController();
             const t = setTimeout(() => c.abort(), 5000);
-            const r = await fetch('https://backend.shinumaths989.workers.dev/', { signal: c.signal });
+            // NOTE: the root "/" route on the worker returns a decorative HTML
+            // page with no Access-Control-Allow-Origin header, so a
+            // cross-origin fetch() to it gets blocked by CORS and throws —
+            // even when the backend is fully healthy. /get-secret always
+            // returns proper CORS headers (used for real login), so probing
+            // it with a deliberately-invalid hash is a much more accurate
+            // "is the backend actually reachable" check. We only care that
+            // we got *any* HTTP response back, not whether it's a success.
+            const r = await fetch('https://backend.shinumaths989.workers.dev/get-secret', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ hash: '_statuscheck_' }),
+              signal: c.signal
+            });
             clearTimeout(t);
-            return { ok: r.ok, status: r.status };
+            // Any HTTP response (even 401/400 for our bogus hash) means the
+            // worker is up and reachable. Only a network-level failure
+            // (timeout, DNS, CORS block, offline) should count as down.
+            return { ok: true, status: r.status };
           } catch(e) { return { ok: false, status: 0, error: e.message }; }
         }
         window.showLogin = function() {
