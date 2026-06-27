@@ -1379,9 +1379,41 @@ Recommended:
   <script src="offline-auth.js?v=20260610-offlinefix12"></script>
   <script src="auth.js?v=20260610-offlinefix12"></script>
   <script src="session.js?v=20260610-offlinefix12"></script>
-  <script src="vault-data.js"></script>
-  <script src="viewer.js"></script>
-  <script src="features.js"></script>
+  <script src="vault-data.js?v=20260628-photosfix1"></script>
+  <script src="viewer.js?v=20260628-photosfix1"></script>
+  <script src="features.js?v=20260628-photosfix1"></script>
+  <script>
+    // ── Stale shell-script guard ──────────────────────────────────────────
+    // If the service worker (or browser HTTP cache) ever serves an old
+    // cached copy of vault-data.js / viewer.js / features.js that predates
+    // a function these pages depend on, those functions silently don't
+    // exist and pages render blank with no visible error (e.g. PHOTOS page
+    // showing "1 Photo" in the count but an empty grid). Detect that here,
+    // once, right after these scripts would have run, and force a hard
+    // reload that bypasses every cache layer instead of leaving the user
+    // stuck on a broken page.
+    (function () {
+      const requiredFns = ['getAllPhotos', 'isImageFile', 'renderPhotos', 'initVault', 'openSecureFile'];
+      const missing = requiredFns.filter(fn => typeof window[fn] !== 'function');
+      if (missing.length) {
+        console.error('[Integrity] Missing critical functions (likely a stale cached script):', missing);
+        if (!sessionStorage.getItem('_staleShellReloaded')) {
+          sessionStorage.setItem('_staleShellReloaded', '1');
+          // Ask the SW to purge its cache (if present), then hard-reload.
+          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CACHE' });
+          }
+          setTimeout(() => location.reload(true), 300);
+        } else {
+          console.error('[Integrity] Already attempted one reload this session — not looping further. Please hard-refresh manually (Ctrl+Shift+R).');
+        }
+      } else {
+        // Healthy load — clear the guard flag so a future genuine staleness
+        // can trigger a fresh auto-recovery again later.
+        sessionStorage.removeItem('_staleShellReloaded');
+      }
+    })();
+  </script>
   <script src="https://www.google.com/recaptcha/api.js" defer></script>
   <script src="vault-ui.js"></script>
     <div id="logModal" class="modal">
@@ -3722,11 +3754,13 @@ Recommended:
             // If we couldn't recover a decryption secret, don't render a
             // vault that will fail on every file open with "Session not
             // unlocked." Force a real login instead — same as a hard refresh
-            // with no trust cookie would do.
+            // with no trust cookie would do. NOTE: we intentionally do NOT
+            // delete vaultTrustInfo here — the failure may be transient
+            // (e.g. masterPassword not populated yet on a prior pass), and
+            // logging in fresh will re-save a corrected trust record anyway.
             if (!_trustRestored && !window.masterPassword) {
               console.warn('[goToDashboard] Trust restore did not yield a usable session. Falling back to login.');
               loadingEl.style.display = 'none';
-              localStorage.removeItem('vaultTrustInfo');
               showLogin();
               return;
             }
