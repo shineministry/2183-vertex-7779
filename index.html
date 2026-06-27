@@ -831,7 +831,7 @@ Recommended:
           text-align: center; font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 900;
           color: #0f172a; margin-bottom: 40px;
         }
-        .land-features h2 span { background: linear-gradient(135deg,#2563eb,#06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .land-features h2 span { background: linear-gradient(135deg,#2563eb,#06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: inherit; }
         .land-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         .land-card {
           background: #fff; border: 1px solid #e2e8f0; border-radius: 20px;
@@ -892,6 +892,7 @@ Recommended:
 </head>
 
 <body>
+<script>window.animateCloseModal=function(m,d){if(window.LITE_MODE){var el=document.getElementById(m);if(el){el.style.display='none';el.classList.remove('show','open')}return}d=d||250;var modal=document.getElementById(m);if(!modal)return;var cnt=modal.querySelector('.modal-content, .modal-content-small, .adv-box, .pm-modal-box');if(cnt)cnt.classList.add('modal-content-closing');modal.classList.add('modal-closing');setTimeout(function(){modal.style.display='none';modal.classList.remove('show','open','modal-closing');if(cnt)cnt.classList.remove('modal-content-closing')},d)};</script>
 <!-- ── LANDING PAGE ── -->
 <div id="landing">
   <div class="land-orbs"><div class="land-orb"></div><div class="land-orb"></div><div class="land-orb"></div></div>
@@ -924,7 +925,7 @@ Recommended:
   <div class="land-hero">
     <h1>Your Fortress for<br>Secure Digital Documents</h1>
     <p>The Online Vault is a fully encrypted document management platform — store, view, share, and organize your most sensitive files with military-grade protection. No data leaves your control.</p>
-    <button class="land-cta" onclick="showLogin()">🔑 Access Your Vault →</button>
+    <button class="land-cta" onclick="trustedGoToDashboard()">🔑 Access Your Vault →</button>
   </div>
 
   <div class="land-features">
@@ -1035,7 +1036,7 @@ Recommended:
           <div class="login-footer-links"> <a href="https://72oe-v2sx.shine-ministry.com/1781287270604.html" onclick="return true;">Privacy</a> <span>·</span> <a href="https://72oe-v2sx.shine-ministry.com/1781287440867.html" onclick="return true;">Terms</a> <span>·</span> <a href="https://72oe-v2sx.shine-ministry.com/1781285772718.html" onclick="return true;">Don't Know Password</a> </div>
         </div>
         <div class="login-col login-col-right">
-          <div class="options-grid"> <label class="custom-checkbox"><input type="checkbox" id="req-otp"><span>Request OTP</span></label> <label class="custom-checkbox"><input type="checkbox" id="trust-device"><span>Trust (14 days)</span></label> <label class="custom-checkbox"><input type="checkbox" id="keep-session" checked><span>Keep Session</span></label> <label class="custom-checkbox"><input type="checkbox" id="private-mode"><span>Private View</span></label> </div>
+          <div class="options-grid"> <label class="custom-checkbox"><input type="checkbox" id="trust-device"><span>Trust (14 days)</span></label> <label class="custom-checkbox"><input type="checkbox" id="keep-session" checked><span>Keep Session</span></label> <label class="custom-checkbox"><input type="checkbox" id="private-mode"><span>Private View</span></label> </div> <button class="otp-btn" id="otpBtn" onclick="requestOTP()" style="margin-top:12px;padding:10px 20px;border-radius:12px;border:1px solid var(--border-color);background:transparent;color:var(--text-main);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;transition:all .2s;"> 📱 Request OTP Code </button>
           <div class="security-modes">
             <div class="section-title">Enforcement Mode</div>
             <div class="radio-group"> <label class="custom-radio"><input type="radio" name="sec-mode" value="normal" checked onclick="updateSecurityState('normal')"><span>Standard Node Login</span></label> <label class="custom-radio"><input type="radio" name="sec-mode" value="high" onclick="updateSecurityState('high')"><span>Elevated Verification</span></label> <label class="custom-radio"><input type="radio" name="sec-mode" value="emergency" onclick="updateSecurityState('emergency')"><span style="color:var(--danger);font-weight:700;">Emergency Immediate Lock</span></label> </div>
@@ -1044,16 +1045,6 @@ Recommended:
             <div class="meta-item"><span>Access Node Point:</span><span class="meta-val" style="color:var(--accent-primary);">192.168.1.84</span></div>
             <div class="meta-item"><span>Session Lifecycle:</span><span class="meta-val" id="lifecycleTimer" style="color:#fbbf24;">10:00 mins remaining</span></div>
           </div>
-          <div class="status-container">
-            <div class="status-card">
-              <h3>Environment Security Parameters</h3>
-              <ul class="status-list">
-                <li style="color:var(--success);">✓ End-to-End Encryption</li>
-                <li style="color:var(--success);">✓ Device Sandbox Valid</li>
-                <li style="color:var(--success);">✓ Threat Guards Armed</li>
-                <li style="color:var(--success);">✓ Global Sync Normal</li>
-              </ul>
-            </div>
           </div>
         </div>
       </div>
@@ -1213,10 +1204,10 @@ Recommended:
         <div class="nav-brand">
           <div class="brand-title"> <span class="brand-full">FORTRESS ONLINE VAULT</span> <span class="brand-short">🔐 F.O.V</span> </div>
         </div> <!-- RIGHT: DESKTOP BUTTONS (hidden on mobile) -->
-        <div class="nav-auth nav-auth-desktop"> <button id="vaultModesNavBtn" class="btn-outline" onclick="openVaultModes()">⚡ MODES</button> <button class="btn-outline icon-btn" data-tip="Favourites" onclick="showPinned()">⭐</button> <button class="btn-outline icon-btn" data-tip="Compare Documents" onclick="startCompareMode()" id="compareNavBtn">⚖️</button> <button class="btn-outline icon-btn" data-tip="Access Log" onclick="openLogs()">📋</button> <button class="btn-outline icon-btn" data-tip="Password Manager" onclick="openPasswordManager()">🔑</button> <button class="btn-solid icon-btn" data-tip="Emergency Contact" onclick="openEmergencyContact()">🆘</button> <button class="icon-btn" data-tip="Vault AI Assistant" onclick="openAIChat()" style="width:42px;height:42px;padding:0;border:none;border-radius:10px;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 2px 10px rgba(124,77,255,0.35);transition:transform .15s;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">✦</button> <button class="btn-outline icon-btn" data-tip="Refresh Vault" onclick="refreshVault()" style="font-size:13px;font-weight:700;">🔄</button><button class="btn-outline icon-btn" data-tip="Feedback" onclick="openFeedbackModal()" style="font-size:13px;font-weight:700;">💬</button><button class="btn-logout icon-btn" data-tip="Logout" onclick="logoutVault('Logged out successfully.')">🔓</button> </div> <!-- RIGHT: MOBILE BUTTONS (hidden on desktop) -->
+        <div class="nav-auth nav-auth-desktop"> <button id="vaultModesNavBtn" class="btn-outline" onclick="openVaultModes()">⚡ MODES</button> <button class="btn-outline icon-btn" data-tip="Status" onclick="openStatusModal()">📊</button> <button class="btn-outline icon-btn" data-tip="Favourites" onclick="showPinned()">⭐</button> <button class="btn-outline icon-btn" data-tip="Compare Documents" onclick="startCompareMode()" id="compareNavBtn">⚖️</button> <button class="btn-outline icon-btn" data-tip="Access Log" onclick="openLogs()">📋</button> <button class="btn-outline icon-btn" data-tip="Password Manager" onclick="openPasswordManager()">🔑</button> <button class="btn-solid icon-btn" data-tip="Emergency Contact" onclick="openEmergencyContact()">🆘</button> <button class="icon-btn" data-tip="Vault AI Assistant" onclick="openAIChat()" style="width:42px;height:42px;padding:0;border:none;border-radius:10px;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 2px 10px rgba(124,77,255,0.35);transition:transform .15s;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">✦</button> <button class="btn-outline icon-btn" data-tip="Refresh Vault" onclick="refreshVault()" style="font-size:13px;font-weight:700;">🔄</button><button class="btn-outline icon-btn" data-tip="Feedback" onclick="openFeedbackModal()" style="font-size:13px;font-weight:700;">💬</button><button class="btn-logout icon-btn" data-tip="Logout" onclick="logoutVault('Logged out successfully.')">🔓</button> </div> <!-- RIGHT: MOBILE BUTTONS (hidden on desktop) -->
         <div class="nav-auth-mobile"> <button class="nav-icon-btn" onclick="toggleNotifications()" title="Notifications" style="font-size:16px;">🔔</button> <button class="nav-icon-btn nav-emergency-btn" onclick="openEmergencyContact()" title="Emergency Contact">🆘</button> <button onclick="openAIChat()" title="Vault AI" style="width:38px;height:38px;border:none;border-radius:50%;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(124,77,255,0.4);flex-shrink:0;">✦</button> <button class="nav-icon-btn nav-logout-btn" onclick="logoutVault('Logged out successfully.')" title="Logout">🔓</button> <button class="nav-icon-btn nav-menu-btn" onclick="toggleMobileMenu()" title="More options" id="mobileMenuBtn">☰</button> </div>
       </div> <!-- MOBILE DROPDOWN MENU -->
-      <div id="mobile-nav-menu" class="mobile-nav-menu"> <button id="vaultModesMobileBtn" onclick="openVaultModes();toggleMobileMenu()">⚡ Vault Modes</button> <button onclick="showPinned();toggleMobileMenu()">⭐ Favourites</button> <button onclick="openPasswordManager();toggleMobileMenu()">🔑 Passwords</button> <button onclick="startCompareMode();toggleMobileMenu()" id="compareNavBtn">⚖️ Compare</button> <button onclick="openLogs();toggleMobileMenu()">📋 Access Log</button> <button onclick="openFeedbackModal();toggleMobileMenu()">💬 Feedback</button> <button onclick="refreshVault();toggleMobileMenu()">🔄 Refresh Vault</button> </div>
+      <div id="mobile-nav-menu" class="mobile-nav-menu"> <button onclick="openStatusModal();toggleMobileMenu()">📊 Status</button> <button id="vaultModesMobileBtn" onclick="openVaultModes();toggleMobileMenu()">⚡ Vault Modes</button> <button onclick="showPinned();toggleMobileMenu()">⭐ Favourites</button> <button onclick="openPasswordManager();toggleMobileMenu()">🔑 Passwords</button> <button onclick="startCompareMode();toggleMobileMenu()" id="compareNavBtn">⚖️ Compare</button> <button onclick="openLogs();toggleMobileMenu()">📋 Access Log</button> <button onclick="openFeedbackModal();toggleMobileMenu()">💬 Feedback</button> <button onclick="refreshVault();toggleMobileMenu()">🔄 Refresh Vault</button> </div>
     </div>
     <div class="main-container">
       <aside class="sidebar">
@@ -1434,6 +1425,40 @@ Recommended:
         <div class="modal-header"> <strong> 💬 FEEDBACK & SUGGESTIONS </strong> <button onclick="closeFeedbackModal()" style="border:none;background:var(--danger);color:white;padding:10px 16px;border-radius:10px;font-weight:bold;cursor:pointer;">CLOSE</button> </div>
         <div style="flex:1;overflow:hidden;background:#f8fafc;">
           <iframe src="https://forms.gle/Pv5LTq7APgFj98rp6" style="width:100%;height:100%;border:none;" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+    </div>
+    <!-- =========================     STATUS MODAL ========================= -->
+    <div id="statusModal" class="modal">
+      <div class="modal-content" style="max-width:600px;">
+        <div class="modal-header"> <strong>📊 VAULT STATUS</strong> <button onclick="closeStatusModal()" style="border:none;background:var(--danger);color:white;padding:10px 16px;border-radius:10px;font-weight:bold;cursor:pointer;">CLOSE</button> </div>
+        <div class="status-dashboard" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+          <div class="status-row" style="display:flex;align-items:center;gap:12px;">
+            <div style="flex:1;font-weight:700;font-size:13px;">🔐 Vault Session</div>
+            <div style="width:140px;height:8px;border-radius:4px;background:#e2e8f0;overflow:hidden;"><div id="stat-session-bar" style="height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#22c55e,#16a34a);transition:width .5s;"></div></div>
+            <div id="stat-session-label" style="font-size:12px;color:#64748b;min-width:70px;text-align:right;">Checking...</div>
+          </div>
+          <div class="status-row" style="display:flex;align-items:center;gap:12px;">
+            <div style="flex:1;font-weight:700;font-size:13px;">📡 Backend Connection</div>
+            <div style="width:140px;height:8px;border-radius:4px;background:#e2e8f0;overflow:hidden;"><div id="stat-backend-bar" style="height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#22c55e,#16a34a);transition:width .5s;"></div></div>
+            <div id="stat-backend-label" style="font-size:12px;color:#64748b;min-width:70px;text-align:right;">Checking...</div>
+          </div>
+          <div class="status-row" style="display:flex;align-items:center;gap:12px;">
+            <div style="flex:1;font-weight:700;font-size:13px;">💾 Offline Cache</div>
+            <div style="width:140px;height:8px;border-radius:4px;background:#e2e8f0;overflow:hidden;"><div id="stat-cache-bar" style="height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#22c55e,#16a34a);transition:width .5s;"></div></div>
+            <div id="stat-cache-label" style="font-size:12px;color:#64748b;min-width:70px;text-align:right;">Checking...</div>
+          </div>
+          <div class="status-row" style="display:flex;align-items:center;gap:12px;">
+            <div style="flex:1;font-weight:700;font-size:13px;">🔑 Encryption Ready</div>
+            <div style="width:140px;height:8px;border-radius:4px;background:#e2e8f0;overflow:hidden;"><div id="stat-encrypt-bar" style="height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#22c55e,#16a34a);transition:width .5s;"></div></div>
+            <div id="stat-encrypt-label" style="font-size:12px;color:#64748b;min-width:70px;text-align:right;">Checking...</div>
+          </div>
+          <div class="status-row" style="display:flex;align-items:center;gap:12px;">
+            <div style="flex:1;font-weight:700;font-size:13px;">📄 Files Loaded</div>
+            <div style="width:140px;height:8px;border-radius:4px;background:#e2e8f0;overflow:hidden;"><div id="stat-files-bar" style="height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#22c55e,#16a34a);transition:width .5s;"></div></div>
+            <div id="stat-files-label" style="font-size:12px;color:#64748b;min-width:70px;text-align:right;">Checking...</div>
+          </div>
+          <div style="margin-top:8px;padding:12px;border-radius:10px;background:#f8fafc;text-align:center;font-size:12px;color:#64748b;" id="stat-version">🔒 FORTRESS ONLINE VAULT · AES-256-GCM · Session: <span id="stat-mode-label">-</span></div>
         </div>
       </div>
     </div>
@@ -3004,8 +3029,12 @@ Recommended:
       }
 
       function closePasswordManager() {
-        const modal = document.getElementById('passwordManagerModal');
-        if (modal) modal.classList.remove('open');
+        if (typeof window.animateCloseModal === 'function') {
+          window.animateCloseModal('passwordManagerModal');
+        } else {
+          const modal = document.getElementById('passwordManagerModal');
+          if (modal) modal.classList.remove('open');
+        }
       } /* Close on overlay click */ document.getElementById('passwordManagerModal').addEventListener('click', function(e){  if(e.target === this) closePasswordManager();});/* ======== Password Strength Bar ======== */function pmStrength(val) {  const bar = document.getElementById('pm-strength-bar');  if (!bar) return;  let score = 0;  if (val.length >= 8) score++;  if (/[A-Z]/.test(val)) score++;  if (/[0-9]/.test(val)) score++;  if (/[^A-Za-z0-9]/.test(val)) score++;  const colors = ['#ef4444','#f97316','#eab308','#16a34a'];  const widths = ['25%','50%','75%','100%'];  bar.style.width = val ? widths[score-1] || '10%' : '0';  bar.style.background = val ? colors[score-1] || '#e2e8f0' : '#e2e8f0';}/* ======== Inline reveal for saved entries ======== */function toggleEntryReveal(id) {  const dots = document.getElementById('pw-dots-'+id);  const actual = document.getElementById('pw-actual-'+id);  const btn = document.getElementById('pw-reveal-btn-'+id);  if (!dots || !actual) return;  const showing = actual.style.display !== 'none';  dots.style.display = showing ? 'block' : 'none';  actual.style.display = showing ? 'none' : 'block';  btn.textContent = showing ? '👁️ Show' : '🙈 Hide';}/* ======== Override renderPMList for richer UI ======== */async function renderPMList() {  const container = document.getElementById('pm-entries-container');  const countNum = document.getElementById('pm-count-num');  if (!container) return;  container.innerHTML = '<div class="pm-empty">⏳ Loading credentials…</div>';  try {    const allEntries = await loadPMEntries().catch(() => []);    const pmSearchEl = document.getElementById('pm-search'); const query = ((pmSearchEl ? pmSearchEl.value : '') || '').toLowerCase();    /* Filter by current mode's allowed members */const mode = (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');const allowedMembers = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null) || ['shineil', 'brother', 'father', 'mother'];
       const filtered = allEntries.filter(e => {
         if (!e.member) return true;
@@ -3477,53 +3506,146 @@ Recommended:
         window.openFeedbackModal = function() {
           document.getElementById('feedbackModal').style.display = 'block';
         };
-        window.closeFeedbackModal = function() {
-          document.getElementById('feedbackModal').style.display = 'none';
+        window.animateCloseModal = function(modalId, duration) {
+          if (window.LITE_MODE) { document.getElementById(modalId).style.display = 'none'; return; }
+          duration = duration || 250;
+          const modal = document.getElementById(modalId);
+          if (!modal) return;
+          const content = modal.querySelector('.modal-content') || modal.querySelector('.modal-content-small');
+          if (content) content.classList.add('modal-content-closing');
+          modal.classList.add('modal-closing');
+          setTimeout(() => {
+            modal.style.display = 'none';
+            modal.classList.remove('modal-closing');
+            if (content) content.classList.remove('modal-content-closing');
+          }, duration);
         };
-        // Close feedback modal on backdrop click
+        window.closeFeedbackModal = function() {
+          animateCloseModal('feedbackModal');
+        };
         document.getElementById('feedbackModal').addEventListener('click', function(e) {
           if (e.target === this) closeFeedbackModal();
         });
+        window.openStatusModal = function() {
+          const modal = document.getElementById('statusModal');
+          if (modal) modal.style.display = 'flex';
+          // Refresh status bars
+          _updateAllStatusBars();
+        };
+        window.closeStatusModal = function() {
+          animateCloseModal('statusModal');
+        };
+        document.getElementById('statusModal').addEventListener('click', function(e) {
+          if (e.target === this) closeStatusModal();
+        });
+        async function _updateAllStatusBars() {
+          const sessionToken = sessionStorage.getItem('vaultSession') || '';
+          const mode = window.VAULT_MODE || sessionStorage.getItem('vaultMode') || '-';
+          document.getElementById('stat-mode-label').textContent = mode;
+          // Session status
+          _setBar('stat-session-bar', 'stat-session-label', sessionToken ? 100 : 0, sessionToken ? '✓ Active' : '✗ None');
+          // Backend check
+          const backendOk = await _checkBackend(sessionToken);
+          _setBar('stat-backend-bar', 'stat-backend-label', backendOk ? 100 : 0, backendOk ? '✓ Online' : '✗ Offline');
+          // Cache check
+          let cacheOk = false;
+          try { const m = typeof idbGetVaultMeta === 'function' ? await idbGetVaultMeta() : null; cacheOk = !!m; } catch(e) {}
+          _setBar('stat-cache-bar', 'stat-cache-label', cacheOk ? 100 : 0, cacheOk ? '✓ Cached' : '✗ Empty');
+          // Encryption check
+          const encOk = !!window.masterPassword;
+          _setBar('stat-encrypt-bar', 'stat-encrypt-label', encOk ? 100 : 0, encOk ? '✓ Ready' : '✗ Missing');
+          // Files check
+          const filesOk = window.allFilesData && Object.keys(window.allFilesData).length > 0;
+          _setBar('stat-files-bar', 'stat-files-label', filesOk ? 100 : 0, filesOk ? Object.keys(window.allFilesData).length + ' cats' : '✗ None');
+        }
+        function _setBar(barId, labelId, pct, text) {
+          const bar = document.getElementById(barId);
+          const lbl = document.getElementById(labelId);
+          if (bar) bar.style.width = pct + '%';
+          if (lbl) lbl.textContent = text;
+        }
+        async function _checkBackend(token) {
+          if (!token) return false;
+          try {
+            const c = new AbortController();
+            const t = setTimeout(() => c.abort(), 5000);
+            const r = await fetch('https://backend.shinumaths989.workers.dev/ping', { signal: c.signal });
+            clearTimeout(t);
+            return r.ok;
+          } catch(e) { return false; }
+        }
         window.showLogin = function() {
           const loadingEl = document.getElementById('trusted-loading');
           if (loadingEl) loadingEl.style.display = 'none';
           document.getElementById('landing').classList.add('hidden');
           document.getElementById('step1').style.display = '';
           document.getElementById('landDropdown').classList.remove('open');
+          window._otpRequested = false;
+          const otpBtn = document.getElementById('otpBtn');
+          if (otpBtn) {
+            otpBtn.style.background = '';
+            otpBtn.style.color = '';
+            otpBtn.style.borderColor = '';
+            otpBtn.textContent = '📱 Request OTP Code';
+          }
           // focus username field
           setTimeout(() => {
             const el = document.getElementById('user-name');
             if (el) el.focus();
           }, 300);
         };
+        window._otpRequested = false;
+        window.requestOTP = function() {
+          window._otpRequested = true;
+          const btn = document.getElementById('otpBtn');
+          if (btn) {
+            btn.style.background = 'linear-gradient(135deg,#3b82f6,#2563eb)';
+            btn.style.color = '#fff';
+            btn.style.borderColor = '#3b82f6';
+            btn.textContent = '✅ OTP Code Will Be Requested';
+          }
+        };
+        window.trustedGoToDashboard = function() {
+          const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
+          if (trust && trust.expiry > Date.now()) {
+            goToDashboard();
+          } else {
+            showLogin();
+          }
+        };
         window.goToDashboard = async function() {
           const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
           if (!trust || !trust.member) { showLogin(); return; }
-          // Show loading overlay
           document.getElementById('landing').classList.add('hidden');
           document.getElementById('landDropdown').classList.remove('open');
           const loadingEl = document.getElementById('trusted-loading');
           const loadingBar = document.getElementById('trusted-loading-bar');
           const loadingStatus = document.getElementById('trusted-loading-status');
           loadingEl.style.display = 'flex';
+          let _cancelled = false;
+
+          // Stuck-bar safety: advance progress periodically if tasks stall
+          let _stuckTimer = setInterval(() => {
+            if (_cancelled) return;
+            const cur = parseFloat(loadingBar?.style?.width || '0');
+            if (cur < 30) { if (loadingBar) loadingBar.style.width = Math.min(cur + 5, 30) + '%'; }
+            else if (cur < 60) { if (loadingBar) loadingBar.style.width = Math.min(cur + 3, 60) + '%'; if (loadingStatus) loadingStatus.textContent = 'Loading files...'; }
+            else if (cur < 85) { if (loadingBar) loadingBar.style.width = Math.min(cur + 2, 85) + '%'; }
+          }, 3000);
+
           const setProgress = (pct, msg) => {
-            if (loadingBar) loadingBar.style.width = pct + '%';
-            if (loadingStatus) loadingStatus.textContent = msg;
+            if (!_cancelled && loadingBar) loadingBar.style.width = Math.max(parseFloat(loadingBar.style.width || '0'), pct) + '%';
+            if (!_cancelled && loadingStatus) loadingStatus.textContent = msg;
           };
           setProgress(5, 'Restoring secure session...');
 
-          // Restore token from trust info
           if (trust.token) {
             sessionStorage.setItem('vaultSessionToken', trust.token);
             sessionStorage.setItem('vaultSession', trust.token);
           }
 
-          // Set up the trust session ready promise (decryptBuffer waits on it)
-          window._trustSessionReady = new Promise(resolve => {
-            window._resolveTrustSession = resolve;
-          });
+          window._trustSessionReady = new Promise(resolve => { window._resolveTrustSession = resolve; });
 
-          // Set VAULT_MODE
           const memberToMode = { shineil:'ADMIN', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
           window.VAULT_MODE = sessionStorage.getItem('vaultMode') || memberToMode[trust.member] || 'ADMIN';
           sessionStorage.setItem('vaultMode', window.VAULT_MODE);
@@ -3531,18 +3653,13 @@ Recommended:
           sessionStorage.setItem('vaultUser', modeUserMap[window.VAULT_MODE] || trust.member || 'all');
 
           try {
-            // Await session restore
             try {
-              if (typeof restoreTrustSession === 'function') {
-                await restoreTrustSession();
-              }
+              if (typeof restoreTrustSession === 'function') await restoreTrustSession();
             } finally {
-              // Always resolve the promise so decryptBuffer won't hang
               if (typeof window._resolveTrustSession === 'function') window._resolveTrustSession();
             }
             setProgress(40, 'Loading file catalogue...');
 
-            // Load vault data
             const existingSession = sessionStorage.getItem('vaultSession') || sessionStorage.getItem('vaultSessionToken');
             if (existingSession && typeof initVault === 'function') {
               try {
@@ -3556,13 +3673,12 @@ Recommended:
             }
 
             setProgress(80, 'Finalizing setup...');
-
-            // Show dashboard
             setProgress(95, 'Opening vault...');
             const dash = document.getElementById('vault-dashboard');
             if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
             if (typeof startSessionTimer === 'function') startSessionTimer();
             if (typeof startInactivityMonitor === 'function') startInactivityMonitor();
+            if (typeof listenForForceLogout === 'function') listenForForceLogout();
             if (typeof vaultPostInit === 'function') vaultPostInit();
             setProgress(100, 'Ready!');
           } catch (e) {
@@ -3572,6 +3688,8 @@ Recommended:
             if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
           }
 
+          _cancelled = true;
+          clearInterval(_stuckTimer);
           setTimeout(() => { loadingEl.style.display = 'none'; }, 400);
         };
         async function _vaultFallbackToIDB() {
