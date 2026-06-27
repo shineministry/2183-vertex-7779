@@ -37,7 +37,11 @@ document.getElementById('share-gear').onclick = () => {
 };
 
 function closeAdvSettings(){
-    document.getElementById('advSettingsModal').classList.remove('show');
+    if (typeof window.animateCloseModal === 'function') {
+        window.animateCloseModal('advSettingsModal');
+    } else {
+        document.getElementById('advSettingsModal').classList.remove('show');
+    }
 }
 
 function switchAdvPanel(id){
