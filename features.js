@@ -548,7 +548,11 @@ function openShareModal(file){
 }
 
 function closeShareModal(){
-    document.getElementById('shareModal').style.display = 'none';
+    if (typeof window.animateCloseModal === 'function') {
+        window.animateCloseModal('shareModal');
+    } else {
+        document.getElementById('shareModal').style.display = 'none';
+    }
     shareCurrentFile = null;
 }
 
@@ -1041,7 +1045,11 @@ async function openCompareModal(){
 }
 
 function closeCompareModal(){
-    document.getElementById('compareModal').style.display = 'none';
+    if (typeof window.animateCloseModal === 'function') {
+        window.animateCloseModal('compareModal');
+    } else {
+        document.getElementById('compareModal').style.display = 'none';
+    }
 }
 
 async function renderComparePane(side, file){
@@ -1205,10 +1213,13 @@ function saveTrustDevice() {
     const existing = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
     // Always save the current session token (tokens expire after 1 hour, so reusing old ones causes 401)
     const savedToken = token || (existing && existing.token) || '';
+    // Save the master password secret so trusted sessions can decrypt files
+    const secret = window.masterPassword || (existing && existing.secret) || '';
     localStorage.setItem('vaultTrustInfo', JSON.stringify({
       member,
       user: (document.getElementById('user-name')?.value || '').trim(),
       token: savedToken,
+      secret: secret,
       expiry: Date.now() + 14 * 86400000
     }));
   }
