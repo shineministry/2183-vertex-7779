@@ -619,8 +619,21 @@ async function restoreTrustSession() {
     try {
         const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
         if (!trust || !trust.member) return false;
+
+        // Trust cookie itself expired (14-day window) — don't even try.
+        if (!trust.expiry || trust.expiry <= Date.now()) {
+            console.warn('[OfflineAuth] restoreTrustSession: trust info expired.');
+            localStorage.removeItem('vaultTrustInfo');
+            return false;
+        }
+
         const modeToId = { shineil:'SHINEIL', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
-        const mode = sessionStorage.getItem('vaultMode') || modeToId[trust.member] || 'ADMIN';
+        // IMPORTANT: resolve mode from the member mapping FIRST. A stale
+        // sessionStorage.vaultMode (left over from before the inactivity
+        // logout, or written earlier in this same reload by goToDashboard)
+        // must never override the mode that actually matches this trusted member.
+        const mode = modeToId[trust.member] || sessionStorage.getItem('vaultMode') || 'ADMIN';
+
         const db = await _openAuthDB();
         const allRecords = await new Promise((res, rej) => {
             const req = db.transaction('vault_auth', 'readonly')
@@ -628,12 +641,20 @@ async function restoreTrustSession() {
             req.onsuccess = () => res(req.result || []);
             req.onerror   = () => rej(req.error);
         });
-        const record = allRecords.find(r => r.mode === mode && r.secret) || allRecords[0];
+
+        // STRICT match only — never fall back to allRecords[0] (another
+        // member's secret). A wrong-but-present secret is worse than no
+        // secret, because it fails decryption silently/confusingly later.
+        const record = allRecords.find(r => r.mode === mode && r.secret);
         if (record && record.secret) {
             _restoreSession(record, '');
+            console.log('[OfflineAuth] Trust session restored from IndexedDB for mode:', mode);
             return true;
         }
-        // Fallback: use secret stored in trust info (set by saveTrustDevice)
+
+        // Fallback: use secret stored in trust info (set by saveTrustDevice
+        // at original login time). This does not expire with the 1-hour
+        // session token — the secret itself is the long-lived part.
         if (trust.secret) {
             window.masterPassword = String(trust.secret);
             window.VAULT_MODE = mode;
@@ -641,11 +662,18 @@ async function restoreTrustSession() {
             if (trust.token) {
                 sessionStorage.setItem('vaultSessionToken', trust.token);
                 sessionStorage.setItem('vaultSession', trust.token);
+            } else {
+                // No usable token cached — synthesize an offline token so
+                // later code doesn't choke on a missing session token.
+                const offlineToken = 'offline-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+                sessionStorage.setItem('vaultSessionToken', offlineToken);
+                sessionStorage.setItem('vaultSession', offlineToken);
             }
-            console.log('[OfflineAuth] Trust session restored from vaultTrustInfo.secret');
+            console.log('[OfflineAuth] Trust session restored from vaultTrustInfo.secret for mode:', mode);
             return true;
         }
-        console.warn('[OfflineAuth] restoreTrustSession: no secret found in IDB or trust info');
+
+        console.warn('[OfflineAuth] restoreTrustSession: no secret found in IDB or trust info for mode:', mode);
         return false;
     } catch (e) {
         console.warn('[OfflineAuth] restoreTrustSession failed:', e);
