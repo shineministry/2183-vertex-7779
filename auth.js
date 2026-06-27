@@ -189,6 +189,25 @@ function logoutVault( reason = "Logged out." ) {
 
     notifyBackendLogout(reason);
 
+    // FIX: Before wiping sessionStorage, refresh the trust device record
+    // (if this device is marked trusted) with the current live token and
+    // secret. The 1-hour session token in vaultTrustInfo otherwise goes
+    // stale after the first hour, and the next auto-restore-as-trusted
+    // would try to reuse a dead token / mismatched secret, leading to
+    // "Session not unlocked" even though the device shows as trusted.
+    try {
+        const _trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
+        if (_trust && _trust.member && _trust.expiry > Date.now()) {
+            const _liveToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || _trust.token || '';
+            const _liveSecret = window.masterPassword || _trust.secret || '';
+            localStorage.setItem('vaultTrustInfo', JSON.stringify({
+                ..._trust,
+                token: _liveToken,
+                secret: _liveSecret
+            }));
+        }
+    } catch(e) { console.warn('[logoutVault] trust info refresh failed:', e); }
+
     // Wipe session storage entirely
     sessionStorage.clear();
 
@@ -451,6 +470,15 @@ function showStep1() {
   document.getElementById("step-totp").style.display = "none";
   document.getElementById("step1").style.display     = "flex";
   stopTOTPCountdown();
+  // Reset OTP request state
+  window._otpRequested = false;
+  const otpBtn = document.getElementById('otpBtn');
+  if (otpBtn) {
+    otpBtn.style.background = '';
+    otpBtn.style.color = '';
+    otpBtn.style.borderColor = '';
+    otpBtn.textContent = '📱 Request OTP Code';
+  }
 }
 
 // ── Digit box auto-advance + backspace ──────
@@ -1523,7 +1551,7 @@ if (!sessionStorage.getItem('vaultUser')) {
         window._pendingAuthPass   = pass;
         window._pendingAuthHash   = await hashPassword(pass);
 
-        const otpRequested = document.getElementById("req-otp") && document.getElementById("req-otp").checked;
+        const otpRequested = window._otpRequested === true;
 
         const step1 = document.getElementById("step1");
 
@@ -1578,14 +1606,23 @@ sessionStorage.setItem('vaultUser', _modeUserMap[result.mode] || 'all');
             window._pendingAuthHash   = null;
 
             // Transition to Step 2 (Legal Declaration)
-showCurtain();
-setTimeout(() => {
-    if (step1) step1.style.display = "none";
-    const step2 = document.getElementById("step2");
-    if (step2) { step2.style.display = "flex"; step2.style.opacity = "1"; }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    hideCurtain(350);
-}, 350);
+            showCurtain();
+            if (step1) {
+                step1.style.pointerEvents = "none";
+                step1.style.opacity = "0";
+                step1.style.transition = "opacity 0.3s ease";
+                setTimeout(() => {
+                    step1.style.display = "none";
+                    const step2 = document.getElementById("step2");
+                    if (step2) { step2.style.display = "flex"; step2.style.opacity = "1"; }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    hideCurtain(150);
+                }, 300);
+            } else {
+                const step2 = document.getElementById("step2");
+                if (step2) { step2.style.display = "flex"; step2.style.opacity = "1"; }
+                hideCurtain(150);
+            }
         }
 
     } catch (e) {
@@ -1639,117 +1676,62 @@ function showStep3(){
 ========================= */
 
 function onCaptchaSuccess(){
-
     showCurtain();
+    document.getElementById('loading-msg').style.display = 'block';
 
-    document.getElementById(
-    'loading-msg').style.display =
-    'block';
+    // Start loading immediately — parallel with the exit animation
+    const vaultLoad = initVault().then(() => {
+        vaultPostInit();
+        runAIIndexingOnLogin();
+    }).catch(e => {
+        console.error('initVault failed:', e);
+        vaultPostInit();
+        runAIIndexingOnLogin();
+    });
 
-    setTimeout(()=>{
+    setTimeout(() => {
+        document.getElementById('step3').classList.add('slide-up-exit');
+        setTimeout(async () => {
+            document.getElementById('step3').style.display = 'none';
 
-        document.getElementById(
-        'step3').classList.add(
-        'slide-up-exit');
+            // Show loading overlay while we wait (may already be done)
+            const loadingEl = document.getElementById('trusted-loading');
+            const loadingBar = document.getElementById('trusted-loading-bar');
+            const loadingStatus = document.getElementById('trusted-loading-status');
+            if (loadingEl) loadingEl.style.display = 'flex';
+            const setProgress = (pct, msg) => {
+                if (loadingBar) loadingBar.style.width = pct + '%';
+                if (loadingStatus) loadingStatus.textContent = msg;
+            };
+            setProgress(40, 'Finalizing setup...');
 
-        setTimeout(()=>{
+            await vaultLoad;
 
-            document.getElementById(
-            'step3').style.display =
-            'none';
-
-const dash =
-document.getElementById(
-'vault-dashboard');
-
-dash.style.display = 'flex';
-
-dash.classList.add(
-'dashboard-enter');
-
-hideCurtain(200);
-
+            setProgress(80, 'Opening vault...');
+            const dash = document.getElementById('vault-dashboard');
+            dash.style.display = 'flex';
+            dash.classList.add('dashboard-enter');
+            hideCurtain(200);
             saveAccessLog();
-
-   registerActiveSession();
-
-           saveVisitorLog({
-
-    visitorName:
-    document.getElementById(
-    'user-name').value,
-
-    purpose:
-    document.getElementById(
-    'user-purpose').value,
-
-    loginTime:
-    new Date().toLocaleString(),
-
-    device:
-    /Mobi|Android/i.test(
-    navigator.userAgent)
-    ? "Mobile"
-    : "Desktop",
-
-    browser:
-    navigator.userAgent,
-
-    platform:
-    navigator.platform,
-
-    screen:
-    `${screen.width}x${screen.height}`,
-
-    timezone:
-    Intl.DateTimeFormat()
-    .resolvedOptions()
-    .timeZone
-
-});
-
+            registerActiveSession();
+            saveVisitorLog({
+                visitorName: document.getElementById('user-name').value,
+                purpose: document.getElementById('user-purpose').value,
+                loginTime: new Date().toLocaleString(),
+                device: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
+                browser: navigator.userAgent,
+                platform: navigator.platform,
+                screen: `${screen.width}x${screen.height}`,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            });
             sendLoginEmail();
-
-            initVault().then(() => {
-
-    console.log(
-      "INIT VAULT DONE"
-    );
-
-    vaultPostInit();
-
-    console.log(
-      "STARTING AI INDEXING"
-    );
-
-    runAIIndexingOnLogin();
-
-}).catch(err => {
-
-    console.error(
-      "initVault failed:",
-      err
-    );
-
-    vaultPostInit();
-
-    console.log(
-      "STARTING AI INDEXING FROM CATCH"
-    );
-
-    runAIIndexingOnLogin();
-});
-
             startSessionTimer();
-
             startInactivityMonitor();
-
-   listenForForceLogout();
-
-        },700);
-
-    },1200);
-
+            listenForForceLogout();
+            setProgress(100, 'Ready!');
+            setTimeout(() => { if (loadingEl) loadingEl.style.display = 'none'; }, 400);
+        }, 700);
+    }, 1200);
 }
 
    async function sendLoginEmail() {
