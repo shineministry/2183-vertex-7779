@@ -762,8 +762,9 @@ function isImageFile(file) {
 
 function getAllPhotos() {
     const photos = [];
-    Object.keys(allFilesData).forEach(cat => {
-        const files = allFilesData[cat];
+    const data = window.allFilesData || {};
+    Object.keys(data).forEach(cat => {
+        const files = data[cat];
         if (!Array.isArray(files)) return;
         files.forEach(f => {
             if (cat === 'PHOTOS' || isImageFile(f)) {
