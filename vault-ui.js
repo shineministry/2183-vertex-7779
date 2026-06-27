@@ -214,7 +214,7 @@ async function requestPasskeyAccess() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                visitorNameName: visitorName,
+                visitorName: visitorName,
                 purposeOfAccess: purpose,
                 timestamp: new Date().toISOString()
             })
