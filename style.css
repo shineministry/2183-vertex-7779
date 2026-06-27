@@ -109,6 +109,15 @@ body{
 
 }
 
+@keyframes modalExit{
+    from{ opacity:1; transform:scale(1); }
+    to{ opacity:0; transform:scale(.92); }
+}
+.lite-mode .modal-content-closing,
+.lite-mode .modal-closing {
+    animation:none !important;
+}
+
 @keyframes floating{
 
     0%{
