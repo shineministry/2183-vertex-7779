@@ -19,7 +19,7 @@
  *  network fetch — no stale authenticated shell is served.
  */
 
-const CACHE = "online-vault-v8";   // bump this string to force a full cache refresh
+const CACHE = "online-vault-v9";   // bump this string to force a full cache refresh
 
 const BACKEND_HOST = "backend.shinumaths989.workers.dev";
 
@@ -142,13 +142,46 @@ self.addEventListener("fetch", function(event) {
     return;
   }
 
-  // 5. Same-origin shell assets (JS, CSS, images) — cache-first
-  event.respondWith(cacheFirst(request));
+  // 5. Same-origin shell assets (JS, CSS, images) — stale-while-revalidate.
+  // Serves the cached copy instantly, but always re-fetches in the background
+  // and updates the cache, so a stale vault-data.js/auth.js/etc. only ever
+  // lasts one page load instead of persisting indefinitely until someone
+  // remembers to bump CACHE.
+  event.respondWith(staleWhileRevalidate(request));
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Strategies
 // ─────────────────────────────────────────────────────────────────────────────
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE);
+  const cached = await cache.match(request);
+
+  const networkFetch = fetch(request).then(function(response) {
+    if (isCacheable(response)) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  }).catch(function() {
+    return null; // network failed — caller falls back to cached version below
+  });
+
+  if (cached) {
+    // Kick off the revalidation but don't block on it.
+    networkFetch;
+    return cached;
+  }
+
+  // Nothing cached yet — must wait for network.
+  const fresh = await networkFetch;
+  if (fresh) return fresh;
+
+  return new Response("Offline", {
+    status: 503,
+    headers: { "Content-Type": "text/plain" }
+  });
+}
 
 async function networkFirst(request) {
   try {
@@ -168,25 +201,6 @@ async function networkFirst(request) {
       if (fallback) return fallback;
     }
 
-    return new Response("Offline", {
-      status: 503,
-      headers: { "Content-Type": "text/plain" }
-    });
-  }
-}
-
-async function cacheFirst(request) {
-  var cached = await caches.match(request);
-  if (cached) return cached;
-
-  try {
-    var response = await fetch(request);
-    if (isCacheable(response)) {
-      var cache = await caches.open(CACHE);
-      await cache.put(request, response.clone());
-    }
-    return response;
-  } catch (err) {
     return new Response("Offline", {
       status: 503,
       headers: { "Content-Type": "text/plain" }
