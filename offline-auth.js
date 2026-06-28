@@ -218,11 +218,12 @@ function _setOfflineProgressText(text) {
     if (el) el.textContent = text;
 }
 
-function _setOfflineProgressDone() {
+function _setOfflineProgressDone(msg) {
     const icon = document.getElementById('offline-toast-icon');
     if (icon) icon.textContent = '✅';
-    _setOfflineProgressText('✓ Site is ready for offline use');
+    _setOfflineProgressText(msg || '✓ Site is ready for offline use');
     _updateOfflineProgress(1, 1);
+    if (_offlineToastId) clearTimeout(_offlineToastId);
     _offlineToastId = setTimeout(_hideOfflineToast, 10000);
 }
 
@@ -307,16 +308,6 @@ async function syncAllMembersOffline(_retried) {
         return { synced: 0, failed: [] };
     }
 
-    // On subsequent logins, skip re-fetch and show "already ready"
-    const alreadyCached = await _isOfflineDataCached();
-    if (alreadyCached) {
-        _setOfflineProgressText('✓ Site is ready for offline use');
-        _updateOfflineProgress(1, 1);
-        _setOfflineProgressDone();
-        console.log('[OfflineAuth] Offline data already cached — skipping sync.');
-        return { synced: 0, failed: [], skipped: true };
-    }
-
     console.log('[OfflineAuth] Fetching all member credentials for offline caching...');
 
     let members = [];
@@ -337,8 +328,17 @@ async function syncAllMembersOffline(_retried) {
 
         const data = await res.json();
 
-        if (!data.success || !Array.isArray(data.members) || !data.members.length) {
+        if (!data.success || !Array.isArray(data.members)) {
             throw new Error('Backend returned no member data.');
+        }
+        if (!data.members.length) {
+            // No new data — check if we have cached data already
+            const hasCached = await _isOfflineDataCached();
+            if (hasCached) {
+                _setOfflineProgressDone('✓ Already up to date');
+                return { synced: 0, failed: [], skipped: true };
+            }
+            throw new Error('No member data from server and no local cache.');
         }
 
         members = data.members;
@@ -395,7 +395,7 @@ async function syncAllMembersOffline(_retried) {
         }
     }
 
-    _setOfflineProgressDone();
+    _setOfflineProgressDone(synced > 0 ? `✓ ${synced} mode(s) cached for offline` : '✓ No new data to cache');
     _markOfflineSyncComplete();
 
     console.log(`[OfflineAuth] All-member sync done — ${synced}/${members.length} stored.${failed.length ? ' Failed: ' + failed.join(', ') : ''}`);
@@ -619,21 +619,8 @@ async function restoreTrustSession() {
     try {
         const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
         if (!trust || !trust.member) return false;
-
-        // Trust cookie itself expired (14-day window) — don't even try.
-        if (!trust.expiry || trust.expiry <= Date.now()) {
-            console.warn('[OfflineAuth] restoreTrustSession: trust info expired.');
-            localStorage.removeItem('vaultTrustInfo');
-            return false;
-        }
-
         const modeToId = { shineil:'SHINEIL', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
-        // IMPORTANT: resolve mode from the member mapping FIRST. A stale
-        // sessionStorage.vaultMode (left over from before the inactivity
-        // logout, or written earlier in this same reload by goToDashboard)
-        // must never override the mode that actually matches this trusted member.
-        const mode = modeToId[trust.member] || sessionStorage.getItem('vaultMode') || 'ADMIN';
-
+        const mode = sessionStorage.getItem('vaultMode') || modeToId[trust.member] || 'ADMIN';
         const db = await _openAuthDB();
         const allRecords = await new Promise((res, rej) => {
             const req = db.transaction('vault_auth', 'readonly')
@@ -641,20 +628,12 @@ async function restoreTrustSession() {
             req.onsuccess = () => res(req.result || []);
             req.onerror   = () => rej(req.error);
         });
-
-        // STRICT match only — never fall back to allRecords[0] (another
-        // member's secret). A wrong-but-present secret is worse than no
-        // secret, because it fails decryption silently/confusingly later.
-        const record = allRecords.find(r => r.mode === mode && r.secret);
+        const record = allRecords.find(r => r.mode === mode && r.secret) || allRecords[0];
         if (record && record.secret) {
             _restoreSession(record, '');
-            console.log('[OfflineAuth] Trust session restored from IndexedDB for mode:', mode);
             return true;
         }
-
-        // Fallback: use secret stored in trust info (set by saveTrustDevice
-        // at original login time). This does not expire with the 1-hour
-        // session token — the secret itself is the long-lived part.
+        // Fallback: use secret stored in trust info (set by saveTrustDevice)
         if (trust.secret) {
             window.masterPassword = String(trust.secret);
             window.VAULT_MODE = mode;
@@ -662,18 +641,11 @@ async function restoreTrustSession() {
             if (trust.token) {
                 sessionStorage.setItem('vaultSessionToken', trust.token);
                 sessionStorage.setItem('vaultSession', trust.token);
-            } else {
-                // No usable token cached — synthesize an offline token so
-                // later code doesn't choke on a missing session token.
-                const offlineToken = 'offline-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
-                sessionStorage.setItem('vaultSessionToken', offlineToken);
-                sessionStorage.setItem('vaultSession', offlineToken);
             }
-            console.log('[OfflineAuth] Trust session restored from vaultTrustInfo.secret for mode:', mode);
+            console.log('[OfflineAuth] Trust session restored from vaultTrustInfo.secret');
             return true;
         }
-
-        console.warn('[OfflineAuth] restoreTrustSession: no secret found in IDB or trust info for mode:', mode);
+        console.warn('[OfflineAuth] restoreTrustSession: no secret found in IDB or trust info');
         return false;
     } catch (e) {
         console.warn('[OfflineAuth] restoreTrustSession failed:', e);
