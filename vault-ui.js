@@ -244,22 +244,21 @@ async function requestPasskeyAccess() {
                 })
             });
 
-            if (pollRes.status === 200) {
-                clearInterval(checkInterval);
-                const data = await pollRes.json();
-                
-                if (data.success && data.secret) {
-                    // Inject the decrypted master password dynamically 
+            const data = await pollRes.json().catch(() => ({}));
+
+            if (pollRes.status === 200 || data.status === 'approved') {
+                if (data.secret) {
+                    clearInterval(checkInterval);
                     masterPassword = data.secret;
                     window.masterPassword = data.secret;
-                    
-                    // Route to legal screen to keep pipeline consistent
                     document.getElementById('passkey-wait').style.display = 'none';
                     document.getElementById('step2').style.display = 'flex';
+                } else if (data.success && data.status === 'approved') {
+                    clearInterval(checkInterval);
+                    alert('Your request was approved. Please login again.');
+                    location.reload();
                 }
-            } else if (pollRes.status === 403) {
-                // Keep waiting silently (admin hasn't clicked 'Approve' yet or denied it)
-                const data = await pollRes.json().catch(() => ({}));
+            } else if (pollRes.status === 403 || data.error) {
                 if (data.error && data.error.includes("denied")) {
                     clearInterval(checkInterval);
                     alert("Your request for administrative authorization was declined.");
@@ -269,5 +268,5 @@ async function requestPasskeyAccess() {
         } catch (e) {
             console.log("Polling connection drop, retrying...", e);
         }
-    }, 3000); // Check status every 3 seconds
+    }, 3000);
 }
