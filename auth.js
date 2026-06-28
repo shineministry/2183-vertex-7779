@@ -505,13 +505,13 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // allow paste of full 6-digit code
+    // allow paste of full 8-digit code
     box.addEventListener("paste", (e) => {
       e.preventDefault();
       const pasted = (e.clipboardData || window.clipboardData)
-        .getData("text").replace(/\D/g, "").slice(0, 6);
+        .getData("text").replace(/\D/g, "").slice(0, 8);
       digits.forEach((d, j) => { d.value = pasted[j] || ""; });
-      if (pasted.length === 6) setTimeout(submitTOTP, 120);
+      if (pasted.length === 8) setTimeout(submitTOTP, 120);
     });
   });
 });
@@ -535,19 +535,19 @@ function getTOTPCode() {
     .map(d => d.value).join("");
 }
 
-// ── Countdown ring (30s TOTP window) ────────
+// ── Countdown ring (60s TOTP window) ────────
 function startTOTPCountdown() {
   stopTOTPCountdown();
 
   function tick() {
-    const sec = 30 - (Math.floor(Date.now() / 1000) % 30);
+    const sec = 60 - (Math.floor(Date.now() / 1000) % 60);
     const ring = document.getElementById("totp-ring");
     const label = document.getElementById("totp-timer-label");
     if (!ring) return;
 
-    const pct = sec / 30;
+    const pct = sec / 60;
     ring.setAttribute("stroke-dashoffset", (125.6 * (1 - pct)).toString());
-    ring.setAttribute("stroke", sec <= 5 ? "#f87171" : "var(--accent,#6ee7f7)");
+    ring.setAttribute("stroke", sec <= 10 ? "#f87171" : sec <= 20 ? "#f59e0b" : "var(--accent,#6ee7f7)");
     if (label) label.textContent = sec + "s";
   }
 
@@ -581,8 +581,8 @@ function hideTOTPError() {
 async function submitTOTP() {
   const code = getTOTPCode();
 
-  if (code.length !== 6) {
-    showTOTPError("Please enter all 6 digits.");
+  if (code.length !== 8) {
+    showTOTPError("Please enter all 8 digits.");
     return;
   }
 
