@@ -470,15 +470,7 @@ function showStep1() {
   document.getElementById("step-totp").style.display = "none";
   document.getElementById("step1").style.display     = "flex";
   stopTOTPCountdown();
-  // Reset OTP request state
   window._otpRequested = false;
-  const otpBtn = document.getElementById('otpBtn');
-  if (otpBtn) {
-    otpBtn.style.background = '';
-    otpBtn.style.color = '';
-    otpBtn.style.borderColor = '';
-    otpBtn.textContent = '📱 Request OTP Code';
-  }
 }
 
 // ── Digit box auto-advance + backspace ──────
@@ -663,6 +655,59 @@ sessionStorage.setItem('vaultUser', _modeUserMap[result.mode] || 'all');
     if (btn) { btn.textContent = "VERIFY CODE"; btn.disabled = false; }
   }
 }
+
+// ── TOTP login entry point ────────────────────────
+async function loginWithTOTP() {
+  const visitorName = document.getElementById("user-name").value.trim();
+  const pass = document.getElementById("vault-pass").value.trim();
+  const purpose = document.getElementById("user-purpose").value.trim();
+
+  if (!visitorName || !purpose || !pass) {
+    alert("Username, Access Context, and Access Matrix Pin are required.");
+    return;
+  }
+
+  window._otpRequested = true;
+  await showStep2();
+}
+
+// ── Cancel passkey wait and return to login ───────
+function cancelPasskeyWait() {
+  const pw = document.getElementById('passkey-wait');
+  if (pw) pw.style.display = 'none';
+  const s1 = document.getElementById('step1');
+  if (s1) s1.style.display = 'flex';
+}
+
+// ── Security quotes rotation ──────────────────────
+const SECURITY_QUOTES = [
+  "Encryption is the great equalizer — it protects the powerless from the powerful.",
+  "Privacy is not about hiding something; it's about protecting everything.",
+  "Security is not a product, but a process. Stay vigilant.",
+  "The only secure system is the one that is never connected to the network.",
+  "Digital security is a habit, not a one-time setup.",
+  "Your data is your identity — guard it like your life depends on it.",
+  "In the digital world, trust but verify — always verify.",
+  "Strong passwords are the first line of defense. Make them count.",
+  "Two-factor authentication: because one lock is never enough.",
+  "The best encryption is useless if the user is careless."
+];
+
+function initSecurityQuotes() {
+  const el = document.getElementById('security-quotes');
+  if (!el) return;
+  let idx = 0;
+  el.textContent = '💬 ' + SECURITY_QUOTES[0];
+  setInterval(() => {
+    idx = (idx + 1) % SECURITY_QUOTES.length;
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.textContent = '💬 ' + SECURITY_QUOTES[idx];
+      el.style.opacity = '1';
+    }, 300);
+  }, 10000);
+}
+document.addEventListener('DOMContentLoaded', initSecurityQuotes);
 
 /* ==========================================================
    PRODUCTION MERGED ENGINE: AI BACKGROUND INDEXING PIPELINE
