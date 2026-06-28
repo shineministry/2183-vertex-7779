@@ -1,5 +1,5 @@
 /* =========================
-   GLOBAL VARIABLES SITE
+   GLOBAL VARIABLES SIT
 ========================= */
 var masterPassword = "";
 
