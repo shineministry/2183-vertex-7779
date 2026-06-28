@@ -3636,7 +3636,7 @@ Recommended:
         window.openStatusModal = function() {
           const modal = document.getElementById('statusModal');
           if (modal) modal.style.display = 'flex';
-          _updateStatusDashboard();
+          window._updateStatusDashboard();
         };
         window.closeStatusModal = function() {
           animateCloseModal('statusModal');
@@ -3644,7 +3644,7 @@ Recommended:
         document.getElementById('statusModal').addEventListener('click', function(e) {
           if (e.target === this) closeStatusModal();
         });
-        async function _updateStatusDashboard() {
+        window._updateStatusDashboard = async function _updateStatusDashboard() {
           const mode = window.VAULT_MODE || sessionStorage.getItem('vaultMode') || '-';
           const el = document.getElementById('stat-mode-label');
           if (el) el.textContent = mode;
