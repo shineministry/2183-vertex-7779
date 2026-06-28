@@ -1426,8 +1426,7 @@ async function idbMarkNotifRead(id) {
 
 // Called by vaultPostInit — loads notifications and shows badge + bubble
 async function initVaultNotifications() {
-  // Try to sync from server first (fails silently if endpoint doesn't exist)
-  let serverNotifs = [];
+  // Sync from Firestore — server is the single source of truth for all devices
   try {
     const currentUserForSync = sessionStorage.getItem('vaultUser') || 'all';
     const res = await fetch(`${WORKER_URL}/get-notifications`, {
@@ -1437,19 +1436,28 @@ async function initVaultNotifications() {
     });
     if (res.ok) {
       const data = await res.json();
-      serverNotifs = data.notifications || [];
-      // Merge server notifications into local IDB, preserving read status
+      const serverNotifs = data.notifications || [];
+
+      // Preserve read-status from local IDB, then replace local with server list
+      // This handles: new notifs added on other devices AND deletions by admin
       const local = await idbGetNotifications();
-      const localKeys = new Set(local.map(n => n._key || (n.title + '|' + n.timestamp)));
+      const readSet = new Set(local.filter(n => n.read).map(n => n._key || String(n.id)));
+
       const db = await openNotifIDB();
-      const tx = db.transaction('vault_notifications', 'readwrite');
-      const store = tx.objectStore('vault_notifications');
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('vault_notifications', 'readwrite');
+        tx.objectStore('vault_notifications').clear();
+        tx.oncomplete = resolve;
+        tx.onerror = reject;
+      });
+      const db2 = await openNotifIDB();
+      const tx2 = db2.transaction('vault_notifications', 'readwrite');
+      const store2 = tx2.objectStore('vault_notifications');
       for (const n of serverNotifs) {
-        const key = n._key || (n.title + '|' + n.timestamp);
-        if (!localKeys.has(key)) {
-          store.add({ ...n, read: false });
-        }
+        const key = n._key || String(n.id);
+        store2.put({ ...n, read: readSet.has(key) ? true : (n.read || false) });
       }
+      await new Promise((resolve, reject) => { tx2.oncomplete = resolve; tx2.onerror = reject; });
     } else {
       console.warn(`[Notifications] get-notifications HTTP ${res.status}: ${await res.text().catch(() => '')}`);
     }
