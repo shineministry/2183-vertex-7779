@@ -819,8 +819,8 @@ async function preCacheVaultDocs(filesData) {
   // gracefully instead.
 
   const allFiles = [];
-  Object.values(filesData).forEach(cat => {
-    if (Array.isArray(cat)) cat.forEach(f => allFiles.push(f));
+  Object.entries(filesData).forEach(([catName, cat]) => {
+    if (Array.isArray(cat)) cat.forEach(f => allFiles.push({ ...f, category: f.category || catName }));
   });
 
   if (typeof idbSetVaultMeta === 'function') {
@@ -835,14 +835,16 @@ async function preCacheVaultDocs(filesData) {
       const existing = await idbGetDoc(f.file).catch(() => null);
       if (existing) { console.log(`[Offline cache] Already cached: ${f.file}`); continue; }
     }
+    const isPhotoFile = f.category === 'PHOTOS' || /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f.file);
+    const routePrefix = isPhotoFile ? 'photos/' : 'docs/';
     try {
-      const res = await fetch(`${WORKER_URL}/photos/${f.file}`, { headers: authHeaders });
+      const res = await fetch(`${WORKER_URL}/${routePrefix}${f.file}`, { headers: authHeaders });
       if (res.ok) {
         const buf = await res.arrayBuffer();
         if (typeof idbSaveDoc === 'function') await idbSaveDoc(f.file, buf);
         console.log(`[Offline cache] Cached: ${f.file}`);
       } else {
-        console.warn(`[Offline cache] HTTP ${res.status} for: ${f.file}`);
+        console.warn(`[Offline cache] HTTP ${res.status} for: ${routePrefix}${f.file}`);
       }
     } catch (e) {
       console.warn(`[Offline cache] Skipped ${f.file}:`, e.message);
@@ -1299,7 +1301,21 @@ if (!multiMemberModes.includes(currentMode) && memberSelectWrap) {
     setTimeout(checkDocExpiryReminders, 2000);
     // Load notifications and show badge/bubble
 setTimeout(() => initVaultNotifications().catch(() => {}), 400);
-   
+
+    // ── Eagerly decrypt photos in the background so they're warm by the time
+    // the user opens PHOTOS, and so opening a photo doesn't take 5-10s.
+    // Goes through the shared, concurrency-limited decrypt queue in
+    // viewer.js, so this doesn't fire 20+ simultaneous fetch+decrypt calls.
+    setTimeout(() => {
+      try {
+        if (typeof getAllPhotos === 'function' && typeof preDecryptAllPhotos === 'function') {
+          preDecryptAllPhotos(getAllPhotos());
+        }
+      } catch (e) {
+        console.warn('[Photos] Eager pre-decrypt kickoff failed:', e);
+      }
+    }, 200);
+
     // ── Pre-cache vault docs into IndexedDB for offline access ──
     // Runs after a short delay so it doesn't compete with the initial render
     setTimeout(async () => {
@@ -1413,10 +1429,12 @@ async function initVaultNotifications() {
   // Try to sync from server first (fails silently if endpoint doesn't exist)
   let serverNotifs = [];
   try {
+    const currentUserForSync = sessionStorage.getItem('vaultUser') || 'all';
     const res = await fetch(`${WORKER_URL}/get-notifications`, {
-  method: 'POST',
-  headers: await getAuthHeaders()
-});
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ user: currentUserForSync, vaultUser: currentUserForSync })
+    });
     if (res.ok) {
       const data = await res.json();
       serverNotifs = data.notifications || [];
@@ -1432,9 +1450,12 @@ async function initVaultNotifications() {
           store.add({ ...n, read: false });
         }
       }
+    } else {
+      console.warn(`[Notifications] get-notifications HTTP ${res.status}: ${await res.text().catch(() => '')}`);
     }
-  } catch {
+  } catch (e) {
     // Server endpoint not available — use local IDB only
+    console.warn('[Notifications] Server sync failed, using local IDB only:', e.message);
   }
 
   const all = await idbGetNotifications();
