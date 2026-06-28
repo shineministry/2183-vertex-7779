@@ -402,8 +402,8 @@ Recommended:
 
         /* Fluid Parameter Options Selection Grids */
         .options-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
+          display: flex;
+          flex-direction: column;
           gap: 10px;
           margin-bottom: 20px;
         }
@@ -412,57 +412,51 @@ Recommended:
         .custom-radio {
           display: flex;
           align-items: center;
-          gap: 8px;
-          font-size: 12px;
+          gap: 10px;
+          font-size: 13px;
           color: var(--text-main);
           cursor: pointer;
-          font-weight: 600;
-          padding: 8px 10px;
+          font-weight: 700;
+          padding: 12px 14px;
           background: #ffffff;
           border: 1px solid #e2e8f0;
-          border-radius: 8px;
+          border-radius: 10px;
           transition: all 0.2s;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
         }
 
         .custom-checkbox:hover,
         .custom-radio:hover {
           background: #f8fafc;
-          border-color: #cbd5e1;
+          border-color: #2563eb;
+          box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.08);
         }
 
         .custom-checkbox input,
         .custom-radio input {
           cursor: pointer;
           accent-color: var(--accent-primary);
-          width: 14px;
-          height: 14px;
+          width: 16px;
+          height: 16px;
         }
 
-        /* Quick Enforcement Level Sub-Selectors */
-        .security-modes {
+        /* Right column card sections */
+        .right-section-card {
           background: #ffffff;
           border: 1px solid var(--border-color);
           border-radius: 12px;
-          padding: 12px;
-          margin-bottom: 16px;
+          padding: 14px;
+          margin-bottom: 14px;
           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
         }
 
-        .security-modes .section-title {
-          font-size: 11px;
+        .right-section-card .section-title {
+          font-size: 10px;
           font-weight: 700;
           color: var(--text-muted);
           text-transform: uppercase;
-          margin-bottom: 8px;
           letter-spacing: 0.5px;
-          text-align: left;
-        }
-
-        .radio-group {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
+          margin-bottom: 8px;
         }
 
         /* Clean Info Utility Strip */
@@ -645,18 +639,7 @@ Recommended:
           }
 
           .options-grid {
-            grid-template-columns: 1fr 1fr !important;
             gap: 6px !important;
-          }
-
-          .security-modes .radio-group {
-            flex-direction: column;
-            gap: 6px;
-          }
-
-          .security-modes .custom-radio {
-            font-size: 11px;
-            padding: 6px 10px;
           }
 
           .header-section .main-logo-container {
@@ -688,7 +671,6 @@ Recommended:
           }
 
           .options-grid {
-            grid-template-columns: 1fr 1fr;
             gap: 6px;
           }
         }
@@ -728,7 +710,7 @@ Recommended:
           }
 
           .options-grid {
-            grid-template-columns: 1fr !important;
+            gap: 6px;
           }
 
           .step-card h2 {
@@ -1090,11 +1072,17 @@ Recommended:
           <div class="login-footer-links"> <a href="https://72oe-v2sx.shine-ministry.com/1781287270604.html" onclick="return true;">Privacy</a> <span>·</span> <a href="https://72oe-v2sx.shine-ministry.com/1781287440867.html" onclick="return true;">Terms</a> <span>·</span> <a href="https://72oe-v2sx.shine-ministry.com/1781285772718.html" onclick="return true;">Don't Know Password</a> </div>
         </div>
         <div class="login-col login-col-right">
-          <div class="options-grid"> <label class="custom-checkbox"><input type="checkbox" id="trust-device"><span>Trust (14 days)</span></label> </div>
-          <div id="security-quotes" style="margin-top:12px;padding:12px 14px;background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1px solid #bfdbfe;border-radius:10px;font-size:11px;color:#1e40af;text-align:center;font-weight:600;min-height:20px;transition:opacity .5s;"></div>
-          <div class="meta-utility-strip">
-            <div class="meta-item"><span>Access Node Point:</span><span class="meta-val" style="color:var(--accent-primary);">192.168.1.84</span></div>
-            <div class="meta-item"><span>Session Lifecycle:</span><span class="meta-val" id="lifecycleTimer" style="color:#fbbf24;">10:00 mins remaining</span></div>
+          <div class="right-section-card">
+            <div class="section-title">Session Preferences</div>
+            <div class="options-grid"> <label class="custom-checkbox"><input type="checkbox" id="trust-device"><span>Trust Device (14 days)</span></label> </div>
+          </div>
+          <div class="right-section-card" style="border-color:#bfdbfe;background:linear-gradient(135deg,#f8faff,#f0fdf4);">
+            <div id="security-quotes" style="font-size:11px;color:#1e40af;text-align:center;font-weight:600;min-height:20px;transition:opacity .5s;"></div>
+          </div>
+          <div class="right-section-card">
+            <div class="section-title">Connection Status</div>
+            <div class="meta-item" style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:8px;"><span style="color:var(--text-muted);font-weight:600;">Access Node:</span><span style="color:var(--accent-primary);font-weight:700;">192.168.1.84</span></div>
+            <div class="meta-item" style="display:flex;justify-content:space-between;align-items:center;font-size:11px;"><span style="color:var(--text-muted);font-weight:600;">Session:</span><span id="lifecycleTimer" style="color:#d97706;font-weight:700;">10:00 mins remaining</span></div>
           </div>
           </div>
         </div>
