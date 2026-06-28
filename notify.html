@@ -547,8 +547,47 @@ async function publishNotification() {
   }
 }
 
-// ── Load published ──
+// ── Load published ── (Firestore is source of truth)
 async function loadPublished() {
+  const log = document.getElementById('notif-log');
+  log.innerHTML = '<div class="empty-state"><div class="es-icon">⏳</div><div class="es-text">Loading from server…</div></div>';
+
+  // Step 1: Fetch from Firestore backend — this is the single source of truth
+  let serverNotifs = [];
+  try {
+    const res = await fetch('https://backend.shinumaths989.workers.dev/get-notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      serverNotifs = data.notifications || [];
+      // Replace local IDB with exactly what the server has
+      const db = await openDB();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('vault_notifications', 'readwrite');
+        tx.objectStore('vault_notifications').clear();
+        tx.oncomplete = resolve;
+        tx.onerror = reject;
+      });
+      const db2 = await openDB();
+      const tx2 = db2.transaction('vault_notifications', 'readwrite');
+      const store2 = tx2.objectStore('vault_notifications');
+      for (const n of serverNotifs) {
+        store2.put(n);
+      }
+      await new Promise((resolve, reject) => {
+        tx2.oncomplete = resolve;
+        tx2.onerror = reject;
+      });
+    } else {
+      console.warn('[notify] get-notifications failed:', res.status);
+    }
+  } catch (e) {
+    console.warn('[notify] Backend unreachable, showing local IDB only:', e.message);
+  }
+
+  // Step 2: Read from IDB (now in sync with server)
   const all = await getAllNotifs();
   const sorted = all.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
 
@@ -557,7 +596,6 @@ async function loadPublished() {
   document.getElementById('stat-global').textContent   = sorted.filter(n => n.type === 'global').length;
   document.getElementById('stat-targeted').textContent = sorted.filter(n => n.type === 'targeted').length;
 
-  const log = document.getElementById('notif-log');
   if (sorted.length === 0) {
     log.innerHTML = '<div class="empty-state"><div class="es-icon">📭</div><div class="es-text">No notifications published yet</div></div>';
     return;
@@ -576,22 +614,45 @@ async function loadPublished() {
           ${n.read ? '<span style="color:#22c55e;">✓ Read</span>' : '<span style="color:#94a3b8;">● Unread</span>'}
         </div>
       </div>
-      <button class="ne-del" onclick="removeNotif(${n.id})">🗑️</button>
+      <button class="ne-del" onclick="removeNotif('${n.id}')">🗑️</button>
     </div>
   `).join('');
 }
 
 async function removeNotif(id) {
+  // Delete from local IDB first
   await deleteNotif(id);
+  // Delete from Firestore so ALL devices stop seeing it
+  try {
+    const res = await fetch('https://backend.shinumaths989.workers.dev/delete-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    if (!res.ok) console.warn('[notify] Backend delete returned:', res.status);
+  } catch (e) {
+    console.warn('[notify] Backend delete failed (local delete still done):', e.message);
+  }
   loadPublished();
-  showToast('🗑️ Notification removed', '#94a3b8');
+  showToast('🗑️ Notification removed from all devices', '#94a3b8');
 }
 
 async function clearAllNotifications() {
-  if (!confirm('Delete ALL notifications? This cannot be undone.')) return;
+  if (!confirm('Delete ALL notifications from all devices? This cannot be undone.')) return;
+  // Get all IDs before clearing local
+  const all = await getAllNotifs();
   await clearAllNotifs();
+  // Delete each from Firestore backend
+  const deletes = all.map(n =>
+    fetch('https://backend.shinumaths989.workers.dev/delete-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: n.id })
+    }).catch(e => console.warn('[notify] Backend delete failed for', n.id, e.message))
+  );
+  await Promise.all(deletes);
   loadPublished();
-  showToast('🗑️ All notifications cleared', '#94a3b8');
+  showToast('🗑️ All notifications cleared from all devices', '#94a3b8');
 }
 
 // ── Helpers ──
