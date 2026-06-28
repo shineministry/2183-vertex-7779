@@ -1220,13 +1220,13 @@ Recommended:
     <div class="step-card">
       <div class="main-logo">🔑</div>
       <h2>Authenticator Verification</h2>
-      <div class="subtitle"> Enter the 6-digit code from your<br> Authenticator App (Google / Authy) </div> <!-- 6 individual digit boxes -->
-      <div id="totp-boxes" style="      display:flex;      gap:10px;      justify-content:center;      margin:24px 0 8px;    "> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> </div> <!-- countdown ring -->
+      <div class="subtitle"> Enter the 8-digit code from your<br> Authenticator App (Google / Authy) </div> <!-- 8 individual digit boxes split 4+4 -->
+      <div id="totp-boxes" style="display:flex;align-items:center;gap:6px;justify-content:center;margin:24px 0 8px;"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <span style="font-size:20px;color:#64748b;line-height:1;margin:0 2px;">·</span> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> </div> <!-- countdown ring -->
       <div style="text-align:center;margin-bottom:18px;"> <svg width="48" height="48" viewBox="0 0 48 48">
           <circle cx="24" cy="24" r="20" fill="none" stroke="#1e293b" stroke-width="4" />
           <circle id="totp-ring" cx="24" cy="24" r="20" fill="none" stroke="var(--accent,#6ee7f7)" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 24 24)" style="transition:stroke-dashoffset 1s linear;" />
         </svg>
-        <div id="totp-timer-label" style="        font-size:11px;        color:#64748b;        margin-top:4px;        font-family:monospace;      ">30s</div>
+        <div id="totp-timer-label" style="        font-size:11px;        color:#64748b;        margin-top:4px;        font-family:monospace;      ">60s</div>
       </div>
       <div id="totp-error" style="      display:none;      color:#f87171;      font-size:13px;      text-align:center;      margin-bottom:12px;      font-weight:700;    "></div> <button class="btn-primary" onclick="submitTOTP()"> VERIFY CODE </button> <button onclick="showStep1()" style="      margin-top:12px;      border:none;      background:transparent;      color:#64748b;      font-size:13px;      cursor:pointer;      width:100%;    ">← Back to Login</button>
     </div>
