@@ -1,8 +1,145 @@
 /* =========================
-   PHOTO DECRYPT CACHE
-   Keyed by docKey → { url, mime } so we never re-decrypt the same photo.
+   PHOTO DECRYPT CACHE + QUEUE
+   Keyed by docKey → { url, mime }. Shared by the photo grid, the lightbox,
+   and the eager pre-decrypt pass kicked off from the loading screen, so a
+   photo is only ever fetched + decrypted ONCE per session — not once per
+   page visit. Decryption runs through a small bounded-concurrency queue so
+   we don't fire 20-30 fetch+PBKDF2 operations at once (which is what was
+   causing slow opens and intermittent failures/timeouts under load).
 ========================= */
 window._photoDecryptedCache = window._photoDecryptedCache || new Map();
+
+// Tracks in-flight decrypt promises so concurrent callers (grid + lightbox
+// both wanting the same photo) await the same work instead of double-fetching.
+window._photoDecryptInflight = window._photoDecryptInflight || new Map();
+
+// Simple concurrency limiter — at most N decrypts running at once.
+window._photoDecryptQueue = window._photoDecryptQueue || (function() {
+    const MAX_CONCURRENT = 3;
+    let active = 0;
+    const waiting = [];
+    function runNext() {
+        if (active >= MAX_CONCURRENT || waiting.length === 0) return;
+        active++;
+        const { task, resolve, reject } = waiting.shift();
+        task().then(resolve, reject).finally(() => {
+            active--;
+            runNext();
+        });
+    }
+    return {
+        push(task) {
+            return new Promise((resolve, reject) => {
+                waiting.push({ task, resolve, reject });
+                runNext();
+            });
+        }
+    };
+})();
+
+/**
+ * Decrypt a photo file, going through (in order): in-memory decrypted cache,
+ * IndexedDB encrypted-bytes cache, then network — with the actual decrypt
+ * work throttled through the shared queue and retried once on transient
+ * failure (timeout / HTTP error). Returns { url, mime } or null.
+ *
+ * This is the single entry point grid thumbnails, the lightbox, and the
+ * eager loading-screen preload should all call, so they share one cache.
+ */
+async function decryptPhotoShared(file, options) {
+    options = options || {};
+    const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '').replace(/^\/photos\/|^photos\//, '');
+    if (!docKey) return null;
+
+    // Already decrypted this session — instant return, no re-fetch/decrypt.
+    if (window._photoDecryptedCache.has(docKey)) {
+        return window._photoDecryptedCache.get(docKey);
+    }
+
+    // Someone else (grid, lightbox, or preloader) is already decrypting this
+    // exact photo right now — await their result instead of starting a
+    // duplicate fetch+decrypt.
+    if (window._photoDecryptInflight.has(docKey)) {
+        return window._photoDecryptInflight.get(docKey);
+    }
+
+    const work = window._photoDecryptQueue.push(() => _decryptPhotoOnce(file, docKey));
+    window._photoDecryptInflight.set(docKey, work);
+    try {
+        const result = await work;
+        if (result) window._photoDecryptedCache.set(docKey, result);
+        return result;
+    } finally {
+        window._photoDecryptInflight.delete(docKey);
+    }
+}
+
+async function _decryptPhotoOnce(file, docKey, attempt) {
+    attempt = attempt || 1;
+    try {
+        const vaultSessionToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
+        let buffer;
+
+        // Encrypted-bytes cache (durable, survives reloads) — works offline too.
+        if (typeof idbGetDoc === 'function') {
+            const cached = await idbGetDoc('photos/' + docKey).catch(() => null);
+            if (cached) buffer = cached;
+        }
+
+        if (!buffer && vaultSessionToken) {
+            const controller = new AbortController();
+            // Generous timeout — under concurrency-limited load a request can
+            // legitimately queue behind others for a few seconds.
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+            try {
+                const res = await fetch('https://backend.shinumaths989.workers.dev/photos/' + docKey, {
+                    headers: { 'Authorization': 'Bearer ' + vaultSessionToken },
+                    signal: controller.signal
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                buffer = await res.arrayBuffer();
+                if (typeof idbSaveDoc === 'function') {
+                    idbSaveDoc('photos/' + docKey, buffer).catch(() => {});
+                }
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        if (!buffer) return null;
+
+        const decrypted = await decryptBuffer(buffer);
+        if (!decrypted) throw new Error('decrypt-failed');
+
+        const mime = typeof getImageMime === 'function' ? getImageMime(file) : 'image/jpeg';
+        const blob = new Blob([decrypted], { type: mime });
+        const url = URL.createObjectURL(blob);
+        return { url, mime };
+    } catch (e) {
+        // One retry on transient failures (timeout, HTTP 429/5xx, momentary
+        // decrypt hiccup) before giving up — this is what was showing up as
+        // "some files fail, some don't" under burst load.
+        if (attempt < 2) {
+            await new Promise(r => setTimeout(r, 400 * attempt));
+            return _decryptPhotoOnce(file, docKey, attempt + 1);
+        }
+        console.warn(`[Photo decrypt] Failed for ${docKey} after ${attempt} attempt(s):`, e.message);
+        return null;
+    }
+}
+
+/**
+ * Kick off decryption for every photo in the background, without blocking
+ * anything. Safe to call multiple times — already-cached / already-inflight
+ * photos are skipped automatically. Intended to be called from the loading
+ * screen so photos are warm in cache by the time the user opens PHOTOS.
+ */
+function preDecryptAllPhotos(photos) {
+    if (!Array.isArray(photos)) return;
+    photos.forEach(file => {
+        decryptPhotoShared(file).catch(() => {});
+    });
+}
 
 /* =========================
    INDEXED DB HELPER SITE
@@ -911,15 +1048,12 @@ function closePhotoViewer() {
     if (overlay) overlay.style.display = 'none';
     _lightboxPhotos = [];
     _lightboxIndex = -1;
-    // Revoke blob URLs and clear decrypt cache
-    document.querySelectorAll('#lightbox-img-container img').forEach(img => {
-        if (img.dataset.blobUrl) URL.revokeObjectURL(img.dataset.blobUrl);
-    });
-    // Also revoke any cached URLs not currently in DOM
-    window._photoDecryptedCache.forEach(entry => {
-        try { URL.revokeObjectURL(entry.url); } catch(e) {}
-    });
-    window._photoDecryptedCache.clear();
+    // NOTE: we intentionally do NOT revoke blob URLs or clear
+    // window._photoDecryptedCache here. That cache is shared with the photo
+    // grid and is meant to persist for the whole session so navigating away
+    // (Profile, Gmail, etc.) and back doesn't force every photo to re-fetch
+    // and re-decrypt. Blob URLs are cheap to leave alive for the session and
+    // get cleaned up naturally on page unload.
     document.getElementById('lightbox-img-container').innerHTML = '';
 }
 
@@ -958,94 +1092,40 @@ async function updateLightboxImage() {
     const file = _lightboxPhotos[_lightboxIndex];
     if (caption) caption.textContent = file.name || 'Photo';
 
-    const docKey = (file.file || '').replace(/^\\/docs\\/|^docs\\//, '').replace(/^\\/photos\\/|^photos\\//, '');
+    const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '').replace(/^\/photos\/|^photos\//, '');
 
-    // ── CACHE HIT: already decrypted, reuse blob URL ──────────────────────────
+    // ── CACHE HIT: already decrypted (by grid, lightbox, or the eager
+    // loading-screen preload), reuse the blob URL — no re-fetch, no re-decrypt.
     if (window._photoDecryptedCache.has(docKey)) {
         const cached = window._photoDecryptedCache.get(docKey);
         container.innerHTML = `<img src="${cached.url}" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,.3);" data-blob-url="${cached.url}" alt="${file.name || ''}">`;
         return;
     }
 
+    if (!window.masterPassword) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Session not unlocked</div>';
+        return;
+    }
+
     container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">Loading...</div>';
 
+    // Capture which photo this load was for — if the user navigates to a
+    // different photo before this resolves (rapid-clicking next/prev), don't
+    // overwrite the container with a stale image.
+    const requestedIndex = _lightboxIndex;
+
     try {
-        const vaultSessionToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
-        if (!vaultSessionToken) return;
+        const result = await decryptPhotoShared(file);
+        if (_lightboxIndex !== requestedIndex) return; // user moved on already
 
-        let buffer;
-
-        if (typeof idbGetDoc === 'function') {
-            const cached = await idbGetDoc('photos/' + docKey).catch(() => null);
-            if (cached) buffer = cached;
-        }
-
-        if (!buffer) {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000);
-            try {
-                const res = await fetch('https://backend.shinumaths989.workers.dev/photos/' + docKey, {
-                    headers: { 'Authorization': 'Bearer ' + vaultSessionToken },
-                    signal: controller.signal
-                });
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                buffer = await res.arrayBuffer();
-                if (typeof idbSaveDoc === 'function') {
-                    idbSaveDoc('photos/' + docKey, buffer).catch(() => {});
-                }
-            } finally {
-                clearTimeout(timeoutId);
-            }
-        }
-
-        if (!buffer) {
+        if (!result) {
             container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Failed to load photo</div>';
             return;
         }
 
-        // Decrypt (if encrypted). If plain image, skip.
-        const settingsLength = new Uint32Array(buffer.slice(0, 4))[0];
-        if (settingsLength === 0 || settingsLength > buffer.byteLength - 32) {
-            container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Corrupted file</div>';
-            return;
-        }
-        const settingsBytes = buffer.slice(4, 4 + settingsLength);
-        const settings = JSON.parse(new TextDecoder().decode(settingsBytes));
-        const salt = buffer.slice(4 + settingsLength, 4 + settingsLength + 16);
-        const iv = buffer.slice(4 + settingsLength + 16, 4 + settingsLength + 16 + 12);
-        const encryptedData = buffer.slice(4 + settingsLength + 16 + 12);
-
-        if (!window.masterPassword) {
-            container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Session not unlocked</div>';
-            return;
-        }
-        const masterPw = window.masterPassword;
-        const passwordHash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(masterPw)));
-        const keyMaterial = await crypto.subtle.importKey('raw', passwordHash, 'PBKDF2', false, ['deriveKey']);
-        const key = await crypto.subtle.deriveKey({
-            name: 'PBKDF2',
-            salt: new Uint8Array(salt),
-            iterations: settings.iterations,
-            hash: settings.hash
-        }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
-        const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(iv) }, key, encryptedData);
-
-        const name = (file.name || '').toLowerCase();
-        let mime = 'image/jpeg';
-        if (name.endsWith('.png')) mime = 'image/png';
-        else if (name.endsWith('.gif')) mime = 'image/gif';
-        else if (name.endsWith('.webp')) mime = 'image/webp';
-        else if (name.endsWith('.bmp')) mime = 'image/bmp';
-
-        const blob = new Blob([decrypted], { type: mime });
-        const url = URL.createObjectURL(blob);
-
-        // ── Store in cache so revisiting this photo skips re-decryption ──
-        window._photoDecryptedCache.set(docKey, { url, mime });
-
-        container.innerHTML = `<img src="${url}" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,.3);" data-blob-url="${url}" alt="${file.name || ''}">`;
-
+        container.innerHTML = `<img src="${result.url}" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,.3);" data-blob-url="${result.url}" alt="${file.name || ''}">`;
     } catch (e) {
+        if (_lightboxIndex !== requestedIndex) return;
         container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Error: ' + e.message + '</div>';
     }
 }
