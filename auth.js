@@ -590,7 +590,7 @@ async function submitTOTP() {
     const res = await fetch(`${BACKEND}/verify-totp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, hash: _totpHash })
+      body: JSON.stringify({ code, hash: _totpHash, username: document.getElementById('user-name').value.trim() })
     });
 
     const data = await res.json();
@@ -600,12 +600,11 @@ async function submitTOTP() {
 
     // ── Apply session data from the verified response ──────────────────
     const result = data;
-    const pass   = window._pendingAuthPass;
 
     sessionStorage.setItem("vaultSessionToken", result.sessionToken);
     sessionStorage.setItem("vaultSession",       result.sessionToken);
 
-    window.masterPassword = result.secret ? String(result.secret) : String(pass || "");
+    window.masterPassword = result.secret ? String(result.secret) : "";
 
     window.VAULT_MODE = result.mode;
     sessionStorage.setItem("vaultMode", result.mode);
@@ -656,19 +655,20 @@ sessionStorage.setItem('vaultUser', _modeUserMap[result.mode] || 'all');
   }
 }
 
-// ── TOTP login entry point ────────────────────────
+// ── TOTP login entry point (independent, no password) ──
 async function loginWithTOTP() {
   const visitorName = document.getElementById("user-name").value.trim();
-  const pass = document.getElementById("vault-pass").value.trim();
   const purpose = document.getElementById("user-purpose").value.trim();
 
-  if (!visitorName || !purpose || !pass) {
-    alert("Username, Access Context, and Access Matrix Pin are required.");
+  if (!visitorName || !purpose) {
+    alert("Username and Access Context are required.");
     return;
   }
 
-  window._otpRequested = true;
-  await showStep2();
+  _totpHash = null;
+  showStepTOTP();
+  startTOTPCountdown();
+  focusFirstDigit();
 }
 
 // ── Cancel passkey wait and return to login ───────
