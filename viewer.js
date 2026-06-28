@@ -1,4 +1,10 @@
 /* =========================
+   PHOTO DECRYPT CACHE
+   Keyed by docKey → { url, mime } so we never re-decrypt the same photo.
+========================= */
+window._photoDecryptedCache = window._photoDecryptedCache || new Map();
+
+/* =========================
    INDEXED DB HELPER SITE
 ========================= */
 
@@ -194,9 +200,13 @@ displayName){
         buffer.slice(ivEnd);
 
         // HASH PASSWORD
+        // Use global sha256Bytes if available; otherwise inline fallback
+        const _sha256BytesFn = (typeof sha256Bytes === 'function')
+            ? sha256Bytes
+            : async (text) => new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
 
         const passwordHash =
-        await sha256Bytes(
+        await _sha256BytesFn(
             window.masterPassword
         );
 
@@ -901,10 +911,15 @@ function closePhotoViewer() {
     if (overlay) overlay.style.display = 'none';
     _lightboxPhotos = [];
     _lightboxIndex = -1;
-    // Revoke blob URLs
+    // Revoke blob URLs and clear decrypt cache
     document.querySelectorAll('#lightbox-img-container img').forEach(img => {
         if (img.dataset.blobUrl) URL.revokeObjectURL(img.dataset.blobUrl);
     });
+    // Also revoke any cached URLs not currently in DOM
+    window._photoDecryptedCache.forEach(entry => {
+        try { URL.revokeObjectURL(entry.url); } catch(e) {}
+    });
+    window._photoDecryptedCache.clear();
     document.getElementById('lightbox-img-container').innerHTML = '';
 }
 
@@ -943,13 +958,21 @@ async function updateLightboxImage() {
     const file = _lightboxPhotos[_lightboxIndex];
     if (caption) caption.textContent = file.name || 'Photo';
 
+    const docKey = (file.file || '').replace(/^\\/docs\\/|^docs\\//, '').replace(/^\\/photos\\/|^photos\\//, '');
+
+    // ── CACHE HIT: already decrypted, reuse blob URL ──────────────────────────
+    if (window._photoDecryptedCache.has(docKey)) {
+        const cached = window._photoDecryptedCache.get(docKey);
+        container.innerHTML = `<img src="${cached.url}" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,.3);" data-blob-url="${cached.url}" alt="${file.name || ''}">`;
+        return;
+    }
+
     container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">Loading...</div>';
 
     try {
         const vaultSessionToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
         if (!vaultSessionToken) return;
 
-        const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '').replace(/^\/photos\/|^photos\//, '');
         let buffer;
 
         if (typeof idbGetDoc === 'function') {
@@ -1016,6 +1039,9 @@ async function updateLightboxImage() {
 
         const blob = new Blob([decrypted], { type: mime });
         const url = URL.createObjectURL(blob);
+
+        // ── Store in cache so revisiting this photo skips re-decryption ──
+        window._photoDecryptedCache.set(docKey, { url, mime });
 
         container.innerHTML = `<img src="${url}" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,.3);" data-blob-url="${url}" alt="${file.name || ''}">`;
 
