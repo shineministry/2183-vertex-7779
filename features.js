@@ -1587,7 +1587,7 @@ async function _renderNotifPanel() {
     const pColors = { info: {bg:'rgba(59,130,246,.2)',c:'#93c5fd'}, warning: {bg:'rgba(245,158,11,.2)',c:'#fcd34d'}, urgent: {bg:'rgba(239,68,68,.2)',c:'#fca5a5'} };
     const pc = pColors[pCls] || pColors.info;
     return `
-    <div id="notif-item-${n.id}" onclick="markNotifRead(${n.id})" style="padding:10px 12px;border-radius:10px;margin-bottom:6px;cursor:pointer;background:${n.read ? 'transparent' : 'rgba(59,130,246,.07)'};border:1px solid ${n.read ? 'transparent' : 'rgba(59,130,246,.15)'};transition:.2s;">
+    <div id="notif-item-${n.id}" onclick="markNotifRead('${n.id}')" style="padding:10px 12px;border-radius:10px;margin-bottom:6px;cursor:pointer;background:${n.read ? 'transparent' : 'rgba(59,130,246,.07)'};border:1px solid ${n.read ? 'transparent' : 'rgba(59,130,246,.15)'};transition:.2s;">
       <div style="display:flex;align-items:flex-start;gap:8px;">
         <span style="font-size:18px;flex-shrink:0;">${n.type === 'global' ? '📢' : '🎯'}</span>
         <div style="flex:1;min-width:0;">
