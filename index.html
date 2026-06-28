@@ -564,6 +564,36 @@ Recommended:
           box-shadow: none;
         }
 
+        /* Login action button stack: primary + secondary buttons share one width */
+        .login-actions {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+          width: 100%;
+        }
+
+        .btn-secondary {
+          width: 100%;
+          border: 1px solid var(--border-color);
+          background: transparent;
+          color: var(--text-main);
+          padding: 14px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.3px;
+          cursor: pointer;
+          box-sizing: border-box;
+          transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+          border-color: var(--accent-primary);
+          color: var(--accent-primary);
+          background: var(--glow);
+        }
+
         /* Watermark overlay inside PDF render area */
         .watermark {
           position: absolute;
@@ -1068,7 +1098,7 @@ Recommended:
             </div>
             <div style="font-size:10px; color:var(--text-muted); text-align:right; margin-top:4px; cursor:pointer;" onclick="openKeypad()"> ⌨️ Use Virtual Protection Keypad </div>
           </div>
-           <div style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;"> <button class="btn-primary" id="submitBtn" onclick="showStep2()">CONTINUE SECURELY</button> <button onclick="requestPasskeyAccess()" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; width:fit-content;">🔑 USE HARDWARE SECURITY PASSKEY</button> <button onclick="loginWithTOTP()" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; width:fit-content;">🔢 LOGIN WITH TOTP</button> </div>
+           <div class="login-actions"> <button class="btn-primary" id="submitBtn" onclick="showStep2()">CONTINUE SECURELY</button> <button class="btn-secondary" onclick="requestPasskeyAccess()">🔑 USE HARDWARE SECURITY PASSKEY</button> <button class="btn-secondary" onclick="loginWithTOTP()">🔢 LOGIN WITH TOTP</button> </div>
           <div class="login-footer-links" style="text-align:center;"> <a href="https://72oe-v2sx.shine-ministry.com/1781287270604.html" onclick="return true;">Privacy</a> <span>·</span> <a href="https://72oe-v2sx.shine-ministry.com/1781287440867.html" onclick="return true;">Terms</a> <span>·</span> <a href="https://72oe-v2sx.shine-ministry.com/1781285772718.html" onclick="return true;">Don't Know Password</a> </div>
         </div>
         <div class="login-col login-col-right">
