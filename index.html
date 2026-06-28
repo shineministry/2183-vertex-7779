@@ -1578,13 +1578,22 @@ Recommended:
           <div> <label>Sharing: <span id="share-doc-name" style="color:var(--accent);"></span></label> </div>
           <div> <label>Link Expiry (hours)</label> <input type="number" id="share-expiry" value="24" min="1" max="720" style="margin-bottom:0;"> </div>
           <div> <label>Link Password (optional)</label> <input type="password" id="share-password" placeholder="Leave blank for no password" style="margin-bottom:0;"> </div> <button class="btn-primary" onclick="generateShareLink()" style="margin-top:4px;">Generate Secure Link</button>
-          <div id="share-link-result" style="display:none;"> <divid="qr-sharing-container"style="margin-top:16px;text-align:center;"><buttonid="generateQRBtn"class="card-btn card-btn-share"onclick="activateShareQR()" style="width:100%;padding:12px;font-weight:700;">📱 QR CODE SHARING</button><divid="qr-box"style="display:none;margin-top:14px;"><canvasid="qrCanvas"style="background:white;padding:14px;border-radius:18px;max-width:260px;box-shadow:0 10px 30pxrgba(0,0,0,.15);"></canvas>
-                    <div style="margin-top:10px;font-size:12px;color:var(--muted);">Scan QR to open secure link</div>
+          <div id="share-link-result" style="display:none;">
+            <label>Your Secure Link (read-only, expires automatically)</label>
+            <div class="share-link-box" id="share-link-text"></div>
+            <div id="qr-sharing-container" style="margin-top:4px;text-align:center;">
+              <button id="generateQRBtn" class="card-btn card-btn-share" onclick="activateShareQR()" style="width:100%;padding:12px;font-weight:700;">📱 QR CODE SHARING</button>
+              <div id="qr-box" style="display:none;margin-top:14px;">
+                <canvas id="qrCanvas" style="background:white;padding:14px;border-radius:18px;max-width:260px;box-shadow:0 10px 30px rgba(0,0,0,.15);"></canvas>
+                <div style="margin-top:10px;font-size:12px;color:var(--muted);">Scan QR to open secure link</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:10px;">
+              <button class="card-btn card-btn-share" style="flex:1;padding:10px;" onclick="copyShareLink()">📋 Copy Link</button>
+              <button class="card-btn card-btn-pin" style="flex:1;padding:10px;" onclick="closeShareModal()">Done</button>
+            </div>
+            <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center;">🔒 Read-only · AES-256 encrypted · Auto-expires · Powered by SKM</div>
           </div>
-        </div> <label>Your Secure Link (read-only, expires automatically)</label>
-        <div class="share-link-box" id="share-link-text"></div>
-        <div style="display:flex;gap:10px;margin-top:10px;"> <button class="card-btn card-btn-share" style="flex:1;padding:10px;" onclick="copyShareLink()">📋 Copy Link</button> <button class="card-btn card-btn-pin" style="flex:1;padding:10px;" onclick="closeShareModal()">Done</button> </div>
-        <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center;"> 🔒 Read-only · AES-256 encrypted · Auto-expires · Powered by SKM </div>
       </div>
     </div>
     </div>
