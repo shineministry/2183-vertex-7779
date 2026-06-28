@@ -796,12 +796,22 @@ function renderPhotos() {
         const card = document.createElement('div');
         card.className = 'photo-card';
         card.dataset.index = index;
-        card.innerHTML = '<div class="photo-thumb"><div class="photo-loading"></div></div>';
         card.onclick = () => openPhotoViewer(photos, index);
-        grid.appendChild(card);
 
-        // Decrypt and render thumbnail on the fly
-        renderPhotoThumb(card.querySelector('.photo-thumb'), file, index);
+        // If this photo was already decrypted (by a previous visit to this
+        // page, the lightbox, or the eager loading-screen preload), paint it
+        // instantly — no spinner, no re-fetch, no re-decrypt.
+        const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '').replace(/^\/photos\/|^photos\//, '');
+        const cached = window._photoDecryptedCache && window._photoDecryptedCache.get(docKey);
+        if (cached) {
+            card.innerHTML = `<div class="photo-thumb"><img class="photo-img" src="${cached.url}" loading="lazy" data-blob-url="${cached.url}"></div>`;
+        } else {
+            card.innerHTML = '<div class="photo-thumb"><div class="photo-loading"></div></div>';
+            // Decrypt and render thumbnail on the fly (throttled + cached)
+            renderPhotoThumb(card.querySelector('.photo-thumb'), file, index);
+        }
+
+        grid.appendChild(card);
     });
 
     // Store photos for lightbox
@@ -810,50 +820,19 @@ function renderPhotos() {
 
 async function renderPhotoThumb(container, file, index) {
     try {
-        const vaultSessionToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
-        const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '').replace(/^\/photos\/|^photos\//, '');
-        let buffer;
-
-        // Try IndexedDB cache first — works without a token
-        if (typeof idbGetDoc === 'function') {
-            const cached = await idbGetDoc('photos/' + docKey).catch(() => null);
-            if (cached) buffer = cached;
+        const result = typeof decryptPhotoShared === 'function'
+            ? await decryptPhotoShared(file)
+            : null;
+        if (!result) {
+            container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:12px;">⚠️</div>';
+            return;
         }
-
-        if (!buffer && vaultSessionToken) {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000);
-            try {
-                const res = await fetch('https://backend.shinumaths989.workers.dev/photos/' + docKey, {
-                    headers: { 'Authorization': 'Bearer ' + vaultSessionToken },
-                    signal: controller.signal
-                });
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                buffer = await res.arrayBuffer();
-                if (typeof idbSaveDoc === 'function') {
-                    idbSaveDoc('photos/' + docKey, buffer).catch(() => {});
-                }
-            } finally {
-                clearTimeout(timeoutId);
-            }
-        }
-
-        if (!buffer) return;
-
-        // Decrypt
-        const decrypted = await decryptBuffer(buffer);
-        if (!decrypted) return;
-
-        // Create blob URL and set as thumbnail background
-        const mime = getImageMime(file);
-        const blob = new Blob([decrypted], { type: mime });
-        const url = URL.createObjectURL(blob);
         container.innerHTML = '';
         const img = document.createElement('img');
         img.className = 'photo-img';
-        img.src = url;
+        img.src = result.url;
         img.loading = 'lazy';
-        img.dataset.blobUrl = url;
+        img.dataset.blobUrl = result.url;
         container.appendChild(img);
     } catch (e) {
         container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:12px;">⚠️</div>';
