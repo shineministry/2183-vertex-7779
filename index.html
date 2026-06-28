@@ -1422,8 +1422,17 @@ Recommended:
           updateViaCache: 'none'
         }).then(reg => {
           reg.update();
-          if (reg.waiting) reg.waiting.postMessage({
-            type: 'SKIP_WAITING'
+          // Send SKIP_WAITING to whichever SW is pending (waiting OR installing)
+          const pending = reg.waiting || reg.installing;
+          if (pending) pending.postMessage({ type: 'SKIP_WAITING' });
+          // Also watch for a new SW installing after the fact
+          reg.addEventListener('updatefound', () => {
+            const newSW = reg.installing;
+            if (newSW) {
+              newSW.addEventListener('statechange', () => {
+                if (newSW.state === 'installed') newSW.postMessage({ type: 'SKIP_WAITING' });
+              });
+            }
           });
         }).catch(err => console.warn('[OfflineFix] service worker update failed:', err));
       }
@@ -3619,7 +3628,7 @@ Recommended:
           { id:'refresh', icon:'🔄', label:'Hard Refresh', check:async()=>{let o=typeof refreshVault==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Refresh function available':'Not loaded'}}},
           { id:'files', icon:'📄', label:'Files Loaded', check:async()=>{let d=window.allFilesData||{};let k=Object.keys(d);return{state:k.length>0?'operational':'degraded',labelText:k.length+' categories',detail:k.length>0?k.join(', '):'No files loaded'}}},
           { id:'logout', icon:'🚪', label:'Logout', check:async()=>{let o=typeof logoutVault==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Logout function available':'Not loaded'}}},
-          { id:'sw', icon:'⚡', label:'Service Worker', check:async()=>{let o='serviceWorker'in navigator&&!!navigator.serviceWorker.controller;return{state:o?'operational':'degraded',labelText:o?'Registered':'Not registered',detail:o?'SW active for offline':navigator.onLine?'No service worker':'Offline mode'}}},
+          { id:'sw', icon:'⚡', label:'Service Worker', check:async()=>{if(!('serviceWorker'in navigator))return{state:'degraded',labelText:'Not supported',detail:'Browser lacks SW support'};try{const reg=await navigator.serviceWorker.getRegistration('/');const active=reg&&(reg.active||reg.waiting||reg.installing);const controlled=!!navigator.serviceWorker.controller;const ok=!!(active||controlled);return{state:ok?'operational':'degraded',labelText:ok?'Registered':'Not registered',detail:ok?'SW active for offline':navigator.onLine?'Registering…':'Offline mode'};}catch(e){return{state:'degraded',labelText:'Error',detail:e.message};}}},
           { id:'sharing', icon:'🔗', label:'Secure Link Sharing', check:async()=>{let o=typeof generateShareLink==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Share module loaded':'Not loaded'}}},
           { id:'sha256', icon:'🔒', label:'SHA256', check:async()=>{let o=typeof crypto.subtle?.digest==='function';return{state:o?'operational':'major',labelText:o?'Available':'Unsupported',detail:o?'Web Crypto SHA-256 ready':'Browser lacks support'}}},
           { id:'security', icon:'🛡️', label:'Security', check:async()=>{let o=typeof window.securityAlert==='function'||typeof window.sendSecurityAlert==='function';return{state:o?'operational':'degraded',labelText:o?'Armed':'Unavailable',detail:o?'Security monitor active':'Module not loaded'}}},
