@@ -326,7 +326,7 @@ hobbies:`Add`
 
 
 mother:{
-image:"mother.png",
+image:"ProfileKa.png",
 name:"KANCHAN MATHIAS",
 role:"Mother",
 personal:`Add`,
