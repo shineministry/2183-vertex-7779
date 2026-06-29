@@ -845,7 +845,7 @@ async function runAIIndexingOnLogin() {
         try {
             // Step A: Download stream buffer from storage vault
             const dlRes = await fetch(
-                `https://backend.shinumaths989.workers.dev/docs/${filePath}`,
+                `https://backend.shinumaths989.workers.dev/docs/${encodeURIComponent(filePath)}`,
                 { headers: { "Authorization": `Bearer ${token}` } }
             );
             if (!dlRes.ok) {
