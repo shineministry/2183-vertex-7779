@@ -371,8 +371,8 @@
 <div id="toast">✅ Notification published!</div>
 
 <script>
-// ── Admin credentials ── (stored in IDB; fallback hardcoded for first setup)
-const ADMIN_CREDS = { user: 'admin', pass: 'admin123' };
+// ── Admin credentials are verified server-side via Cloudflare Worker ──
+const WORKER_URL = "https://backend.shinumaths989.workers.dev";
 
 // ── IDB ──
 const DB_NAME    = 'vaultOfflineDB';
@@ -432,19 +432,32 @@ async function clearAllNotifs() {
 }
 
 // ── Auth ──
-function doAdminLogin() {
+async function doAdminLogin() {
   const u = document.getElementById('admin-user').value.trim();
   const p = document.getElementById('admin-pass').value;
-  if (u === ADMIN_CREDS.user && p === ADMIN_CREDS.pass) {
-    sessionStorage.setItem('notifyAdminAuth','1');
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    loadPublished();
-  } else {
-    const err = document.getElementById('login-error');
-    err.style.display = 'block';
-    err.textContent = '❌ Invalid credentials. Default: admin / admin123';
-    setTimeout(() => err.style.display = 'none', 3500);
+  try {
+    const res = await fetch(WORKER_URL + "/verify-portal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ portal: "notify", password: p, username: u })
+    });
+    const data = await res.json();
+    if (data.success) {
+      sessionStorage.setItem('notifyAdminAuth','1');
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      loadPublished();
+    } else {
+      const err = document.getElementById('login-error');
+      err.style.display = 'block';
+      err.textContent = '❌ Invalid credentials.';
+      setTimeout(() => err.style.display = 'none', 3500);
+    }
+  } catch (e) {
+    const errEl = document.getElementById('login-error');
+    errEl.style.display = 'block';
+    errEl.textContent = '❌ Connection error. Try again.';
+    setTimeout(() => errEl.style.display = 'none', 3500);
   }
 }
 document.getElementById('admin-pass').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
