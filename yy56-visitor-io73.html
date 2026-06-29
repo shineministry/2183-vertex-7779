@@ -349,6 +349,20 @@ tr:hover{
 
 <body>
 
+<!-- Login Screen -->
+<div id="login-screen" style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a,#111827,#1e293b);">
+  <div style="background:rgba(255,255,255,.06);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);border-radius:28px;padding:40px 36px;max-width:380px;width:90%;text-align:center;">
+    <div style="font-size:40px;margin-bottom:12px;">🛡️</div>
+    <div style="font-size:20px;font-weight:800;color:#f1f5f9;margin-bottom:6px;">Visitor Dashboard</div>
+    <div style="font-size:13px;color:#94a3b8;margin-bottom:28px;">Enter the visitor portal password</div>
+    <input type="password" id="portal-pass" placeholder="Portal password" style="width:100%;padding:14px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#f1f5f9;font-size:15px;text-align:center;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter') verifyVisitorPortal()">
+    <button onclick="verifyVisitorPortal()" style="width:100%;margin-top:14px;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;font-weight:800;font-size:15px;cursor:pointer;">ACCESS DASHBOARD</button>
+    <div id="portal-error" style="display:none;margin-top:14px;color:#ef4444;font-size:13px;font-weight:600;">❌ Incorrect password</div>
+  </div>
+</div>
+
+<div id="dashboard-content" style="display:none;">
+
 <div class="bg-glow"></div>
 
 <div class="topbar">
@@ -625,6 +639,36 @@ onSnapshot(q,(snapshot)=>{
 
 });
 
+</script>
+
+<script>
+const WORKER_URL = "https://backend.shinumaths989.workers.dev";
+
+async function verifyVisitorPortal() {
+  const pass = document.getElementById('portal-pass').value.trim();
+  if (!pass) return;
+  try {
+    const res = await fetch(WORKER_URL + "/verify-portal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ portal: "visitor", password: pass })
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard-content').style.display = 'block';
+    } else {
+      const err = document.getElementById('portal-error');
+      err.style.display = 'block';
+      setTimeout(() => err.style.display = 'none', 3000);
+    }
+  } catch (e) {
+    const err = document.getElementById('portal-error');
+    err.textContent = '❌ Connection error. Try again.';
+    err.style.display = 'block';
+    setTimeout(() => err.style.display = 'none', 3000);
+  }
+}
 </script>
 
 </body>
