@@ -1223,11 +1223,21 @@ async function sendAIMessage() {
   showAITyping(true);
    
   try {
-    const token = sessionStorage.getItem('vaultSessionToken') ||
+    let token = sessionStorage.getItem('vaultSessionToken') ||
                   sessionStorage.getItem('vaultSession') ||
                   localStorage.getItem('sessionToken') || '';
 
-    const res = await fetch('https://backend.shinumaths989.workers.dev/ai-search', {
+    // If token is an offline placeholder, try silent re-auth for a real one
+    if (token.startsWith('offline-') && typeof _silentReAuth === 'function') {
+      const fresh = await _silentReAuth();
+      if (fresh) {
+        token = fresh;
+        sessionStorage.setItem('vaultSessionToken', fresh);
+        sessionStorage.setItem('vaultSession', fresh);
+      }
+    }
+
+    let res = await fetch('https://backend.shinumaths989.workers.dev/ai-search', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1235,6 +1245,24 @@ async function sendAIMessage() {
       },
       body: JSON.stringify({ question })
     });
+
+    // If server says unauthorized, try silent re-auth and retry once
+    if (res.status === 401 && typeof _silentReAuth === 'function') {
+      const fresh = await _silentReAuth();
+      if (fresh) {
+        token = fresh;
+        sessionStorage.setItem('vaultSessionToken', fresh);
+        sessionStorage.setItem('vaultSession', fresh);
+        res = await fetch('https://backend.shinumaths989.workers.dev/ai-search', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ question })
+        });
+      }
+    }
 
      const data = await res.json();
 
