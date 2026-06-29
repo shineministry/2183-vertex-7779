@@ -174,7 +174,7 @@ function notifyBackendLogout(reason = "Logged out.") {
     } catch(e) {}
 }
 
-function logoutVault( reason = "Logged out." ) {
+function logoutVault( reason = "Logged out.", clearTrust = false ) {
 
     clearTimeout( inactivityTimer );
     if (typeof _sessionTimerInterval !== 'undefined' && _sessionTimerInterval) {
@@ -189,24 +189,28 @@ function logoutVault( reason = "Logged out." ) {
 
     notifyBackendLogout(reason);
 
-    // FIX: Before wiping sessionStorage, refresh the trust device record
-    // (if this device is marked trusted) with the current live token and
-    // secret. The 1-hour session token in vaultTrustInfo otherwise goes
-    // stale after the first hour, and the next auto-restore-as-trusted
-    // would try to reuse a dead token / mismatched secret, leading to
-    // "Session not unlocked" even though the device shows as trusted.
-    try {
-        const _trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
-        if (_trust && _trust.member && _trust.expiry > Date.now()) {
-            const _liveToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || _trust.token || '';
-            const _liveSecret = window.masterPassword || _trust.secret || '';
-            localStorage.setItem('vaultTrustInfo', JSON.stringify({
-                ..._trust,
-                token: _liveToken,
-                secret: _liveSecret
-            }));
-        }
-    } catch(e) { console.warn('[logoutVault] trust info refresh failed:', e); }
+    if (!clearTrust) {
+        // FIX: Before wiping sessionStorage, refresh the trust device record
+        // (if this device is marked trusted) with the current live token and
+        // secret. The 1-hour session token in vaultTrustInfo otherwise goes
+        // stale after the first hour, and the next auto-restore-as-trusted
+        // would try to reuse a dead token / mismatched secret, leading to
+        // "Session not unlocked" even though the device shows as trusted.
+        try {
+            const _trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
+            if (_trust && _trust.member && _trust.expiry > Date.now()) {
+                const _liveToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || _trust.token || '';
+                const _liveSecret = window.masterPassword || _trust.secret || '';
+                localStorage.setItem('vaultTrustInfo', JSON.stringify({
+                    ..._trust,
+                    token: _liveToken,
+                    secret: _liveSecret
+                }));
+            }
+        } catch(e) { console.warn('[logoutVault] trust info refresh failed:', e); }
+    } else {
+        localStorage.removeItem('vaultTrustInfo');
+    }
 
     // Wipe session storage entirely
     sessionStorage.clear();
@@ -238,6 +242,29 @@ function logoutVault( reason = "Logged out." ) {
 /* =========================
    CLOCK
 ========================= */
+
+function showLogoutOptions() {
+    const overlay = document.createElement('div');
+    overlay.id = 'logout-options-overlay';
+    Object.assign(overlay.style, {
+        position:'fixed',inset:'0',zIndex:'10000',
+        display:'flex',alignItems:'center',justifyContent:'center',
+        background:'rgba(0,0,0,.5)',backdropFilter:'blur(4px)'
+    });
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `
+        <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center;">
+            <div style="font-size:32px;margin-bottom:8px;">🚪</div>
+            <div style="font-weight:800;font-size:17px;color:#0f172a;margin-bottom:4px;">Logout Options</div>
+            <div style="font-size:13px;color:#64748b;margin-bottom:20px;">How would you like to log out?</div>
+            <button onclick="logoutVault('Logged out completely.', true);document.getElementById('logout-options-overlay').remove();" style="width:100%;padding:14px;border:none;border-radius:12px;background:#ef4444;color:white;font-weight:800;font-size:14px;cursor:pointer;margin-bottom:10px;">🚫 Logout Completely</button>
+            <div style="font-size:11px;color:#94a3b8;margin:-6px 0 14px;">Clears trusted device — you'll need to log in fully next time</div>
+            <button onclick="logoutVault('Logged out.', false);document.getElementById('logout-options-overlay').remove();" style="width:100%;padding:14px;border:1px solid #e2e8f0;border-radius:12px;background:transparent;color:#0f172a;font-weight:700;font-size:14px;cursor:pointer;">🔓 Logout (Keep Trusted)</button>
+            <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Keeps device trusted for faster login next time</div>
+            <button onclick="document.getElementById('logout-options-overlay').remove();" style="margin-top:16px;padding:8px 20px;border:none;border-radius:8px;background:transparent;color:#64748b;font-size:13px;cursor:pointer;">Cancel</button>
+        </div>`;
+    document.body.appendChild(overlay);
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     updateClock();
