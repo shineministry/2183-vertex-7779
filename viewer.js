@@ -80,7 +80,18 @@ async function _decryptPhotoOnce(file, docKey, attempt) {
         const vaultSessionToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
         let buffer;
 
-        // Encrypted-bytes cache (durable, survives reloads) — works offline too.
+        // Decrypted-bytes cache (durable, survives reloads & memory pressure on mobile)
+        if (typeof idbGetDoc === 'function') {
+            const decryptedCached = await idbGetDoc('decrypted/' + docKey).catch(() => null);
+            if (decryptedCached) {
+                const mime = typeof getImageMime === 'function' ? getImageMime(file) : 'image/jpeg';
+                const blob = new Blob([decryptedCached], { type: mime });
+                const url = URL.createObjectURL(blob);
+                return { url, mime };
+            }
+        }
+
+        // Encrypted-bytes cache (works offline too)
         if (typeof idbGetDoc === 'function') {
             const cached = await idbGetDoc('photos/' + docKey).catch(() => null);
             if (cached) buffer = cached;
@@ -110,6 +121,11 @@ async function _decryptPhotoOnce(file, docKey, attempt) {
 
         const decrypted = await decryptBuffer(buffer);
         if (!decrypted) throw new Error('decrypt-failed');
+
+        // Cache decrypted bytes in IDB so mobile devices don't re-decrypt on every view
+        if (typeof idbSaveDoc === 'function') {
+            idbSaveDoc('decrypted/' + docKey, decrypted).catch(() => {});
+        }
 
         const mime = typeof getImageMime === 'function' ? getImageMime(file) : 'image/jpeg';
         const blob = new Blob([decrypted], { type: mime });
