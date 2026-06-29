@@ -196,7 +196,7 @@ document.addEventListener('keydown', (e) => {
     if(e.ctrlKey && e.shiftKey && e.key === 'L'){
         const tog = document.getElementById('panicShortcutToggle');
         if(tog && tog.checked){
-            if(typeof logoutVault === 'function') logoutVault('🔴 Panic Lock triggered via keyboard.');
+            if(typeof logoutVault === 'function') logoutVault('🔴 Panic Lock triggered via keyboard.', true);
         }
     }
 });
