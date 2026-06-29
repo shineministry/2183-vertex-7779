@@ -39,6 +39,8 @@
         }
         .meta-table {
             width: 100%;
+            max-width: 100%;
+            table-layout: fixed;
             border-collapse: collapse;
         }
         .meta-table td {
@@ -46,11 +48,15 @@
             vertical-align: top;
             color: #e2e8f0;
             font-size: 10.5pt;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
         .meta-label {
             font-weight: 600;
             color: #f6ad55;
             width: 80px;
+            white-space: nowrap;
         }
         .subject-line {
             font-size: 13.5pt;
@@ -58,6 +64,9 @@
             color: #ffffff;
             margin-top: 5px;
             letter-spacing: 0.3px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
         .email-body {
             padding: 40px;
@@ -200,11 +209,25 @@
             .email-header {
                 padding: 18px 16px;
             }
+            .meta-table {
+                table-layout: fixed;
+            }
             .meta-table td {
-                font-size: 9pt;
+                font-size: 8.5pt;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                word-break: break-word;
+            }
+            .meta-label {
+                width: 52px;
+                white-space: nowrap;
+                padding-right: 4px;
             }
             .subject-line {
-                font-size: 11pt;
+                font-size: 10pt;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                word-break: break-word;
             }
             .salutation {
                 font-size: 11pt;
@@ -258,6 +281,22 @@
             }
             .desktop-notice {
                 font-size: 8.5pt;
+            }
+        }
+
+        /* Extra-small phones */
+        @media only screen and (max-width: 380px) {
+            .email-header {
+                padding: 14px 12px;
+            }
+            .meta-label {
+                width: 46px;
+            }
+            .meta-table td {
+                font-size: 8pt;
+            }
+            .subject-line {
+                font-size: 9pt;
             }
         }
     </style>
