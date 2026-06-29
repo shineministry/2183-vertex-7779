@@ -283,7 +283,16 @@ async function _silentReAuth() {
     }
 }
 
-// ── syncAllMembersOffline: fetch & cache ALL 7 modes ──────────────────────
+// ── Helper: count files across all categories ──────────────────────────────
+function _countFiles(filesData) {
+  let n = 0;
+  for (const v of Object.values(filesData)) {
+    if (Array.isArray(v)) n += v.length;
+  }
+  return n;
+}
+
+// ── syncAllMembersOffline: fetch & cache ALL data for offline ──────────────
 async function syncAllMembersOffline(_retried) {
     _showOfflineProgress();
     _setOfflineProgressText('Preparing site for offline access...');
@@ -395,11 +404,122 @@ async function syncAllMembersOffline(_retried) {
         }
     }
 
-    _setOfflineProgressDone(synced > 0 ? `✓ ${synced} mode(s) cached for offline` : '✓ No new data to cache');
+    // ── Phase 2: Fetch file list + cache all documents ──
+    let fileCount = 0;
+    let filesCached = 0;
+    let filesFailed = 0;
+
+    try {
+      _setOfflineProgressText('Fetching file list...');
+      const filesRes = await fetch(`${_WORKER_URL}/files.json`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (filesRes.ok) {
+        const raw = await filesRes.json();
+        let filesData = {};
+        if (Array.isArray(raw)) {
+          raw.forEach(f => {
+            const cat = f.category || f.type || 'Documents';
+            if (!filesData[cat]) filesData[cat] = [];
+            filesData[cat].push(f);
+          });
+        } else if (raw && typeof raw === 'object') {
+          filesData = raw;
+        }
+        fileCount = _countFiles(filesData);
+
+        // Cache file list
+        if (typeof idbSetVaultMeta === 'function') {
+          await idbSetVaultMeta(filesData);
+        }
+
+        const totalSteps = members.length + fileCount + 1;
+        _updateOfflineProgress(members.length + 0, totalSteps);
+
+        // Cache each file's content
+        const allFiles = [];
+        Object.entries(filesData).forEach(([catName, cat]) => {
+          if (Array.isArray(cat)) cat.forEach(f => allFiles.push({ ...f, category: f.category || catName }));
+        });
+
+        for (const f of allFiles) {
+          if (!f.file) { filesFailed++; continue; }
+          const isPhoto = f.category === 'PHOTOS' || /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f.file);
+          const prefix = isPhoto ? 'photos/' : 'docs/';
+          try {
+            if (typeof idbGetDoc === 'function') {
+              const existing = await idbGetDoc(f.file);
+              if (existing) { filesCached++; continue; }
+            }
+            const docRes = await fetch(`${_WORKER_URL}/${prefix}${f.file}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (docRes.ok) {
+              const buf = await docRes.arrayBuffer();
+              if (typeof idbSaveDoc === 'function') await idbSaveDoc(f.file, buf);
+              filesCached++;
+            } else {
+              filesFailed++;
+            }
+          } catch (e) {
+            filesFailed++;
+          }
+          const done = members.length + filesCached + filesFailed;
+          _updateOfflineProgress(done, totalSteps);
+          _setOfflineProgressText(`Caching files... (${filesCached + filesFailed}/${fileCount})`);
+        }
+      }
+    } catch (e) {
+      console.warn('[OfflineAuth] File caching failed:', e.message);
+    }
+
+    // ── Phase 3: Sync notifications ──
+    try {
+      _setOfflineProgressText('Caching notifications...');
+      const notifRes = await fetch(`${_WORKER_URL}/get-notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ user: sessionStorage.getItem('vaultUser') || 'all' })
+      });
+      if (notifRes.ok) {
+        const data = await notifRes.json();
+        const serverNotifs = data.notifications || [];
+        // Store in vault_notifications store of offline DB
+        const db = await _openAuthDB();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction('vault_notifications', 'readwrite');
+          tx.objectStore('vault_notifications').clear();
+          for (const n of serverNotifs) {
+            tx.objectStore('vault_notifications').put({ ...n, read: n.read || false });
+          }
+          tx.oncomplete = resolve;
+          tx.onerror = reject;
+        });
+        console.log(`[OfflineAuth] Cached ${serverNotifs.length} notifications`);
+      }
+    } catch (e) {
+      console.warn('[OfflineAuth] Notification caching failed:', e.message);
+    }
+
+    // ── All done — verify everything is cached ──
+    const totalExpected = members.length + fileCount + 1;
+    const totalDone = synced + filesCached + 1; // +1 for notifications
+    if (totalDone >= totalExpected) {
+      _setOfflineProgressDone('✓ Site is ready for offline use');
+    } else {
+      _setOfflineProgressText(`⚠️ ${totalDone}/${totalExpected} items cached — partial offline`);
+      _updateOfflineProgress(totalDone, totalExpected);
+      setTimeout(() => {
+        _setOfflineProgressDone('✓ Partial cache ready');
+      }, 2000);
+    }
     _markOfflineSyncComplete();
 
-    console.log(`[OfflineAuth] All-member sync done — ${synced}/${members.length} stored.${failed.length ? ' Failed: ' + failed.join(', ') : ''}`);
-    return { synced, failed };
+    console.log(`[OfflineAuth] Full sync done — ${synced}/${members.length} members, ${filesCached}/${fileCount} files, notifications cached.`);
+    return { synced, failed, filesCached, filesFailed };
 }
 
 // ── offlineLogin: full-password path ──────────────────────────────────────
