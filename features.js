@@ -1301,6 +1301,8 @@ if (!multiMemberModes.includes(currentMode) && memberSelectWrap) {
     setTimeout(checkDocExpiryReminders, 2000);
     // Load notifications and show badge/bubble
 setTimeout(() => initVaultNotifications().catch(() => {}), 400);
+// Poll for new notifications every 60s so mobile/tablet devices receive them without manual refresh
+setInterval(() => initVaultNotifications().catch(() => {}), 60000);
 
     // ── Eagerly decrypt photos in the background so they're warm by the time
     // the user opens PHOTOS, and so opening a photo doesn't take 5-10s.
