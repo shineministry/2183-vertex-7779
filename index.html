@@ -3799,7 +3799,7 @@ Recommended:
           // 'shineil' -> 'SHINEIL' here (not 'ADMIN') so that restoreTrustSession()
           // looks up the IndexedDB record actually saved under that mode.
           const memberToMode = { shineil:'SHINEIL', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
-          window.VAULT_MODE = memberToMode[trust.member] || sessionStorage.getItem('vaultMode') || 'ADMIN';
+          window.VAULT_MODE = sessionStorage.getItem('vaultMode') || memberToMode[trust.member] || 'ADMIN';
           sessionStorage.setItem('vaultMode', window.VAULT_MODE);
           const modeUserMap = { SHINEIL:'shineil', KEVIN:'brother', OFFICIAL:'official', PARENTS:'father', SHINEIL_PARENTS:'shineil', KEVIN_PARENTS:'brother', ADMIN:'shineil' };
           sessionStorage.setItem('vaultUser', modeUserMap[window.VAULT_MODE] || trust.member || 'all');
