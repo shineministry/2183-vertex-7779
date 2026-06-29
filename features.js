@@ -1427,6 +1427,9 @@ async function idbMarkNotifRead(id) {
 }
 
 // Called by vaultPostInit — loads notifications and shows badge + bubble
+// Track already-bubbled notification keys so polling only shows truly new ones
+window._notifBubbledKeys = window._notifBubbledKeys || new Set();
+
 async function initVaultNotifications() {
   // Sync from Firestore — server is the single source of truth for all devices
   try {
@@ -1464,13 +1467,11 @@ async function initVaultNotifications() {
       console.warn(`[Notifications] get-notifications HTTP ${res.status}: ${await res.text().catch(() => '')}`);
     }
   } catch (e) {
-    // Server endpoint not available — use local IDB only
     console.warn('[Notifications] Server sync failed, using local IDB only:', e.message);
   }
 
   const all = await idbGetNotifications();
   const currentUser = sessionStorage.getItem('vaultUser') || 'all';
-  // Filter: show Global or targeted to this user
   const relevant = all.filter(n => {
     if (n.type === 'global') return true;
     if (n.type === 'targeted') {
@@ -1483,10 +1484,13 @@ async function initVaultNotifications() {
   const unread = relevant.filter(n => !n.read);
   _updateNotifBadge(unread.length);
 
-  // Float ALL relevant notifications one-by-one on every login,
-  // even ones already marked read in a previous session.
-  if (relevant.length > 0) {
-    _showNotifBubbleQueue(relevant);
+  // Only bubble notifications not yet shown this session
+  const newRelevant = relevant.filter(n => !window._notifBubbledKeys.has(n._key || String(n.id)));
+  for (const n of newRelevant) {
+    window._notifBubbledKeys.add(n._key || String(n.id));
+  }
+  if (newRelevant.length > 0) {
+    _showNotifBubbleQueue(newRelevant);
   }
 }
 
