@@ -148,7 +148,7 @@ async function _saveAuthRecordFromServerHash({ mode, passwordHash, secret, token
 // ── syncOfflineAuth: save CURRENT logged-in user ───────────────────────────
 async function syncOfflineAuth() {
     try {
-        const password = window._pendingAuthPass || '';
+        const password = window._pendingAuthPass || window.masterPassword || '';
         const secret   = window.masterPassword || '';
         const token    = sessionStorage.getItem('vaultSessionToken') ||
                          sessionStorage.getItem('vaultSession') || '';
