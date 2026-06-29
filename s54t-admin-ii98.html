@@ -350,20 +350,28 @@
     <audio id="approveSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=correct-2-46134.mp3"></audio>
 
     <script>
-        const ADMIN_PASSWORD = "Mfyi2019wIbSC@Justice";
-        
-        // Dynamic holder tracking this specific open admin instance's session ID
+        const WORKER_URL = "https://backend.shinumaths989.workers.dev";
         window.currentAdminSessionId = null; 
 
-        function unlockAdmin(){
+        async function unlockAdmin(){
             const pass = document.getElementById('admin-pass').value.trim();
-            if (pass !== ADMIN_PASSWORD){
-                alert("Incorrect administrator password.");
+            if (!pass) { alert("Please enter the administrator password."); return; }
+            try {
+                const res = await fetch(WORKER_URL + "/verify-portal", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ portal: "admin", password: pass })
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    alert("Incorrect administrator password.");
+                    return;
+                }
+            } catch (e) {
+                alert("Verification failed. Check your connection.");
                 return;
             }
             document.getElementById('login-screen').style.display = 'none';
-            
-            // Trigger administrative session generation logic if available
             if(window.initializeAdminSession) {
                 window.initializeAdminSession();
             }
