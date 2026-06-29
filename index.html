@@ -564,36 +564,6 @@ Recommended:
           box-shadow: none;
         }
 
-        /* Login action button stack: primary + secondary buttons share one width */
-        .login-actions {
-          display: flex;
-          flex-direction: column;
-          align-items: stretch;
-          gap: 10px;
-          width: 100%;
-        }
-
-        .btn-secondary {
-          width: 100%;
-          border: 1px solid var(--border-color);
-          background: transparent;
-          color: var(--text-main);
-          padding: 14px;
-          border-radius: 12px;
-          font-size: 12px;
-          font-weight: 700;
-          letter-spacing: 0.3px;
-          cursor: pointer;
-          box-sizing: border-box;
-          transition: all 0.2s ease;
-        }
-
-        .btn-secondary:hover {
-          border-color: var(--accent-primary);
-          color: var(--accent-primary);
-          background: var(--glow);
-        }
-
         /* Watermark overlay inside PDF render area */
         .watermark {
           position: absolute;
@@ -1098,7 +1068,7 @@ Recommended:
             </div>
             <div style="font-size:10px; color:var(--text-muted); text-align:right; margin-top:4px; cursor:pointer;" onclick="openKeypad()"> ⌨️ Use Virtual Protection Keypad </div>
           </div>
-           <div class="login-actions"> <button class="btn-primary" id="submitBtn" onclick="showStep2()">CONTINUE SECURELY</button> <button class="btn-secondary" onclick="requestPasskeyAccess()">🔑 USE HARDWARE SECURITY PASSKEY</button> <button class="btn-secondary" onclick="loginWithTOTP()">🔢 LOGIN WITH TOTP</button> </div>
+           <div style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;"> <button class="btn-primary" id="submitBtn" onclick="showStep2()">CONTINUE SECURELY</button> <button onclick="requestPasskeyAccess()" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; width:fit-content;">🔑 USE HARDWARE SECURITY PASSKEY</button> <button onclick="loginWithTOTP()" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; width:fit-content;">🔢 LOGIN WITH TOTP</button> </div>
           <div class="login-footer-links" style="text-align:center;"> <a href="https://72oe-v2sx.shine-ministry.com/1781287270604.html" onclick="return true;">Privacy</a> <span>·</span> <a href="https://72oe-v2sx.shine-ministry.com/1781287440867.html" onclick="return true;">Terms</a> <span>·</span> <a href="https://72oe-v2sx.shine-ministry.com/1781285772718.html" onclick="return true;">Don't Know Password</a> </div>
         </div>
         <div class="login-col login-col-right">
@@ -1214,7 +1184,7 @@ Recommended:
   <div id="step2" class="overlay" style="display:none;">
     <div class="step-card">
       <h2> Legal Declaration </h2>
-      <div class="legal-box"> This secure vault contains highly confidential personal, academic, administrative, legal, identification, and sensitive digital records belonging exclusively to <b>Shineil Keith Mathias</b>. These protected materials are maintained within a controlled encrypted environment and are intended solely for authorized and legitimate viewing purposes. Unauthorized attempts to obtain, manipulate, misuse, or reproduce any information from this system are strictly prohibited. <br><br> By proceeding further into this protected environment, you acknowledge and agree that all documents, certificates, records, scans, archives, and related contents remain the personal and intellectual property of the owner. Any unauthorized screenshotting, downloading, copying, forwarding, extraction, recording, public distribution, cloud uploading, social media sharing, or third-party disclosure may constitute a breach of privacy, confidentiality obligations, and applicable legal protections. <br><br> You further confirm that your request for access is genuine, lawful, and made in good faith. You understand that this vault system may maintain temporary access logs, security monitoring, and session verification mechanisms for protective purposes. Any suspicious activity, unauthorized access attempt, misuse of credentials, or breach of trust may result in immediate termination of access privileges and may lead to further legal, administrative, or disciplinary action wherever applicable. <br><br> <label style="            display:flex;            align-items:center;            gap:10px;            font-weight:700;            cursor:pointer;"> <input type="checkbox" id="terms-tick"> I fully understand and agree to the above declaration. </label> </div> <div style="margin-top:10px;font-size:11px;text-align:center;"><a href="https://72oe-v2sx.shine-ministry.com/1782654839843.html" onclick="alert('Link for legal declaration explanation');return false;" style="color:var(--accent-primary);font-weight:600;">Understanding the Legal Declaration: Why is consent required?</a></div> <button class="btn-primary" onclick="showStep3()"> SUBMIT DECLARATION </button>
+      <div class="legal-box"> This secure vault contains highly confidential personal, academic, administrative, legal, identification, and sensitive digital records belonging exclusively to <b>Shineil Keith Mathias</b>. These protected materials are maintained within a controlled encrypted environment and are intended solely for authorized and legitimate viewing purposes. Unauthorized attempts to obtain, manipulate, misuse, or reproduce any information from this system are strictly prohibited. <br><br> By proceeding further into this protected environment, you acknowledge and agree that all documents, certificates, records, scans, archives, and related contents remain the personal and intellectual property of the owner. Any unauthorized screenshotting, downloading, copying, forwarding, extraction, recording, public distribution, cloud uploading, social media sharing, or third-party disclosure may constitute a breach of privacy, confidentiality obligations, and applicable legal protections. <br><br> You further confirm that your request for access is genuine, lawful, and made in good faith. You understand that this vault system may maintain temporary access logs, security monitoring, and session verification mechanisms for protective purposes. Any suspicious activity, unauthorized access attempt, misuse of credentials, or breach of trust may result in immediate termination of access privileges and may lead to further legal, administrative, or disciplinary action wherever applicable. <br><br> <label style="            display:flex;            align-items:center;            gap:10px;            font-weight:700;            cursor:pointer;"> <input type="checkbox" id="terms-tick"> I fully understand and agree to the above declaration. </label> </div> <button class="btn-primary" onclick="showStep3()"> SUBMIT DECLARATION </button> <div style="margin-top:10px;font-size:11px;text-align:center;"><a href="https://72oe-v2sx.shine-ministry.com/1782654839843.html" style="color:var(--accent-primary);font-weight:600;">Understanding the Legal Declaration: Why is consent required?</a></div>
     </div>
   </div><!-- =========================     STEP 3========================= -->
   <div id="step3" class="overlay" style="display:none;">
@@ -1222,7 +1192,7 @@ Recommended:
       <h2> Security Verification </h2>
       <div class="subtitle"> Complete reCAPTCHA verification to continue secure access. </div>
       <div class="g-recaptcha" data-sitekey="6Lf9VeMsAAAAABzamBAJwc4NabgDTk4vqTrAe-nN" data-callback="onCaptchaSuccess"> </div>
-      <div style="margin-top:10px;font-size:11px;text-align:center;"><a href="https://72oe-v2sx.shine-ministry.com/1782654945613.html" onclick="alert('Link for reCAPTCHA explanation');return false;" style="color:var(--accent-primary);font-weight:600;">Understanding reCAPTCHA: How does this step secure the infrastructure?</a></div>
+      <div style="margin-top:10px;font-size:11px;text-align:center;"><a href="https://72oe-v2sx.shine-ministry.com/1782654945613.html" style="color:var(--accent-primary);font-weight:600;">Understanding reCAPTCHA: How does this step secure the infrastructure?</a></div>
       <div id="loading-msg" style="        display:none;        margin-top:20px;        font-weight:700;        color:var(--accent);"> Authenticating Secure Session... </div>
     </div>
   </div>
