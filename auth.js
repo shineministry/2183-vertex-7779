@@ -789,8 +789,10 @@ async function runAIIndexingOnLogin() {
     }
 
     // Filter pipeline tracking: Strict evaluation targeting document files (.pdf, .enc)
+    // Exclude photos (paths starting with photos/ or /photos/) — only documents should be OCR-indexed
     const pdfFiles = allFiles.filter(f => {
         const pathStr = (f.file || f.name || f.fileName || f.path || "").toLowerCase();
+        if (pathStr.startsWith("photos/") || pathStr.startsWith("/photos/")) return false;
         return pathStr.endsWith(".pdf") || pathStr.endsWith(".enc");
     });
 
