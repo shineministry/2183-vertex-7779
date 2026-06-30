@@ -1114,7 +1114,7 @@ async function updateLightboxImage() {
     // loading-screen preload), reuse the blob URL — no re-fetch, no re-decrypt.
     if (window._photoDecryptedCache.has(docKey)) {
         const cached = window._photoDecryptedCache.get(docKey);
-        container.innerHTML = `<img src="${cached.url}" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,.3);" data-blob-url="${cached.url}" alt="${file.name || ''}">`;
+        container.innerHTML = `<img src="${escHtml(cached.url)}" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,.3);" data-blob-url="${escHtml(cached.url)}" alt="${escHtml(file.name || '')}">`;
         return;
     }
 
@@ -1139,10 +1139,10 @@ async function updateLightboxImage() {
             return;
         }
 
-        container.innerHTML = `<img src="${result.url}" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,.3);" data-blob-url="${result.url}" alt="${file.name || ''}">`;
+        container.innerHTML = `<img src="${escHtml(result.url)}" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,.3);" data-blob-url="${escHtml(result.url)}" alt="${escHtml(file.name || '')}">`;
     } catch (e) {
         if (_lightboxIndex !== requestedIndex) return;
-        container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Error: ' + e.message + '</div>';
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Error: ' + escHtml(e.message) + '</div>';
     }
 }
 
