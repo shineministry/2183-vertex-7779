@@ -1226,7 +1226,7 @@ Recommended:
       <div id="totp-error" style="      display:none;      color:#f87171;      font-size:13px;      text-align:center;      margin-bottom:12px;      font-weight:700;    "></div> <button class="btn-primary" onclick="submitTOTP()"> VERIFY CODE </button> <button onclick="showStep1()" style="      margin-top:12px;      border:none;      background:transparent;      color:#64748b;      font-size:13px;      cursor:pointer;      width:100%;    ">← Back to Login</button>
     </div>
   </div><!-- =========================     DASHBOARD========================= -->
-  <div id="vault-dashboard" style="display:none;">
+  <div id="vault-dashboard" style="display:none;flex-direction:column;min-height:100vh;">
     <div class="passport-navbar"> <!-- TOP DATE BAR -->
       <div class="passport-top-utility">
         <div id="passport-datetime"> Thursday 14 May 2026 at 11:48 PM </div>
@@ -1258,7 +1258,7 @@ Recommended:
       </div> <!-- MOBILE DROPDOWN MENU -->
       <div id="mobile-nav-menu" class="mobile-nav-menu"> <button onclick="openStatusModal();toggleMobileMenu()">📊 Status</button> <button id="vaultModesMobileBtn" onclick="openVaultModes();toggleMobileMenu()">⚡ Vault Modes</button> <button onclick="showPinned();toggleMobileMenu()">⭐ Favourites</button> <button onclick="openPasswordManager();toggleMobileMenu()">🔑 Passwords</button> <button onclick="startCompareMode();toggleMobileMenu()" id="compareNavBtn">⚖️ Compare</button> <button onclick="openLogs();toggleMobileMenu()">📋 Access Log</button> <button onclick="openFeedbackModal();toggleMobileMenu()">💬 Feedback</button> <button onclick="refreshVault();toggleMobileMenu()">🔄 Refresh Vault</button> </div>
     </div>
-    <div class="main-container">
+    <div class="main-container" style="flex:1 1 auto;min-height:0;">
       <aside class="sidebar">
         <div id="sidebar-controls-wrap" style="        background:linear-gradient(135deg,#0f172a,#1e293b);        border-radius:14px;        padding:12px;        margin-bottom:14px;        border:1px solid rgba(255,255,255,.1);        box-sizing:border-box;        overflow:hidden;        ">
           <div style="        display:flex;        align-items:center;        gap:8px;        width:100%;        box-sizing:border-box;        "> <select id="member-select" style="                flex:1;                min-width:0;                padding:12px;                border-radius:12px;                border:1px solid rgba(255,255,255,.18);                font-weight:700;                font-size:13px;                cursor:pointer;                background:rgba(255,255,255,.08);                color:#e2e8f0;                box-sizing:border-box;            "></select> <button id="share-gear" style="                width:46px;                height:46px;                border:1px solid rgba(255,255,255,.18);                border-radius:12px;                background:rgba(255,255,255,.08);                cursor:pointer;                font-size:18px;                display:flex;                align-items:center;                justify-content:center;                flex-shrink:0;                color:#94a3b8;            "> ⚙️ </button> </div>
@@ -1379,10 +1379,10 @@ Recommended:
           </div>
           <div id="photos-grid" class="file-grid photo-grid"></div>
         </div><!-- end #page-photos -->
-        <div style="text-align:center;padding:18px 20px;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;background:#f8fafc;line-height:1.6;">
-          Made by Shineil Keith Mathias, founder of Shine Ministry — India. &copy; 2026.
-        </div>
       </main>
+    </div>
+    <div style="text-align:center;padding:18px 20px;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;background:#f8fafc;line-height:1.6;flex-shrink:0;">
+      Made by Shineil Keith Mathias, founder of Shine Ministry — India. &copy; 2026.
     </div>
   </div>
   <div id="modal" class="modal">
