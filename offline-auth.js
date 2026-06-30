@@ -4,7 +4,7 @@
 
    Authentication method: LOCAL PBKDF2 + SHA-256 server-hash,
    stored in IndexedDB (vaultOfflineDB). No server required after
-   first online login.
+   first online loginn.
 
    ALL 7 VAULT MODES are cached on the device after the first
    online login by any member. Every device can then authenticate
