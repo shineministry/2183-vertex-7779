@@ -128,43 +128,43 @@ const logs = await res.json();
             <tr>
 
                 <td style="padding:10px;border:1px solid #ddd;">
-                    ${log.visitorName || '-'}
+                    ${escHtml(log.visitorName || '-')}
                 </td>
 
                 <td style="padding:10px;border:1px solid #ddd;">
-                    ${log.purpose || '-'}
+                    ${escHtml(log.purpose || '-')}
                 </td>
 
                 <td style="padding:10px;border:1px solid #ddd;">
-                    ${log.loginTime || '-'}
+                    ${escHtml(log.loginTime || '-')}
                 </td>
 
                 <td style="padding:10px;border:1px solid #ddd;">
-                    ${log.device || '-'}
+                    ${escHtml(log.device || '-')}
                 </td>
 
                 <td style="padding:10px;border:1px solid #ddd;">
-                    ${log.browser || '-'}
+                    ${escHtml(log.browser || '-')}
                 </td>
 
                 <td style="padding:10px;border:1px solid #ddd;">
-                    ${log.platform || '-'}
+                    ${escHtml(log.platform || '-')}
                 </td>
 
                 <td style="padding:10px;border:1px solid #ddd;">
-                    ${log.screen || '-'}
+                    ${escHtml(log.screen || '-')}
                 </td>
 
                 <td style="padding:10px;border:1px solid #ddd;">
-                    ${log.timezone || '-'}
+                    ${escHtml(log.timezone || '-')}
                 </td>
 
                 <td style="padding:10px;border:1px solid #ddd;">
-                    ${log.ipAddress || '-'}
+                    ${escHtml(log.ipAddress || '-')}
                 </td>
 
                 <td style="padding:10px;border:1px solid #ddd;">
-                    ${log.location || '-'}
+                    ${escHtml(log.location || '-')}
                 </td>
 
             </tr>
