@@ -187,11 +187,8 @@ async function savePMEntry() {
 function _pmCopyToClipboard(text, label) {
   navigator.clipboard.writeText(text);
   alert(label + ' (clipboard clears in 20s)');
-  const snapshot = text;
   setTimeout(() => {
-    navigator.clipboard.readText().then(cur => {
-      if (cur === snapshot) navigator.clipboard.writeText('');
-    }).catch(() => {});
+    navigator.clipboard.writeText('').catch(() => {});
   }, 20000);
 }
 
@@ -628,7 +625,7 @@ body: JSON.stringify({
 
         console.error(err);
 
-        // fallback client-side token
+        // fallback client-side token (no masterPassword embedded)
         const payload =
         btoa(JSON.stringify({
 
@@ -645,11 +642,7 @@ body: JSON.stringify({
             pwd:
             password
             ? await window.sha256(password)
-            : null,
-
-            // real vault password
-            vaultKey:
-            window.masterPassword
+            : null
         }));
 
         const link =
@@ -723,11 +716,47 @@ function openIDB() {
   });
 }
 
+// ── PM entry encryption helpers ──────────────────────────────────────────
+async function _pmDeriveKey() {
+  const raw = sessionStorage.getItem('vaultSessionToken') || navigator.userAgent || 'pm-default-key';
+  const salt = new TextEncoder().encode('pm-encryption-v1');
+  const keyMaterial = await crypto.subtle.importKey('raw', new TextEncoder().encode(raw), 'PBKDF2', false, ['deriveBits']);
+  const keyBits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 10000 }, keyMaterial, 256);
+  return crypto.subtle.importKey('raw', new Uint8Array(keyBits), { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+}
+
+async function _pmEncryptPassword(plaintext) {
+  const key = await _pmDeriveKey();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext));
+  const combined = new Uint8Array(12 + ct.byteLength);
+  combined.set(iv, 0); combined.set(new Uint8Array(ct), 12);
+  return 'pmv1:' + btoa(String.fromCharCode(...combined));
+}
+
+async function _pmDecryptPassword(encrypted) {
+  try {
+    const b64 = encrypted.replace(/^pmv1:/, '');
+    const raw = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const iv = raw.slice(0, 12);
+    const ct = raw.slice(12);
+    const key = await _pmDeriveKey();
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+    return new TextDecoder().decode(pt);
+  } catch (e) {
+    // Fallback: try legacy plaintext
+    try { return decodeURIComponent(escape(atob(encrypted.replace(/^pmv1:/, '')))); } catch {}
+    return encrypted;
+  }
+}
+
 async function idbSavePMEntry(entry) {
   const db = await openIDB();
+  const toStore = { ...entry };
+  if (toStore.password) toStore.password = await _pmEncryptPassword(toStore.password);
   return new Promise((resolve, reject) => {
     const tx = db.transaction('pm_entries', 'readwrite');
-    tx.objectStore('pm_entries').put(entry);
+    tx.objectStore('pm_entries').put(toStore);
     tx.oncomplete = resolve;
     tx.onerror    = e => reject(e.target.error);
   });
@@ -745,22 +774,31 @@ async function idbDeletePMEntry(id) {
 
 async function idbGetAllPMEntries() {
   const db = await openIDB();
-  return new Promise((resolve, reject) => {
+  const entries = await new Promise((resolve, reject) => {
     const tx = db.transaction('pm_entries', 'readonly');
     const req = tx.objectStore('pm_entries').getAll();
     req.onsuccess = e => resolve(e.target.result || []);
     req.onerror   = e => reject(e.target.error);
   });
+  for (const e of entries) {
+    if (e.password) e.password = await _pmDecryptPassword(e.password);
+  }
+  return entries;
 }
 
 // Full replace of local PM cache with server list (strips deleted entries)
 async function idbSyncPMEntries(serverEntries) {
   const db = await openIDB();
+  const encrypted = await Promise.all(serverEntries.map(async e => {
+    const toStore = { ...e };
+    if (toStore.password) toStore.password = await _pmEncryptPassword(toStore.password);
+    return toStore;
+  }));
   return new Promise((resolve, reject) => {
     const tx    = db.transaction('pm_entries', 'readwrite');
     const store = tx.objectStore('pm_entries');
     store.clear();
-    serverEntries.forEach(e => store.put(e));
+    encrypted.forEach(e => store.put(e));
     tx.oncomplete = resolve;
     tx.onerror    = e => reject(e.target.error);
   });
@@ -965,7 +1003,7 @@ function renderPinnedSection(){
     pinnedDocs.forEach(file=>{
         const chip = document.createElement('div');
         chip.className = 'pinned-chip';
-        chip.innerHTML = `📄 ${file.name} <span style="color:#ef4444;font-size:14px;margin-left:4px;" title="Unpin">✕</span>`;
+        chip.innerHTML = `📄 ${escHtml(file.name)} <span style="color:#ef4444;font-size:14px;margin-left:4px;" title="Unpin">✕</span>`;
 chip.onclick = ()=> openSecureFile((file.category === 'PHOTOS' ? "photos/" : "docs/") + file.file, file.name);
        chip.querySelector('span').onclick = (e)=>{
             e.stopPropagation();
@@ -1158,7 +1196,7 @@ async function renderComparePane(side, file){
 
     } catch (err) {
         console.error(err);
-        contentEl.innerHTML = `<div class="compare-select-prompt" style="color:var(--danger)">❌ Decryption Failed: ${err.message}</div>`;
+        contentEl.innerHTML = `<div class="compare-select-prompt" style="color:var(--danger)">❌ Decryption Failed: ${escHtml(err.message)}</div>`;
     }
 }
    
@@ -1205,7 +1243,7 @@ async function checkDocExpiryReminders(){
     }
 }
 
-function saveTrustDevice() {
+async function saveTrustDevice() {
   const cb = document.getElementById('trust-device');
   if (cb && cb.checked) {
     const mode = sessionStorage.getItem('vaultMode') || 'ADMIN';
@@ -1213,15 +1251,37 @@ function saveTrustDevice() {
     const member = modeToMember[mode] || 'shineil';
     const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
     const existing = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
-    // Always save the current session token (tokens expire after 1 hour, so reusing old ones causes 401)
     const savedToken = token || (existing && existing.token) || '';
-    // Save the master password secret so trusted sessions can decrypt files
-    const secret = window.masterPassword || (existing && existing.secret) || '';
+    // Derive an encrypted wrapper for the secret instead of storing raw password
+    const secret = window.masterPassword || '';
+    let wrappedSecret = '';
+    if (secret) {
+      try {
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const keyMaterial = await crypto.subtle.importKey('raw',
+          new TextEncoder().encode(navigator.userAgent + salt),
+          'PBKDF2', false, ['deriveBits']);
+        const keyBits = await crypto.subtle.deriveBits(
+          { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 10000 },
+          keyMaterial, 256);
+        const wrapKey = await crypto.subtle.importKey('raw', new Uint8Array(keyBits),
+          { name: 'AES-GCM' }, false, ['encrypt']);
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv },
+          wrapKey, new TextEncoder().encode(secret));
+        const combined = new Uint8Array(16 + 12 + ct.byteLength);
+        combined.set(salt, 0); combined.set(iv, 16); combined.set(new Uint8Array(ct), 28);
+        wrappedSecret = btoa(String.fromCharCode(...combined));
+      } catch (e) {
+        console.warn('[TrustDevice] Encryption failed, falling back to session-only', e);
+        wrappedSecret = '';
+      }
+    }
     localStorage.setItem('vaultTrustInfo', JSON.stringify({
       member,
       user: (document.getElementById('user-name')?.value || '').trim(),
       token: savedToken,
-      secret: secret,
+      secret: wrappedSecret,
       expiry: Date.now() + 14 * 86400000
     }));
   }
@@ -1600,7 +1660,7 @@ async function _renderNotifPanel() {
           <div style="font-weight:${n.read ? '600' : '800'};font-size:13px;color:#0f172a;margin-bottom:2px;">${escHtml(n.title||'Notification')}</div>
           <div style="font-size:12px;color:#475569;line-height:1.5;">${escHtml(n.body||'')}</div>
           <div style="font-size:10px;color:#94a3b8;margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:800;background:${pc.bg};color:${pc.c};">${pCls.toUpperCase()}</span>
+            <span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:800;background:${pc.bg};color:${pc.c};">${escHtml(pCls.toUpperCase())}</span>
             <span>${n.type === 'global' ? '🌐 Global' : '🎯 ' + escHtml(n.targets || 'Targeted')}</span>
             <span>${n.timestamp ? new Date(n.timestamp).toLocaleString() : ''}</span>
           </div>
