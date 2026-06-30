@@ -220,6 +220,12 @@ function isCacheable(response) {
 self.addEventListener("message", function(event) {
   if (!event.data) return;
 
+  // Only accept messages from same-origin pages
+  if (event.source && event.source.location && event.source.location.origin !== self.location.origin) {
+    console.warn("[SW] Ignoring message from untrusted origin:", event.source.location.origin);
+    return;
+  }
+
   switch (event.data.type) {
 
     // Force the waiting SW to activate immediately (useful after updates)
