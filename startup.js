@@ -130,7 +130,8 @@ function checkVaultHealth(){
 
 function revealToken(){
     const tok = sessionStorage.getItem('vaultSession') || sessionStorage.getItem('vaultSessionToken') || 'No token found';
-    document.getElementById('tokenDisplayBox').textContent = tok;
+    const masked = tok.length > 8 ? tok.slice(0, 4) + '****' + tok.slice(-4) : '****';
+    document.getElementById('tokenDisplayBox').textContent = masked;
 }
 
 function runDupeScan(){
