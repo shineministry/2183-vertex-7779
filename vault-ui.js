@@ -105,15 +105,13 @@ async function openLogs(){
 
     try{
 
+const token = sessionStorage.getItem('vaultSession') || '';
 const res = await fetch(
     "https://backend.shinumaths989.workers.dev/get-logs",
     {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            browser: navigator.userAgent,
-            platform: navigator.platform
-        })
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({})
     }
 );
 

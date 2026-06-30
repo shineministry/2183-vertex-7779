@@ -4002,6 +4002,32 @@ Recommended:
         };
       })();
     </script>
+  <script>
+    // ── PIN FOOTER TO BOTTOM OF RIGHT-SIDE CONTENT AREA ──────────────────
+    // Measures actual available height below the content-view's top edge
+    // and enforces it as a min-height, so the footer (margin-top:auto)
+    // always sits at the bottom of the visible content panel instead of
+    // trailing right after the file cards. Pure JS so it can't be thrown
+    // off by external stylesheet assumptions.
+    (function () {
+      function pinFooter() {
+        var cv = document.querySelector('main.content-view');
+        if (!cv || cv.offsetParent === null) return; // hidden / not laid out yet
+        var top = cv.getBoundingClientRect().top;
+        var avail = window.innerHeight - top;
+        if (avail > 0) cv.style.minHeight = avail + 'px';
+      }
+      window.addEventListener('resize', pinFooter);
+      window.addEventListener('load', pinFooter);
+      document.addEventListener('DOMContentLoaded', pinFooter);
+      var dashEl = document.getElementById('vault-dashboard');
+      if (dashEl && window.MutationObserver) {
+        new MutationObserver(pinFooter).observe(dashEl, { attributes: true, attributeFilter: ['style', 'class'] });
+      }
+      // Recalculate shortly after becoming visible (fonts/images can shift layout)
+      setInterval(pinFooter, 1000);
+    })();
+  </script>
 </body>
 
 </html>

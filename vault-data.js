@@ -913,19 +913,19 @@ function renderProfile(memberKey) {
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;">
-        <div class="profile-box"><h3>Personal Details</h3>${escHtml(profile.personal || '-')}</div>
-        <div class="profile-box"><h3>Contact</h3>${escHtml(profile.contact || '-')}</div>
-        <div class="profile-box"><h3>Education</h3>${escHtml(profile.education || '-')}</div>
-        <div class="profile-box"><h3>Skills</h3>${escHtml(profile.skills || '-')}</div>
-        <div class="profile-box"><h3>Languages</h3>${escHtml(profile.languages || '-')}</div>
-        <div class="profile-box"><h3>Achievements</h3>${escHtml(profile.achievements || '-')}</div>
-        <div class="profile-box"><h3>Experience</h3>${escHtml(profile.experience || '-')}</div>
-        <div class="profile-box"><h3>Projects</h3>${escHtml(profile.projects || '-')}</div>
-        <div class="profile-box"><h3>Future Goals</h3>${escHtml(profile.goals || '-')}</div>
-        <div class="profile-box"><h3>Faith / Ministry</h3>${escHtml(profile.faith || '-')}</div>
+        <div class="profile-box"><h3>Personal Details</h3>${profile.personal || '-'}</div>
+        <div class="profile-box"><h3>Contact</h3>${profile.contact || '-'}</div>
+        <div class="profile-box"><h3>Education</h3>${profile.education || '-'}</div>
+        <div class="profile-box"><h3>Skills</h3>${profile.skills || '-'}</div>
+        <div class="profile-box"><h3>Languages</h3>${profile.languages || '-'}</div>
+        <div class="profile-box"><h3>Achievements</h3>${profile.achievements || '-'}</div>
+        <div class="profile-box"><h3>Experience</h3>${profile.experience || '-'}</div>
+        <div class="profile-box"><h3>Projects</h3>${profile.projects || '-'}</div>
+        <div class="profile-box"><h3>Future Goals</h3>${profile.goals || '-'}</div>
+        <div class="profile-box"><h3>Faith / Ministry</h3>${profile.faith || '-'}</div>
       </div>
-      <div style="margin-top:25px;background:#eff6ff;padding:24px;border-radius:18px;"><h3>About Me</h3>${escHtml(profile.about || '-')}</div>
-      <div style="margin-top:25px;background:#f8fafc;padding:24px;border-radius:18px;"><h3>Hobbies &amp; Interests</h3>${escHtml(profile.hobbies || '-')}</div>
+      <div style="margin-top:25px;background:#eff6ff;padding:24px;border-radius:18px;"><h3>About Me</h3>${profile.about || '-'}</div>
+      <div style="margin-top:25px;background:#f8fafc;padding:24px;border-radius:18px;"><h3>Hobbies &amp; Interests</h3>${profile.hobbies || '-'}</div>
     </div>`;
 }
 async function unifiedSearch(){
