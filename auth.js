@@ -1473,8 +1473,8 @@ async function showStep2() {
             animation: fadeInUp .3s ease;
         `;
         box.innerHTML = `
-            <div style="font-weight:800;color:var(--danger);font-size:13px;margin-bottom:4px;">⚠️ ${title}</div>
-            <div style="font-size:12px;color:#fff;line-height:1.5;">${detail}</div>
+            <div style="font-weight:800;color:var(--danger);font-size:13px;margin-bottom:4px;">⚠️ ${escHtml(title)}</div>
+            <div style="font-size:12px;color:#fff;line-height:1.5;">${escHtml(detail)}</div>
             <button onclick="this.parentElement.remove()" style="
                 margin-top:10px;border:none;background:var(--danger);color:white;
                 border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;">
