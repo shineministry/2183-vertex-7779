@@ -3,7 +3,7 @@
  *
  * Routing strategy:
  *  • Backend API calls        → Always network-only (auth-bearing, never cached)
- *  • AI / chat endpoints      → Network-only (never cached)
+ *  • AI / chat endpoints      → Network-only (never cachede)
  *  • Vault /docs/* blobs      → Network-only; offline fallback via page IndexedDB
  *                               (features.js → fetchVaultDocWithOfflineFallback)
  *  • Navigation (HTML pages)  → Network-first, fall back to cached /index.html
