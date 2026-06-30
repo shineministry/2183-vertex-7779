@@ -475,6 +475,11 @@ import {
 }
 from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
+function escHtml(s) {
+  if (typeof s !== 'string') return String(s || '');
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 const firebaseConfig = {
 
     apiKey:
@@ -574,52 +579,52 @@ onSnapshot(q,(snapshot)=>{
 
             <td>
                 <span class="badge">
-                    ${log.visitorName || '-'}
+                    ${escHtml(log.visitorName || '-')}
                 </span>
             </td>
 
             <td>
-                ${log.purpose || '-'}
+                ${escHtml(log.purpose || '-')}
             </td>
 
             <td>
-                ${log.loginTime || '-'}
+                ${escHtml(log.loginTime || '-')}
             </td>
 
             <td>
-                ${log.logoutTime || 'Active Session'}
+                ${escHtml(log.logoutTime || 'Active Session')}
             </td>
 
             <td>
-                ${log.device || '-'}
+                ${escHtml(log.device || '-')}
             </td>
 
             <td style="
             max-width:260px;
             word-break:break-word;">
 
-                ${log.browser || '-'}
+                ${escHtml(log.browser || '-')}
 
             </td>
 
             <td>
-                ${log.platform || '-'}
+                ${escHtml(log.platform || '-')}
             </td>
 
             <td>
-                ${log.screen || '-'}
+                ${escHtml(log.screen || '-')}
             </td>
 
             <td>
-                ${log.timezone || '-'}
+                ${escHtml(log.timezone || '-')}
             </td>
 
             <td>
-                ${log.ipAddress || '-'}
+                ${escHtml(log.ipAddress || '-')}
             </td>
 
             <td>
-                ${log.location || '-'}
+                ${escHtml(log.location || '-')}
             </td>
 
         </tr>
