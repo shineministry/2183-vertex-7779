@@ -402,6 +402,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
+        function escHtml(s) { if (typeof s !== 'string') return String(s || ''); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "online-vault-shine-26.firebaseapp.com",
@@ -482,17 +484,17 @@
                     <div class="user-row">
                         <div class="avatar">${initial}</div>
                         <div class="user-info">
-                            <h2>${data.visitorName || 'Unknown Requestor'}</h2>
-                            <span>${data.location || 'Austria/Global Location'}</span>
+                            <h2>${escHtml(data.visitorName || 'Unknown Requestor')}</h2>
+                            <span>${escHtml(data.location || 'Austria/Global Location')}</span>
                         </div>
                     </div>
                     <div class="info-box">
                         <div class="info-title">Purpose of Entry</div>
-                        <div class="info-value">${data.purpose || 'Not stated'}</div>
+                        <div class="info-value">${escHtml(data.purpose || 'Not stated')}</div>
                     </div>
                     <div class="info-box">
                         <div class="info-title">Device Fingerprint</div>
-                        <div class="info-value">${data.device || 'Unknown Hardware Target'}</div>
+                        <div class="info-value">${escHtml(data.device || 'Unknown Hardware Target')}</div>
                     </div>
                     <div class="button-group">
                         <button class="btn approve" onclick="approveRequest('${docSnap.id}')">APPROVE</button>
@@ -539,17 +541,17 @@
                     <div class="user-row">
                         <div class="avatar" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);">${userInitial}</div>
                         <div class="user-info">
-                            <h2>${data.visitor || 'Active User'}</h2>
-                            <span>Session: ${docSnap.id.substring(0,8)}...</span>
+                            <h2>${escHtml(data.visitor || 'Active User')}</h2>
+                            <span>Session: ${escHtml(docSnap.id.substring(0,8))}...</span>
                         </div>
                     </div>
                     <div class="info-box">
                         <div class="info-title">Last Check-in / IP Environment</div>
-                        <div class="info-value">${data.ipAddress || 'Protected System Node'}</div>
+                        <div class="info-value">${escHtml(data.ipAddress || 'Protected System Node')}</div>
                     </div>
                     <div class="info-box">
                         <div class="info-title">Platform OS Info</div>
-                        <div class="info-value">${data.userAgent || 'Web Browser Interface'}</div>
+                        <div class="info-value">${escHtml(data.userAgent || 'Web Browser Interface')}</div>
                     </div>
                     <div class="button-group">
                         <button class="btn deny" onclick="forceLogout('${docSnap.id}')">FORCE LOGOUT</button>
