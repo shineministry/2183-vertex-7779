@@ -3,6 +3,17 @@
 ========================= */
 var masterPassword = "";
 
+// ── HTML escape helper (prevents XSS in innerHTML) ──────────────────────
+window.escHtml = function(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
+
 function showCurtain(){
     const c = document.getElementById('white-curtain');
     if(c) c.classList.add('show');
@@ -1161,7 +1172,7 @@ async function indexAI(fileUrl, fileName) {
       );
 
       const data = await res.json();
-      console.log(`✦ chunk ${i + 1}/${chunks.length} → ${data.success ? '✅' : '❌ ' + data.error}`);
+      if (data.success) { console.log(`✦ chunk ${i + 1}/${chunks.length} indexed`); }
 
     } catch (e) {
       console.warn(`✦ chunk ${i + 1} failed:`, e);
@@ -1307,7 +1318,8 @@ async function sendAIMessage() {
       const replyTarget = wrap.querySelector('[id^="ai-reply-target-"]');
 
       // Pre-process markdown so bold and line breaks render as HTML
-      const rawReply = data.reply
+      // Sanitize: escape HTML first, then apply controlled markdown
+      const rawReply = escHtml(data.reply)
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // bold
         .replace(/\n\n/g, '<br><br>')                       // paragraph breaks
         .replace(/\n/g, '<br>');                            // single line breaks
@@ -1375,7 +1387,7 @@ function appendAIBubble(text) {
   wrap.className = 'ai-msg-ai-wrap';
   wrap.innerHTML = `
     <div class="ai-gem-avatar">✦</div>
-    <div class="ai-msg-ai">${text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</div>
+    <div class="ai-msg-ai">${escHtml(text).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</div>
   `;
   msgs.appendChild(wrap);
   msgs.scrollTop = msgs.scrollHeight;
