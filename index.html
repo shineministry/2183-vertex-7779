@@ -19,6 +19,11 @@ Recommended:
 -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://cdn.jsdelivr.net https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https:; frame-src https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self';"><｜end▁of▁thinking｜>
+
+<｜｜DSML｜｜tool_calls>
+<｜｜DSML｜｜invoke name="todowrite">
+<｜｜DSML｜｜parameter name="todos" string="false">[{"priority":"completed","content":"Read all critical source files fully","status":"completed"},{"priority":"completed","content":"Fix #1: Authenticate all unprotected endpoints in worker.js","status":"completed"},{"priority":"completed","content":"Fix #2: Remove master password from localStorage/IndexedDB, use derived key","status":"in_progress"},{"priority":"completed","content":"Fix #3: Never embed masterPassword in share link fallback","status":"completed"},{"priority":"completed","content":"Fix #4: /check-passkey returns one-time token, not master password","status":"completed"},{"priority":"completed","content":"Fix #5: Path traversal in handleGetDoc","status":"completed"},{"priority":"pending","content":"Fix #6: Replace bare SHA-256 with PBKDF2 for password hashing","status":"completed"},{"priority":"completed","content":"Fix #7: Encrypt password manager entries in IndexedDB","status":"completed"},{"priority":"completed","content":"Fix #8: Add CSRF protection (Origin/Referer validation) in worker.js","status":"completed"},{"priority":"completed","content":"Fix #9: Add rate limiting fallback","status":"completed"},{"priority":"completed","content":"Fix #10: Portal passwords use timingSafeEqual","status":"completed"},{"priority":"completed","content":"Fix #11: Auth on /send-email and /save-notification","status":"completed"},{"priority":"completed","content":"Fix #12: SW postMessage origin validation","status":"completed"},{"priority":"completed","content":"Fix #13: Remove revealToken from production","status":"completed"},{"priority":"completed","content":"Fix #14: Add request body size limits","status":"completed"},{"priority":"completed","content":"Fix #15: Implement /security-alert properly","status":"completed"},{"priority":"completed","content":"Fix #16: Add blur-on-tab-hide to login forms","status":"completed"},{"priority":"completed","content":"Fix #17: Add Content Security Policy headers","status":"completed"},{"priority":"pending","content":"Fix #18: Session revocation via Firestore blocklist","status":"pending"},{"priority":"completed","content":"Fix #19: Clipboard read confirmation dialog","status":"completed"},{"priority":"completed","content":"Fix #20: PM encryption key rotation support","status":"completed"},{"priority":"completed","content":"Fix footer: Move footer below main content area (right side), not in nav sidebar","status":"completed"},{"priority":"pending","content":"Verify all changes compile/syntax check correctly","status":"pending"}]
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <script>
     // ── TEMPORARY ON-SCREEN ERROR OVERLAY ──────────────────────────────────
@@ -1133,6 +1138,13 @@ Recommended:
       }
     }
 
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        const pField = document.getElementById('vault-pass');
+        if (pField) pField.blur();
+      }
+    });
+
     function testPassStrength() {
       const pass = document.getElementById("vault-pass").value;
       const m1 = document.getElementById("meter1");
@@ -1371,11 +1383,11 @@ Recommended:
           </div>
           <div id="photos-grid" class="file-grid photo-grid"></div>
         </div><!-- end #page-photos -->
+        <div style="text-align:center;padding:18px 20px;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;background:#f8fafc;line-height:1.6;">
+          Made by Shineil Keith Mathias, founder of Shine Ministry — India. &copy; 2026.
+        </div>
       </main>
     </div>
-  </div>
-  <div style="text-align:center;padding:18px 20px;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;background:#f8fafc;line-height:1.6;">
-    Made by Shineil Keith Mathias, founder of Shine Ministry — India. &copy; 2026.
   </div>
   <div id="modal" class="modal">
     <div class="modal-content">
@@ -1513,7 +1525,7 @@ Recommended:
       <div class="modal-content" style="max-width:700px;height:90%;">
         <div class="modal-header"> <strong> 💬 FEEDBACK & SUGGESTIONS </strong> <button onclick="closeFeedbackModal()" style="border:none;background:var(--danger);color:white;padding:10px 16px;border-radius:10px;font-weight:bold;cursor:pointer;">CLOSE</button> </div>
         <div style="flex:1;overflow:hidden;background:#f8fafc;">
-          <iframe src="https://forms.gle/Pv5LTq7APgFj98rp6" style="width:100%;height:100%;border:none;" allowfullscreen loading="lazy"></iframe>
+          <iframe src="https://forms.gle/Pv5LTq7APgFj98rp6" style="width:100%;height:100%;border:none;" sandbox="allow-forms allow-scripts allow-popups allow-same-origin" allowfullscreen loading="lazy"></iframe>
         </div>
       </div>
     </div>
@@ -3348,8 +3360,8 @@ Recommended:
             <div style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;background:#f8fafc;border:1px solid #f1f5f9;">
               <span style="font-size:18px;flex-shrink:0;">${icons[i % icons.length]}</span>
               <div style="min-width:0;">
-                <div style="font-size:12px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
-                <div style="font-size:10px;color:#94a3b8;margin-top:1px;">${time}</div>
+                <div style="font-size:12px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(name)}</div>
+                <div style="font-size:10px;color:#94a3b8;margin-top:1px;">${escHtml(time)}</div>
               </div>
             </div>`;
         });
@@ -3879,7 +3891,7 @@ Recommended:
               const li = document.createElement('li');
               const iconKey = Object.keys(catIcons).find(k => cat.toLowerCase().includes(k.toLowerCase()));
               const icon = catIcons[cat] || (iconKey ? catIcons[iconKey] : '📁');
-              li.innerHTML = '<span style="font-size:15px;">' + icon + '</span><span>' + cat + '</span>';
+              li.innerHTML = '<span style="font-size:15px;">' + icon + '</span><span>' + escHtml(cat) + '</span>';
               li.onclick = () => { if (typeof selectVaultCategory === 'function') selectVaultCategory(cat); };
               list.appendChild(li);
             });
