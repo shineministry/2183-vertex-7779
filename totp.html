@@ -328,34 +328,74 @@ async function generateTOTP(secret, digits=8, period=60) {
   return String(binCode % Math.pow(10, digits)).padStart(digits, '0');
 }
 
+/* ══════════════ ENCRYPTED STORAGE ══════════════ */
+const STORAGE_KEY = 'vault_totp_secret';
+const SALT_KEY    = 'vault_totp_salt';
+const PBKDF2_ITER = 100000;
+
+async function _totpDeriveKey(salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode('vault-totp-v1'), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: PBKDF2_ITER, hash: 'SHA-256' },
+    keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+  );
+}
+
+async function _encryptSecret(plaintext) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key  = await _totpDeriveKey(salt);
+  const iv   = crypto.getRandomValues(new Uint8Array(12));
+  const enc  = new TextEncoder();
+  const ct   = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plaintext)));
+  const combined = new Uint8Array(12 + 16 + ct.length);
+  combined.set(iv, 0); combined.set(salt, 12); combined.set(ct, 28);
+  return btoa(String.fromCharCode(...combined));
+}
+
+async function _decryptSecret(stored) {
+  try {
+    const combined = new Uint8Array(atob(stored).split('').map(c => c.charCodeAt(0)));
+    const iv   = combined.slice(0, 12);
+    const salt = combined.slice(12, 28);
+    const ct   = combined.slice(28);
+    const key  = await _totpDeriveKey(salt);
+    const dec  = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct));
+    return new TextDecoder().decode(dec);
+  } catch(e) { return null; }
+}
+
 /* ══════════════ STATE ══════════════ */
 const PERIOD = 60, CIRC = 213.6;
 let _secret = '', _timerID = null, _lastBucket = -1;
-const STORAGE_KEY = 'vault_totp_secret';
 
 /* ══════════════ SAVED KEY ══════════════ */
-function loadSavedKey() {
+async function loadSavedKey() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved && isValidBase32(saved)) {
-      document.getElementById('savedNotice').style.display = 'flex';
-      document.getElementById('secretInput').value = saved;
-      _secret = saved;
-      document.getElementById('placeholder').style.display = 'none';
-      document.getElementById('codeArea').style.display = 'block';
-      startEngine();
+    if (saved) {
+      const decrypted = await _decryptSecret(saved);
+      if (decrypted && isValidBase32(decrypted)) {
+        document.getElementById('savedNotice').style.display = 'flex';
+        document.getElementById('secretInput').value = decrypted;
+        _secret = decrypted;
+        document.getElementById('placeholder').style.display = 'none';
+        document.getElementById('codeArea').style.display = 'block';
+        startEngine();
+      }
     }
   } catch(e) {}
 }
 
-function saveKey() {
+async function saveKey() {
   const raw = document.getElementById('secretInput').value.trim().toUpperCase().replace(/\s/g,'');
   if (!raw || !isValidBase32(raw)) {
     showErr('Enter a valid key first before saving.');
     return;
   }
   try {
-    localStorage.setItem(STORAGE_KEY, raw);
+    const encrypted = await _encryptSecret(raw);
+    localStorage.setItem(STORAGE_KEY, encrypted);
     document.getElementById('savedNotice').style.display = 'flex';
     const btn = document.getElementById('saveBtn');
     btn.innerHTML = '<span class="micon">✅</span>Saved!';
