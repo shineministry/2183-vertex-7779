@@ -112,7 +112,7 @@ list.innerHTML = `
     if (cat === 'HOME' || cat === 'PROFILE' || cat === 'PHOTOS') return;
     const li = document.createElement('li');
     const icon = getCatIcon(cat);
-    li.innerHTML = `<span style="font-size:15px;">${icon}</span><span>${cat}</span>`;
+    li.innerHTML = `<span style="font-size:15px;">${icon}</span><span>${escHtml(cat)}</span>`;
     li.onclick = () => {
     if (typeof selectVaultCategory === 'function') {
         selectVaultCategory(cat);
@@ -143,7 +143,7 @@ else if (list.querySelector('li')) list.querySelector('li').click();
         color:var(--danger);
         font-weight:700;
     ">
-        🚨 ${e.message || "Failed to load secure database."}
+        🚨 ${escHtml(e.message) || "Failed to load secure database."}
     </div>`;
 }
 }
@@ -326,7 +326,7 @@ hobbies:`Add`
 
 
 mother:{
-image:"ProfileKa.png",
+image:"mother.png",
 name:"KANCHAN MATHIAS",
 role:"Mother",
 personal:`Add`,
@@ -374,7 +374,7 @@ const CAT_SUMMARIES = {
 function getCatSummary(cat) {
     return CAT_SUMMARIES[cat]
         || CAT_SUMMARIES[Object.keys(CAT_SUMMARIES).find(k => cat.toLowerCase().includes(k.toLowerCase()))]
-        || `Documents related to ${cat}.`;
+        || `Documents related to ${escHtml(cat)}.`;
 }
 
 
@@ -388,12 +388,13 @@ function buildHomeDashboard(){
     let recents = [];
     try{ recents = JSON.parse(localStorage.getItem('recentFiles') || '[]'); }catch(e){}
 
+    const esc = window.escHtml;
     const historyHTML = recents.length
         ? recents.slice(0,8).map(r => `
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#f8fafc;border:1px solid var(--border);margin-bottom:8px;">
                 <div style="overflow:hidden;">
-                    <div style="font-weight:700;font-size:12.5px;color:var(--text-main, #0f172a);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📄 ${r.name}</div>
-                    <div style="font-size:10.5px;color:var(--muted);margin-top:2px;">${r.category || ''} · ${r.date || ''}</div>
+                    <div style="font-weight:700;font-size:12.5px;color:var(--text-main, #0f172a);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📄 ${esc(r.name)}</div>
+                    <div style="font-size:10.5px;color:var(--muted);margin-top:2px;">${esc(r.category || '')} · ${esc(r.date || '')}</div>
                 </div>
             </div>`).join('')
         : `<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">No files viewed yet</div>`;
@@ -401,8 +402,8 @@ function buildHomeDashboard(){
     const categoriesHTML = categories.length
         ? categories.map(c => `
             <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:12px;background:#f8fafc;border:1px solid var(--border);margin-bottom:8px;">
-                <div style="font-weight:700;font-size:12.5px;color:var(--text-main, #0f172a);">📁 ${c}</div>
-                <div style="font-size:11px;font-weight:800;color:var(--accent);background:#eff6ff;padding:3px 10px;border-radius:999px;">${(allFilesData[c]||[]).length}</div>
+                <div style="font-weight:700;font-size:12.5px;color:var(--text-main, #0f172a);">📁 ${esc(c)}</div>
+                <div style="font-size:11px;font-weight:800;color:var(--accent);background:#eff6ff;padding:3px 10px;border-radius:999px;">${esc((allFilesData[c]||[]).length)}</div>
             </div>`).join('')
         : `<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">No categories</div>`;
 
@@ -690,7 +691,7 @@ visibleFiles.forEach(file=>{
         <div style="
         font-weight:800;
         line-height:1.5;">
-            ${file.name}
+            ${escHtml(file.name)}
         </div>
 
         ${expiryBadge}
@@ -804,7 +805,7 @@ function renderPhotos() {
         const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '').replace(/^\/photos\/|^photos\//, '');
         const cached = window._photoDecryptedCache && window._photoDecryptedCache.get(docKey);
         if (cached) {
-            card.innerHTML = `<div class="photo-thumb"><img class="photo-img" src="${cached.url}" loading="lazy" data-blob-url="${cached.url}"></div>`;
+            card.innerHTML = `<div class="photo-thumb"><img class="photo-img" src="${escHtml(cached.url)}" loading="lazy" data-blob-url="${escHtml(cached.url)}"></div>`;
         } else {
             card.innerHTML = '<div class="photo-thumb"><div class="photo-loading"></div></div>';
             // Decrypt and render thumbnail on the fly (throttled + cached)
@@ -893,7 +894,7 @@ function renderProfile(memberKey) {
   const card = document.getElementById('profile-card');
   if (card) card.innerHTML = `<div style="padding:30px;text-align:center;color:#64748b;">
     <div style="font-size:48px;margin-bottom:12px;">👤</div>
-    <div style="font-weight:700;font-size:16px;">No profile data for "${memberKey}"</div>
+    <div style="font-weight:700;font-size:16px;">No profile data for "${escHtml(memberKey)}"</div>
     <div style="font-size:13px;margin-top:8px;">Add this member to the profiles object in vault-data.js</div>
   </div>`;
   return;
@@ -905,26 +906,26 @@ function renderProfile(memberKey) {
     card.innerHTML = `
     <div style="background:white;border:1px solid var(--border);border-radius:24px;padding:35px;color:#0f172a;">
       <div style="display:flex;gap:25px;flex-wrap:wrap;margin-bottom:30px;">
-        <img src="${profile.image}" style="width:150px;height:150px;border-radius:24px;object-fit:cover;" onerror="this.style.display='none'">
+        <img src="${escHtml(profile.image)}" style="width:150px;height:150px;border-radius:24px;object-fit:cover;" onerror="this.style.display='none'">
         <div>
-          <h1 style="color:var(--accent);margin:0 0 8px;">${profile.name}</h1>
-          <div style="color:#64748b;">${profile.role}</div>
+          <h1 style="color:var(--accent);margin:0 0 8px;">${escHtml(profile.name)}</h1>
+          <div style="color:#64748b;">${escHtml(profile.role)}</div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;">
-        <div class="profile-box"><h3>Personal Details</h3>${profile.personal || '-'}</div>
-        <div class="profile-box"><h3>Contact</h3>${profile.contact || '-'}</div>
-        <div class="profile-box"><h3>Education</h3>${profile.education || '-'}</div>
-        <div class="profile-box"><h3>Skills</h3>${profile.skills || '-'}</div>
-        <div class="profile-box"><h3>Languages</h3>${profile.languages || '-'}</div>
-        <div class="profile-box"><h3>Achievements</h3>${profile.achievements || '-'}</div>
-        <div class="profile-box"><h3>Experience</h3>${profile.experience || '-'}</div>
-        <div class="profile-box"><h3>Projects</h3>${profile.projects || '-'}</div>
-        <div class="profile-box"><h3>Future Goals</h3>${profile.goals || '-'}</div>
-        <div class="profile-box"><h3>Faith / Ministry</h3>${profile.faith || '-'}</div>
+        <div class="profile-box"><h3>Personal Details</h3>${escHtml(profile.personal || '-')}</div>
+        <div class="profile-box"><h3>Contact</h3>${escHtml(profile.contact || '-')}</div>
+        <div class="profile-box"><h3>Education</h3>${escHtml(profile.education || '-')}</div>
+        <div class="profile-box"><h3>Skills</h3>${escHtml(profile.skills || '-')}</div>
+        <div class="profile-box"><h3>Languages</h3>${escHtml(profile.languages || '-')}</div>
+        <div class="profile-box"><h3>Achievements</h3>${escHtml(profile.achievements || '-')}</div>
+        <div class="profile-box"><h3>Experience</h3>${escHtml(profile.experience || '-')}</div>
+        <div class="profile-box"><h3>Projects</h3>${escHtml(profile.projects || '-')}</div>
+        <div class="profile-box"><h3>Future Goals</h3>${escHtml(profile.goals || '-')}</div>
+        <div class="profile-box"><h3>Faith / Ministry</h3>${escHtml(profile.faith || '-')}</div>
       </div>
-      <div style="margin-top:25px;background:#eff6ff;padding:24px;border-radius:18px;"><h3>About Me</h3>${profile.about || '-'}</div>
-      <div style="margin-top:25px;background:#f8fafc;padding:24px;border-radius:18px;"><h3>Hobbies &amp; Interests</h3>${profile.hobbies || '-'}</div>
+      <div style="margin-top:25px;background:#eff6ff;padding:24px;border-radius:18px;"><h3>About Me</h3>${escHtml(profile.about || '-')}</div>
+      <div style="margin-top:25px;background:#f8fafc;padding:24px;border-radius:18px;"><h3>Hobbies &amp; Interests</h3>${escHtml(profile.hobbies || '-')}</div>
     </div>`;
 }
 async function unifiedSearch(){
@@ -1033,14 +1034,14 @@ async function unifiedSearch(){
         <div style="
         font-weight:800;
         line-height:1.5;">
-            ${file.name}
+            ${escHtml(file.name)}
         </div>
 
         <div style="
         margin-top:10px;
         color:var(--muted);
         font-size:.85rem;">
-            ${file.category}
+            ${escHtml(file.category)}
         </div>
 
         <div style="
@@ -1048,7 +1049,7 @@ async function unifiedSearch(){
         color:#2563eb;
         font-size:.75rem;
         font-weight:700;">
-            ${file.source}
+            ${escHtml(file.source)}
         </div>
 
         `;
