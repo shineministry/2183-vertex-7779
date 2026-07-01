@@ -2781,3 +2781,52 @@ button{
     zoom:0.85;
   }
 }
+
+/* ── 9. Password Manager PIN gate ───────────────── */
+.pm-pin-digit-row{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+}
+.pm-pin-digit{
+  width:46px;
+  height:56px;
+  border:2px solid #cbd5e1;
+  border-radius:12px;
+  background:#f8fafc;
+  color:#0f172a;
+  font-size:24px;
+  font-weight:800;
+  text-align:center;
+  outline:none;
+  caret-color:#2563eb;
+  transition:border-color .2s, box-shadow .2s;
+  font-family:monospace;
+}
+.pm-pin-digit:focus{
+  border-color:#2563eb;
+  box-shadow:0 0 0 3px rgba(37,99,235,0.15);
+}
+.pm-pin-digit.error{
+  border-color:#f87171;
+  animation:shake .4s ease;
+}
+.pm-member-pick-btn{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 14px;
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  background:#f8fafc;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:700;
+  color:#0f172a;
+  text-align:left;
+  transition:.15s;
+}
+.pm-member-pick-btn:hover{
+  border-color:#2563eb;
+  background:#eff6ff;
+}
