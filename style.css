@@ -2771,3 +2771,13 @@ button{
   display: inline-block;
   box-shadow: 0 0 6px rgba(22,163,74,.5);
 }
+
+/* ── 8. Mobile-only text scale-down (desktop untouched) ──
+   Most font-size rules in this file are hardcoded px, so they don't
+   respond to a root font-size change. `zoom` scales text + spacing
+   together, proportionally, only inside this mobile breakpoint. */
+@media screen and (max-width:767.98px){
+  html{
+    zoom:0.85;
+  }
+}
