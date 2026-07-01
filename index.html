@@ -3181,6 +3181,7 @@ Recommended:
         window._pmActiveMember = memberKey;
         const modal = document.getElementById('passwordManagerModal');
         if (modal) {
+          modal.style.display = '';
           modal.classList.add('open');
           const sel = document.getElementById('pm-member');
           if (sel) { sel.value = memberKey; sel.disabled = true; sel.style.opacity = '0.65'; }
@@ -3909,7 +3910,7 @@ Recommended:
           modal.classList.add('modal-closing');
           setTimeout(() => {
             modal.style.display = 'none';
-            modal.classList.remove('modal-closing');
+            modal.classList.remove('modal-closing', 'open', 'show');
             if (content) content.classList.remove('modal-content-closing');
           }, duration);
         };
