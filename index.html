@@ -1660,6 +1660,7 @@ Recommended:
             <div class="adv-menu-item" onclick="switchAdvPanel('experimental')"><span class="adv-icon">🧬</span><span>Experimental Features</span></div>
             <div class="adv-menu-item" onclick="switchAdvPanel('stealth-mode')"><span class="adv-icon">🥷</span><span>Stealth Mode</span></div>
             <div class="adv-menu-item" onclick="switchAdvPanel('panic-lock')"><span class="adv-icon">🔴</span><span>Panic Lock Button</span></div>
+            <div class="adv-menu-item" onclick="switchAdvPanel('trusted-device')"><span class="adv-icon">✅</span><span>Trusted Device</span></div>
           </nav> <!-- RIGHT CONTENT PANELS -->
           <div class="adv-content"> <!-- 1. VAULT NAME -->
             <div class="adv-panel active" id="panel-vault-identity">
@@ -2357,6 +2358,22 @@ Recommended:
                     <div class="setting-row-label" style="color:#dc2626;">🔴 TRIGGER PANIC LOCK NOW</div>
                     <div class="setting-row-hint">Immediately ends session, clears memory, reloads vault</div>
                   </div> <button class="adv-action-btn adv-btn-solid-red" onclick="if(confirm('Trigger Panic Lock? This will end your session immediately.')){logoutVault('🔴 Panic Lock triggered.', true);}">LOCK NOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="adv-panel" id="panel-trusted-device">
+              <div class="adv-panel-title">✅ Trusted Device</div>
+              <div class="adv-panel-desc">Mark this device as trusted to bypass aggressive security checks. Use this only on your personal devices.</div>
+              <div class="setting-row">
+                <div class="setting-row-left">
+                  <div class="setting-row-label">Trust this device</div>
+                  <div class="setting-row-hint">When enabled, device integrity checks will alert but never block login</div>
+                </div>
+                <label class="adv-toggle"><input type="checkbox" id="trustedDeviceToggle" onchange="toggleTrustedDevice(this.checked)"><span class="adv-toggle-track"></span></label>
+              </div>
+              <div class="setting-row" style="margin-top:12px;">
+                <div class="setting-row-left">
+                  <div style="font-size:11px;color:var(--muted);line-height:1.5;">Device fingerprint: <span id="deviceFingerprintDisplay" style="font-family:monospace;font-size:10px;word-break:break-all;"></span></div>
                 </div>
               </div>
             </div>
