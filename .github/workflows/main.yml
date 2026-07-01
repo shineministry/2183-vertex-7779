@@ -14,15 +14,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+
     steps:
       - uses: actions/checkout@v4
 
-      # Build your website
-      - run: |
-          mkdir -p dist
-          cp -r * dist/
-
-      # Generate artifact attestation
       - uses: actions/attest-build-provenance@v3
         with:
-          subject-path: dist/**
+          subject-path: .
