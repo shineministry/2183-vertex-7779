@@ -3222,6 +3222,20 @@ Recommended:
         return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
       }
 
+      function _pmNextRowFirstInput(rowKey) {
+        // Row order depends on which fields are visible for the current context
+        const order = ['old', 'main', 'confirm'].filter(k => {
+          const wrap = k === 'old' ? document.getElementById('pm-pin-old-row')
+                     : k === 'confirm' ? document.getElementById('pm-pin-confirm-row')
+                     : document.getElementById('pm-pin-main-row');
+          return wrap && wrap.style.display !== 'none';
+        });
+        const pos = order.indexOf(rowKey);
+        const nextKey = order[pos + 1];
+        if (!nextKey) return null;
+        return document.querySelector(`.pm-pin-digit-row[data-row="${nextKey}"] .pm-pin-digit`);
+      }
+
       function _pmBuildDigitRow(rowKey, count) {
         const row = document.querySelector(`.pm-pin-digit-row[data-row="${rowKey}"]`);
         if (!row) return;
@@ -3236,11 +3250,22 @@ Recommended:
           inp.dataset.idx = i;
           inp.addEventListener('input', function () {
             this.value = this.value.replace(/[^0-9]/g, '');
-            if (this.value && this.nextElementSibling) this.nextElementSibling.focus();
+            if (this.value && this.nextElementSibling) {
+              this.nextElementSibling.focus();
+            } else if (this.value && i === count - 1) {
+              // Last digit of this row filled — jump into the next visible row,
+              // or submit if this was the last row on the screen.
+              const nextInput = _pmNextRowFirstInput(rowKey);
+              if (nextInput) nextInput.focus(); else submitPMPin();
+            }
           });
           inp.addEventListener('keydown', function (e) {
             if (e.key === 'Backspace' && !this.value && this.previousElementSibling) {
               this.previousElementSibling.focus();
+            }
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              submitPMPin();
             }
           });
           row.appendChild(inp);
@@ -3350,44 +3375,56 @@ Recommended:
         const errEl = document.getElementById('pm-pin-error');
         errEl.textContent = '';
 
-        if (ctx.mode === 'enter') {
-          const pin = _pmRowValue('main');
-          if (pin.length !== 4) { errEl.textContent = 'Enter all 4 digits.'; _pmShakeRow('main'); return; }
-          const hash = await _pmHashPin(pin, ctx.member);
-          const stored = localStorage.getItem('pmPinHash_' + ctx.member);
-          if (hash !== stored) { errEl.textContent = 'Incorrect PIN. Try again.'; _pmShakeRow('main'); return; }
-          closePMPinModal();
-          _openPMModalForMember(ctx.member);
-          return;
-        }
+        try {
+          if (typeof crypto === 'undefined' || !crypto.subtle) {
+            errEl.textContent = '⚠️ Secure context required (HTTPS) — PIN check unavailable.';
+            return;
+          }
 
-        if (ctx.mode === 'set') {
-          const pin = _pmRowValue('main');
-          const confirm = _pmRowValue('confirm');
-          if (pin.length !== 4) { errEl.textContent = 'Enter all 4 digits.'; _pmShakeRow('main'); return; }
-          if (pin !== confirm) { errEl.textContent = 'PINs do not match.'; _pmShakeRow('confirm'); return; }
-          const hash = await _pmHashPin(pin, ctx.member);
-          localStorage.setItem('pmPinHash_' + ctx.member, hash);
-          closePMPinModal();
-          _openPMModalForMember(ctx.member);
-          return;
-        }
+          if (ctx.mode === 'enter') {
+            const pin = _pmRowValue('main');
+            if (pin.length !== 4) { errEl.textContent = 'Enter all 4 digits.'; _pmShakeRow('main'); return; }
+            const hash = await _pmHashPin(pin, ctx.member);
+            const stored = localStorage.getItem('pmPinHash_' + ctx.member);
+            if (hash !== stored) { errEl.textContent = 'Incorrect PIN. Try again.'; _pmShakeRow('main'); return; }
+            closePMPinModal();
+            _openPMModalForMember(ctx.member);
+            return;
+          }
 
-        if (ctx.mode === 'change') {
-          const oldPin = _pmRowValue('old');
-          const newPin = _pmRowValue('main');
-          const confirm = _pmRowValue('confirm');
-          if (oldPin.length !== 4) { errEl.textContent = 'Enter your current PIN.'; _pmShakeRow('old'); return; }
-          const oldHash = await _pmHashPin(oldPin, ctx.member);
-          const stored = localStorage.getItem('pmPinHash_' + ctx.member);
-          if (oldHash !== stored) { errEl.textContent = 'Current PIN is incorrect.'; _pmShakeRow('old'); return; }
-          if (newPin.length !== 4) { errEl.textContent = 'Enter a new 4-digit PIN.'; _pmShakeRow('main'); return; }
-          if (newPin !== confirm) { errEl.textContent = 'New PINs do not match.'; _pmShakeRow('confirm'); return; }
-          const newHash = await _pmHashPin(newPin, ctx.member);
-          localStorage.setItem('pmPinHash_' + ctx.member, newHash);
-          closePMPinModal();
-          errEl.textContent = '';
-          return;
+          if (ctx.mode === 'set') {
+            const pin = _pmRowValue('main');
+            const confirm = _pmRowValue('confirm');
+            if (pin.length !== 4) { errEl.textContent = 'Enter all 4 digits of your new PIN.'; _pmShakeRow('main'); return; }
+            if (confirm.length !== 4) { errEl.textContent = 'Now re-type the same PIN below to confirm it.'; _pmShakeRow('confirm'); return; }
+            if (pin !== confirm) { errEl.textContent = 'PINs do not match — try again.'; _pmShakeRow('main'); _pmShakeRow('confirm'); return; }
+            const hash = await _pmHashPin(pin, ctx.member);
+            localStorage.setItem('pmPinHash_' + ctx.member, hash);
+            closePMPinModal();
+            _openPMModalForMember(ctx.member);
+            return;
+          }
+
+          if (ctx.mode === 'change') {
+            const oldPin = _pmRowValue('old');
+            const newPin = _pmRowValue('main');
+            const confirm = _pmRowValue('confirm');
+            if (oldPin.length !== 4) { errEl.textContent = 'Enter your current PIN.'; _pmShakeRow('old'); return; }
+            const oldHash = await _pmHashPin(oldPin, ctx.member);
+            const stored = localStorage.getItem('pmPinHash_' + ctx.member);
+            if (oldHash !== stored) { errEl.textContent = 'Current PIN is incorrect.'; _pmShakeRow('old'); return; }
+            if (newPin.length !== 4) { errEl.textContent = 'Enter a new 4-digit PIN.'; _pmShakeRow('main'); return; }
+            if (confirm.length !== 4) { errEl.textContent = 'Re-type the new PIN below to confirm it.'; _pmShakeRow('confirm'); return; }
+            if (newPin !== confirm) { errEl.textContent = 'New PINs do not match — try again.'; _pmShakeRow('main'); _pmShakeRow('confirm'); return; }
+            const newHash = await _pmHashPin(newPin, ctx.member);
+            localStorage.setItem('pmPinHash_' + ctx.member, newHash);
+            closePMPinModal();
+            errEl.textContent = '';
+            return;
+          }
+        } catch (err) {
+          console.error('[PM-PIN] submit failed:', err);
+          errEl.textContent = '⚠️ Something went wrong: ' + (err && err.message ? err.message : 'unknown error');
         }
       }
       document.getElementById('pmMemberPickerModal').addEventListener('click', function (e) { if (e.target === this) closePMMemberPicker(); });
