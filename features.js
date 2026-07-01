@@ -136,7 +136,7 @@ async function savePMEntry() {
   document.getElementById('pm-password').value = '';
   document.getElementById('pm-notes').value    = '';
   const memberSel = document.getElementById('pm-member');
-  if (memberSel) memberSel.value = '';
+  if (memberSel) memberSel.value = window._pmActiveMember || '';
 
   // Then try to sync to server
   try {
