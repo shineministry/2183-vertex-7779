@@ -2911,9 +2911,52 @@ Recommended:
         background: #e2e8f0;
       }
     </style>
+    <style>
+      #pmMemberPickerModal.pm-modal-overlay, #pmPinModal.pm-modal-overlay { z-index: 10050; }
+    </style>
+    <!-- ========== PASSWORD MANAGER: MEMBER PICKER (grouped modes) ========== -->
+    <div id="pmMemberPickerModal" class="pm-modal-overlay">
+      <div class="pm-modal-box" style="max-width:380px;">
+        <div class="pm-modal-head"> <span style="font-size:20px;">👥</span> <strong>WHOSE PASSWORDS?</strong> <button onclick="closePMMemberPicker()" class="pm-modal-close">✕ CLOSE</button> </div>
+        <div class="pm-body" style="padding:20px;">
+          <p style="font-size:13px;color:#64748b;margin:0 0 14px;">Select which member's password vault you want to unlock.</p>
+          <div id="pm-member-picker-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PASSWORD MANAGER: PIN GATE (set / enter / change) ========== -->
+    <div id="pmPinModal" class="pm-modal-overlay">
+      <div class="pm-modal-box" style="max-width:380px;">
+        <div class="pm-modal-head"> <span style="font-size:20px;">🔒</span> <strong id="pm-pin-modal-title">ENTER PIN</strong> <button onclick="closePMPinModal()" class="pm-modal-close">✕ CLOSE</button> </div>
+        <div class="pm-body" style="padding:24px 20px;text-align:center;">
+          <p id="pm-pin-subtitle" style="font-size:13px;color:#64748b;margin:0 0 18px;">Enter your 4-digit PIN to continue.</p>
+
+          <div id="pm-pin-old-row" style="display:none;margin-bottom:18px;">
+            <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.5px;margin-bottom:8px;">CURRENT PIN</div>
+            <div class="pm-pin-digit-row" data-row="old"></div>
+          </div>
+
+          <div id="pm-pin-main-row">
+            <div id="pm-pin-main-label" style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.5px;margin-bottom:8px;display:none;">NEW PIN</div>
+            <div class="pm-pin-digit-row" data-row="main"></div>
+          </div>
+
+          <div id="pm-pin-confirm-row" style="display:none;margin-top:18px;">
+            <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.5px;margin-bottom:8px;">CONFIRM PIN</div>
+            <div class="pm-pin-digit-row" data-row="confirm"></div>
+          </div>
+
+          <div id="pm-pin-error" style="color:#ef4444;font-size:12px;font-weight:600;margin-top:14px;min-height:16px;"></div>
+
+          <button class="pm-save-btn" style="margin-top:14px;width:100%;" onclick="submitPMPin()">✔ CONFIRM</button>
+        </div>
+      </div>
+    </div>
+
     <div id="passwordManagerModal" class="pm-modal-overlay">
       <div class="pm-modal-box">
-        <div class="pm-modal-head"> <span style="font-size:20px;">🔑</span> <strong>PASSWORD MANAGER</strong> <button onclick="closePasswordManager()" class="pm-modal-close">✕ CLOSE</button> </div>
+        <div class="pm-modal-head"> <span style="font-size:20px;">🔑</span> <strong>PASSWORD MANAGER</strong> <button onclick="openPMChangePin()" class="pm-modal-close" title="Change PIN" style="margin-left:auto;margin-right:8px;">⚙️ PIN</button> <button onclick="closePasswordManager()" class="pm-modal-close">✕ CLOSE</button> </div>
         <div class="pm-body"> <!-- ADD FORM -->
           <div class="pm-add-card">
             <h4>➕ Add New Password</h4>
@@ -3134,11 +3177,28 @@ Recommended:
     </div>
     <script>
       /* ======== Password Manager Open/Close ======== */
-      function openPasswordManager() {
+      function _openPMModalForMember(memberKey) {
+        window._pmActiveMember = memberKey;
         const modal = document.getElementById('passwordManagerModal');
         if (modal) {
           modal.classList.add('open');
+          const sel = document.getElementById('pm-member');
+          if (sel) { sel.value = memberKey; sel.disabled = true; sel.style.opacity = '0.65'; }
           renderPMList();
+        }
+      }
+
+      // Entry point wired to the 🔑 nav buttons. Gates access behind a
+      // per-member 4-digit PIN before any saved credential is ever rendered.
+      function openPasswordManager() {
+        const mode = (typeof getCurrentVaultMode === 'function') ? getCurrentVaultMode()
+                     : (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');
+        const allowed = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null)
+                        || ['shineil', 'brother', 'father', 'mother'];
+        if (allowed.length > 1) {
+          openPMMemberPicker(allowed);
+        } else {
+          pmGateForMember(allowed[0] || 'shineil');
         }
       }
 
@@ -3149,7 +3209,189 @@ Recommended:
           const modal = document.getElementById('passwordManagerModal');
           if (modal) modal.classList.remove('open');
         }
-      } /* Close on overlay click */ document.getElementById('passwordManagerModal').addEventListener('click', function(e){  if(e.target === this) closePasswordManager();});/* ======== Password Strength Bar ======== */function pmStrength(val) {  const bar = document.getElementById('pm-strength-bar');  if (!bar) return;  let score = 0;  if (val.length >= 8) score++;  if (/[A-Z]/.test(val)) score++;  if (/[0-9]/.test(val)) score++;  if (/[^A-Za-z0-9]/.test(val)) score++;  const colors = ['#ef4444','#f97316','#eab308','#16a34a'];  const widths = ['25%','50%','75%','100%'];  bar.style.width = val ? widths[score-1] || '10%' : '0';  bar.style.background = val ? colors[score-1] || '#e2e8f0' : '#e2e8f0';}/* ======== Inline reveal for saved entries ======== */function toggleEntryReveal(id) {  const dots = document.getElementById('pw-dots-'+id);  const actual = document.getElementById('pw-actual-'+id);  const btn = document.getElementById('pw-reveal-btn-'+id);  if (!dots || !actual) return;  const showing = actual.style.display !== 'none';  dots.style.display = showing ? 'block' : 'none';  actual.style.display = showing ? 'none' : 'block';  btn.textContent = showing ? '👁️ Show' : '🙈 Hide';}/* ======== Override renderPMList for richer UI ======== */async function renderPMList() {  const container = document.getElementById('pm-entries-container');  const countNum = document.getElementById('pm-count-num');  if (!container) return;  container.innerHTML = '<div class="pm-empty">⏳ Loading credentials…</div>';  try {    const allEntries = await loadPMEntries().catch(() => []);    const pmSearchEl = document.getElementById('pm-search'); const query = ((pmSearchEl ? pmSearchEl.value : '') || '').toLowerCase();    /* Filter by current mode's allowed members */const mode = (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');const allowedMembers = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null) || ['shineil', 'brother', 'father', 'mother'];
+        window._pmActiveMember = null;
+        const sel = document.getElementById('pm-member');
+        if (sel) { sel.disabled = false; sel.style.opacity = '1'; }
+      }
+
+      /* ======== Password Manager PIN gate ======== */
+      const PM_MEMBER_LABELS = { shineil:'SHINEIL MATHIAS', brother:'KEVIN MATHIAS', father:'STEPHEN MATHIAS', mother:'KANCHAN MATHIAS' };
+
+      async function _pmHashPin(pin, memberKey) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('pm-pin:' + memberKey + ':' + pin));
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+
+      function _pmBuildDigitRow(rowKey, count) {
+        const row = document.querySelector(`.pm-pin-digit-row[data-row="${rowKey}"]`);
+        if (!row) return;
+        row.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+          const inp = document.createElement('input');
+          inp.type = 'password';
+          inp.inputMode = 'numeric';
+          inp.maxLength = 1;
+          inp.className = 'pm-pin-digit';
+          inp.dataset.row = rowKey;
+          inp.dataset.idx = i;
+          inp.addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value && this.nextElementSibling) this.nextElementSibling.focus();
+          });
+          inp.addEventListener('keydown', function (e) {
+            if (e.key === 'Backspace' && !this.value && this.previousElementSibling) {
+              this.previousElementSibling.focus();
+            }
+          });
+          row.appendChild(inp);
+        }
+      }
+
+      function _pmRowValue(rowKey) {
+        return Array.from(document.querySelectorAll(`.pm-pin-digit-row[data-row="${rowKey}"] .pm-pin-digit`))
+          .map(i => i.value).join('');
+      }
+
+      function _pmShakeRow(rowKey) {
+        document.querySelectorAll(`.pm-pin-digit-row[data-row="${rowKey}"] .pm-pin-digit`).forEach(i => {
+          i.classList.add('error');
+          i.value = '';
+          setTimeout(() => i.classList.remove('error'), 400);
+        });
+        const first = document.querySelector(`.pm-pin-digit-row[data-row="${rowKey}"] .pm-pin-digit`);
+        if (first) first.focus();
+      }
+
+      function openPMMemberPicker(allowedMembers) {
+        const list = document.getElementById('pm-member-picker-list');
+        if (list) {
+          list.innerHTML = allowedMembers.map(m =>
+            `<button class="pm-member-pick-btn" onclick="closePMMemberPicker();pmGateForMember('${m}')">👤 ${PM_MEMBER_LABELS[m] || m}</button>`
+          ).join('');
+        }
+        const modal = document.getElementById('pmMemberPickerModal');
+        if (modal) modal.classList.add('open');
+      }
+      function closePMMemberPicker() {
+        const modal = document.getElementById('pmMemberPickerModal');
+        if (modal) modal.classList.remove('open');
+      }
+
+      async function pmGateForMember(memberKey) {
+        const existing = localStorage.getItem('pmPinHash_' + memberKey);
+        if (existing) {
+          openPMPinEntry(memberKey);
+        } else {
+          openPMPinSetup(memberKey);
+        }
+      }
+
+      function openPMPinSetup(memberKey) {
+        window._pmPinContext = { mode: 'set', member: memberKey };
+        document.getElementById('pm-pin-modal-title').textContent = 'SET YOUR PIN';
+        document.getElementById('pm-pin-subtitle').textContent =
+          `First time here — set a 4-digit PIN to protect ${PM_MEMBER_LABELS[memberKey] || memberKey}'s saved passwords.`;
+        document.getElementById('pm-pin-old-row').style.display = 'none';
+        document.getElementById('pm-pin-main-label').style.display = 'block';
+        document.getElementById('pm-pin-main-label').textContent = 'NEW PIN';
+        document.getElementById('pm-pin-confirm-row').style.display = 'block';
+        document.getElementById('pm-pin-error').textContent = '';
+        _pmBuildDigitRow('main', 4);
+        _pmBuildDigitRow('confirm', 4);
+        const modal = document.getElementById('pmPinModal');
+        if (modal) modal.classList.add('open');
+        setTimeout(() => { const f = document.querySelector('.pm-pin-digit-row[data-row="main"] .pm-pin-digit'); if (f) f.focus(); }, 50);
+      }
+
+      function openPMPinEntry(memberKey) {
+        window._pmPinContext = { mode: 'enter', member: memberKey };
+        document.getElementById('pm-pin-modal-title').textContent = 'ENTER PIN';
+        document.getElementById('pm-pin-subtitle').textContent =
+          `Enter the 4-digit PIN for ${PM_MEMBER_LABELS[memberKey] || memberKey}.`;
+        document.getElementById('pm-pin-old-row').style.display = 'none';
+        document.getElementById('pm-pin-main-label').style.display = 'none';
+        document.getElementById('pm-pin-confirm-row').style.display = 'none';
+        document.getElementById('pm-pin-error').textContent = '';
+        _pmBuildDigitRow('main', 4);
+        const modal = document.getElementById('pmPinModal');
+        if (modal) modal.classList.add('open');
+        setTimeout(() => { const f = document.querySelector('.pm-pin-digit-row[data-row="main"] .pm-pin-digit'); if (f) f.focus(); }, 50);
+      }
+
+      function openPMChangePin() {
+        if (!window._pmActiveMember) return;
+        const memberKey = window._pmActiveMember;
+        window._pmPinContext = { mode: 'change', member: memberKey };
+        document.getElementById('pm-pin-modal-title').textContent = 'CHANGE PIN';
+        document.getElementById('pm-pin-subtitle').textContent =
+          `Enter your current PIN, then choose a new one for ${PM_MEMBER_LABELS[memberKey] || memberKey}.`;
+        document.getElementById('pm-pin-old-row').style.display = 'block';
+        document.getElementById('pm-pin-main-label').style.display = 'block';
+        document.getElementById('pm-pin-main-label').textContent = 'NEW PIN';
+        document.getElementById('pm-pin-confirm-row').style.display = 'block';
+        document.getElementById('pm-pin-error').textContent = '';
+        _pmBuildDigitRow('old', 4);
+        _pmBuildDigitRow('main', 4);
+        _pmBuildDigitRow('confirm', 4);
+        const modal = document.getElementById('pmPinModal');
+        if (modal) modal.classList.add('open');
+        setTimeout(() => { const f = document.querySelector('.pm-pin-digit-row[data-row="old"] .pm-pin-digit'); if (f) f.focus(); }, 50);
+      }
+
+      function closePMPinModal() {
+        const modal = document.getElementById('pmPinModal');
+        if (modal) modal.classList.remove('open');
+        window._pmPinContext = null;
+      }
+
+      async function submitPMPin() {
+        const ctx = window._pmPinContext;
+        if (!ctx) return;
+        const errEl = document.getElementById('pm-pin-error');
+        errEl.textContent = '';
+
+        if (ctx.mode === 'enter') {
+          const pin = _pmRowValue('main');
+          if (pin.length !== 4) { errEl.textContent = 'Enter all 4 digits.'; _pmShakeRow('main'); return; }
+          const hash = await _pmHashPin(pin, ctx.member);
+          const stored = localStorage.getItem('pmPinHash_' + ctx.member);
+          if (hash !== stored) { errEl.textContent = 'Incorrect PIN. Try again.'; _pmShakeRow('main'); return; }
+          closePMPinModal();
+          _openPMModalForMember(ctx.member);
+          return;
+        }
+
+        if (ctx.mode === 'set') {
+          const pin = _pmRowValue('main');
+          const confirm = _pmRowValue('confirm');
+          if (pin.length !== 4) { errEl.textContent = 'Enter all 4 digits.'; _pmShakeRow('main'); return; }
+          if (pin !== confirm) { errEl.textContent = 'PINs do not match.'; _pmShakeRow('confirm'); return; }
+          const hash = await _pmHashPin(pin, ctx.member);
+          localStorage.setItem('pmPinHash_' + ctx.member, hash);
+          closePMPinModal();
+          _openPMModalForMember(ctx.member);
+          return;
+        }
+
+        if (ctx.mode === 'change') {
+          const oldPin = _pmRowValue('old');
+          const newPin = _pmRowValue('main');
+          const confirm = _pmRowValue('confirm');
+          if (oldPin.length !== 4) { errEl.textContent = 'Enter your current PIN.'; _pmShakeRow('old'); return; }
+          const oldHash = await _pmHashPin(oldPin, ctx.member);
+          const stored = localStorage.getItem('pmPinHash_' + ctx.member);
+          if (oldHash !== stored) { errEl.textContent = 'Current PIN is incorrect.'; _pmShakeRow('old'); return; }
+          if (newPin.length !== 4) { errEl.textContent = 'Enter a new 4-digit PIN.'; _pmShakeRow('main'); return; }
+          if (newPin !== confirm) { errEl.textContent = 'New PINs do not match.'; _pmShakeRow('confirm'); return; }
+          const newHash = await _pmHashPin(newPin, ctx.member);
+          localStorage.setItem('pmPinHash_' + ctx.member, newHash);
+          closePMPinModal();
+          errEl.textContent = '';
+          return;
+        }
+      }
+      document.getElementById('pmMemberPickerModal').addEventListener('click', function (e) { if (e.target === this) closePMMemberPicker(); });
+      document.getElementById('pmPinModal').addEventListener('click', function (e) { if (e.target === this) closePMPinModal(); }); /* Close on overlay click */ document.getElementById('passwordManagerModal').addEventListener('click', function(e){  if(e.target === this) closePasswordManager();});/* ======== Password Strength Bar ======== */function pmStrength(val) {  const bar = document.getElementById('pm-strength-bar');  if (!bar) return;  let score = 0;  if (val.length >= 8) score++;  if (/[A-Z]/.test(val)) score++;  if (/[0-9]/.test(val)) score++;  if (/[^A-Za-z0-9]/.test(val)) score++;  const colors = ['#ef4444','#f97316','#eab308','#16a34a'];  const widths = ['25%','50%','75%','100%'];  bar.style.width = val ? widths[score-1] || '10%' : '0';  bar.style.background = val ? colors[score-1] || '#e2e8f0' : '#e2e8f0';}/* ======== Inline reveal for saved entries ======== */function toggleEntryReveal(id) {  const dots = document.getElementById('pw-dots-'+id);  const actual = document.getElementById('pw-actual-'+id);  const btn = document.getElementById('pw-reveal-btn-'+id);  if (!dots || !actual) return;  const showing = actual.style.display !== 'none';  dots.style.display = showing ? 'block' : 'none';  actual.style.display = showing ? 'none' : 'block';  btn.textContent = showing ? '👁️ Show' : '🙈 Hide';}/* ======== Override renderPMList for richer UI ======== */async function renderPMList() {  const container = document.getElementById('pm-entries-container');  const countNum = document.getElementById('pm-count-num');  if (!container) return;  container.innerHTML = '<div class="pm-empty">⏳ Loading credentials…</div>';  try {    const allEntries = await loadPMEntries().catch(() => []);    const pmSearchEl = document.getElementById('pm-search'); const query = ((pmSearchEl ? pmSearchEl.value : '') || '').toLowerCase();    /* Filter by current mode's allowed members */const mode = (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');const modeAllowedMembers = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null) || ['shineil', 'brother', 'father', 'mother'];const allowedMembers = window._pmActiveMember ? [window._pmActiveMember] : modeAllowedMembers;
       const filtered = allEntries.filter(e => {
         if (!e.member) return true;
         return allowedMembers.includes(e.member);
