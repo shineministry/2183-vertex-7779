@@ -1,5 +1,5 @@
 /* =========================
-   DEVICE INTEGRITY & BEHAVIORAL DETECTION
+   DEVICE INTEGRITY & BEHAVIORAL DETECTIONS
    ========================= */
 window.__deviceIntegrity = (function () {
 
