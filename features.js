@@ -1490,15 +1490,27 @@ async function idbMarkNotifRead(id) {
 // Track already-bubbled notification keys so polling only shows truly new ones
 window._notifBubbledKeys = window._notifBubbledKeys || new Set();
 
-async function initVaultNotifications() {
+async function initVaultNotifications(_retried) {
   // Sync from Firestore — server is the single source of truth for all devices
   try {
     const currentUserForSync = sessionStorage.getItem('vaultUser') || 'all';
-    const res = await fetch(`${WORKER_URL}/get-notifications`, {
+    let res = await fetch(`${WORKER_URL}/get-notifications`, {
       method: 'POST',
       headers: await getAuthHeaders(),
       body: JSON.stringify({ user: currentUserForSync, vaultUser: currentUserForSync })
     });
+
+    // Session token likely expired (1hr TTL) — silently mint a fresh one and retry once,
+    // same recovery path already used by syncAllMembersOffline().
+    if (res.status === 401 && !_retried && typeof _silentReAuth === 'function') {
+      const newToken = await _silentReAuth();
+      if (newToken) {
+        sessionStorage.setItem('vaultSessionToken', newToken);
+        sessionStorage.setItem('vaultSession', newToken);
+        return initVaultNotifications(true);
+      }
+    }
+
     if (res.ok) {
       const data = await res.json();
       const serverNotifs = data.notifications || [];
