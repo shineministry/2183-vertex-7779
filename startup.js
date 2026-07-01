@@ -29,11 +29,31 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 // ---- ADVANCED SETTINGS LOGIC ----
 
+function toggleTrustedDevice(enabled) {
+    if (!window.__deviceIntegrity) return;
+    if (enabled) {
+        window.__deviceIntegrity.markTrusted();
+        alert('🟢 This device is now trusted. Security checks will not block login.');
+    } else {
+        window.__deviceIntegrity.unmarkTrusted();
+        alert('🔴 Trust status removed. Aggressive security checks are active.');
+    }
+}
+
 document.getElementById('share-gear').onclick = () => {
     document.getElementById('advSettingsModal').classList.add('show');
     document.getElementById('lastSyncTime').textContent = 'Last synced: ' + new Date().toLocaleTimeString();
     const lt = document.getElementById('liteModeToggle');
     if(lt) lt.checked = window.LITE_MODE === true;
+    // Sync trusted device toggle state
+    const td = document.getElementById('trustedDeviceToggle');
+    if (td && window.__deviceIntegrity) {
+        td.checked = window.__deviceIntegrity.isTrusted();
+    }
+    const fp = document.getElementById('deviceFingerprintDisplay');
+    if (fp && window.__deviceIntegrity) {
+        fp.textContent = navigator.userAgent.slice(0, 80) + '...';
+    }
 };
 
 function closeAdvSettings(){
