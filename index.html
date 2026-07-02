@@ -1253,8 +1253,8 @@ Recommended:
         <div class="nav-brand">
           <div class="brand-title"> <span class="brand-full">FORTRESS ONLINE VAULT</span> <span class="brand-short">🔐 F.O.V</span> </div>
         </div> <!-- RIGHT: DESKTOP BUTTONS (hidden on mobile) -->
-        <div class="nav-auth nav-auth-desktop"> <button id="vaultModesNavBtn" class="btn-outline" onclick="openVaultModes()">⚡ MODES</button> <button class="btn-outline icon-btn" data-tip="Status" onclick="openStatusModal()">📊</button> <button class="btn-outline icon-btn" data-tip="Favourites" onclick="showPinned()">⭐</button> <button class="btn-outline icon-btn" data-tip="Compare Documents" onclick="startCompareMode()" id="compareNavBtn">⚖️</button> <button class="btn-outline icon-btn" data-tip="Access Log" onclick="openLogs()">📋</button> <button class="btn-outline icon-btn" data-tip="Password Manager" onclick="openPasswordManager()">🔑</button> <button class="btn-solid icon-btn" data-tip="Emergency Contact" onclick="openEmergencyContact()">🆘</button> <button class="icon-btn" data-tip="Vault AI Assistant" onclick="openAIChat()" style="width:42px;height:42px;padding:0;border:none;border-radius:10px;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 2px 10px rgba(124,77,255,0.35);transition:transform .15s;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">✦</button> <button class="btn-outline icon-btn" data-tip="Refresh Vault" onclick="refreshVault()" style="font-size:13px;font-weight:700;">🔄</button><button class="btn-outline icon-btn" data-tip="Feedback" onclick="openFeedbackModal()" style="font-size:13px;font-weight:700;">💬</button><button class="btn-logout icon-btn" data-tip="Logout" onclick="showLogoutOptions()">🔓</button> </div> <!-- RIGHT: MOBILE BUTTONS (hidden on desktop) -->
-        <div class="nav-auth-mobile"> <button class="nav-icon-btn nav-emergency-btn" onclick="openEmergencyContact()" title="Emergency Contact">🆘</button> <button onclick="openAIChat()" title="Vault AI" style="width:38px;height:38px;border:none;border-radius:50%;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(124,77,255,0.4);flex-shrink:0;">✦</button> <button class="nav-icon-btn nav-logout-btn" onclick="showLogoutOptions()" title="Logout">🔓</button> <button class="nav-icon-btn nav-menu-btn" onclick="toggleMobileMenu()" title="More options" id="mobileMenuBtn">☰</button> </div>
+        <div class="nav-auth nav-auth-desktop"> <button id="vaultModesNavBtn" class="btn-outline" onclick="openVaultModes()">⚡ MODES</button> <button class="btn-outline icon-btn" data-tip="Status" onclick="openStatusModal()">📊</button> <button class="btn-outline icon-btn" data-tip="Favourites" onclick="showPinned()">⭐</button> <button class="btn-outline icon-btn" data-tip="Compare Documents" onclick="startCompareMode()" id="compareNavBtn">⚖️</button> <button class="btn-outline icon-btn" data-tip="Access Log" onclick="openLogs()">📋</button> <button class="btn-outline icon-btn" data-tip="Password Manager" onclick="openPasswordManager()">🔑</button> <button class="btn-solid icon-btn" data-tip="Emergency Contact" onclick="openEmergencyContact()">🆘</button> <button class="icon-btn" data-tip="Vault AI Assistant" onclick="openAIChat()" style="width:42px;height:42px;padding:0;border:none;border-radius:10px;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 2px 10px rgba(124,77,255,0.35);transition:transform .15s;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">✦</button> <button class="btn-outline icon-btn" data-tip="Refresh Vault" onclick="refreshVault()" style="font-size:13px;font-weight:700;">🔄</button><button class="btn-outline icon-btn" data-tip="Feedback" onclick="openFeedbackModal()" style="font-size:13px;font-weight:700;">💬</button><button class="btn-logout icon-btn" data-tip="Logout" onclick="safeShowLogoutOptions()">🔓</button> </div> <!-- RIGHT: MOBILE BUTTONS (hidden on desktop) -->
+        <div class="nav-auth-mobile"> <button class="nav-icon-btn nav-emergency-btn" onclick="openEmergencyContact()" title="Emergency Contact">🆘</button> <button onclick="openAIChat()" title="Vault AI" style="width:38px;height:38px;border:none;border-radius:50%;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(124,77,255,0.4);flex-shrink:0;">✦</button> <button class="nav-icon-btn nav-logout-btn" onclick="safeShowLogoutOptions()" title="Logout">🔓</button> <button class="nav-icon-btn nav-menu-btn" onclick="toggleMobileMenu()" title="More options" id="mobileMenuBtn">☰</button> </div>
       </div> <!-- MOBILE DROPDOWN MENU -->
       <div id="mobile-nav-menu" class="mobile-nav-menu"> <button onclick="openStatusModal();toggleMobileMenu()">📊 Status</button> <button id="vaultModesMobileBtn" onclick="openVaultModes();toggleMobileMenu()">⚡ Vault Modes</button> <button onclick="showPinned();toggleMobileMenu()">⭐ Favourites</button> <button onclick="openPasswordManager();toggleMobileMenu()">🔑 Passwords</button> <button onclick="startCompareMode();toggleMobileMenu()" id="compareNavBtn">⚖️ Compare</button> <button onclick="openLogs();toggleMobileMenu()">📋 Access Log</button> <button onclick="openFeedbackModal();toggleMobileMenu()">💬 Feedback</button> <button onclick="refreshVault();toggleMobileMenu()">🔄 Refresh Vault</button> </div>
     </div>
@@ -2689,6 +2689,36 @@ Recommended:
         background: #1d4ed8;
       }
 
+      .pm-pin-field {
+        width: 100%;
+        padding: 14px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 24px;
+        font-weight: 800;
+        text-align: center;
+        letter-spacing: 8px;
+        outline: none;
+        background: #fff;
+        color: #0f172a;
+        transition: border-color .2s;
+        box-sizing: border-box;
+      }
+      .pm-pin-field:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+      }
+      .pm-pin-field.error {
+        border-color: #ef4444;
+        animation: pmShake .3s ease;
+      }
+      @keyframes pmShake {
+        0%,100% { transform: translateX(0); }
+        25% { transform: translateX(-6px); }
+        50% { transform: translateX(6px); }
+        75% { transform: translateX(-4px); }
+      }
+
       .pm-save-btn {
         width: 100%;
         padding: 13px;
@@ -2934,17 +2964,17 @@ Recommended:
 
           <div id="pm-pin-old-row" style="display:none;margin-bottom:18px;">
             <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.5px;margin-bottom:8px;">CURRENT PIN</div>
-            <div class="pm-pin-digit-row" data-row="old"></div>
+            <input type="password" id="pm-pin-old-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="pm-pin-field" placeholder="••••" autocomplete="off">
           </div>
 
           <div id="pm-pin-main-row">
             <div id="pm-pin-main-label" style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.5px;margin-bottom:8px;display:none;">NEW PIN</div>
-            <div class="pm-pin-digit-row" data-row="main"></div>
+            <input type="password" id="pm-pin-main-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="pm-pin-field" placeholder="••••" autocomplete="off">
           </div>
 
           <div id="pm-pin-confirm-row" style="display:none;margin-top:18px;">
             <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.5px;margin-bottom:8px;">CONFIRM PIN</div>
-            <div class="pm-pin-digit-row" data-row="confirm"></div>
+            <input type="password" id="pm-pin-confirm-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="pm-pin-field" placeholder="••••" autocomplete="off">
           </div>
 
           <div id="pm-pin-error" style="color:#ef4444;font-size:12px;font-weight:600;margin-top:14px;min-height:16px;"></div>
@@ -3201,6 +3231,7 @@ Recommended:
         } else {
           pmGateForMember(allowed[0] || 'shineil');
         }
+        loadPinHashesFromServer();
       }
 
       function closePasswordManager() {
@@ -3223,69 +3254,54 @@ Recommended:
         return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
       }
 
-      function _pmNextRowFirstInput(rowKey) {
-        // Row order depends on which fields are visible for the current context
-        const order = ['old', 'main', 'confirm'].filter(k => {
-          const wrap = k === 'old' ? document.getElementById('pm-pin-old-row')
-                     : k === 'confirm' ? document.getElementById('pm-pin-confirm-row')
-                     : document.getElementById('pm-pin-main-row');
-          return wrap && wrap.style.display !== 'none';
-        });
-        const pos = order.indexOf(rowKey);
-        const nextKey = order[pos + 1];
-        if (!nextKey) return null;
-        return document.querySelector(`.pm-pin-digit-row[data-row="${nextKey}"] .pm-pin-digit`);
+      async function syncPinHashToServer(memberKey, pinHash) {
+        try {
+          const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
+          if (!token) return;
+          await fetch('https://backend.shinumaths989.workers.dev/save-pin-hash', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ memberKey, pinHash })
+          });
+        } catch (e) {
+          console.warn('[PM-PIN] sync to server failed (non-critical):', e);
+        }
       }
 
-      function _pmBuildDigitRow(rowKey, count) {
-        const row = document.querySelector(`.pm-pin-digit-row[data-row="${rowKey}"]`);
-        if (!row) return;
-        row.innerHTML = '';
-        for (let i = 0; i < count; i++) {
-          const inp = document.createElement('input');
-          inp.type = 'password';
-          inp.inputMode = 'numeric';
-          inp.maxLength = 1;
-          inp.className = 'pm-pin-digit';
-          inp.dataset.row = rowKey;
-          inp.dataset.idx = i;
-          inp.addEventListener('input', function () {
-            this.value = this.value.replace(/[^0-9]/g, '');
-            if (this.value && this.nextElementSibling) {
-              this.nextElementSibling.focus();
-            } else if (this.value && i === count - 1) {
-              // Last digit of this row filled — jump into the next visible row,
-              // or submit if this was the last row on the screen.
-              const nextInput = _pmNextRowFirstInput(rowKey);
-              if (nextInput) nextInput.focus(); else submitPMPin();
-            }
+      async function loadPinHashesFromServer() {
+        try {
+          const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
+          if (!token) return;
+          const res = await fetch('https://backend.shinumaths989.workers.dev/get-pin-hashes', {
+            headers: { 'Authorization': 'Bearer ' + token }
           });
-          inp.addEventListener('keydown', function (e) {
-            if (e.key === 'Backspace' && !this.value && this.previousElementSibling) {
-              this.previousElementSibling.focus();
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data.success && data.hashes) {
+            for (const memberKey in data.hashes) {
+              const stored = localStorage.getItem('pmPinHash_' + memberKey);
+              if (!stored) {
+                localStorage.setItem('pmPinHash_' + memberKey, data.hashes[memberKey]);
+              }
             }
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              submitPMPin();
-            }
-          });
-          row.appendChild(inp);
+          }
+        } catch (e) {
+          console.warn('[PM-PIN] load from server failed (non-critical):', e);
         }
       }
 
       function _pmRowValue(rowKey) {
-        return Array.from(document.querySelectorAll(`.pm-pin-digit-row[data-row="${rowKey}"] .pm-pin-digit`))
-          .map(i => i.value).join('');
+        const inp = document.getElementById('pm-pin-' + rowKey + '-input');
+        return inp ? inp.value.replace(/[^0-9]/g, '').slice(0, 4) : '';
       }
 
       function _pmShakeRow(rowKey) {
-        document.querySelectorAll(`.pm-pin-digit-row[data-row="${rowKey}"] .pm-pin-digit`).forEach(i => {
-          i.classList.add('error');
-          i.value = '';
-          setTimeout(() => i.classList.remove('error'), 400);
-        });
-        const first = document.querySelector(`.pm-pin-digit-row[data-row="${rowKey}"] .pm-pin-digit`);
-        if (first) first.focus();
+        const inp = document.getElementById('pm-pin-' + rowKey + '-input');
+        if (!inp) return;
+        inp.classList.add('error');
+        inp.value = '';
+        setTimeout(function() { inp.classList.remove('error'); }, 400);
+        inp.focus();
       }
 
       function openPMMemberPicker(allowedMembers) {
@@ -3304,7 +3320,7 @@ Recommended:
       }
 
       async function pmGateForMember(memberKey) {
-        const existing = localStorage.getItem('pmPinHash_' + memberKey);
+        var existing = localStorage.getItem('pmPinHash_' + memberKey);
         if (existing) {
           openPMPinEntry(memberKey);
         } else {
@@ -3316,52 +3332,53 @@ Recommended:
         window._pmPinContext = { mode: 'set', member: memberKey };
         document.getElementById('pm-pin-modal-title').textContent = 'SET YOUR PIN';
         document.getElementById('pm-pin-subtitle').textContent =
-          `First time here — set a 4-digit PIN to protect ${PM_MEMBER_LABELS[memberKey] || memberKey}'s saved passwords.`;
+          'First time here — set a 4-digit PIN to protect ' + (PM_MEMBER_LABELS[memberKey] || memberKey) + "'s saved passwords.";
         document.getElementById('pm-pin-old-row').style.display = 'none';
         document.getElementById('pm-pin-main-label').style.display = 'block';
         document.getElementById('pm-pin-main-label').textContent = 'NEW PIN';
         document.getElementById('pm-pin-confirm-row').style.display = 'block';
         document.getElementById('pm-pin-error').textContent = '';
-        _pmBuildDigitRow('main', 4);
-        _pmBuildDigitRow('confirm', 4);
-        const modal = document.getElementById('pmPinModal');
+        document.getElementById('pm-pin-main-input').value = '';
+        document.getElementById('pm-pin-confirm-input').value = '';
+        var modal = document.getElementById('pmPinModal');
         if (modal) modal.classList.add('open');
-        setTimeout(() => { const f = document.querySelector('.pm-pin-digit-row[data-row="main"] .pm-pin-digit'); if (f) f.focus(); }, 50);
+        setTimeout(function() { document.getElementById('pm-pin-main-input').focus(); }, 50);
       }
 
       function openPMPinEntry(memberKey) {
         window._pmPinContext = { mode: 'enter', member: memberKey };
         document.getElementById('pm-pin-modal-title').textContent = 'ENTER PIN';
         document.getElementById('pm-pin-subtitle').textContent =
-          `Enter the 4-digit PIN for ${PM_MEMBER_LABELS[memberKey] || memberKey}.`;
+          'Enter the 4-digit PIN for ' + (PM_MEMBER_LABELS[memberKey] || memberKey) + '.';
         document.getElementById('pm-pin-old-row').style.display = 'none';
-        document.getElementById('pm-pin-main-label').style.display = 'none';
+        document.getElementById('pm-pin-main-label').style.display = 'block';
+        document.getElementById('pm-pin-main-label').textContent = 'PIN';
         document.getElementById('pm-pin-confirm-row').style.display = 'none';
         document.getElementById('pm-pin-error').textContent = '';
-        _pmBuildDigitRow('main', 4);
-        const modal = document.getElementById('pmPinModal');
+        document.getElementById('pm-pin-main-input').value = '';
+        var modal = document.getElementById('pmPinModal');
         if (modal) modal.classList.add('open');
-        setTimeout(() => { const f = document.querySelector('.pm-pin-digit-row[data-row="main"] .pm-pin-digit'); if (f) f.focus(); }, 50);
+        setTimeout(function() { document.getElementById('pm-pin-main-input').focus(); }, 50);
       }
 
       function openPMChangePin() {
         if (!window._pmActiveMember) return;
-        const memberKey = window._pmActiveMember;
+        var memberKey = window._pmActiveMember;
         window._pmPinContext = { mode: 'change', member: memberKey };
         document.getElementById('pm-pin-modal-title').textContent = 'CHANGE PIN';
         document.getElementById('pm-pin-subtitle').textContent =
-          `Enter your current PIN, then choose a new one for ${PM_MEMBER_LABELS[memberKey] || memberKey}.`;
+          'Enter your current PIN, then choose a new one for ' + (PM_MEMBER_LABELS[memberKey] || memberKey) + '.';
         document.getElementById('pm-pin-old-row').style.display = 'block';
         document.getElementById('pm-pin-main-label').style.display = 'block';
         document.getElementById('pm-pin-main-label').textContent = 'NEW PIN';
         document.getElementById('pm-pin-confirm-row').style.display = 'block';
         document.getElementById('pm-pin-error').textContent = '';
-        _pmBuildDigitRow('old', 4);
-        _pmBuildDigitRow('main', 4);
-        _pmBuildDigitRow('confirm', 4);
-        const modal = document.getElementById('pmPinModal');
+        document.getElementById('pm-pin-old-input').value = '';
+        document.getElementById('pm-pin-main-input').value = '';
+        document.getElementById('pm-pin-confirm-input').value = '';
+        var modal = document.getElementById('pmPinModal');
         if (modal) modal.classList.add('open');
-        setTimeout(() => { const f = document.querySelector('.pm-pin-digit-row[data-row="old"] .pm-pin-digit'); if (f) f.focus(); }, 50);
+        setTimeout(function() { document.getElementById('pm-pin-old-input').focus(); }, 50);
       }
 
       function closePMPinModal() {
@@ -3369,6 +3386,16 @@ Recommended:
         if (modal) modal.classList.remove('open');
         window._pmPinContext = null;
       }
+
+      document.getElementById('pm-pin-main-input').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); submitPMPin(); }
+      });
+      document.getElementById('pm-pin-confirm-input').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); submitPMPin(); }
+      });
+      document.getElementById('pm-pin-old-input').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); submitPMPin(); }
+      });
 
       async function submitPMPin() {
         const ctx = window._pmPinContext;
@@ -3401,6 +3428,7 @@ Recommended:
             if (pin !== confirm) { errEl.textContent = 'PINs do not match — try again.'; _pmShakeRow('main'); _pmShakeRow('confirm'); return; }
             const hash = await _pmHashPin(pin, ctx.member);
             localStorage.setItem('pmPinHash_' + ctx.member, hash);
+            syncPinHashToServer(ctx.member, hash);
             closePMPinModal();
             _openPMModalForMember(ctx.member);
             return;
@@ -3419,6 +3447,7 @@ Recommended:
             if (newPin !== confirm) { errEl.textContent = 'New PINs do not match — try again.'; _pmShakeRow('main'); _pmShakeRow('confirm'); return; }
             const newHash = await _pmHashPin(newPin, ctx.member);
             localStorage.setItem('pmPinHash_' + ctx.member, newHash);
+            syncPinHashToServer(ctx.member, newHash);
             closePMPinModal();
             errEl.textContent = '';
             return;
