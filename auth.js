@@ -1871,8 +1871,13 @@ function showStep3(){
     step2.classList.add('slide-up-exit');
     setTimeout(()=>{
         step2.style.display = 'none';
-        document.getElementById('step3').style.display = 'flex';
+        const step3 = document.getElementById('step3');
+        step3.style.display = 'flex';
         hideCurtain(150);
+        // Re-render reCAPTCHA now that the container is visible
+        if (typeof grecaptcha !== 'undefined' && step3.querySelector('.g-recaptcha') && !step3.querySelector('.g-recaptcha iframe')) {
+            try { grecaptcha.render(step3.querySelector('.g-recaptcha')); } catch(e) {}
+        }
     }, 700);
 
 }
