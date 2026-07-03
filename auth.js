@@ -277,6 +277,22 @@ function showLogoutOptions() {
     document.body.appendChild(overlay);
 }
 
+function safeShowLogoutOptions() {
+  if (typeof showLogoutOptions === 'function') {
+    showLogoutOptions();
+  } else {
+    setTimeout(function() {
+      if (typeof showLogoutOptions === 'function') {
+        showLogoutOptions();
+      } else {
+        if (confirm('Logout completely?')) {
+          logoutVault('Logged out.', true);
+        }
+      }
+    }, 500);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     updateClock();
     setInterval(updateClock, 1000);
@@ -733,10 +749,11 @@ const SECURITY_QUOTES = [
 
 function initSecurityQuotes() {
   const el = document.getElementById('security-quotes');
-  if (!el) return;
+  if (!el) { setTimeout(initSecurityQuotes, 100); return; }
   let idx = 0;
   el.textContent = '💬 ' + SECURITY_QUOTES[0];
-  setInterval(() => {
+  if (window._securityQuotesTimer) clearInterval(window._securityQuotesTimer);
+  window._securityQuotesTimer = setInterval(() => {
     idx = (idx + 1) % SECURITY_QUOTES.length;
     el.style.opacity = '0';
     setTimeout(() => {
@@ -745,7 +762,11 @@ function initSecurityQuotes() {
     }, 300);
   }, 10000);
 }
-document.addEventListener('DOMContentLoaded', initSecurityQuotes);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSecurityQuotes);
+} else {
+  initSecurityQuotes();
+}
 
 /* ==========================================================
    PRODUCTION MERGED ENGINE: AI BACKGROUND INDEXING PIPELINE
@@ -1051,8 +1072,7 @@ async function decryptVaultFile(arrayBuffer) {
 // After successfully deleting the file from storage, also remove its chunks:
 async function deleteFileChunks(fileName) {
   const token = sessionStorage.getItem('vaultSessionToken') ||
-                sessionStorage.getItem('vaultSession') ||
-                localStorage.getItem('sessionToken') || '';
+                sessionStorage.getItem('vaultSession') || '';
   try {
     await fetch('https://backend.shinumaths989.workers.dev/ai-chunk-delete', {
       method: 'POST',
@@ -1067,8 +1087,7 @@ async function deleteFileChunks(fileName) {
 
 async function indexAI(fileUrl, fileName) {
   const token = sessionStorage.getItem('vaultSessionToken') ||
-                sessionStorage.getItem('vaultSession') ||
-                localStorage.getItem('sessionToken') || '';
+                sessionStorage.getItem('vaultSession') || '';
 
   // ── Check if this file's chunks already exist ──
   try {
@@ -1262,8 +1281,7 @@ async function sendAIMessage() {
    
   try {
     let token = sessionStorage.getItem('vaultSessionToken') ||
-                  sessionStorage.getItem('vaultSession') ||
-                  localStorage.getItem('sessionToken') || '';
+                  sessionStorage.getItem('vaultSession') || '';
 
     // If token is an offline placeholder, try silent re-auth for a real one
     if (token.startsWith('offline-') && typeof _silentReAuth === 'function') {
@@ -1401,19 +1419,41 @@ function showAITyping(show) {
          }
 
 /* ========================= STEP 1 ========================= */
-async function hashPassword(password) {
+async function hashPassword(password, useSlowKdf = false) {
   const normalized = password
     .trim()
     .normalize("NFKC");
 
   const encoder = new TextEncoder();
+
+  if (useSlowKdf) {
+    // PBKDF2 + SHA-256 for stronger protection
+    const salt = new TextEncoder().encode('vault-pbkdf2-v1');
+    const keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(normalized), 'PBKDF2', false, ['deriveBits']);
+    const keyBits = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 200000 },
+      keyMaterial, 256
+    );
+    const hashBuffer = await crypto.subtle.digest("SHA-256", new Uint8Array(keyBits));
+    return Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  // Legacy SHA-256 only (backward compatibility)
   const data = encoder.encode(normalized);
-
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-
   return Array.from(new Uint8Array(hashBuffer))
     .map(b => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+// Try PBKDF2+SHA-256 first, fall back to legacy SHA-256
+async function hashPasswordWithFallback(password) {
+  const slowHash = await hashPassword(password, true);
+  // Return an array: [newHash, legacyHash]
+  const legacyHash = await hashPassword(password, false);
+  return { slowHash, legacyHash };
 }
    
 /* ==========================================================
@@ -1520,7 +1560,8 @@ async function showStep2() {
 
     try {
         masterPassword = pass;
-        const hash = await hashPassword(pass);
+        const hashPair = await hashPasswordWithFallback(pass);
+        const hash = hashPair.slowHash; // Try PBKDF2+SHA-256 first
 
         // =================================
         // OFFLINE LOGIN — navigator.onLine is unreliable so we always
@@ -1660,18 +1701,46 @@ if (!sessionStorage.getItem('vaultUser')) {
         }
 
         if (!res.ok || !result.success || !result.authorized) {
-            restoreLoginBtn();
-            failedAttempts++;
-
-            if (failedAttempts >= 5) {
-                sendSecurityAlert("Multiple failed password attempts");
-                lockUntil = Date.now() + 300000;
-                failedAttempts = 0;
-                showLoginError('Vault Locked', 'Too many unauthorized access requests. Security freeze for 5 minutes.');
-            } else {
-                showLoginError('Authentication Failure', `Incorrect access token matrix sequence. ${5 - failedAttempts} attempts remain.`);
+            // Try legacy SHA-256 hash as fallback (backward compatibility)
+            if (hash !== hashPair.legacyHash) {
+                try {
+                    const legacyRes = await fetchWithTimeout(
+                        "https://backend.shinumaths989.workers.dev/get-secret",
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ hash: hashPair.legacyHash })
+                        }, 12000
+                    );
+                    if (legacyRes.ok) {
+                        try { result = await legacyRes.json(); } catch {}
+                        if (result && result.success && result.authorized) {
+                            hashPair.slowHash = hashPair.legacyHash; // use legacy hash for TOTP
+                            // Clear failed attempts since legacy worked
+                            failedAttempts = 0;
+                            // Fall through to AUTHORIZED block below
+                            res = legacyRes;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[Auth] Legacy hash fallback also failed:', e.message);
+                }
             }
-            return;
+
+            if (!res.ok || !result.success || !result.authorized) {
+                restoreLoginBtn();
+                failedAttempts++;
+
+                if (failedAttempts >= 5) {
+                    sendSecurityAlert("Multiple failed password attempts");
+                    lockUntil = Date.now() + 300000;
+                    failedAttempts = 0;
+                    showLoginError('Vault Locked', 'Too many unauthorized access requests. Security freeze for 5 minutes.');
+                } else {
+                    showLoginError('Authentication Failure', `Incorrect access token matrix sequence. ${5 - failedAttempts} attempts remain.`);
+                }
+                return;
+            }
         }
 
         // AUTHORIZED — stash result and proceed
@@ -1686,7 +1755,7 @@ if (!sessionStorage.getItem('vaultUser')) {
         // Stash auth data — applied fully only after TOTP passes (or immediately if OTP skipped)
         window._pendingAuthResult = result;
         window._pendingAuthPass   = pass;
-        window._pendingAuthHash   = await hashPassword(pass);
+        window._pendingAuthHash   = hash; // use the hash that worked (slow or legacy fallback)
 
         const otpRequested = window._otpRequested === true;
 
@@ -1856,8 +1925,8 @@ function onCaptchaSuccess(){
                 purpose: document.getElementById('user-purpose').value,
                 loginTime: new Date().toLocaleString(),
                 device: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
-                browser: navigator.userAgent,
-                platform: navigator.platform,
+                browser: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
+                platform: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
                 screen: `${screen.width}x${screen.height}`,
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
             });
@@ -1891,7 +1960,7 @@ function onCaptchaSuccess(){
                 loginTime: new Date().toLocaleString(),
                 ip, location,
                 device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
-                browser: navigator.userAgent
+                browser: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
             })
         }).catch(() => {});
     } catch(e) { console.warn('sendLoginEmail error:', e); }
@@ -1940,8 +2009,8 @@ function onCaptchaSuccess(){
                     purpose: data.purpose,
                     loginTime: new Date().toLocaleString(),
                     device: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
-                    browser: navigator.userAgent,
-                    platform: navigator.platform,
+                    browser: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
+                    platform: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
                     screen: `${screen.width}x${screen.height}`,
                     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     ipAddress: ip,
@@ -2056,8 +2125,7 @@ function onCaptchaSuccess(){
                         {
                             name:"Device",
                             value:
-                            navigator.userAgent
-                            .slice(0,100),
+                            /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
                             inline:false
                         }
 
