@@ -55,12 +55,6 @@ document.addEventListener('visibilitychange', () => {
     ? "Mobile"
     : "Desktop";
 
-    const browser =
-    navigator.userAgent;
-
-    const platform =
-    navigator.platform;
-
     const screenSize =
     `${screen.width}x${screen.height}`;
 
@@ -75,8 +69,7 @@ document.addEventListener('visibilitychange', () => {
         purpose,
         loginTime,
         device,
-        browser,
-        platform,
+        platform: device,
         screenSize,
         timezone
 
@@ -119,57 +112,20 @@ if(!res.ok) throw new Error("Failed to load logs");
 
 const logs = await res.json();
 
-        logs.forEach(log=>{
-
-            body.innerHTML += `
-
-            <tr>
-
-                <td style="padding:10px;border:1px solid #ddd;">
-                    ${escHtml(log.visitorName || '-')}
-                </td>
-
-                <td style="padding:10px;border:1px solid #ddd;">
-                    ${escHtml(log.purpose || '-')}
-                </td>
-
-                <td style="padding:10px;border:1px solid #ddd;">
-                    ${escHtml(log.loginTime || '-')}
-                </td>
-
-                <td style="padding:10px;border:1px solid #ddd;">
-                    ${escHtml(log.device || '-')}
-                </td>
-
-                <td style="padding:10px;border:1px solid #ddd;">
-                    ${escHtml(log.browser || '-')}
-                </td>
-
-                <td style="padding:10px;border:1px solid #ddd;">
-                    ${escHtml(log.platform || '-')}
-                </td>
-
-                <td style="padding:10px;border:1px solid #ddd;">
-                    ${escHtml(log.screen || '-')}
-                </td>
-
-                <td style="padding:10px;border:1px solid #ddd;">
-                    ${escHtml(log.timezone || '-')}
-                </td>
-
-                <td style="padding:10px;border:1px solid #ddd;">
-                    ${escHtml(log.ipAddress || '-')}
-                </td>
-
-                <td style="padding:10px;border:1px solid #ddd;">
-                    ${escHtml(log.location || '-')}
-                </td>
-
-            </tr>
-
-            `;
-
-        });
+        var rows = logs.map(function(log){
+            return '<tr>' +
+                '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.visitorName || '-') + '</td>' +
+                '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.purpose || '-') + '</td>' +
+                '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.loginTime || '-') + '</td>' +
+                '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.device || '-') + '</td>' +
+                '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.platform || '-') + '</td>' +
+                '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.screen || '-') + '</td>' +
+                '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.timezone || '-') + '</td>' +
+                '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.ipAddress || '-') + '</td>' +
+                '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.location || '-') + '</td>' +
+                '</tr>';
+        }).join('');
+        body.innerHTML = rows;
 
     }catch(e){
 
@@ -245,10 +201,10 @@ async function requestPasskeyAccess() {
             const data = await pollRes.json().catch(() => ({}));
 
             if (pollRes.status === 200 || data.status === 'approved') {
-                if (data.secret) {
+                if (data.sessionToken) {
                     clearInterval(checkInterval);
-                    masterPassword = data.secret;
-                    window.masterPassword = data.secret;
+                    sessionStorage.setItem('vaultSessionToken', data.sessionToken);
+                    sessionStorage.setItem('vaultSession', data.sessionToken);
                     document.getElementById('passkey-wait').style.display = 'none';
                     document.getElementById('step2').style.display = 'flex';
                 } else if (data.success && data.status === 'approved') {
