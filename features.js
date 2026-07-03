@@ -5,8 +5,21 @@
    navbar. No additional JS needed.)
 ========================= */
 
+// ============ GLOBAL CONFIG ============
+window.BACKEND_URL = 'https://backend.shinumaths989.workers.dev'; // single source of truth for backend URL
+const WORKER_URL = window.BACKEND_URL;
+
+// Device-specific key for local encryption (persisted in sessionStorage, NOT navigator.userAgent)
+function _getDeviceKey() {
+  let key = sessionStorage.getItem('_device_enc_key');
+  if (!key) {
+    key = Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, '0')).join('');
+    sessionStorage.setItem('_device_enc_key', key);
+  }
+  return key;
+}
+
 // ============ PASSWORD MANAGER ============
-const WORKER_URL = 'https://backend.shinumaths989.workers.dev'; // your worker URL
 
 // renderPMList, openPasswordManager, closePasswordManager are defined in index.html
 if (typeof renderPMList !== 'function') {
@@ -79,9 +92,7 @@ function togglePMPassword(buttonElement, inputId) {
 async function getAuthHeaders() {
   // Check every token key variant your vault system might be assigning
   const token = sessionStorage.getItem('vaultSessionToken') || 
-                sessionStorage.getItem('vaultSession') || 
-                sessionStorage.getItem('sessionToken') || 
-                localStorage.getItem('sessionToken') || '';
+                sessionStorage.getItem('vaultSession') || '';
                 
   return { 
     'Content-Type': 'application/json', 
@@ -622,39 +633,8 @@ body: JSON.stringify({
         }
 
     }catch(err){
-
         console.error(err);
-
-        // fallback client-side token (no masterPassword embedded)
-        const payload =
-        btoa(JSON.stringify({
-
-            file:
-            shareCurrentFile.file,
-
-            name:
-            shareCurrentFile.name,
-
-            exp:
-            Date.now() +
-            expiry * 3600000,
-
-            pwd:
-            password
-            ? await window.sha256(password)
-            : null
-        }));
-
-        const link =
-        `${location.origin}/share.html?t=${payload}`;
-
-        document.getElementById(
-        'share-link-text'
-        ).textContent = link;
-
-        document.getElementById(
-        'share-link-result'
-        ).style.display = 'block';
+        alert('Could not create share link. Backend unreachable. Please try again later.');
     }
 }
 
@@ -718,7 +698,7 @@ function openIDB() {
 
 // ── PM entry encryption helpers ──────────────────────────────────────────
 async function _pmDeriveKey() {
-  const raw = sessionStorage.getItem('vaultSessionToken') || navigator.userAgent || 'pm-default-key';
+  const raw = sessionStorage.getItem('vaultSessionToken') || _getDeviceKey();
   const salt = new TextEncoder().encode('pm-encryption-v1');
   const keyMaterial = await crypto.subtle.importKey('raw', new TextEncoder().encode(raw), 'PBKDF2', false, ['deriveBits']);
   const keyBits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 10000 }, keyMaterial, 256);
@@ -1259,10 +1239,10 @@ async function saveTrustDevice() {
       try {
         const salt = crypto.getRandomValues(new Uint8Array(16));
         const keyMaterial = await crypto.subtle.importKey('raw',
-          new TextEncoder().encode(navigator.userAgent + salt),
+          new TextEncoder().encode(_getDeviceKey() + salt),
           'PBKDF2', false, ['deriveBits']);
         const keyBits = await crypto.subtle.deriveBits(
-          { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 10000 },
+          { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 100000 },
           keyMaterial, 256);
         const wrapKey = await crypto.subtle.importKey('raw', new Uint8Array(keyBits),
           { name: 'AES-GCM' }, false, ['encrypt']);
