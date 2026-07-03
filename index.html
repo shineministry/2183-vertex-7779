@@ -1542,9 +1542,13 @@ Recommended:
         <div style="overflow-y:auto;flex:1;padding:16px 20px 20px;">
           <!-- Overall Status Banner -->
           <div id="overall-status-banner" style="padding:14px 18px;border-radius:14px;margin-bottom:16px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;color:#166534;"> 🟢 <span>All Systems Operational</span> </div>
+          <!-- 90-Day Uptime History (Statuspage-style) -->
+          <div id="uptime-section" style="margin-bottom:18px;"></div>
+          <div id="uptime-day-detail" style="display:none;margin:-4px 0 16px;padding:10px 14px;border-radius:10px;background:#0f172a;color:#f8fafc;font-size:12px;line-height:1.6;"></div>
           <!-- Components -->
           <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase;">Components</div>
           <div id="status-components" style="display:flex;flex-direction:column;gap:4px;"></div>
+          <div id="uptimeTooltip" style="display:none;position:fixed;z-index:99999;background:#0f172a;color:#f8fafc;padding:8px 12px;border-radius:8px;font-size:11px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;max-width:230px;"></div>
           <!-- Version footer -->
           <div style="margin-top:14px;padding:10px 12px;border-radius:10px;background:#f1f5f9;text-align:center;font-size:11px;color:#64748b;"> FORTRESS ONLINE VAULT · AES-256-GCM · Session: <span id="stat-mode-label">-</span> · <span id="stat-version-label">v202606</span> </div>
         </div>
@@ -3980,9 +3984,145 @@ Recommended:
           { id:'decrypt', icon:'🔓', label:'Decryption', check:async()=>{let o=typeof decryptBuffer==='function';return{state:o?'operational':'major',labelText:o?'Ready':'Missing',detail:o?'Decrypt function available':'Crypto module not loaded'}}},
           { id:'mobile', icon:'📱', label:'Mobile Responsiveness', check:async()=>{let o=typeof toggleMobileMenu==='function';return{state:o?'operational':'degraded',labelText:o?'Adaptive':'Fixed',detail:o?'Responsive layout active':'Mobile menu not loaded'}}},
         ];
+        // ── 90-Day Uptime History (Statuspage-style bars) ──
+        const UPTIME_TRACKED_IDS = ['backend','auth','session','encryption','ai','cache','sw','offline'];
+        const UPTIME_DAYS = 90;
+        function _uptimeHistKey(){ return 'vaultUptimeHistoryV1'; }
+        function _loadUptimeHistory(){
+          try { return JSON.parse(localStorage.getItem(_uptimeHistKey()) || '{}'); } catch(e){ return {}; }
+        }
+        function _saveUptimeHistory(hist){
+          try { localStorage.setItem(_uptimeHistKey(), JSON.stringify(hist)); } catch(e){ /* storage full/blocked */ }
+        }
+        function _dayKey(d){
+          d = d || new Date();
+          return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        }
+        // Record today's check result into history. Escalates severity if a worse
+        // state occurs later the same day, never silently downgrades an incident.
+        function _recordUptimeToday(results){
+          const hist = _loadUptimeHistory();
+          const today = _dayKey();
+          const order = { operational:0, degraded:1, partial:2, major:3, maintenance:4 };
+          UPTIME_TRACKED_IDS.forEach(id => {
+            const r = results.find(x => x.id === id);
+            if (!r) return;
+            if (!hist[id]) hist[id] = {};
+            const existing = hist[id][today];
+            if (!existing || order[r.state] >= order[existing.state]) {
+              hist[id][today] = { state: r.state, detail: r.detail || r.labelText || '', time: new Date().toISOString() };
+            }
+          });
+          // Prune anything older than UPTIME_DAYS+5 to keep localStorage lean
+          const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - (UPTIME_DAYS + 5));
+          Object.keys(hist).forEach(id => {
+            Object.keys(hist[id]).forEach(k => {
+              if (new Date(k) < cutoff) delete hist[id][k];
+            });
+          });
+          _saveUptimeHistory(hist);
+          return hist;
+        }
+        function _buildUptimeStrip(id, label, icon, hist){
+          const stateColors = { operational:'#22c55e', degraded:'#eab308', partial:'#fb923c', major:'#ef4444', maintenance:'#3b82f6' };
+          const now = new Date();
+          const days = [];
+          for (let i = UPTIME_DAYS - 1; i >= 0; i--) {
+            const d = new Date(now); d.setDate(now.getDate() - i);
+            const key = _dayKey(d);
+            const rec = (hist[id] && hist[id][key]) || null;
+            // Days with no recorded check default to Operational (no incident on file)
+            days.push({ date: d, key, state: rec ? rec.state : 'operational', detail: rec ? rec.detail : 'No incidents recorded', time: rec ? rec.time : null });
+          }
+          const upCount = days.filter(d => d.state === 'operational').length;
+          const pct = ((upCount / UPTIME_DAYS) * 100).toFixed(2);
+          const worstToday = days[days.length - 1].state;
+          const overallTxt = worstToday === 'operational' ? 'Operational' : _statusText(worstToday);
+          const overallColor = stateColors[worstToday] || '#22c55e';
+          const bars = days.map(d => {
+            const c = stateColors[d.state] || '#22c55e';
+            const dstr = d.date.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+            return '<div class="uptime-bar" data-comp="' + escHtml(label) + '" data-icon="' + icon + '" data-date="' + dstr + '" data-state="' + d.state + '" data-detail="' + escHtml(d.detail || '') + '" data-time="' + (d.time || '') + '" style="flex:1;min-width:2px;height:30px;border-radius:2px;background:' + c + ';cursor:pointer;transition:transform .12s;"></div>';
+          }).join('');
+          return '<div style="margin-bottom:16px;">'
+            + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'
+            +   '<div style="font-weight:700;font-size:12.5px;color:#0f172a;display:flex;align-items:center;gap:6px;"><span>' + icon + '</span><span>' + escHtml(label) + '</span></div>'
+            +   '<div style="font-size:11px;font-weight:700;color:' + overallColor + ';">' + overallTxt + '</div>'
+            + '</div>'
+            + '<div style="display:flex;gap:2px;">' + bars + '</div>'
+            + '<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:#94a3b8;">'
+            +   '<span>' + UPTIME_DAYS + ' days ago</span><span>' + pct + '% uptime</span><span>Today</span>'
+            + '</div>'
+            + '</div>';
+        }
+        function renderUptimeSection(results){
+          const hist = _recordUptimeToday(results);
+          const container = document.getElementById('uptime-section');
+          if (!container) return;
+          let html = '<div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase;">System Uptime · Last ' + UPTIME_DAYS + ' Days</div>';
+          UPTIME_TRACKED_IDS.forEach(id => {
+            const comp = STATUS_COMPONENTS.find(c => c.id === id);
+            if (!comp) return;
+            html += _buildUptimeStrip(id, comp.label, comp.icon, hist);
+          });
+          container.innerHTML = html;
+          _bindUptimeBars();
+        }
+        function _positionUptimeTooltip(e, tip){
+          const pad = 14;
+          let x = e.clientX + pad;
+          let y = e.clientY - 10;
+          const tw = tip.offsetWidth || 210;
+          const th = tip.offsetHeight || 50;
+          if (x + tw > window.innerWidth - 10) x = e.clientX - tw - pad;
+          if (y + th > window.innerHeight - 10) y = window.innerHeight - th - 10;
+          if (y < 10) y = 10;
+          tip.style.left = x + 'px';
+          tip.style.top = y + 'px';
+        }
+        function _uptimeTooltipHtml(bar){
+          const state = bar.dataset.state;
+          const badge = _statusBadge(state);
+          const txt = _statusText(state);
+          const detail = bar.dataset.detail || '';
+          const time = bar.dataset.time ? new Date(bar.dataset.time).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : '';
+          return '<div style="font-weight:800;margin-bottom:3px;">' + bar.dataset.icon + ' ' + bar.dataset.comp + '</div>'
+            + '<div style="opacity:.85;margin-bottom:3px;">' + bar.dataset.date + (time ? ' · ' + time : '') + '</div>'
+            + '<div>' + badge + ' ' + txt + '</div>'
+            + (state !== 'operational' && detail ? '<div style="margin-top:4px;color:#fca5a5;">' + detail + '</div>' : '');
+        }
+        function _bindUptimeBars(){
+          const tip = document.getElementById('uptimeTooltip');
+          const detailPanel = document.getElementById('uptime-day-detail');
+          if (!tip) return;
+          document.querySelectorAll('.uptime-bar').forEach(bar => {
+            bar.onmouseenter = function(e){
+              tip.innerHTML = _uptimeTooltipHtml(this);
+              tip.style.display = 'block';
+              this.style.transform = 'scaleY(1.18)';
+              _positionUptimeTooltip(e, tip);
+            };
+            bar.onmousemove = function(e){ _positionUptimeTooltip(e, tip); };
+            bar.onmouseleave = function(){ tip.style.display = 'none'; this.style.transform = 'scaleY(1)'; };
+            bar.onclick = function(){
+              if (!detailPanel) return;
+              const state = this.dataset.state;
+              const badge = _statusBadge(state);
+              const txt = _statusText(state);
+              const detail = this.dataset.detail || '';
+              const time = this.dataset.time ? new Date(this.dataset.time).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : '';
+              detailPanel.style.display = 'block';
+              detailPanel.innerHTML = '<div style="font-weight:800;margin-bottom:4px;">' + this.dataset.icon + ' ' + this.dataset.comp + ' — ' + this.dataset.date + (time ? ' · ' + time : '') + '</div>'
+                + '<div>' + badge + ' ' + txt + '</div>'
+                + (state !== 'operational' && detail ? '<div style="margin-top:4px;color:#fca5a5;">Reason: ' + detail + '</div>' : '<div style="margin-top:4px;color:#94a3b8;">No incidents reported on this day.</div>');
+            };
+          });
+        }
         window.openStatusModal = function() {
           const modal = document.getElementById('statusModal');
           if (modal) modal.style.display = 'flex';
+          const detailPanel = document.getElementById('uptime-day-detail');
+          if (detailPanel) { detailPanel.style.display = 'none'; detailPanel.innerHTML = ''; }
           window._updateStatusDashboard();
         };
         window.closeStatusModal = function() {
@@ -4014,6 +4154,8 @@ Recommended:
               worst = 'major';
             }
           }
+          // Update 90-day uptime history bars (records today's result + renders strips)
+          try { renderUptimeSection(results); } catch(e) { console.warn('uptime render failed', e); }
           // Update overall banner
           const banner = document.getElementById('overall-status-banner');
           if (banner) {
