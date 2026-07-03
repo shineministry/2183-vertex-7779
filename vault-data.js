@@ -167,10 +167,7 @@ personal:`
 `,
 
 contact:`
-<b>Phone:</b> +91 8605586173<br>
-<b>Email:</b> shinumaths989@gmail.com<br>
-<b>Website:</b> shine-ministry.com<br>
-<b>Instagram:</b> @shinu_vordenker_7
+<b>Contact via vault support portal</b>
 `,
 
 education:`
