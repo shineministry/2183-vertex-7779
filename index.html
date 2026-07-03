@@ -19,9 +19,9 @@ Recommended:
 -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://cdn.jsdelivr.net https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https:; frame-src https://www.google.com https://recaptcha.google.com https://www.recaptcha.net https://forms.gle https://docs.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-opencode-2026-fix' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://cdn.jsdelivr.net https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https:; frame-src https://www.google.com https://recaptcha.google.com https://www.recaptcha.net https://forms.gle https://docs.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self';">
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
-  <script>
+  <script nonce="opencode-2026-fix">
     // ── TEMPORARY ON-SCREEN ERROR OVERLAY ──────────────────────────────────
     // Purpose: some devices (tablets, etc.) don't have easy DevTools access.
     // This catches any uncaught error or unhandled promise rejection and
@@ -941,7 +941,7 @@ Recommended:
 </head>
 
 <body>
-<script>window.animateCloseModal=function(m,d){if(window.LITE_MODE){var el=document.getElementById(m);if(el){el.style.display='none';el.classList.remove('show','open')}return}d=d||250;var modal=document.getElementById(m);if(!modal)return;var cnt=modal.querySelector('.modal-content, .modal-content-small, .adv-box, .pm-modal-box');if(cnt)cnt.classList.add('modal-content-closing');modal.classList.add('modal-closing');setTimeout(function(){modal.style.display='none';modal.classList.remove('show','open','modal-closing');if(cnt)cnt.classList.remove('modal-content-closing')},d)};</script>
+<script nonce="opencode-2026-fix">window.animateCloseModal=function(m,d){if(window.LITE_MODE){var el=document.getElementById(m);if(el){el.style.display='none';el.classList.remove('show','open')}return}d=d||250;var modal=document.getElementById(m);if(!modal)return;var cnt=modal.querySelector('.modal-content, .modal-content-small, .adv-box, .pm-modal-box');if(cnt)cnt.classList.add('modal-content-closing');modal.classList.add('modal-closing');setTimeout(function(){modal.style.display='none';modal.classList.remove('show','open','modal-closing');if(cnt)cnt.classList.remove('modal-content-closing')},d)};</script>
 <!-- ── LANDING PAGE ── -->
 <div id="landing">
   <div class="land-orbs"><div class="land-orb"></div><div class="land-orb"></div><div class="land-orb"></div></div>
@@ -1102,7 +1102,7 @@ Recommended:
       </div>
     </div>
   </div>
-  <script>
+  <script nonce="opencode-2026-fix">
     let _keypadValue = '';
 
     function openKeypad() {
@@ -1418,7 +1418,7 @@ Recommended:
     <button class="lightbox-nav-btn" id="lightbox-next" onclick="nextPhoto(event)">›</button>
     <div id="lightbox-img-container"></div>
   </div>
-  <script>
+  <script nonce="opencode-2026-fix">
     (function() {
       const FIX_VERSION = '20260610-offlinefix12';
       window.SHINE_OFFLINE_FIX_VERSION = FIX_VERSION;
@@ -1456,7 +1456,7 @@ Recommended:
   <script src="vault-data.js?v=20260628-photosfix1"></script>
   <script src="viewer.js?v=20260628-photosfix1"></script>
   <script src="features.js?v=20260628-photosfix1"></script>
-  <script>
+  <script nonce="opencode-2026-fix">
     // ── Stale shell-script guard ──────────────────────────────────────────
     // If the service worker (or browser HTTP cache) ever serves an old
     // cached copy of vault-data.js / viewer.js / features.js that predates
@@ -1489,7 +1489,7 @@ Recommended:
     })();
   </script>
   <script src="https://www.google.com/recaptcha/api.js?render=6LfOK0MtAAAAADF4cSt_wf34J3CGpTtIWWNrXJ1U&onload=onRecaptchaV3Loaded" defer></script>
-  <script>
+  <script nonce="opencode-2026-fix">
     // Activate reCAPTCHA v3 so the badge shows Google's full branding, Privacy & Terms links
     function onRecaptchaV3Loaded() {
       grecaptcha.ready(function() {
@@ -1545,7 +1545,7 @@ Recommended:
       <div class="modal-content" style="max-width:700px;height:90%;">
         <div class="modal-header"> <strong> 💬 FEEDBACK & SUGGESTIONS </strong> <button onclick="closeFeedbackModal()" style="border:none;background:var(--danger);color:white;padding:10px 16px;border-radius:10px;font-weight:bold;cursor:pointer;">CLOSE</button> </div>
         <div style="flex:1;overflow:hidden;background:#f8fafc;">
-          <iframe src="https://forms.gle/Pv5LTq7APgFj98rp6" style="width:100%;height:100%;border:none;" sandbox="allow-forms allow-scripts allow-popups allow-same-origin" allowfullscreen loading="lazy"></iframe>
+          <iframe src="https://forms.gle/Pv5LTq7APgFj98rp6" style="width:100%;height:100%;border:none;" sandbox="allow-forms allow-scripts allow-popups allow-same-origin allow-top-navigation-by-user-activation allow-popups-to-escape-sandbox" allowfullscreen loading="lazy"></iframe>
         </div>
       </div>
     </div>
@@ -3239,7 +3239,7 @@ Recommended:
         </div>
       </div>
     </div>
-    <script>
+    <script nonce="opencode-2026-fix">
       /* ======== Password Manager Open/Close ======== */
       function _openPMModalForMember(memberKey) {
         window._pmActiveMember = memberKey;
@@ -3545,10 +3545,10 @@ Recommended:
       const entries = query ? filtered.filter(e => (e.site || '').toLowerCase().includes(query) || (e.username || '').toLowerCase().includes(query)) : filtered;
       if (countNum) countNum.textContent = entries.length + ' saved'; /* Build member filter tabs for multi-member modes */const memberFilter = document.getElementById('pm-member-filter');const memberLabels = { shineil:'SHINEIL', brother:'KEVIN', father:'STEPHEN', mother:'KANCHAN' };if (allowedMembers.length > 1) {if (!memberFilter) {const hdr = document.querySelector('.pm-entries-header');if (hdr) {const wrap = document.createElement('div');wrap.id = 'pm-member-filter';wrap.style.cssText = 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;';hdr.after(wrap);}}if (memberFilter) {memberFilter.innerHTML = allowedMembers.map(m => `<button class="pm-member-tab" data-member="${m}" style="padding:4px 10px;border:1px solid #cbd5e1;border-radius:8px;background:transparent;cursor:pointer;font-size:11px;font-weight:600;color:#475569;transition:.15s;">${memberLabels[m] || m}</button>`).join('');memberFilter.querySelectorAll('.pm-member-tab').forEach(btn => {btn.onclick = () => {memberFilter.querySelectorAll('.pm-member-tab').forEach(b => {b.style.background = 'transparent';b.style.color = '#475569';});btn.style.background = '#2563eb';btn.style.color = '#fff';const memberKey = btn.dataset.member;renderPMListFiltered(memberKey);};});}} else if (memberFilter) {memberFilter.remove();}window._pmAllowedMembers = allowedMembers;container.innerHTML = '';if (!entries || entries.length === 0) {container.innerHTML = '<div class="pm-empty">🔐 No saved passwords yet.<br><span style="font-size:12px;color:#cbd5e1;">Add your first one above.</span></div>';return;}const siteIcons = {'google':'🌐','gmail':'📧','github':'🐙','facebook':'👤','twitter':'🐦','instagram':'📷','amazon':'📦','netflix':'🎬','spotify':'🎵','apple':'🍎','microsoft':'💻','linkedin':'💼','youtube':'▶️','whatsapp':'💬','bank':'🏦','paypal':'💳'};function getSiteIcon(site) {const s = (site||'').toLowerCase();for(const k of Object.keys(siteIcons)) {if(s.includes(k)) return siteIcons[k];}return '🔑';}entries.forEach(entry => {const card = document.createElement('div');card.className = 'pm-entry-card';const icon = getSiteIcon(entry.site);const pwMasked = '••••••••••';const memberLabel = memberLabels[entry.member] || entry.member || '';card.innerHTML = `        <div class="pm-entry-top">          <div class="pm-entry-favicon">${icon}</div>          <div class="pm-entry-info">            <div class="pm-entry-site">${escapeHTML(entry.site)}</div>            <div class="pm-entry-user">${escapeHTML(entry.username || 'No username')}</div>          </div>          <div class="pm-entry-actions">            <button class="pm-act-btn" onclick="copyPMPassword('${entry.id}')" title="Copy password">📋 Copy</button>            <button class="pm-act-btn pm-act-del" onclick="deletePMEntry('${entry.id}')" title="Delete">🗑️</button>          </div>        </div>        <div class="pm-pw-reveal-row">          <span id="pw-dots-${entry.id}" class="pw-dots">${pwMasked}</span>          <span id="pw-actual-${entry.id}" class="pw-actual">${escapeHTML(entry.password || '')}</span>          <button id="pw-reveal-btn-${entry.id}" class="pm-reveal-btn" onclick="toggleEntryReveal('${entry.id}')">👁️ Show</button>        </div>        ${entry.notes ? `<div class="pm-notes-row">📝 ${escapeHTML(entry.notes)}</div>` : ''}        <div class="pm-notes-row" style="color:#6366f1;font-weight:600;">👤 ${escapeHTML(memberLabel)}</div>      `;container.appendChild(card);});} catch(err) {console.error(err);container.innerHTML = '<div class="pm-empty" style="color:#ef4444;">❌ Error loading passwords.</div>';}}function renderPMListFiltered(memberKey) {const container = document.getElementById('pm-entries-container');const countNum = document.getElementById('pm-count-num');if (!container) return;loadPMEntries().catch(() => []).then(allEntries => {const allowed = window._pmAllowedMembers || ['shineil','brother','father','mother'];const pmSearch2 = document.getElementById('pm-search');const query = ((pmSearch2 ? pmSearch2.value : '') || '').toLowerCase();const filtered = allEntries.filter(e => {if (!e.member) return true;if (memberKey && e.member !== memberKey) return false;return allowed.includes(e.member);});const entries = query ? filtered.filter(e => (e.site||'').toLowerCase().includes(query) || (e.username||'').toLowerCase().includes(query)) : filtered;if (countNum) countNum.textContent = entries.length + ' saved';container.innerHTML = '';if (!entries || entries.length === 0) {container.innerHTML = '<div class="pm-empty">🔐 No passwords for this member.</div>';return;}const memberLabels = { shineil:'SHINEIL MATHIAS', brother:'KEVIN MATHIAS', father:'STEPHEN MATHIAS', mother:'KANCHAN MATHIAS' };const siteIcons = {'google':'🌐','gmail':'📧','github':'🐙','facebook':'👤','twitter':'🐦','instagram':'📷','amazon':'📦','netflix':'🎬','spotify':'🎵','apple':'🍎','microsoft':'💻','linkedin':'💼','youtube':'▶️','whatsapp':'💬','bank':'🏦','paypal':'💳'};function getSiteIcon(site) {const s = (site||'').toLowerCase();for(const k of Object.keys(siteIcons)) {if(s.includes(k)) return siteIcons[k];}return '🔑';}entries.forEach(entry => {const card = document.createElement('div');card.className = 'pm-entry-card';const icon = getSiteIcon(entry.site);const pwMasked = '••••••••••';const memberLabel = memberLabels[entry.member] || entry.member || '';card.innerHTML = `        <div class="pm-entry-top">          <div class="pm-entry-favicon">${icon}</div>          <div class="pm-entry-info">            <div class="pm-entry-site">${escapeHTML(entry.site)}</div>            <div class="pm-entry-user">${escapeHTML(entry.username || 'No username')}</div>          </div>          <div class="pm-entry-actions">            <button class="pm-act-btn" onclick="copyPMPassword('${entry.id}')" title="Copy password">📋 Copy</button>            <button class="pm-act-btn pm-act-del" onclick="deletePMEntry('${entry.id}')" title="Delete">🗑️</button>          </div>        </div>        <div class="pm-pw-reveal-row">          <span id="pw-dots-${entry.id}" class="pw-dots">${pwMasked}</span>          <span id="pw-actual-${entry.id}" class="pw-actual">${escapeHTML(entry.password || '')}</span>          <button id="pw-reveal-btn-${entry.id}" class="pm-reveal-btn" onclick="toggleEntryReveal('${entry.id}')">👁️ Show</button>        </div>        ${entry.notes ? `<div class="pm-notes-row">📝 ${escapeHTML(entry.notes)}</div>` : ''}        <div class="pm-notes-row" style="color:#6366f1;font-weight:600;">👤 ${escapeHTML(memberLabel)}</div>      `;container.appendChild(card);});});}/* ======== Vault Modes ======== */const VAULT_MODES = [  { id:'online',    icon:'🌐', name:'Online Mode',           desc:'Access your vault anytime, anywhere with internet.' },  { id:'offline',   icon:'📥', name:'Offline Vault Mode',    desc:'Access encrypted local copies without internet.' },  { id:'share',     icon:'🔗', name:'Secure Share Mode',     desc:'Share documents securely with full control and tracking.' },  { id:'emergency', icon:'🚨', name:'Emergency Recovery',    desc:'Secure backup access during account recovery.' },  { id:'guardian',  icon:'👥', name:'Guardian Access Mode',  desc:'Allow trusted guardians to access specific documents.' },  { id:'verify',    icon:'✅', name:'Verification Mode',     desc:'Generate QR-secured verification for official submissions.' },  { id:'readonly',  icon:'👁️', name:'Read-Only Mode',        desc:'Allow view-only access without download or modification.' },  { id:'timelock',  icon:'⏰', name:'Time-Lock Mode',        desc:'Restrict access to documents until a specific date.' },  { id:'legal',     icon:'🏛️', name:'Legal Archive Mode',    desc:'Long-term preservation for apostille and legal documents.' },  { id:'ministry',  icon:'✝️', name:'Private Ministry Mode', desc:'Secure storage for ministry, pastoral, and church records.' },];let activeVaultMode = 'online';function openVaultModes() {  document.getElementById('vaultModesModal').classList.add('open');  renderVaultModes();}function closeVaultModes() {  document.getElementById('vaultModesModal').classList.remove('open');}document.getElementById('vaultModesModal').addEventListener('click', function(e){  if(e.target === this) closeVaultModes();});function renderVaultModes() {  const grid = document.getElementById('vm-modes-grid');  if (!grid) return;  grid.innerHTML = '';  VAULT_MODES.forEach(m => {    const card = document.createElement('div');    card.className = 'vm-card' + (m.id === activeVaultMode ? ' active' : '');    card.innerHTML = `<div class="vm-card-icon">${m.icon}</div><div class="vm-card-name">${m.name}</div><div class="vm-card-desc">${m.desc}</div>`;    card.onclick = () => setVaultMode(m.id);    grid.appendChild(card);  });}function setVaultMode(id) {  activeVaultMode = id;  const m = VAULT_MODES.find(x => x.id === id);  if (m) {    document.getElementById('vm-active-name').textContent = m.name;    document.getElementById('vm-active-desc').textContent = m.desc;    document.querySelector('.vm-active-badge span:first-child').textContent = m.icon;  }  renderVaultModes();  /* Show brief toast */  const toast = document.createElement('div');  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:99999;';  toast.textContent = `✓ ${(m ? m.name : "") || 'Mode'} activated`;  document.body.appendChild(toast);  setTimeout(() => toast.remove(), 2200);}
     </script>
-    <script>
+    <script nonce="opencode-2026-fix">
       // MODES button is now a real HTML button in the navbar — no injection needed.
     </script>
-    <script>
+    <script nonce="opencode-2026-fix">
       /* ============================================================   HOME / PROFILE / FILES PAGE SWITCHER   ============================================================ */
       let _currentPage = null;
       const VAULT_TIPS = ['Use the Compare tool (⚖️) to view two documents side by side — great for verifying document versions.', 'Pin your most-used documents with ⭐ for instant access from the Home page.', 'Switch between family members using the dropdown in the left sidebar.', 'Use Password Manager (🔑) to store and retrieve secure credentials.', 'Enable Offline Vault Mode in Advanced Settings to access files without internet.', 'Use the Search bar in Files to quickly locate any document across all categories.', 'Access Logs (📋) let you see who accessed the vault and when.', 'Vault Modes (⚡) give you different access configurations — try Secure Share Mode for sharing.', ];
@@ -3809,7 +3809,7 @@ Recommended:
         setTimeout(function() { switchPage('home'); }, 600);
       });
     </script>
-    <script>
+    <script nonce="opencode-2026-fix">
       /* ============================================================   SIDEBAR CATEGORY / HOME STATS REPAIR   - hides the extra HOME category row injected by vault-data.js   - opens Files page before category rendering when sidebar rows are clicked   - counts files/categories from allFilesData instead of rendered cards   ============================================================ */
       (function() {
         const CATEGORY_HOME_LABEL = 'HOME';
@@ -4579,7 +4579,7 @@ Recommended:
         };
       })();
     </script>
-  <script>
+  <script nonce="opencode-2026-fix">
     // ── PIN FOOTER TO BOTTOM OF RIGHT-SIDE CONTENT AREA ──────────────────
     // Measures actual available height below the content-view's top edge
     // and enforces it as a min-height, so the footer (margin-top:auto)
