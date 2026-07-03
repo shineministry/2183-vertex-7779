@@ -8,7 +8,7 @@ NOTE:
 Passkey / approval reachability abroad depends mainly on:-
 1. Firebase regional availabilitys
 2. Cloudflare Worker routing steps
-3. Internet/firewall restrictions
+3. Internet/firewall restriction
 4. Browser notification/background sync permissions
 
 Recommended:
@@ -61,15 +61,27 @@ Recommended:
         box.appendChild(line);
       }
 
+      function _reportFrontendError(source, message, line, col) {
+        try {
+          var t = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
+          if (!t) return;
+          var x = new XMLHttpRequest();
+          x.open('POST', 'https://backend.shinumaths989.workers.dev/frontend-error');
+          x.setRequestHeader('Content-Type', 'application/json');
+          x.setRequestHeader('Authorization', 'Bearer ' + t);
+          x.send(JSON.stringify({ source: source, message: (message||'').slice(0,500), line: line||0, col: col||0 }));
+        } catch(_){}
+      }
       window.addEventListener('error', function (e) {
         const msg = e.message || (e.error && e.error.message) || 'Unknown error';
         const where = (e.filename ? e.filename.split('/').pop() : '?') + ':' + e.lineno;
         _report('JS Error', msg + '  (' + where + ')');
+        _reportFrontendError('js', msg, e.lineno, e.colno);
       });
-
       window.addEventListener('unhandledrejection', function (e) {
         const msg = (e.reason && (e.reason.message || e.reason)) || 'Unknown rejection';
         _report('Unhandled Promise Rejection', msg);
+        _reportFrontendError('promise', msg);
       });
 
       window._getDiagErrors = function () { return _errors.slice(); };
@@ -2693,28 +2705,35 @@ Recommended:
         background: #1d4ed8;
       }
 
-      .pm-pin-field {
-        width: 100%;
-        padding: 14px;
+      .pm-pin-digit-row {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+      .pm-pin-digit {
+        width: 56px;
+        height: 64px;
         border: 2px solid #e2e8f0;
         border-radius: 12px;
-        font-size: 24px;
+        font-size: 28px;
         font-weight: 800;
         text-align: center;
-        letter-spacing: 8px;
         outline: none;
         background: #fff;
         color: #0f172a;
-        transition: border-color .2s;
-        box-sizing: border-box;
+        caret-color: #2563eb;
+        transition: border-color .2s, box-shadow .2s;
       }
-      .pm-pin-field:focus {
+      .pm-pin-digit:focus {
         border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+        box-shadow: 0 0 0 3px rgba(37,99,235,.15);
       }
-      .pm-pin-field.error {
+      .pm-pin-digit.error {
         border-color: #ef4444;
         animation: pmShake .3s ease;
+      }
+      @media (max-width:400px) {
+        .pm-pin-digit { width: 48px; height: 56px; font-size: 24px; }
       }
       @keyframes pmShake {
         0%,100% { transform: translateX(0); }
@@ -2968,17 +2987,17 @@ Recommended:
 
           <div id="pm-pin-old-row" style="display:none;margin-bottom:18px;">
             <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.5px;margin-bottom:8px;">CURRENT PIN</div>
-            <input type="password" id="pm-pin-old-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="pm-pin-field" placeholder="••••" autocomplete="off">
+            <div class="pm-pin-digit-row" data-row="old"></div>
           </div>
 
           <div id="pm-pin-main-row">
             <div id="pm-pin-main-label" style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.5px;margin-bottom:8px;display:none;">NEW PIN</div>
-            <input type="password" id="pm-pin-main-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="pm-pin-field" placeholder="••••" autocomplete="off">
+            <div class="pm-pin-digit-row" data-row="main"></div>
           </div>
 
           <div id="pm-pin-confirm-row" style="display:none;margin-top:18px;">
             <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.5px;margin-bottom:8px;">CONFIRM PIN</div>
-            <input type="password" id="pm-pin-confirm-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="pm-pin-field" placeholder="••••" autocomplete="off">
+            <div class="pm-pin-digit-row" data-row="confirm"></div>
           </div>
 
           <div id="pm-pin-error" style="color:#ef4444;font-size:12px;font-weight:600;margin-top:14px;min-height:16px;"></div>
@@ -3294,18 +3313,73 @@ Recommended:
         }
       }
 
+      function _pmBuildDigitRow(rowKey, count) {
+        var row = document.querySelector('.pm-pin-digit-row[data-row="' + rowKey + '"]');
+        if (!row) return;
+        row.innerHTML = '';
+        for (var i = 0; i < count; i++) {
+          var inp = document.createElement('input');
+          inp.type = 'password';
+          inp.inputMode = 'numeric';
+          inp.maxLength = 1;
+          inp.className = 'pm-pin-digit';
+          inp.dataset.row = rowKey;
+          inp.dataset.idx = i;
+          inp.autocomplete = 'off';
+          inp.addEventListener('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value && this.nextElementSibling) {
+              this.nextElementSibling.focus();
+            } else if (this.value && i === count - 1) {
+              var nextInput = _pmNextRowFirstInput(rowKey);
+              if (nextInput) nextInput.focus(); else submitPMPin();
+            }
+          });
+          inp.addEventListener('keydown', function (e) {
+            if (e.key === 'Backspace' && !this.value && this.previousElementSibling) {
+              this.previousElementSibling.focus();
+            }
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              submitPMPin();
+            }
+          });
+          row.appendChild(inp);
+        }
+      }
+
+      function _pmNextRowFirstInput(rowKey) {
+        var order = ['old', 'main', 'confirm'].filter(function (k) {
+          var wrap = k === 'old' ? document.getElementById('pm-pin-old-row')
+                     : k === 'confirm' ? document.getElementById('pm-pin-confirm-row')
+                     : document.getElementById('pm-pin-main-row');
+          return wrap && wrap.style.display !== 'none';
+        });
+        var pos = order.indexOf(rowKey);
+        var nextKey = order[pos + 1];
+        if (!nextKey) return null;
+        var nextRow = document.querySelector('.pm-pin-digit-row[data-row="' + nextKey + '"]');
+        return nextRow ? nextRow.querySelector('.pm-pin-digit') : null;
+      }
+
       function _pmRowValue(rowKey) {
-        const inp = document.getElementById('pm-pin-' + rowKey + '-input');
-        return inp ? inp.value.replace(/[^0-9]/g, '').slice(0, 4) : '';
+        var inputs = document.querySelectorAll('.pm-pin-digit-row[data-row="' + rowKey + '"] .pm-pin-digit');
+        var val = '';
+        for (var i = 0; i < inputs.length; i++) val += inputs[i].value;
+        return val;
       }
 
       function _pmShakeRow(rowKey) {
-        const inp = document.getElementById('pm-pin-' + rowKey + '-input');
-        if (!inp) return;
-        inp.classList.add('error');
-        inp.value = '';
-        setTimeout(function() { inp.classList.remove('error'); }, 400);
-        inp.focus();
+        var inputs = document.querySelectorAll('.pm-pin-digit-row[data-row="' + rowKey + '"] .pm-pin-digit');
+        for (var i = 0; i < inputs.length; i++) {
+          inputs[i].classList.add('error');
+          inputs[i].value = '';
+        }
+        var first = document.querySelector('.pm-pin-digit-row[data-row="' + rowKey + '"] .pm-pin-digit');
+        if (first) first.focus();
+        setTimeout(function() {
+          for (var i = 0; i < inputs.length; i++) inputs[i].classList.remove('error');
+        }, 400);
       }
 
       function openPMMemberPicker(allowedMembers) {
@@ -3342,11 +3416,11 @@ Recommended:
         document.getElementById('pm-pin-main-label').textContent = 'NEW PIN';
         document.getElementById('pm-pin-confirm-row').style.display = 'block';
         document.getElementById('pm-pin-error').textContent = '';
-        document.getElementById('pm-pin-main-input').value = '';
-        document.getElementById('pm-pin-confirm-input').value = '';
+        _pmBuildDigitRow('main', 4);
+        _pmBuildDigitRow('confirm', 4);
         var modal = document.getElementById('pmPinModal');
         if (modal) modal.classList.add('open');
-        setTimeout(function() { document.getElementById('pm-pin-main-input').focus(); }, 50);
+        setTimeout(function() { var f = document.querySelector('.pm-pin-digit-row[data-row="main"] .pm-pin-digit'); if (f) f.focus(); }, 50);
       }
 
       function openPMPinEntry(memberKey) {
@@ -3359,10 +3433,10 @@ Recommended:
         document.getElementById('pm-pin-main-label').textContent = 'PIN';
         document.getElementById('pm-pin-confirm-row').style.display = 'none';
         document.getElementById('pm-pin-error').textContent = '';
-        document.getElementById('pm-pin-main-input').value = '';
+        _pmBuildDigitRow('main', 4);
         var modal = document.getElementById('pmPinModal');
         if (modal) modal.classList.add('open');
-        setTimeout(function() { document.getElementById('pm-pin-main-input').focus(); }, 50);
+        setTimeout(function() { var f = document.querySelector('.pm-pin-digit-row[data-row="main"] .pm-pin-digit'); if (f) f.focus(); }, 50);
       }
 
       function openPMChangePin() {
@@ -3377,12 +3451,12 @@ Recommended:
         document.getElementById('pm-pin-main-label').textContent = 'NEW PIN';
         document.getElementById('pm-pin-confirm-row').style.display = 'block';
         document.getElementById('pm-pin-error').textContent = '';
-        document.getElementById('pm-pin-old-input').value = '';
-        document.getElementById('pm-pin-main-input').value = '';
-        document.getElementById('pm-pin-confirm-input').value = '';
+        _pmBuildDigitRow('old', 4);
+        _pmBuildDigitRow('main', 4);
+        _pmBuildDigitRow('confirm', 4);
         var modal = document.getElementById('pmPinModal');
         if (modal) modal.classList.add('open');
-        setTimeout(function() { document.getElementById('pm-pin-old-input').focus(); }, 50);
+        setTimeout(function() { var f = document.querySelector('.pm-pin-digit-row[data-row="old"] .pm-pin-digit'); if (f) f.focus(); }, 50);
       }
 
       function closePMPinModal() {
@@ -3390,16 +3464,6 @@ Recommended:
         if (modal) modal.classList.remove('open');
         window._pmPinContext = null;
       }
-
-      document.getElementById('pm-pin-main-input').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); submitPMPin(); }
-      });
-      document.getElementById('pm-pin-confirm-input').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); submitPMPin(); }
-      });
-      document.getElementById('pm-pin-old-input').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); submitPMPin(); }
-      });
 
       async function submitPMPin() {
         const ctx = window._pmPinContext;
@@ -3983,9 +4047,10 @@ Recommended:
           { id:'preview', icon:'👁️', label:'Quick Preview', check:async()=>{let o=typeof startHoverPreview==='function'&&typeof getPreviewBitmap==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Preview module loaded':'Not loaded'}}},
           { id:'decrypt', icon:'🔓', label:'Decryption', check:async()=>{let o=typeof decryptBuffer==='function';return{state:o?'operational':'major',labelText:o?'Ready':'Missing',detail:o?'Decrypt function available':'Crypto module not loaded'}}},
           { id:'mobile', icon:'📱', label:'Mobile Responsiveness', check:async()=>{let o=typeof toggleMobileMenu==='function';return{state:o?'operational':'degraded',labelText:o?'Adaptive':'Fixed',detail:o?'Responsive layout active':'Mobile menu not loaded'}}},
+          { id:'frontend', icon:'🧩', label:'Frontend Integrity', check:async()=>{try{var f=await fetch('https://backend.shinumaths989.workers.dev/frontend-errors-today',{headers:{'Authorization':'Bearer '+(sessionStorage.getItem('vaultSessionToken')||sessionStorage.getItem('vaultSession')||'')}});if(!f.ok)return{state:'degraded',labelText:'Unreachable',detail:'Cannot check frontend error count'};var d=await f.json();var cnt=d.count||0;if(cnt===0)return{state:'operational',labelText:'Clean ('+cnt+')',detail:'No frontend errors reported today'};if(cnt<5)return{state:'degraded',labelText:cnt+' errors',detail:cnt+' frontend error(s) reported across devices today'};return{state:'major',labelText:cnt+' errors',detail:cnt+' frontend error(s) — check HTML/CSS/JS files'};}catch(e){return{state:'degraded',labelText:'Check failed',detail:e.message}}}},
         ];
-        // ── 90-Day Uptime History (Statuspage-style bars) ──
-        const UPTIME_TRACKED_IDS = ['backend','auth','session','encryption','ai','cache','sw','offline'];
+        // ── 90-Day Uptime History — track ALL components ──
+        const UPTIME_TRACKED_IDS = STATUS_COMPONENTS.map(function(c){return c.id;});
         const UPTIME_DAYS = 90;
         function _uptimeHistKey(){ return 'vaultUptimeHistoryV1'; }
         function _loadUptimeHistory(){
@@ -4131,21 +4196,61 @@ Recommended:
         document.getElementById('statusModal').addEventListener('click', function(e) {
           if (e.target === this) closeStatusModal();
         });
+        async function _reportStatusGlobally(results) {
+          try {
+            var token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
+            if (!token) return;
+            var body = results.map(function(r){ return { id:r.id, state:r.state, label:r.label, icon:r.icon, detail:r.detail||r.labelText||'' }; });
+            await fetch('https://backend.shinumaths989.workers.dev/status-report', {
+              method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+              body:JSON.stringify({ results: body })
+            });
+          } catch(_){}
+        }
+
+        async function _fetchGlobalHistory() {
+          try {
+            var token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
+            if (!token) return null;
+            var res = await fetch('https://backend.shinumaths989.workers.dev/status-history', { headers:{'Authorization':'Bearer '+token} });
+            if (!res.ok) return null;
+            var d = await res.json();
+            return d.success ? d.history : null;
+          } catch(_){ return null; }
+        }
+
+        function _renderStatusComp(r) {
+          var sc = { operational:'#22c55e', degraded:'#eab308', partial:'#fb923c', major:'#ef4444', maintenance:'#3b82f6' };
+          var sb = { operational:'#f0fdf4', degraded:'#fefce8', partial:'#fff7ed', major:'#fef2f2', maintenance:'#eff6ff' };
+          var c = sc[r.state] || '#94a3b8';
+          var b = sb[r.state] || '#f8fafc';
+          var badge = { operational:'🟢', degraded:'🟡', partial:'🟠', major:'🔴', maintenance:'🔵' }[r.state] || '⚪';
+          var txt = { operational:'Operational', degraded:'Degraded', partial:'Partial Outage', major:'Major Outage', maintenance:'Maintenance' }[r.state] || 'Unknown';
+          return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:'+b+';border:1px solid '+(r.state==='operational'?'#e2e8f0':c+'44')+';">'
+            +'<span style="font-size:14px;width:22px;text-align:center;">'+r.icon+'</span>'
+            +'<span style="flex:1;font-weight:700;font-size:12px;color:#0f172a;">'+escHtml(r.label)+'</span>'
+            +'<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:'+c+'18;color:'+c+';font-weight:700;white-space:nowrap;">'+badge+' '+txt+'</span>'
+            +'<span style="font-size:11px;color:#64748b;max-width:180px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" title="'+escHtml(r.detail||'')+'">'+escHtml(r.labelText||r.detail||'')+'</span>'
+            +'</div>';
+        }
+
         window._updateStatusDashboard = async function _updateStatusDashboard() {
-          const mode = window.VAULT_MODE || sessionStorage.getItem('vaultMode') || '-';
-          const el = document.getElementById('stat-mode-label');
+          var mode = window.VAULT_MODE || sessionStorage.getItem('vaultMode') || '-';
+          var el = document.getElementById('stat-mode-label');
           if (el) el.textContent = mode;
-          const versionEl = document.getElementById('stat-version-label');
+          var versionEl = document.getElementById('stat-version-label');
           if (versionEl) versionEl.textContent = window.SHINE_AUTH_VERSION || 'v202606';
-          const container = document.getElementById('status-components');
+          var container = document.getElementById('status-components');
           if (!container) return;
           container.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">⏳ Checking all systems...</div>';
-          const results = [];
-          let worst = 'operational';
-          const order = { operational:0, degraded:1, partial:2, major:3, maintenance:4 };
-          for (const comp of STATUS_COMPONENTS) {
+          // Run all component checks
+          var results = [];
+          var worst = 'operational';
+          var order = { operational:0, degraded:1, partial:2, major:3, maintenance:4 };
+          for (var ci = 0; ci < STATUS_COMPONENTS.length; ci++) {
+            var comp = STATUS_COMPONENTS[ci];
             try {
-              const r = await comp.check();
+              var r = await comp.check();
               r.id = comp.id; r.icon = comp.icon; r.label = comp.label;
               results.push(r);
               if (order[r.state] > order[worst]) worst = r.state;
@@ -4154,39 +4259,47 @@ Recommended:
               worst = 'major';
             }
           }
-          // Update 90-day uptime history bars (records today's result + renders strips)
+          // Report globally (fire-and-forget)
+          _reportStatusGlobally(results);
+          // Fetch global history from Firestore
+          var globalHist = await _fetchGlobalHistory();
+          // Update local 90-day uptime bars + record today
           try { renderUptimeSection(results); } catch(e) { console.warn('uptime render failed', e); }
           // Update overall banner
-          const banner = document.getElementById('overall-status-banner');
+          var banner = document.getElementById('overall-status-banner');
           if (banner) {
-            const bannerMap = {
-              operational:{ emoji:'🟢', bg:'linear-gradient(135deg,#f0fdf4,#dcfce7)', border:'#86efac', color:'#166534', text:'All Systems Operational' },
-              degraded:{ emoji:'🟡', bg:'linear-gradient(135deg,#fefce8,#fef9c3)', border:'#facc15', color:'#854d0e', text:'Partial System Outage' },
-              partial:{ emoji:'🟠', bg:'linear-gradient(135deg,#fff7ed,#ffedd5)', border:'#fb923c', color:'#9a3412', text:'Partial System Outage' },
-              major:{ emoji:'🔴', bg:'linear-gradient(135deg,#fef2f2,#fecaca)', border:'#f87171', color:'#991b1b', text:'Major Service Outage' },
-              maintenance:{ emoji:'🔵', bg:'linear-gradient(135deg,#eff6ff,#dbeafe)', border:'#60a5fa', color:'#1e40af', text:'Under Maintenance' }
-            };
-            const m = bannerMap[worst] || bannerMap.operational;
+            var bm = { operational:{ e:'🟢', bg:'linear-gradient(135deg,#f0fdf4,#dcfce7)', bc:'#86efac', c:'#166534', t:'All Systems Operational' },
+              degraded:{ e:'🟡', bg:'linear-gradient(135deg,#fefce8,#fef9c3)', bc:'#facc15', c:'#854d0e', t:'Partial System Outage' },
+              partial:{ e:'🟠', bg:'linear-gradient(135deg,#fff7ed,#ffedd5)', bc:'#fb923c', c:'#9a3412', t:'Partial System Outage' },
+              major:{ e:'🔴', bg:'linear-gradient(135deg,#fef2f2,#fecaca)', bc:'#f87171', c:'#991b1b', t:'Major Service Outage' },
+              maintenance:{ e:'🔵', bg:'linear-gradient(135deg,#eff6ff,#dbeafe)', bc:'#60a5fa', c:'#1e40af', t:'Under Maintenance' } };
+            var m = bm[worst] || bm.operational;
             banner.style.background = m.bg;
-            banner.style.borderColor = m.border;
-            banner.style.color = m.color;
-            banner.innerHTML = m.emoji + ' <span>' + m.text + '</span>';
+            banner.style.borderColor = m.bc;
+            banner.style.color = m.c;
+            banner.innerHTML = m.e + ' <span>' + m.t + '</span>';
           }
-          // Build component rows
-          container.innerHTML = results.map(r => {
-            const stateColors = { operational:'#22c55e', degraded:'#eab308', partial:'#fb923c', major:'#ef4444', maintenance:'#3b82f6' };
-            const stateBg = { operational:'#f0fdf4', degraded:'#fefce8', partial:'#fff7ed', major:'#fef2f2', maintenance:'#eff6ff' };
-            const c = stateColors[r.state] || '#94a3b8';
-            const b = stateBg[r.state] || '#f8fafc';
-            const badge = { operational:'🟢', degraded:'🟡', partial:'🟠', major:'🔴', maintenance:'🔵' }[r.state] || '⚪';
-            const statTxt = { operational:'Operational', degraded:'Degraded', partial:'Partial Outage', major:'Major Outage', maintenance:'Maintenance' }[r.state] || 'Unknown';
-            return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:'+b+';border:1px solid '+(r.state==='operational'?'#e2e8f0':c+'44')+';transition:background .2s;">'
-              +'<span style="font-size:14px;width:22px;text-align:center;">'+r.icon+'</span>'
-              +'<span style="flex:1;font-weight:700;font-size:12px;color:#0f172a;">'+escHtml(r.label)+'</span>'
-              +'<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:'+c+'18;color:'+c+';font-weight:700;white-space:nowrap;">'+badge+' '+statTxt+'</span>'
-              +'<span style="font-size:11px;color:#64748b;max-width:180px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" title="'+escHtml(r.detail||'')+'">'+escHtml(r.labelText||r.detail||'')+'</span>'
-              +'</div>';
-          }).join('');
+          // Build HTML: Local Status section (this device) + Global Status section (all devices)
+          var html = '';
+          // ── Local Device Status ──
+          html += '<div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin:16px 0 8px;text-transform:uppercase;display:flex;align-items:center;gap:6px;"><span>??</span> LOCAL DEVICE STATUS</div>';
+          html += results.map(function(r){ return _renderStatusComp(r); }).join('');
+          // ── Global Status (from other devices) ──
+          html += '<div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin:16px 0 8px;text-transform:uppercase;display:flex;align-items:center;gap:6px;"><span>??</span> GLOBAL STATUS (all devices)</div>';
+          if (globalHist) {
+            var worstGlobal = 'operational';
+            for (var gid in globalHist) {
+              var gdays = globalHist[gid];
+              var todayKey = _dayKey();
+              var todayRec = gdays ? gdays[todayKey] : null;
+              if (todayRec && order[todayRec.state] > order[worstGlobal]) worstGlobal = todayRec.state;
+            }
+            html += '<div style="font-size:12px;color:#64748b;margin-bottom:10px;">Global status reflects checks reported from all devices in the last 24h.</div>';
+            html += '<div style="font-size:11px;font-weight:700;padding:8px 12px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;color:#475569;">?? Today\'s worst: <span style="color:'+({operational:'#22c55e',degraded:'#eab308',partial:'#fb923c',major:'#ef4444',maintenance:'#3b82f6'}[worstGlobal]||'#94a3b8')+';">'+({operational:'✅ Operational',degraded:'⚠️ Degraded',partial:'🟠 Partial',major:'🔴 Major Outage',maintenance:'🔵 Maintenance'}[worstGlobal]||'Unknown')+'</span></div>';
+          } else {
+            html += '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">?? No global data yet — other devices will report here when they check status.</div>';
+          }
+          container.innerHTML = html;
         }
         function _statusBadge(state) {
           const map = { operational:'🟢', degraded:'🟡', partial:'🟠', major:'🔴', maintenance:'🔵' };
