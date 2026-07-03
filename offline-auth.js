@@ -27,7 +27,7 @@
 
 window.SHINE_OFFLINE_AUTH_VERSION = '20260609-clean';
 
-const _WORKER_URL = 'https://backend.shinumaths989.workers.dev';
+const _WORKER_URL = window.BACKEND_URL || 'https://backend.shinumaths989.workers.dev';
 
 // ── IndexedDB setup ────────────────────────────────────────────────────────
 const _AUTH_DB_NAME    = 'vaultOfflineDB';
@@ -100,10 +100,52 @@ async function _sha256Legacy(text) {
 
 // ── Write helpers ──────────────────────────────────────────────────────────
 
+// Encrypt secret using a key derived from the password (separate salt from PBKDF2 hash)
+async function _wrapSecret(secret, password) {
+    const wrapSalt = _randomSalt();
+    const keyMaterial = await crypto.subtle.importKey('raw',
+        new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+    const keyBits = await crypto.subtle.deriveBits(
+        { name: 'PBKDF2', hash: 'SHA-256', salt: Uint8Array.from(wrapSalt.match(/.{2}/g), h => parseInt(h, 16)), iterations: 200000 },
+        keyMaterial, 256);
+    const key = await crypto.subtle.importKey('raw', new Uint8Array(keyBits),
+        { name: 'AES-GCM' }, false, ['encrypt']);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv },
+        key, new TextEncoder().encode(String(secret)));
+    const combined = new Uint8Array(16 + 12 + ct.byteLength);
+    combined.set(Uint8Array.from(wrapSalt.match(/.{2}/g), h => parseInt(h, 16)), 0);
+    combined.set(iv, 16);
+    combined.set(new Uint8Array(ct), 28);
+    return 'w1:' + btoa(String.fromCharCode(...combined));
+}
+
+async function _unwrapSecret(wrapped, password) {
+    if (!wrapped || !wrapped.startsWith('w1:')) return String(password || '');
+    try {
+        const raw = Uint8Array.from(atob(wrapped.slice(3)), c => c.charCodeAt(0));
+        const wrapSalt = Array.from(raw.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join('');
+        const iv = raw.slice(16, 28);
+        const ct = raw.slice(28);
+        const keyMaterial = await crypto.subtle.importKey('raw',
+            new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+        const keyBits = await crypto.subtle.deriveBits(
+            { name: 'PBKDF2', hash: 'SHA-256', salt: Uint8Array.from(wrapSalt.match(/.{2}/g), h => parseInt(h, 16)), iterations: 200000 },
+            keyMaterial, 256);
+        const key = await crypto.subtle.importKey('raw', new Uint8Array(keyBits),
+            { name: 'AES-GCM' }, false, ['decrypt']);
+        const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+        return new TextDecoder().decode(pt);
+    } catch (e) {
+        console.warn('[OfflineAuth] Failed to unwrap secret, falling back to typed password:', e.message);
+        return String(password || '');
+    }
+}
+
 async function _saveAuthRecordLocal({ mode, password, secret, token }) {
     const salt         = _randomSalt();
     const passwordHash = await _pbkdf2Hash(password, salt);
-    const loginHash    = await _sha256AuthHash(password);
+    const wrappedSecret = await _wrapSecret(secret || password, password);
     const db           = await _openAuthDB();
 
     return new Promise((res, rej) => {
@@ -111,10 +153,9 @@ async function _saveAuthRecordLocal({ mode, password, secret, token }) {
         tx.objectStore('vault_auth').put({
             id:           mode + '-pbkdf2',
             passwordHash,
-            loginHash,
+            wrappedSecret,
             salt,
             algo:         'pbkdf2-sha256-200k',
-            secret:       String(secret || password),
             token:        token || '',
             mode,
             trusted:      true,
@@ -134,7 +175,6 @@ async function _saveAuthRecordFromServerHash({ mode, passwordHash, secret, token
             id:           mode + '-sha256',
             passwordHash,
             algo:         'sha256-server',
-            secret:       String(secret || ''),
             token:        token || '',
             mode,
             trusted:      true,
@@ -251,7 +291,7 @@ async function _markOfflineSyncComplete() {
     }
 }
 
-// ── Silent re-auth: use stored SHA-256 login hash to get a fresh session token ─────
+// ── Silent re-auth: use stored PBKDF2 record to get a fresh session token ─────
 async function _silentReAuth() {
     try {
         const db = await _openAuthDB();
@@ -262,21 +302,21 @@ async function _silentReAuth() {
             req.onerror   = () => rej(req.error);
         });
 
-        // Find a pbkdf2 record that has a loginHash stored
-        const record = allRecords.find(r => r.algo === 'pbkdf2-sha256-200k' && r.loginHash);
-        if (!record || !record.loginHash) {
-            console.warn('[OfflineAuth] _silentReAuth: no stored login hash found');
+        // Find a pbkdf2 record with a token
+        const record = allRecords.find(r => r.algo === 'pbkdf2-sha256-200k' && r.token && r.token.startsWith('vault_'));
+        if (!record || !record.token) {
+            console.warn('[OfflineAuth] _silentReAuth: no usable token found');
             return null;
         }
 
-        const res = await fetch(`${_WORKER_URL}/get-secret`, {
+        // Verify the stored token is still valid by checking with the server
+        const res = await fetch(`${_WORKER_URL}/check-session`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ hash: record.loginHash })
+            body: JSON.stringify({ token: record.token })
         });
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data.sessionToken || null;
+        if (res.ok) return record.token;
+        return null;
     } catch (e) {
         console.warn('[OfflineAuth] _silentReAuth failed:', e.message);
         return null;
@@ -561,7 +601,7 @@ async function offlineLogin(_ignored, password) {
             return false;
         }
 
-        _restoreSession(match, password);
+        await _restoreSession(match, password);
         console.log('[OfflineAuth] Offline login OK, mode:', window.VAULT_MODE, '| algo:', match.algo);
         return window.masterPassword;
 
@@ -574,8 +614,8 @@ async function offlineLogin(_ignored, password) {
 
 // ── Internal helpers ───────────────────────────────────────────────────────
 
-function _restoreSession(record, passwordFallback) {
-    const secret = record.secret || String(passwordFallback || '');
+async function _restoreSession(record, passwordFallback) {
+    const secret = await _unwrapSecret(record.wrappedSecret, passwordFallback);
     window.masterPassword = String(secret);
     window.VAULT_MODE     = record.mode || record.id;
     sessionStorage.setItem('vaultMode', window.VAULT_MODE);
@@ -583,7 +623,7 @@ function _restoreSession(record, passwordFallback) {
         sessionStorage.setItem('vaultSessionToken', record.token);
         sessionStorage.setItem('vaultSession',      record.token);
     } else {
-        const offlineToken = 'offline-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+        const offlineToken = 'offline-' + crypto.randomUUID();
         sessionStorage.setItem('vaultSessionToken', offlineToken);
         sessionStorage.setItem('vaultSession',      offlineToken);
     }
@@ -741,19 +781,8 @@ async function restoreTrustSession() {
         if (!trust || !trust.member) return false;
         const modeToId = { shineil:'SHINEIL', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
         const mode = sessionStorage.getItem('vaultMode') || modeToId[trust.member] || 'ADMIN';
-        const db = await _openAuthDB();
-        const allRecords = await new Promise((res, rej) => {
-            const req = db.transaction('vault_auth', 'readonly')
-                          .objectStore('vault_auth').getAll();
-            req.onsuccess = () => res(req.result || []);
-            req.onerror   = () => rej(req.error);
-        });
-        const record = allRecords.find(r => r.mode === mode && r.secret) || allRecords[0];
-        if (record && record.secret) {
-            _restoreSession(record, '');
-            return true;
-        }
-        // Fallback: use secret stored in trust info (set by saveTrustDevice)
+        // Trust device restore uses localStorage trust info
+        // (IDB records no longer store raw secrets — they are encrypted with the user password)
         if (trust.secret) {
             window.masterPassword = String(trust.secret);
             window.VAULT_MODE = mode;
