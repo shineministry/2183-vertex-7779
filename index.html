@@ -1488,9 +1488,17 @@ Recommended:
       }
     })();
   </script>
-  <script src="https://www.google.com/recaptcha/api.js?render=6LfOK0MtAAAAADF4cSt_wf34J3CGpTtIWWNrXJ1U" defer></script>
+  <script src="https://www.google.com/recaptcha/api.js?render=6LfOK0MtAAAAADF4cSt_wf34J3CGpTtIWWNrXJ1U&onload=onRecaptchaV3Loaded" defer></script>
+  <script>
+    // Activate reCAPTCHA v3 so the badge shows Google's full branding, Privacy & Terms links
+    function onRecaptchaV3Loaded() {
+      grecaptcha.ready(function() {
+        grecaptcha.execute('6LfOK0MtAAAAADF4cSt_wf34J3CGpTtIWWNrXJ1U', {action: 'homepage'});
+      });
+    }
+  </script>
   <style>
-    .grecaptcha-badge { visibility: visible !important; z-index: 99999; }
+    .grecaptcha-badge { visibility: visible !important; z-index: 99999; bottom: 14px !important; box-shadow: 0 2px 12px rgba(0,0,0,.15) !important; border-radius: 8px !important; }
   </style>
   <script src="vault-ui.js"></script>
     <div id="logModal" class="modal">
@@ -4174,17 +4182,15 @@ Recommended:
             };
             bar.onmousemove = function(e){ _positionUptimeTooltip(e, tip); };
             bar.onmouseleave = function(){ tip.style.display = 'none'; this.style.transform = 'scaleY(1)'; };
-            bar.onclick = function(){
-              if (!detailPanel) return;
+            bar.onclick = function(e){
+              if (!tip) return;
               const state = this.dataset.state;
-              const badge = _statusBadge(state);
-              const txt = _statusText(state);
               const detail = this.dataset.detail || '';
               const time = this.dataset.time ? new Date(this.dataset.time).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : '';
-              detailPanel.style.display = 'block';
-              detailPanel.innerHTML = '<div style="font-weight:800;margin-bottom:4px;">' + this.dataset.icon + ' ' + this.dataset.comp + ' — ' + this.dataset.date + (time ? ' · ' + time : '') + '</div>'
-                + '<div>' + badge + ' ' + txt + '</div>'
-                + (state !== 'operational' && detail ? '<div style="margin-top:4px;color:#fca5a5;">Reason: ' + detail + '</div>' : '<div style="margin-top:4px;color:#94a3b8;">No incidents reported on this day.</div>');
+              tip.innerHTML = _uptimeTooltipHtml(this)
+                + (state !== 'operational' && detail ? '<div style="margin-top:4px;color:#fca5a5;">Reason: ' + detail + '</div>' : '');
+              tip.style.display = 'block';
+              _positionUptimeTooltip(e, tip);
             };
           });
         }
