@@ -40,14 +40,14 @@ window.__deviceIntegrity = (function () {
   // Previously Ctrl+Shift+D flipped trust instantly with NO authentication —
   // anyone with keyboard access to the login page could self-trust and
   // bypass every bot/automation check below. Now the gesture only OPENS
-  // a prompt; trust is auto-granted only if the entered secret's SHA-256 hash
+  // a prompt; trust is granted only if the entered secret's SHA-256 hash
   // matches TRUST_SECRET_HASH.
   //
   // ⚠️ Set your own secret before relying on this:
   //   1. Open password-hash.html (already in this project)
   //   2. Type a secret phrase only you know (not your vault password)
   //   3. Copy the resulting SHA-256 hash and paste it below
-  var TRUST_SECRET_HASH = '19c18a3da28f4aa226c42a8d2679f27ec6dbdfe2bc7642694fdb724c70b4f46d';
+  var TRUST_SECRET_HASH = 'REPLACE_WITH_YOUR_OWN_SHA256_HASH';
 
   async function _sha256(text) {
     if (window.sha256) return window.sha256(text);
@@ -323,15 +323,12 @@ window.__deviceIntegrity = (function () {
   }
 
   // ── 6. BEHAVIORAL: PASTE ─────────────────────────────────────────
-  var _pasteDetected = false;
-
+  // Removed: pasting into a password field is completely normal
+  // (password managers, notes app, older users who copy their PIN)
+  // and was wrongly treated as a bot signal, blocking real people.
   function startPasteMonitor(fieldId) {
-    var field = document.getElementById(fieldId);
-    if (!field) return;
-    field.addEventListener('paste', function () {
-      _pasteDetected = true;
-      flag('paste-detected', 'Content pasted into password field');
-    }, { passive: true });
+    // intentionally a no-op now — kept as a stub so any external
+    // calls to startPasteMonitor() elsewhere don't break.
   }
 
   // ── 7. BEHAVIORAL: MOUSE ─────────────────────────────────────────
@@ -420,9 +417,7 @@ window.__deviceIntegrity = (function () {
       BEHAVIOR_LOG.push('mouse samples=' + md.samples + ' teleports=' + (md.teleports || 0) + ' noMove=' + (md.noMovement || false));
     }
 
-    // Paste check
-    if (_pasteDetected && FLAGS.every(function (f) { return f.rule !== 'paste-detected'; }))
-      flag('paste-detected', 'Content pasted into password field');
+    // Paste check removed — see startPasteMonitor() note above.
 
     return { score: score, flags: FLAGS };
   }
