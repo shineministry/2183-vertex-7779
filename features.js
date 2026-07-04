@@ -9,12 +9,17 @@
 window.BACKEND_URL = 'https://backend.shinumaths989.workers.dev'; // single source of truth for backend URL
 const WORKER_URL = window.BACKEND_URL;
 
-// Device-specific key for local encryption (persisted in sessionStorage, NOT navigator.userAgent)
+// Device-specific key for local encryption. Must be in localStorage, not
+// sessionStorage — this key is what unlocks the 14-day "Trust Device"
+// secret in vaultTrustInfo, so it has to survive the tab/app closing.
+// (Previously lived in sessionStorage, which is wiped on session end —
+// meaning the very next visit always failed to decrypt the trust secret
+// and silently fell back to a forced re-login, defeating the feature.)
 function _getDeviceKey() {
-  let key = sessionStorage.getItem('_device_enc_key');
+  let key = localStorage.getItem('_device_enc_key');
   if (!key) {
     key = Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, '0')).join('');
-    sessionStorage.setItem('_device_enc_key', key);
+    localStorage.setItem('_device_enc_key', key);
   }
   return key;
 }
