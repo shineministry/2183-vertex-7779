@@ -3,6 +3,27 @@
 ========================= */
 var masterPassword = "";
 
+/* =========================
+   DEFENSIVE CLEANUP
+   Guarantees no leftover login-step markup — especially the reCAPTCHA
+   widget, whose offline "could not connect" fallback text was showing up
+   below the file list — can ever remain visible once the dashboard is up,
+   no matter which login path (online, offline, TOTP, silent re-auth) got
+   the user there.
+========================= */
+function hideAllAuthSteps() {
+    ['step1', 'step2', 'step3', 'step-totp', 'passkey-wait', 'virtual-keypad-overlay'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    // Reset the widget so it isn't left mid-render / showing a stale
+    // "no connection" state next time step3 is actually needed.
+    if (typeof grecaptcha !== 'undefined') {
+        try { grecaptcha.reset(); } catch (e) {}
+    }
+}
+
+
 // ── HTML escape helper (prevents XSS in innerHTML) ──────────────────────
 window.escHtml = function(str) {
   if (str == null) return '';
@@ -185,7 +206,7 @@ function notifyBackendLogout(reason = "Logged out.") {
     } catch(e) {}
 }
 
-function logoutVault( reason = "Logged out.", clearTrust = false ) {
+async function logoutVault( reason = "Logged out.", clearTrust = false ) {
 
     clearTimeout( inactivityTimer );
     if (typeof _sessionTimerInterval !== 'undefined' && _sessionTimerInterval) {
@@ -211,11 +232,16 @@ function logoutVault( reason = "Logged out.", clearTrust = false ) {
             const _trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
             if (_trust && _trust.member && _trust.expiry > Date.now()) {
                 const _liveToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || _trust.token || '';
-                const _liveSecret = window.masterPassword || _trust.secret || '';
+                // Never write window.masterPassword raw into localStorage — it must
+                // go through the same encryption saveTrustDevice() uses, or DevTools
+                // > Application > Local Storage would show the master secret in plain text.
+                const _refreshSecret = window.masterPassword
+                    ? await (typeof _wrapTrustSecret === 'function' ? _wrapTrustSecret(window.masterPassword) : Promise.resolve(_trust.secret || ''))
+                    : (_trust.secret || '');
                 localStorage.setItem('vaultTrustInfo', JSON.stringify({
                     ..._trust,
                     token: _liveToken,
-                    secret: _liveSecret
+                    secret: _refreshSecret
                 }));
             }
         } catch(e) { console.warn('[logoutVault] trust info refresh failed:', e); }

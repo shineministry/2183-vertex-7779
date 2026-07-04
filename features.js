@@ -1223,6 +1223,34 @@ async function checkDocExpiryReminders(){
     }
 }
 
+// Encrypts a secret for storage in localStorage's vaultTrustInfo, keyed to
+// this device (via _getDeviceKey). Used by saveTrustDevice() AND by
+// logoutVault()'s trust-info refresh — anywhere that writes vaultTrustInfo.secret
+// must go through this, never store window.masterPassword raw.
+async function _wrapTrustSecret(secret) {
+  if (!secret) return '';
+  try {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const keyMaterial = await crypto.subtle.importKey('raw',
+      new TextEncoder().encode(_getDeviceKey() + salt),
+      'PBKDF2', false, ['deriveBits']);
+    const keyBits = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 100000 },
+      keyMaterial, 256);
+    const wrapKey = await crypto.subtle.importKey('raw', new Uint8Array(keyBits),
+      { name: 'AES-GCM' }, false, ['encrypt']);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv },
+      wrapKey, new TextEncoder().encode(secret));
+    const combined = new Uint8Array(16 + 12 + ct.byteLength);
+    combined.set(salt, 0); combined.set(iv, 16); combined.set(new Uint8Array(ct), 28);
+    return btoa(String.fromCharCode(...combined));
+  } catch (e) {
+    console.warn('[TrustDevice] Encryption failed, falling back to session-only', e);
+    return '';
+  }
+}
+
 async function saveTrustDevice() {
   const cb = document.getElementById('trust-device');
   if (cb && cb.checked) {
@@ -1233,30 +1261,7 @@ async function saveTrustDevice() {
     const existing = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
     const savedToken = token || (existing && existing.token) || '';
     // Derive an encrypted wrapper for the secret instead of storing raw password
-    const secret = window.masterPassword || '';
-    let wrappedSecret = '';
-    if (secret) {
-      try {
-        const salt = crypto.getRandomValues(new Uint8Array(16));
-        const keyMaterial = await crypto.subtle.importKey('raw',
-          new TextEncoder().encode(_getDeviceKey() + salt),
-          'PBKDF2', false, ['deriveBits']);
-        const keyBits = await crypto.subtle.deriveBits(
-          { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 100000 },
-          keyMaterial, 256);
-        const wrapKey = await crypto.subtle.importKey('raw', new Uint8Array(keyBits),
-          { name: 'AES-GCM' }, false, ['encrypt']);
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv },
-          wrapKey, new TextEncoder().encode(secret));
-        const combined = new Uint8Array(16 + 12 + ct.byteLength);
-        combined.set(salt, 0); combined.set(iv, 16); combined.set(new Uint8Array(ct), 28);
-        wrappedSecret = btoa(String.fromCharCode(...combined));
-      } catch (e) {
-        console.warn('[TrustDevice] Encryption failed, falling back to session-only', e);
-        wrappedSecret = '';
-      }
-    }
+    const wrappedSecret = await _wrapTrustSecret(window.masterPassword || '');
     localStorage.setItem('vaultTrustInfo', JSON.stringify({
       member,
       user: (document.getElementById('user-name')?.value || '').trim(),
@@ -1269,6 +1274,7 @@ async function saveTrustDevice() {
 
 // Post-init hook: called at end of onCaptchaSuccess after initVault()
 function vaultPostInit(){
+  hideAllAuthSteps();
   saveTrustDevice();
    const mode = sessionStorage.getItem("vaultMode");
 

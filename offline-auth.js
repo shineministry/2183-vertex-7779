@@ -142,6 +142,44 @@ async function _unwrapSecret(wrapped, password) {
     }
 }
 
+// ── Hash-keyed wrap/unwrap ──────────────────────────────────────────────────
+// Used for "full sync" records (syncAllMembersOffline) where we only ever
+// receive a member's server-computed passwordHash — never their plaintext
+// password. We can't derive a PBKDF2 key from a password we don't have, but
+// we DO get that exact same hash back from the client at offline-login time
+// (offlineLogin recomputes _sha256AuthHash(password) to find the matching
+// record), so the hash itself is a safe, deterministic key to wrap/unwrap
+// the real secret with.
+async function _deriveRawKeyFromHash(passwordHashHex, usage) {
+    const keyBytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(passwordHashHex)));
+    return crypto.subtle.importKey('raw', keyBytes, { name: 'AES-GCM' }, false, [usage]);
+}
+
+async function _wrapSecretWithHash(secret, passwordHashHex) {
+    const key = await _deriveRawKeyFromHash(passwordHashHex, 'encrypt');
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(String(secret)));
+    const combined = new Uint8Array(12 + ct.byteLength);
+    combined.set(iv, 0);
+    combined.set(new Uint8Array(ct), 12);
+    return 'w2:' + btoa(String.fromCharCode(...combined));
+}
+
+async function _unwrapSecretWithHash(wrapped, passwordHashHex) {
+    if (!wrapped || !wrapped.startsWith('w2:')) return null;
+    try {
+        const raw = Uint8Array.from(atob(wrapped.slice(3)), c => c.charCodeAt(0));
+        const iv = raw.slice(0, 12);
+        const ct = raw.slice(12);
+        const key = await _deriveRawKeyFromHash(passwordHashHex, 'decrypt');
+        const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+        return new TextDecoder().decode(pt);
+    } catch (e) {
+        console.warn('[OfflineAuth] Failed to unwrap server-hash secret:', e.message);
+        return null;
+    }
+}
+
 async function _saveAuthRecordLocal({ mode, password, secret, token }) {
     const salt         = _randomSalt();
     const passwordHash = await _pbkdf2Hash(password, salt);
@@ -169,11 +207,21 @@ async function _saveAuthRecordLocal({ mode, password, secret, token }) {
 async function _saveAuthRecordFromServerHash({ mode, passwordHash, secret, token }) {
     const db = await _openAuthDB();
 
+    // Previously `secret` was received but never stored, so offline login
+    // for these records had no wrappedSecret to unwrap and silently fell
+    // back to using the typed password as the decryption key — which is
+    // NOT the same as the real secret, so every file/photo failed to
+    // decrypt offline. Wrap it (keyed off the server passwordHash, since
+    // that's all we have for members whose plaintext password we never see)
+    // so it can be correctly recovered at offline-login time.
+    const wrappedSecret = secret ? await _wrapSecretWithHash(secret, passwordHash) : '';
+
     return new Promise((res, rej) => {
         const tx = db.transaction('vault_auth', 'readwrite');
         tx.objectStore('vault_auth').put({
             id:           mode + '-sha256',
             passwordHash,
+            wrappedSecret,
             algo:         'sha256-server',
             token:        token || '',
             mode,
@@ -615,7 +663,20 @@ async function offlineLogin(_ignored, password) {
 // ── Internal helpers ───────────────────────────────────────────────────────
 
 async function _restoreSession(record, passwordFallback) {
-    const secret = await _unwrapSecret(record.wrappedSecret, passwordFallback);
+    let secret = null;
+
+    if (record.algo === 'sha256-server' && record.wrappedSecret) {
+        // Full-sync record — unwrap using the server passwordHash as the key.
+        secret = await _unwrapSecretWithHash(record.wrappedSecret, record.passwordHash);
+    }
+
+    if (secret === null) {
+        // Own-login record (w1: PBKDF2-from-password), or a server-hash
+        // record with no wrappedSecret at all (older cached data saved
+        // before this fix) — fall back to the previous behavior.
+        secret = await _unwrapSecret(record.wrappedSecret, passwordFallback);
+    }
+
     window.masterPassword = String(secret);
     window.VAULT_MODE     = record.mode || record.id;
     sessionStorage.setItem('vaultMode', window.VAULT_MODE);
@@ -775,24 +836,55 @@ async function idbGetVaultMeta() {
 }
 
 // ── Trust device session restore ──────────────────────────────────────────
+// Unwraps a secret written by features.js's _wrapTrustSecret() into
+// vaultTrustInfo.secret. Must match that function's format exactly:
+// salt(16) + iv(12) + ciphertext, AES-GCM key from PBKDF2(_getDeviceKey()+salt).
+async function _unwrapTrustSecret(wrapped) {
+    if (!wrapped) return '';
+    try {
+        const raw = Uint8Array.from(atob(wrapped), c => c.charCodeAt(0));
+        const salt = raw.slice(0, 16);
+        const iv = raw.slice(16, 28);
+        const ct = raw.slice(28);
+        const deviceKey = typeof _getDeviceKey === 'function' ? _getDeviceKey() : '';
+        const keyMaterial = await crypto.subtle.importKey('raw',
+            new TextEncoder().encode(deviceKey + salt), 'PBKDF2', false, ['deriveBits']);
+        const keyBits = await crypto.subtle.deriveBits(
+            { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 100000 },
+            keyMaterial, 256);
+        const key = await crypto.subtle.importKey('raw', new Uint8Array(keyBits),
+            { name: 'AES-GCM' }, false, ['decrypt']);
+        const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+        return new TextDecoder().decode(pt);
+    } catch (e) {
+        console.warn('[OfflineAuth] Failed to unwrap trust secret:', e.message);
+        return '';
+    }
+}
+
 async function restoreTrustSession() {
     try {
         const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
         if (!trust || !trust.member) return false;
         const modeToId = { shineil:'SHINEIL', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
         const mode = sessionStorage.getItem('vaultMode') || modeToId[trust.member] || 'ADMIN';
-        // Trust device restore uses localStorage trust info
-        // (IDB records no longer store raw secrets — they are encrypted with the user password)
+        // trust.secret is encrypted (see features.js _wrapTrustSecret) — never
+        // stored or used raw. Unwrap it here before assigning to masterPassword.
         if (trust.secret) {
-            window.masterPassword = String(trust.secret);
-            window.VAULT_MODE = mode;
-            sessionStorage.setItem('vaultMode', window.VAULT_MODE);
-            if (trust.token) {
-                sessionStorage.setItem('vaultSessionToken', trust.token);
-                sessionStorage.setItem('vaultSession', trust.token);
+            const secret = await _unwrapTrustSecret(trust.secret);
+            if (secret) {
+                window.masterPassword = secret;
+                window.VAULT_MODE = mode;
+                sessionStorage.setItem('vaultMode', window.VAULT_MODE);
+                if (trust.token) {
+                    sessionStorage.setItem('vaultSessionToken', trust.token);
+                    sessionStorage.setItem('vaultSession', trust.token);
+                }
+                console.log('[OfflineAuth] Trust session restored from vaultTrustInfo.secret');
+                return true;
             }
-            console.log('[OfflineAuth] Trust session restored from vaultTrustInfo.secret');
-            return true;
+            console.warn('[OfflineAuth] restoreTrustSession: could not unwrap stored secret');
+            return false;
         }
         console.warn('[OfflineAuth] restoreTrustSession: no secret found in IDB or trust info');
         return false;
