@@ -9,8 +9,8 @@ window.__deviceIntegrity = (function () {
   const BEHAVIOR_LOG = [];
   var PAGE_LOAD_TIME = Date.now();
 
-  function flag(rule, detail) {
-    FLAGS.push({ rule, detail, severity: 'high', ts: Date.now() });
+  function flag(rule, detail, severity) {
+    FLAGS.push({ rule, detail, severity: severity || 'high', ts: Date.now() });
   }
 
   function check(name, fn) {
@@ -36,6 +36,96 @@ window.__deviceIntegrity = (function () {
     localStorage.removeItem(TRUSTED_KEY);
   }
 
+  // ── SECRET-GATED MANUAL TRUST TOGGLE ─────────────────────────────
+  // Previously Ctrl+Shift+D flipped trust instantly with NO authentication —
+  // anyone with keyboard access to the login page could self-trust and
+  // bypass every bot/automation check below. Now the gesture only OPENS
+  // a prompt; trust is granted only if the entered secret's SHA-256 hash
+  // matches TRUST_SECRET_HASH.
+  //
+  // ⚠️ Set your own secret before relying on this:
+  //   1. Open password-hash.html (already in this project)
+  //   2. Type a secret phrase only you know (not your vault password)
+  //   3. Copy the resulting SHA-256 hash and paste it below
+  var TRUST_SECRET_HASH = 'REPLACE_WITH_YOUR_OWN_SHA256_HASH';
+
+  async function _sha256(text) {
+    if (window.sha256) return window.sha256(text);
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  function tryUnlockTrust(secret) {
+    if (!secret) return Promise.resolve(false);
+    return _sha256(secret.trim()).then(function (hash) {
+      if (TRUST_SECRET_HASH === 'REPLACE_WITH_YOUR_OWN_SHA256_HASH') {
+        alert('⚠️ Trust secret not configured yet.\nSet TRUST_SECRET_HASH in device-integrity.js first (see comment above it).');
+        return false;
+      }
+      if (hash === TRUST_SECRET_HASH) {
+        if (isTrusted()) {
+          unmarkTrusted();
+          alert('🔴 Trusted device removed. Aggressive checks active.');
+        } else {
+          markTrusted();
+          alert('🟢 Device trusted. Checks bypassed.');
+        }
+        return true;
+      }
+      alert('❌ Incorrect secret.');
+      return false;
+    });
+  }
+
+  function openTrustPrompt() {
+    if (document.getElementById('__diTrustModal')) return;
+
+    var overlay = document.createElement('div');
+    overlay.id = '__diTrustModal';
+    overlay.style.cssText =
+      'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.65);' +
+      'display:flex;align-items:center;justify-content:center;padding:20px;';
+
+    overlay.innerHTML =
+      '<div style="background:#111827;border:1px solid #2563eb;border-radius:14px;' +
+      'padding:22px;max-width:320px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.5);font-family:inherit;">' +
+        '<div style="font-weight:800;color:#fff;font-size:15px;margin-bottom:6px;">🔒 Device Trust</div>' +
+        '<div style="font-size:12px;color:#94a3b8;margin-bottom:14px;line-height:1.5;">' +
+          'Enter your device-trust secret to mark or unmark this device as trusted.</div>' +
+        '<input id="__diTrustInput" type="password" placeholder="Trust secret" ' +
+          'style="width:100%;padding:10px;border-radius:8px;border:1px solid #374151;' +
+          'background:#0b1220;color:#fff;font-size:14px;box-sizing:border-box;margin-bottom:12px;" autocomplete="off">' +
+        '<div style="display:flex;gap:8px;">' +
+          '<button id="__diTrustCancel" style="flex:1;padding:10px;border-radius:8px;border:none;' +
+            'background:#374151;color:#fff;font-weight:700;font-size:13px;cursor:pointer;">Cancel</button>' +
+          '<button id="__diTrustSubmit" style="flex:1;padding:10px;border-radius:8px;border:none;' +
+            'background:#2563eb;color:#fff;font-weight:700;font-size:13px;cursor:pointer;">Confirm</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+
+    var input = document.getElementById('__diTrustInput');
+    input.focus();
+
+    function close() { overlay.remove(); }
+
+    document.getElementById('__diTrustCancel').addEventListener('click', close);
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+
+    function submit() {
+      var val = input.value;
+      close();
+      tryUnlockTrust(val);
+    }
+
+    document.getElementById('__diTrustSubmit').addEventListener('click', submit);
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') submit();
+      if (e.key === 'Escape') close();
+    });
+  }
+
   // ── 1. AUTOMATION / BOT ──────────────────────────────────────────
   check('webdriver', function () {
     if (navigator.webdriver === true)
@@ -54,17 +144,17 @@ window.__deviceIntegrity = (function () {
 
   check('no-plugins', function () {
     if (!navigator.plugins || navigator.plugins.length === 0)
-      flag('no-plugins', 'navigator.plugins empty/missing');
+      flag('no-plugins', 'navigator.plugins empty/missing', 'medium');
   });
 
   check('no-mimetypes', function () {
     if (!navigator.mimeTypes || navigator.mimeTypes.length === 0)
-      flag('no-mimetypes', 'navigator.mimeTypes empty/missing');
+      flag('no-mimetypes', 'navigator.mimeTypes empty/missing', 'medium');
   });
 
   check('no-languages', function () {
     if (!navigator.languages || navigator.languages.length === 0)
-      flag('no-languages', 'navigator.languages empty');
+      flag('no-languages', 'navigator.languages empty', 'medium');
   });
 
   check('headless-ua', function () {
@@ -74,24 +164,24 @@ window.__deviceIntegrity = (function () {
 
   check('pdf-viewer-disabled', function () {
     if (navigator.pdfViewerEnabled === false)
-      flag('pdf-viewer-disabled', 'navigator.pdfViewerEnabled is false');
+      flag('pdf-viewer-disabled', 'navigator.pdfViewerEnabled is false', 'medium');
   });
 
   check('webdriver-nav', function () {
     if (navigator.webdriver !== undefined && navigator.webdriver !== null)
-      flag('webdriver-nav', 'navigator.webdriver property present');
+      flag('webdriver-nav', 'navigator.webdriver property present', 'medium');
   });
 
   check('modified-prototypes', function () {
     try {
       if (document.__proto__.toString().indexOf('Document') === -1)
-        flag('modified-prototypes', 'Document prototype modified');
+        flag('modified-prototypes', 'Document prototype modified', 'medium');
     } catch (e) {}
   });
 
   check('performance-memory', function () {
     if (performance.memory === undefined && testUA(/chrome|chromium|crios/))
-      flag('performance-memory', 'performance.memory missing in Chrome');
+      flag('performance-memory', 'performance.memory missing in Chrome', 'medium');
   });
 
   // ── 2. EMULATOR ──────────────────────────────────────────────────
@@ -110,17 +200,17 @@ window.__deviceIntegrity = (function () {
       var ua = (navigator.userAgent || '').toLowerCase();
       var plat = (navigator.platform || '').toLowerCase();
       if (testUA(/iphone|ipad|ipod/) && plat.indexOf('mac') === -1 && plat.indexOf('iphone') === -1)
-        flag('ua-platform-mismatch', 'iOS UA but platform is not iOS');
+        flag('ua-platform-mismatch', 'iOS UA but platform is not iOS', 'medium');
       if (testUA(/android/) && plat.indexOf('win') !== -1)
-        flag('ua-platform-mismatch', 'Android UA but platform is Windows');
+        flag('ua-platform-mismatch', 'Android UA but platform is Windows', 'medium');
       if (testUA(/mobile|android/) && plat.indexOf('linux') !== -1 && !testUA(/android/))
-        flag('ua-platform-mismatch', 'Mobile UA but platform is Linux');
+        flag('ua-platform-mismatch', 'Mobile UA but platform is Linux', 'medium');
     } catch (e) {}
   });
 
   check('subsystem-android', function () {
     if (testUA(/subsystem for android|wsa/i))
-      flag('subsystem-android', 'Windows Subsystem for Android detected');
+      flag('subsystem-android', 'Windows Subsystem for Android detected', 'medium');
   });
 
   // ── 3. DEBUGGER ──────────────────────────────────────────────────
@@ -171,35 +261,35 @@ window.__deviceIntegrity = (function () {
   // ── 4. VM / ENVIRONMENT ──────────────────────────────────────────
   check('cores-undefined', function () {
     if (navigator.hardwareConcurrency === undefined)
-      flag('cores-undefined', 'hardwareConcurrency undefined');
+      flag('cores-undefined', 'hardwareConcurrency undefined', 'medium');
   });
 
   check('cores-power-of-two', function () {
     var c = navigator.hardwareConcurrency;
     if (c !== undefined && c > 0 && (c & (c - 1)) === 0 && c <= 4)
-      flag('cores-power-of-two', 'Cores is power-of-two (' + c + ') — common VM allocation');
+      flag('cores-power-of-two', 'Cores is power-of-two (' + c + ') — common VM allocation', 'medium');
   });
 
   check('memory-undefined', function () {
     if (navigator.deviceMemory === undefined)
-      flag('memory-undefined', 'deviceMemory undefined');
+      flag('memory-undefined', 'deviceMemory undefined', 'medium');
   });
 
   check('vm-resolution', function () {
     var w = screen.width, h = screen.height;
     if ((w === 1024 && h === 768) || (w === 800 && h === 600) || (w === 1152 && h === 864))
-      flag('vm-resolution', w + 'x' + h + ' — typical VM resolution');
+      flag('vm-resolution', w + 'x' + h + ' — typical VM resolution', 'medium');
   });
 
   check('screen-avail-ratio', function () {
     if (screen.availWidth && screen.width && (screen.availWidth / screen.width) > 0.98)
-      flag('screen-avail-ratio', 'Taskbar unobtrusive — VM pattern');
+      flag('screen-avail-ratio', 'Taskbar unobtrusive — VM pattern', 'medium');
   });
 
   check('product-sub', function () {
     try {
       if (navigator.productSub && navigator.productSub !== '20030107')
-        flag('product-sub', 'navigator.productSub is not 20030107');
+        flag('product-sub', 'navigator.productSub is not 20030107', 'medium');
     } catch (e) {}
   });
 
@@ -278,12 +368,12 @@ window.__deviceIntegrity = (function () {
   // ── 8. BEHAVIORAL: TAB / FOCUS ───────────────────────────────────
   check('hidden-tab', function () {
     if (document.visibilityState === 'hidden')
-      flag('hidden-tab', 'Tab is hidden during login attempt');
+      flag('hidden-tab', 'Tab is hidden during login attempt', 'medium');
   });
 
   check('no-focus', function () {
     if (document.hasFocus && !document.hasFocus())
-      flag('no-focus', 'Window does not have focus during login');
+      flag('no-focus', 'Window does not have focus during login', 'medium');
   });
 
   check('instant-interaction', function () {
@@ -324,7 +414,7 @@ window.__deviceIntegrity = (function () {
     var md = analyzeMousePattern();
     if (md) {
       if (md.noMovement)
-        flag('no-mouse-movement', 'Zero mouse movement before login');
+        flag('no-mouse-movement', 'Zero mouse movement before login', 'medium');
       else if (md.teleports > 1)
         flag('mouse-teleport', md.teleports + ' mouse teleports');
       BEHAVIOR_LOG.push('mouse samples=' + md.samples + ' teleports=' + (md.teleports || 0) + ' noMove=' + (md.noMovement || false));
@@ -369,6 +459,7 @@ window.__deviceIntegrity = (function () {
     isTrusted: isTrusted,
     markTrusted: markTrusted,
     unmarkTrusted: unmarkTrusted,
+    openTrustPrompt: openTrustPrompt,
     getFlags: function () { return FLAGS.slice(); },
     getBehaviorLog: function () { return BEHAVIOR_LOG.slice(); }
   };
@@ -381,17 +472,35 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!di) return;
   di.startBehavioralMonitoring();
 
-  // Ctrl+Shift+D toggle trusted status
+  // Ctrl+Shift+D (desktop) — opens the secret-gated trust prompt.
+  // No longer toggles trust instantly; see openTrustPrompt() above.
   document.addEventListener('keydown', function (e) {
     if (e.ctrlKey && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
       e.preventDefault();
-      if (di.isTrusted()) {
-        di.unmarkTrusted();
-        alert('🔴 Trusted device removed. Aggressive checks active.');
-      } else {
-        di.markTrusted();
-        alert('🟢 Device trusted. Checks bypassed.');
-      }
+      di.openTrustPrompt();
     }
   });
+
+  // Mobile equivalent — 5 taps on the vault logo within 2 seconds.
+  // Ctrl+Shift+D doesn't exist on a touchscreen, so this hidden tap
+  // gesture opens the same secret-gated prompt instead.
+  (function setupMobileTrustGesture() {
+    var logo = document.querySelector('.main-logo-container');
+    if (!logo) return;
+
+    var tapCount = 0;
+    var tapResetTimer = null;
+
+    logo.addEventListener('click', function () {
+      tapCount++;
+      clearTimeout(tapResetTimer);
+      tapResetTimer = setTimeout(function () { tapCount = 0; }, 2000);
+
+      if (tapCount >= 5) {
+        tapCount = 0;
+        clearTimeout(tapResetTimer);
+        di.openTrustPrompt();
+      }
+    });
+  })();
 });
