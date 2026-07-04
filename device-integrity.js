@@ -40,7 +40,7 @@ window.__deviceIntegrity = (function () {
   // Previously Ctrl+Shift+D flipped trust instantly with NO authentication —
   // anyone with keyboard access to the login page could self-trust and
   // bypass every bot/automation check below. Now the gesture only OPENS
-  // a prompt; trust is granted only if the entered secret's SHA-256 hash
+  // a prompt; trust is auto-granted only if the entered secret's SHA-256 hash
   // matches TRUST_SECRET_HASH.
   //
   // ⚠️ Set your own secret before relying on this:
