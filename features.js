@@ -1713,3 +1713,300 @@ document.addEventListener('click', function(e) {
   s.textContent = `@keyframes notifBubblePop { from { opacity:0; transform:scale(.85) translateY(-6px); } to { opacity:1; transform:scale(1) translateY(0); } }`;
   document.head.appendChild(s);
 })();
+
+// ── EXPORT VAULT BACKUP (JSON) ─────────────────────────────────────────
+function exportVaultBackup() {
+  try {
+    const data = window.allFilesData || {};
+    const meta = {
+      exportedAt: new Date().toISOString(),
+      totalCategories: Object.keys(data).length,
+      totalFiles: Object.values(data).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0),
+      categories: {}
+    };
+    Object.keys(data).forEach(function(cat) {
+      meta.categories[cat] = Array.isArray(data[cat]) ? data[cat].length : 0;
+    });
+    const payload = JSON.stringify({ metadata: meta, files: data }, null, 2);
+    const blob = new Blob([payload], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'vault-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    console.error('exportVaultBackup failed:', e);
+    alert('Export failed: ' + e.message);
+  }
+}
+
+// ── DARK MODE TOGGLE ────────────────────────────────────────────────────
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('vaultDarkMode', isDark ? '1' : '0');
+  const btn = document.getElementById('toggle-dark-mode');
+  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+}
+
+// Restore dark mode on page load
+(function() {
+  if (localStorage.getItem('vaultDarkMode') === '1') {
+    document.body.classList.add('dark-mode');
+    const btn = document.getElementById('toggle-dark-mode');
+    if (btn) btn.textContent = '☀️';
+  }
+  // Also listen for when the button is dynamically re-created
+  const obs = new MutationObserver(function() {
+    const btn = document.getElementById('toggle-dark-mode');
+    if (btn && !btn.dataset.darkInit) {
+      btn.dataset.darkInit = '1';
+      if (document.body.classList.contains('dark-mode')) {
+        btn.textContent = '☀️';
+      }
+    }
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+})();
+
+// ── QUICK NOTES ─────────────────────────────────────────────────────────
+var _notesEditingId = null;
+
+function _notesKey() { return window.masterPassword || 'vault-default-notes-key'; }
+
+function _notesEncrypt(text) {
+  if (!text) return '';
+  try {
+    var key = _notesKey();
+    var b64 = btoa(unescape(encodeURIComponent(text)));
+    var xor = '';
+    for (var i = 0; i < b64.length; i++) {
+      xor += String.fromCharCode(b64.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return btoa(unescape(encodeURIComponent(xor)));
+  } catch(e) { return text; }
+}
+
+function _notesDecrypt(enc) {
+  if (!enc) return '';
+  try {
+    var key = _notesKey();
+    var xor = decodeURIComponent(escape(atob(enc)));
+    var b64 = '';
+    for (var i = 0; i < xor.length; i++) {
+      b64 += String.fromCharCode(xor.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return decodeURIComponent(escape(atob(b64)));
+  } catch(e) { return enc; }
+}
+
+function _getNotes() {
+  try { return JSON.parse(localStorage.getItem('vaultNotes') || '[]'); } catch(e) { return []; }
+}
+
+function _saveNotes(notes) {
+  localStorage.setItem('vaultNotes', JSON.stringify(notes));
+}
+
+function openNotesModal() {
+  document.getElementById('notesModal').style.display = 'block';
+  renderNotesList();
+}
+
+function closeNotesModal() {
+  document.getElementById('notesModal').style.display = 'none';
+}
+
+function renderNotesList() {
+  var list = document.getElementById('notesList');
+  var notes = _getNotes();
+  var q = (document.getElementById('notesSearch').value || '').toLowerCase();
+  if (q) notes = notes.filter(function(n) { return (n.title||'').toLowerCase().includes(q) || (n.content||'').toLowerCase().includes(q) || (n.category||'').toLowerCase().includes(q); });
+  if (!notes.length) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">No notes yet. Click "+ New Note" to create one.</div>';
+    return;
+  }
+  list.innerHTML = notes.slice().reverse().map(function(n) {
+    var decrypted = _notesDecrypt(n.content || '');
+    var preview = decrypted.slice(0, 80);
+    return '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="editNote(\'' + n.id + '\')">' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-weight:700;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(n.title || 'Untitled') + '</div>' +
+        '<div style="font-size:12px;color:var(--muted);margin-top:3px;">' + escHtml(preview) + (preview.length < decrypted.length ? '…' : '') + '</div>' +
+        '<div style="font-size:11px;color:var(--accent);margin-top:4px;">' + escHtml(n.category || 'General') + '</div>' +
+      '</div>' +
+      '<button onclick="event.stopPropagation();deleteNote(\'' + n.id + '\')" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px;color:var(--danger);">🗑️</button>' +
+    '</div>';
+  }).join('');
+}
+
+function showNoteEditor() {
+  _notesEditingId = null;
+  document.getElementById('noteEditorTitle').textContent = '✏️ New Note';
+  document.getElementById('noteTitle').value = '';
+  document.getElementById('noteContent').value = '';
+  document.getElementById('noteCategory').value = 'General';
+  document.getElementById('notesModal').style.display = 'none';
+  document.getElementById('noteEditorModal').style.display = 'block';
+}
+
+function editNote(id) {
+  var notes = _getNotes();
+  var n = notes.find(function(x) { return x.id === id; });
+  if (!n) return;
+  _notesEditingId = id;
+  document.getElementById('noteEditorTitle').textContent = '✏️ Edit Note';
+  document.getElementById('noteTitle').value = n.title || '';
+  document.getElementById('noteContent').value = _notesDecrypt(n.content || '');
+  document.getElementById('noteCategory').value = n.category || 'General';
+  document.getElementById('notesModal').style.display = 'none';
+  document.getElementById('noteEditorModal').style.display = 'block';
+}
+
+function closeNoteEditor() {
+  document.getElementById('noteEditorModal').style.display = 'none';
+  document.getElementById('notesModal').style.display = 'block';
+  renderNotesList();
+}
+
+function saveCurrentNote() {
+  var title = document.getElementById('noteTitle').value.trim() || 'Untitled';
+  var content = document.getElementById('noteContent').value.trim();
+  var category = document.getElementById('noteCategory').value;
+  if (!content) { alert('Please enter some content.'); return; }
+  var notes = _getNotes();
+  if (_notesEditingId) {
+    var idx = notes.findIndex(function(x) { return x.id === _notesEditingId; });
+    if (idx >= 0) {
+      notes[idx].title = title;
+      notes[idx].content = _notesEncrypt(content);
+      notes[idx].category = category;
+      notes[idx].updatedAt = Date.now();
+    }
+  } else {
+    notes.push({
+      id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8),
+      title: title,
+      content: _notesEncrypt(content),
+      category: category,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
+  }
+  _saveNotes(notes);
+  closeNoteEditor();
+  document.getElementById('notesModal').style.display = 'block';
+  renderNotesList();
+}
+
+function deleteNote(id) {
+  if (!confirm('Delete this note?')) return;
+  var notes = _getNotes().filter(function(x) { return x.id !== id; });
+  _saveNotes(notes);
+  renderNotesList();
+}
+
+// Auto-decrypt notes on render (already handled in renderNotesList via preview)
+// Full content is decrypted when editing
+// On page load, ensure notes are accessible
+(function() {
+  // Add stub for openNotesModal if JS loads before features.js is done
+  if (typeof window.__stub_openNotesModal !== 'undefined') {
+    window.openNotesModal = function() {
+      document.getElementById('notesModal').style.display = 'block';
+      renderNotesList();
+    };
+  }
+})();
+
+// ── BULK DOWNLOAD ZIP ────────────────────────────────────────────────────
+function getSelectedFiles() {
+  var checks = document.querySelectorAll('.bulk-check:checked');
+  var files = [];
+  checks.forEach(function(cb) {
+    try { files.push(JSON.parse(cb.dataset.file)); } catch(e) {}
+  });
+  return files;
+}
+
+function updateBulkToolbar() {
+  var selected = getSelectedFiles();
+  var toolbar = document.getElementById('bulk-toolbar');
+  var countEl = document.getElementById('bulk-count');
+  var zipBtn = document.getElementById('download-zip-btn');
+  if (toolbar) toolbar.style.display = 'flex';
+  if (countEl) countEl.textContent = selected.length + ' selected';
+  if (zipBtn) zipBtn.style.display = selected.length ? 'inline-flex' : 'none';
+}
+
+function selectAllFiles() {
+  document.querySelectorAll('.bulk-check').forEach(function(cb) { cb.checked = true; });
+  updateBulkToolbar();
+}
+
+function clearFileSelection() {
+  document.querySelectorAll('.bulk-check').forEach(function(cb) { cb.checked = false; });
+  updateBulkToolbar();
+}
+
+async function downloadSelectedAsZip() {
+  var files = getSelectedFiles();
+  if (!files.length) return;
+  if (typeof JSZip === 'undefined') {
+    alert('JSZip library not loaded yet. Please refresh and try again.');
+    return;
+  }
+  var zip = new JSZip();
+  var token = sessionStorage.getItem('vaultSession') || sessionStorage.getItem('vaultSessionToken') || '';
+  var total = files.length;
+  var done = 0;
+  var failed = [];
+
+  // Show progress
+  var btn = document.getElementById('download-zip-btn');
+  var origText = btn ? btn.textContent : '';
+  if (btn) btn.textContent = '⏳ 0/' + total;
+
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    try {
+      var isPhoto = (f.category && f.category.toUpperCase() === 'PHOTOS');
+      var fetchPath = isPhoto ? 'photos/' + f.file : 'docs/' + f.file;
+      var res = await fetch('https://backend.shinumaths989.workers.dev/' + fetchPath, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) { failed.push(f.name); continue; }
+      var blob = await res.blob();
+      zip.file(f.name, blob);
+      done++;
+      if (btn) btn.textContent = '⏳ ' + i + '/' + total;
+    } catch(e) {
+      failed.push(f.name);
+    }
+  }
+
+  if (!done) {
+    alert('Failed to download any files.');
+    if (btn) btn.textContent = origText;
+    return;
+  }
+
+  if (btn) btn.textContent = '📦 Zipping...';
+  var zipBlob = await zip.generateAsync({ type: 'blob' });
+  var url = URL.createObjectURL(zipBlob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'vault-bulk-' + new Date().toISOString().slice(0, 10) + '.zip';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  if (btn) btn.textContent = origText;
+  var msg = '✅ Downloaded ' + done + ' of ' + total + ' files';
+  if (failed.length) msg += '\n⚠️ Failed: ' + failed.join(', ');
+  alert(msg);
+  clearFileSelection();
+}
