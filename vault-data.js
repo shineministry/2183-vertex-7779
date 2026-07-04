@@ -679,6 +679,9 @@ visibleFiles.forEach(file=>{
         const isPinned = pinnedDocs.some(p => p.file === file.file);
 
         card.innerHTML = `
+        <label class="bulk-check-label" onclick="event.stopPropagation();" style="position:absolute;top:8px;left:8px;z-index:2;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.85);padding:2px 6px 2px 4px;border-radius:6px;font-size:11px;cursor:pointer;">
+          <input type="checkbox" class="bulk-check" data-file='${JSON.stringify({name:file.name,file:file.file,category:file.category||category}).replace(/'/g,"&#39;")}' onchange="updateBulkToolbar()" style="cursor:pointer;">
+        </label>
         <div style="
         font-size:48px;
         margin-bottom:12px;">
@@ -946,9 +949,10 @@ async function unifiedSearch(){
         return;
     }
 
-    let results = [];
+    // Determine if query looks like a file type search: ".pdf", "pdf", "jpg", etc.
+    const typeQuery = query.replace(/^\.+/, '');
 
-    // FILE NAME SEARCH
+    let results = [];
 
     Object.keys(allFilesData)
     .forEach(category=>{
@@ -960,19 +964,23 @@ async function unifiedSearch(){
 
         files.forEach(file=>{
 
-            if(
-                file.name
-                .toLowerCase()
-                .includes(query)
-            ){
+            // Search by name, category, or file extension
+            const name   = (file.name   || '').toLowerCase();
+            const cat    = (category    || '').toLowerCase();
+            const ext    = ((file.file  || file.name || '').split('.').pop() || '').toLowerCase();
+            const source = [];
 
-                results.push({
-                    ...file,
-                    category,
-                    source:"Filename"
-                });
+            if (name.includes(query))  source.push('Filename');
+            if (cat.includes(query))   source.push('Category');
+            if (ext.includes(typeQuery) && ext !== typeQuery) source.push('Type');
 
-            }
+            if (source.length === 0) return;
+
+            results.push({
+                ...file,
+                category,
+                source: source.join(', ')
+            });
 
         });
 
