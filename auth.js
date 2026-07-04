@@ -663,6 +663,12 @@ async function submitTOTP() {
     window.VAULT_MODE = result.mode;
     sessionStorage.setItem("vaultMode", result.mode);
 
+    // Successful ADMIN auth is a real, backend-verified credential check —
+    // safe to auto-trust this device on it (no separate secret needed).
+    if (result.mode === "ADMIN" && window.__deviceIntegrity) {
+        window.__deviceIntegrity.markTrusted();
+    }
+
     resetInactivityTimer();
 
        // Derive vaultUser from mode for notification targeting
@@ -1784,6 +1790,12 @@ if (!sessionStorage.getItem('vaultUser')) {
 
             window.VAULT_MODE = result.mode;
             sessionStorage.setItem("vaultMode", result.mode);
+
+            // Successful ADMIN auth is a real, backend-verified credential check —
+            // safe to auto-trust this device on it (no separate secret needed).
+            if (result.mode === "ADMIN" && window.__deviceIntegrity) {
+                window.__deviceIntegrity.markTrusted();
+            }
 
             resetInactivityTimer();
 
