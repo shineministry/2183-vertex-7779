@@ -47,7 +47,7 @@ window.__deviceIntegrity = (function () {
   //   1. Open password-hash.html (already in this project)
   //   2. Type a secret phrase only you know (not your vault password)
   //   3. Copy the resulting SHA-256 hash and paste it below
-  var TRUST_SECRET_HASH = 'REPLACE_WITH_YOUR_OWN_SHA256_HASH';
+  var TRUST_SECRET_HASH = '19c18a3da28f4aa226c42a8d2679f27ec6dbdfe2bc7642694fdb724c70b4f46d';
 
   async function _sha256(text) {
     if (window.sha256) return window.sha256(text);
