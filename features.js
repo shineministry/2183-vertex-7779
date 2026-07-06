@@ -1491,14 +1491,16 @@ async function initVaultNotifications(_retried) {
       body: JSON.stringify({ user: currentUserForSync, vaultUser: currentUserForSync })
     });
 
-    // Session token likely expired (1hr TTL) — silently mint a fresh one and retry once,
-    // same recovery path already used by syncAllMembersOffline().
+    // If already using an offline token, skip the retry — server won't accept it
     if (res.status === 401 && !_retried && typeof _silentReAuth === 'function') {
-      const newToken = await _silentReAuth();
-      if (newToken) {
-        sessionStorage.setItem('vaultSessionToken', newToken);
-        sessionStorage.setItem('vaultSession', newToken);
-        return initVaultNotifications(true);
+      const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
+      if (!token.startsWith('offline-')) {
+        const newToken = await _silentReAuth();
+        if (newToken) {
+          sessionStorage.setItem('vaultSessionToken', newToken);
+          sessionStorage.setItem('vaultSession', newToken);
+          return initVaultNotifications(true);
+        }
       }
     }
 
@@ -1527,7 +1529,12 @@ async function initVaultNotifications(_retried) {
       }
       await new Promise((resolve, reject) => { tx2.oncomplete = resolve; tx2.onerror = reject; });
     } else {
-      console.warn(`[Notifications] get-notifications HTTP ${res.status}: ${await res.text().catch(() => '')}`);
+      const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
+      if (token.startsWith('offline-')) {
+        console.log('[Notifications] Offline token, using local IDB only');
+      } else {
+        console.warn(`[Notifications] get-notifications HTTP ${res.status}: ${await res.text().catch(() => '')}`);
+      }
     }
   } catch (e) {
     console.warn('[Notifications] Server sync failed, using local IDB only:', e.message);
