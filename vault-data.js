@@ -1,5 +1,5 @@
 /* =========================
-   INIT VAULT
+   INIT VAULTS
 ========================= */
 
 async function initVault() {
