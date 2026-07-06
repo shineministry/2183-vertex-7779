@@ -366,7 +366,18 @@ function showRinging(call){
   startCallAlerts(call);
   clearTimeout(ringExpireTimer);
   ringExpireTimer = setTimeout(()=>{
-    if(ringingBlock.style.display === 'flex'){ stopCallAlerts(); recordMissedCall(); showIdle(); }
+    if(ringingBlock.style.display === 'flex'){
+      stopCallAlerts();
+      // Notify worker of timeout
+      if (currentCall && WORKER_URL) {
+        fetch(WORKER_URL + '/api/respond-call/' + currentCall.callId, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'declined' })
+        }).catch(function(){});
+      }
+      recordMissedCall();
+      showIdle();
+    }
   }, 32000); // matches the visitor's 30s wait, plus a small buffer
 }
 
@@ -386,6 +397,13 @@ function acceptCall(){
   clearTimeout(ringExpireTimer);
   stopCallAlerts();
   notifyVisitor('accepted');
+  // Notify worker
+  if (currentCall && WORKER_URL) {
+    fetch(WORKER_URL + '/api/respond-call/' + currentCall.callId, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'accepted' })
+    }).catch(function(){});
+  }
   ringingBlock.style.display='none';
   ringActions.style.display='none';
   badge.style.display='none';
@@ -403,12 +421,25 @@ function declineCall(){
   clearTimeout(ringExpireTimer);
   stopCallAlerts();
   notifyVisitor('declined');
+  // Notify worker
+  if (currentCall && WORKER_URL) {
+    fetch(WORKER_URL + '/api/respond-call/' + currentCall.callId, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'declined' })
+    }).catch(function(){});
+  }
   recordMissedCall();
   showIdle();
 }
 
 function endLiveCall(){
   notifyVisitor('ended');
+  // Notify worker
+  if (currentCall && WORKER_URL) {
+    fetch(WORKER_URL + '/api/end-call/' + currentCall.callId, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }
+    }).catch(function(){});
+  }
   clearInterval(timerInterval);
   endOnly.style.display='none';
   liveBlock.classList.remove('active');
@@ -431,6 +462,102 @@ if(callChannel){
     }
   };
 }
+
+/* =================== PUSH NOTIFICATION SETUP =================== */
+const WORKER_URL = 'https://backend.shinumaths989.workers.dev';
+
+function urlBase64ToUint8Array(base64String) {
+  var padding = '='.repeat((4 - base64String.length % 4) % 4);
+  var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  var raw = atob(base64);
+  var arr = new Uint8Array(raw.length);
+  for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+
+function setupPushNotifications(){
+  if (!WORKER_URL) return;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+  navigator.serviceWorker.register('sw-call.js').then(function(reg){
+    // Listen for messages from the SW (push-call relay)
+    navigator.serviceWorker.addEventListener('message', function(ev){
+      if (!ev.data || ev.data.type !== 'push-call') return;
+      var callId = ev.data.callId;
+      // Check with the worker for active call details
+      fetch(WORKER_URL + '/api/active-call')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          if (!data.active || !data.call) return;
+          showRinging({
+            callId: data.call.callId,
+            name: data.call.name,
+            mode: data.call.mode,
+            country: data.call.country,
+            reason: data.call.reason
+          });
+        })
+        .catch(function(){});
+    });
+
+    // Subscribe to push
+    reg.pushManager.getSubscription().then(function(sub){
+      if (sub) return sub; // already subscribed
+
+      return fetch(WORKER_URL + '/api/vapid-public-key')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          if (!data.publicKey) throw new Error('No VAPID key');
+          return reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(data.publicKey)
+          });
+        });
+    }).then(function(subscription){
+      // Save subscription to the worker
+      fetch(WORKER_URL + '/api/push-subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscription: {
+            endpoint: subscription.endpoint,
+            keys: subscription.toJSON().keys
+          },
+          deviceName: 'Admin Device'
+        })
+      }).catch(function(){});
+    }).catch(function(err){
+      console.warn('[Push] Setup failed:', err);
+    });
+  }).catch(function(err){
+    console.warn('[SW] Registration failed:', err);
+  });
+}
+
+/* ─── Check URL param for callId (opened from notification click) ─── */
+function checkUrlForActiveCall(){
+  var params = new URLSearchParams(window.location.search);
+  var callId = params.get('callId');
+  if (!callId || !WORKER_URL) return;
+  fetch(WORKER_URL + '/api/active-call')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (data.active && data.call && data.call.callId === callId) {
+        showRinging({
+          callId: data.call.callId,
+          name: data.call.name,
+          mode: data.call.mode,
+          country: data.call.country,
+          reason: data.call.reason
+        });
+      }
+    })
+    .catch(function(){});
+}
+
+/* init — push notifications + Active Call check */
+setupPushNotifications();
+checkUrlForActiveCall();
 
 /* init — this page never auto-shows a "call"; it only rings when a real
    BroadcastChannel signal arrives from a visitor's call above. */

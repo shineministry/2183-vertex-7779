@@ -235,6 +235,9 @@
 /* =================== STATE =================== */
 const state = { mode:'', country:'', name:'', purpose:'', detail:'', inputMode:'select' };
 
+/* =================== WORKER URL (set this to your Cloudflare Worker) =================== */
+const WORKER_URL = 'https://backend.shinumaths989.workers.dev';
+
 /* =================== CLOCK =================== */
 function updateClock(){ document.getElementById('clock').textContent = new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
 updateClock(); setInterval(updateClock, 30000);
@@ -701,10 +704,48 @@ function callOwner(){
   activeCallChannel = channel;
   activeCallId = callId;
 
+  // ─── POST to worker API for cross-device push ──────────────────────────
+  let statusPollTimer = null;
+  workerCallId = null;
+  if (WORKER_URL) {
+    fetch(WORKER_URL + '/api/trigger-call', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(callPayload)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (data.success && data.callId) {
+        workerCallId = data.callId;
+        // Poll for status every 2 seconds
+        statusPollTimer = setInterval(function(){
+          fetch(WORKER_URL + '/api/call-status/' + workerCallId)
+            .then(function(r2){ return r2.json(); })
+            .then(function(statusData){
+              if (settled) { clearInterval(statusPollTimer); return; }
+              if (statusData.status === 'accepted') conclude(true);
+              else if (statusData.status === 'declined') conclude(false);
+            })
+            .catch(function(){});
+        }, 2000);
+      }
+    })
+    .catch(function(err){ console.warn('[trigger-call] Worker POST failed:', err); });
+  }
+
   const conclude = (accepted)=>{
     if(settled) return; settled = true;
     stopRingback();
+    if (statusPollTimer) clearInterval(statusPollTimer);
     clearTimeout(waitTimer);
+
+    // Notify worker of end if call was accepted (visitor hung up)
+    if (accepted && workerCallId && WORKER_URL) {
+      fetch(WORKER_URL + '/api/end-call/' + workerCallId, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }
+      }).catch(function(){});
+    }
+
     if(accepted){
       if(ringStatusEl) ringStatusEl.textContent = 'Connected — go ahead';
       speak("You're connected. Go ahead.", ()=>{
@@ -726,20 +767,18 @@ function callOwner(){
       if(e.data.type === 'declined') conclude(false);
       if(e.data.type === 'ended') endLiveCallFromRemote();
     };
-    // This is the ONLY thing that reaches the owner's side — a signal, not a visible page.
-    // admin-incoming-call.html must already be open on the owner's own device to receive it.
     channel.postMessage({ type:'call-request', ...callPayload });
-  } else {
-    // BroadcastChannel unsupported — nothing can ring, so fail gracefully to "not answering"
-    setTimeout(()=>conclude(false), 1200);
   }
 
-  const waitTimer = setTimeout(()=>conclude(false), 30000); // wait up to 30 seconds for the owner to answer
+  const waitTimer = setTimeout(function(){
+    if (!settled) conclude(false);
+  }, 30000); // wait up to 30 seconds for the owner to answer
 }
 
 /* =================== LIVE CALL (stays connected until either side hangs up) =================== */
 let activeCallChannel = null;
 let activeCallId = null;
+let workerCallId = null; // set by callOwner() for worker API path
 let liveCallInterval = null;
 function startLiveCallTimer(){
   let secs = 0;
@@ -773,14 +812,30 @@ function hangUp(){
     activeCallChannel.close();
     activeCallChannel = null; activeCallId = null;
   }
+  // Notify worker (use workerCallId, not local activeCallId)
+  var endId = workerCallId || activeCallId;
+  if (endId && WORKER_URL) {
+    fetch(WORKER_URL + '/api/end-call/' + endId, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }
+    }).catch(function(){});
+  }
   clearInterval(liveCallInterval);
   finishFlow();
 }
+
+
 function resetFlow(){
   answered=false;
   synth && synth.cancel();
   stopAmbientMusic();
   stopRingback();
+  // Notify worker if we had a live call
+  var endId = workerCallId || activeCallId;
+  if (endId && WORKER_URL && !activeCallChannel) {
+    fetch(WORKER_URL + '/api/end-call/' + endId, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }
+    }).catch(function(){});
+  }
   Object.keys(state).forEach(k=>state[k]= k==='inputMode' ? 'select' : '');
   const ci=document.getElementById('countryInput'); if(ci) ci.value='';
   const ni=document.getElementById('nameInput'); if(ni) ni.value='';
