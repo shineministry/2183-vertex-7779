@@ -1420,7 +1420,7 @@ function getCurrentVaultMember() {
   const map = {
     SHINEIL: 'shineil',
     KEVIN: 'brother',
-    OFFICIAL: 'official',
+    OFFICIAL: null, // show all members files
     PARENTS: 'father',
     SHINEIL_PARENTS: 'shineil',
     KEVIN_PARENTS: 'brother',
@@ -1958,13 +1958,43 @@ async function downloadSelectedAsZip() {
     alert('JSZip library not loaded yet. Please refresh and try again.');
     return;
   }
+
+  // PASSWORD GATE
+  var dlPass = prompt('Enter download password:');
+  if (dlPass === null) return;
+  try {
+    var dlHash = await window.sha256(dlPass);
+    var passRes = await fetch('https://backend.shinumaths989.workers.dev/get-secret', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hash: dlHash })
+    });
+    var passResult = await passRes.json();
+    if (!passResult || !passResult.success) {
+      alert(passResult && passResult.message ? passResult.message : 'Incorrect download password.');
+      return;
+    }
+    // Restore master password from the /get-secret response so decryption works
+    if (!window.masterPassword && passResult.secret) {
+      window.masterPassword = String(passResult.secret);
+    }
+  } catch (fetchErr) {
+    console.error(fetchErr);
+    alert('Could not verify password.');
+    return;
+  }
+
+  if (!window.masterPassword) {
+    alert('Session not unlocked. Log in again to enable offline access.');
+    return;
+  }
+
   var zip = new JSZip();
-  var token = sessionStorage.getItem('vaultSession') || sessionStorage.getItem('vaultSessionToken') || '';
+  var token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
   var total = files.length;
   var done = 0;
   var failed = [];
 
-  // Show progress
   var btn = document.getElementById('download-zip-btn');
   var origText = btn ? btn.textContent : '';
   if (btn) btn.textContent = '⏳ 0/' + total;
@@ -1978,10 +2008,24 @@ async function downloadSelectedAsZip() {
         headers: { 'Authorization': 'Bearer ' + token }
       });
       if (!res.ok) { failed.push(f.name); continue; }
-      var blob = await res.blob();
+      var buffer = await res.arrayBuffer();
+      var decrypted = await decryptBuffer(buffer);
+      if (!decrypted) { failed.push(f.name); continue; }
+      var nameLower = f.name.toLowerCase();
+      var mime = 'application/octet-stream';
+      if (nameLower.endsWith('.pdf')) mime = 'application/pdf';
+      else if (nameLower.endsWith('.jpg') || nameLower.endsWith('.jpeg')) mime = 'image/jpeg';
+      else if (nameLower.endsWith('.png')) mime = 'image/png';
+      else if (nameLower.endsWith('.gif')) mime = 'image/gif';
+      else if (nameLower.endsWith('.webp')) mime = 'image/webp';
+      else if (nameLower.endsWith('.mp4')) mime = 'video/mp4';
+      else if (nameLower.endsWith('.mp3')) mime = 'audio/mpeg';
+      else if (nameLower.endsWith('.json')) mime = 'application/json';
+      else if (nameLower.endsWith('.txt')) mime = 'text/plain';
+      var blob = new Blob([decrypted], { type: mime });
       zip.file(f.name, blob);
       done++;
-      if (btn) btn.textContent = '⏳ ' + i + '/' + total;
+      if (btn) btn.textContent = '⏳ ' + done + '/' + total;
     } catch(e) {
       failed.push(f.name);
     }
@@ -2009,4 +2053,19 @@ async function downloadSelectedAsZip() {
   if (failed.length) msg += '\n⚠️ Failed: ' + failed.join(', ');
   alert(msg);
   clearFileSelection();
+}
+
+function toggleBulkExport() {
+  var toolbar = document.getElementById('bulk-toolbar');
+  if (!toolbar) return;
+  var shown = toolbar.style.display !== 'none' && toolbar.style.display !== '';
+  if (shown) {
+    toolbar.style.display = 'none';
+    clearFileSelection();
+  } else {
+    toolbar.style.display = 'flex';
+    document.querySelectorAll('.bulk-check-label').forEach(function(lbl) {
+      lbl.style.display = 'flex';
+    });
+  }
 }
