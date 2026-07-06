@@ -1318,7 +1318,7 @@ async function sendAIMessage() {
     // If token is an offline placeholder, try silent re-auth for a real one
     if (token.startsWith('offline-') && typeof _silentReAuth === 'function') {
       const fresh = await _silentReAuth();
-      if (fresh) {
+      if (fresh && !fresh.startsWith('offline-')) {
         token = fresh;
         sessionStorage.setItem('vaultSessionToken', fresh);
         sessionStorage.setItem('vaultSession', fresh);
@@ -1337,7 +1337,7 @@ async function sendAIMessage() {
     // If server says unauthorized, try silent re-auth and retry once
     if (res.status === 401 && typeof _silentReAuth === 'function') {
       const fresh = await _silentReAuth();
-      if (fresh) {
+      if (fresh && !fresh.startsWith('offline-')) {
         token = fresh;
         sessionStorage.setItem('vaultSessionToken', fresh);
         sessionStorage.setItem('vaultSession', fresh);
