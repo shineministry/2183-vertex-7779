@@ -451,7 +451,12 @@ async function syncAllMembersOffline(_retried) {
         _updateOfflineProgress(0, members.length);
 
     } catch (fetchErr) {
-        console.warn('[OfflineAuth] /sync-offline-members failed:', fetchErr.message);
+        const _offlineToken = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
+        if (_offlineToken.startsWith('offline-')) {
+            console.log('[OfflineAuth] /sync-offline-members skipped (offline token)');
+        } else {
+            console.warn('[OfflineAuth] /sync-offline-members failed:', fetchErr.message);
+        }
         const is401 = fetchErr.message.includes('401') || fetchErr.message.includes('Unauthorized');
 
         // If unauthorized (and not already a retry), try to silently re-authenticate using stored login hash
@@ -470,8 +475,7 @@ async function syncAllMembersOffline(_retried) {
             }
         }
 
-        const usingOffline = sessionStorage.getItem('vaultSessionToken')?.startsWith('offline-');
-        _setOfflineProgressText(is401 && !_retried && !usingOffline
+        _setOfflineProgressText(is401 && !_retried && !_offlineToken.startsWith('offline-')
             ? '🔑 Session expired — log in again to enable offline access'
             : '⚠️ Sync failed: ' + fetchErr.message);
         _updateOfflineProgress(1, 1);
