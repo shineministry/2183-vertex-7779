@@ -339,7 +339,7 @@ async function _markOfflineSyncComplete() {
     }
 }
 
-// ── Silent re-auth: use stored PBKDF2 record to get a fresh session token ─────
+// ── Silent re-auth: use stored credentials to get a session token ──────────
 async function _silentReAuth() {
     try {
         const db = await _openAuthDB();
@@ -350,20 +350,29 @@ async function _silentReAuth() {
             req.onerror   = () => rej(req.error);
         });
 
-        // Find a pbkdf2 record with a token
-        const record = allRecords.find(r => r.algo === 'pbkdf2-sha256-200k' && r.token && r.token.startsWith('vault_'));
-        if (!record || !record.token) {
-            console.warn('[OfflineAuth] _silentReAuth: no usable token found');
-            return null;
+        // 1) Prefer a pbkdf2 record with a server-issued token — verify it
+        let record = allRecords.find(r => r.algo === 'pbkdf2-sha256-200k' && r.token);
+        if (record && record.token) {
+            const res = await fetch(`${_WORKER_URL}/check-session`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: record.token })
+            });
+            if (res.ok) return record.token;
         }
 
-        // Verify the stored token is still valid by checking with the server
-        const res = await fetch(`${_WORKER_URL}/check-session`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: record.token })
-        });
-        if (res.ok) return record.token;
+        // 2) Fallback: any trusted record → generate an offline token
+        record = allRecords.find(r => r.trusted === true);
+        if (record) {
+            const offlineToken = 'offline-' + crypto.randomUUID();
+            // Persist the token back so subsequent calls don't re-generate
+            const tx = db.transaction('vault_auth', 'readwrite');
+            tx.objectStore('vault_auth').put({ ...record, token: offlineToken });
+            console.log('[OfflineAuth] _silentReAuth: generated offline token for trusted user');
+            return offlineToken;
+        }
+
+        console.warn('[OfflineAuth] _silentReAuth: no usable token or trusted record found');
         return null;
     } catch (e) {
         console.warn('[OfflineAuth] _silentReAuth failed:', e.message);
@@ -451,13 +460,18 @@ async function syncAllMembersOffline(_retried) {
             if (newToken) {
                 sessionStorage.setItem('vaultSessionToken', newToken);
                 sessionStorage.setItem('vaultSession', newToken);
-                console.log('[OfflineAuth] Re-authenticated, retrying sync...');
-                // Retry the sync with the fresh token (pass _retried=true to prevent loops)
-                return await syncAllMembersOffline(true);
+                // Don't retry if we got an offline token — server won't accept it
+                if (newToken.startsWith('offline-')) {
+                    console.log('[OfflineAuth] Offline token generated, skipping server retry');
+                } else {
+                    console.log('[OfflineAuth] Re-authenticated, retrying sync...');
+                    return await syncAllMembersOffline(true);
+                }
             }
         }
 
-        _setOfflineProgressText(is401
+        const usingOffline = sessionStorage.getItem('vaultSessionToken')?.startsWith('offline-');
+        _setOfflineProgressText(is401 && !_retried && !usingOffline
             ? '🔑 Session expired — log in again to enable offline access'
             : '⚠️ Sync failed: ' + fetchErr.message);
         _updateOfflineProgress(1, 1);
