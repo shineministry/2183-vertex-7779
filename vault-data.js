@@ -72,13 +72,15 @@ try {
     allFilesData = data;
 
     const list = document.getElementById('cat-list');
+const _buildMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "VIEWER";
 list.innerHTML = `
   <li id="nav-home" onclick="selectVaultCategory('HOME')" style="font-weight:700;">
     <span style="font-size:15px;">🏠</span><span>HOME</span>
   </li>
+  ${_buildMode !== 'OFFICIAL' ? `
   <li id="nav-profile" onclick="selectVaultCategory('PROFILE')" style="font-weight:700;">
     <span style="font-size:15px;">👤</span><span>PROFILE</span>
-  </li>
+  </li>` : ''}
   <li id="nav-photos" onclick="selectVaultCategory('PHOTOS')" style="font-weight:700;">
     <span style="font-size:15px;">📸</span><span>PHOTOS</span>
   </li>
@@ -1076,7 +1078,7 @@ async function unifiedSearch(){
 // Frontend member keys map to backend member ids as: shineil, brother, father, mother
 const VAULT_MODE_ALLOWED_MEMBERS = {
     ADMIN:           ["shineil", "brother", "father", "mother"],
-    OFFICIAL:        ["shineil"],
+    OFFICIAL:        ["shineil", "brother", "father", "mother"],
     PARENTS:         ["father", "mother"],
     SHINEIL_PARENTS: ["shineil", "father", "mother"],
     KEVIN_PARENTS:   ["brother", "father", "mother"],
@@ -1099,6 +1101,8 @@ function isMemberAllowedForCurrentMode(memberKey) {
 // profile — closes the leak where a non-admin user could view another
 // member's profile by clicking a HOME shortcut even with the dropdown hidden.
 function openMemberProfileGuarded(memberKey) {
+    const _guardMode = getCurrentVaultMode();
+    if (_guardMode === 'OFFICIAL') return; // no-op in official mode (profile hidden)
     if (!isMemberAllowedForCurrentMode(memberKey)) {
         console.warn('[Vault] Blocked profile access for unauthorized member:', memberKey);
         return;
