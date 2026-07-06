@@ -210,6 +210,13 @@
     <div class="conv-body fade-in" id="detailBody"></div>
   </div>
 
+  <!-- LIVE CALL (shown once the owner accepts, until either side hangs up) -->
+  <div class="screen" id="screen-call" style="justify-content:center; align-items:center; text-align:center;">
+    <div class="end-check" style="background:rgba(51,199,102,.15);"><svg viewBox="0 0 24 24" width="26" height="26" fill="none"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" fill="#33C766"/></svg></div>
+    <h2 class="end-title">Connected with Shineil</h2>
+    <p class="end-sub" id="callLiveTimer">00:00</p>
+  </div>
+
   <!-- END -->
   <div class="screen" id="screen-end">
     <div class="end-check"><svg viewBox="0 0 24 24" width="30" height="30" fill="none"><path d="M4 12l5 5L20 6" stroke="#33C766" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -691,16 +698,22 @@ function callOwner(){
   let settled = false;
   let channel = null;
   try{ channel = new BroadcastChannel('shine-vault-call'); }catch(e){ channel = null; }
+  activeCallChannel = channel;
+  activeCallId = callId;
 
   const conclude = (accepted)=>{
     if(settled) return; settled = true;
     stopRingback();
-    if(channel) channel.close();
     clearTimeout(waitTimer);
     if(accepted){
       if(ringStatusEl) ringStatusEl.textContent = 'Connected — go ahead';
-      speak("You're connected. Go ahead.", ()=>setTimeout(()=>finishFlow('Call connected.'), 1400));
+      speak("You're connected. Go ahead.", ()=>{
+        showScreen('screen-call');
+        startLiveCallTimer();
+      });
     } else {
+      if(channel) channel.close();
+      activeCallChannel = null; activeCallId = null;
       if(ringStatusEl) ringStatusEl.textContent = 'Shineil is not answering';
       speak('Shineil is not answering the call right now. You can try calling again later.', ()=>finishFlow('No answer — please try again later.'));
     }
@@ -711,6 +724,7 @@ function callOwner(){
       if(!e.data || e.data.callId !== callId) return;
       if(e.data.type === 'accepted') conclude(true);
       if(e.data.type === 'declined') conclude(false);
+      if(e.data.type === 'ended') endLiveCallFromRemote();
     };
     // This is the ONLY thing that reaches the owner's side — a signal, not a visible page.
     // admin-incoming-call.html must already be open on the owner's own device to receive it.
@@ -723,6 +737,29 @@ function callOwner(){
   const waitTimer = setTimeout(()=>conclude(false), 30000); // wait up to 30 seconds for the owner to answer
 }
 
+/* =================== LIVE CALL (stays connected until either side hangs up) =================== */
+let activeCallChannel = null;
+let activeCallId = null;
+let liveCallInterval = null;
+function startLiveCallTimer(){
+  let secs = 0;
+  const el = document.getElementById('callLiveTimer');
+  clearInterval(liveCallInterval);
+  liveCallInterval = setInterval(()=>{
+    secs++;
+    const m = String(Math.floor(secs/60)).padStart(2,'0');
+    const s = String(secs%60).padStart(2,'0');
+    if(el) el.textContent = `${m}:${s}`;
+  }, 1000);
+}
+function endLiveCallFromRemote(){
+  // Owner ended the call from their side — reflect that here instead of just going silent.
+  clearInterval(liveCallInterval);
+  if(activeCallChannel) activeCallChannel.close();
+  activeCallChannel = null; activeCallId = null;
+  finishFlow('Shineil ended the call. Have a nice day!');
+}
+
 /* =================== END / HANGUP =================== */
 function finishFlow(customSub){
   document.getElementById('screen-end').querySelector('.end-sub').textContent = customSub || 'Have a nice day!';
@@ -730,7 +767,15 @@ function finishFlow(customSub){
   speak('Thank you for calling with us. Have a nice day!');
   setTimeout(resetFlow, 3400);
 }
-function hangUp(){ finishFlow(); }
+function hangUp(){
+  if(activeCallChannel && activeCallId){
+    activeCallChannel.postMessage({ callId: activeCallId, type: 'visitor-ended' });
+    activeCallChannel.close();
+    activeCallChannel = null; activeCallId = null;
+  }
+  clearInterval(liveCallInterval);
+  finishFlow();
+}
 function resetFlow(){
   answered=false;
   synth && synth.cancel();

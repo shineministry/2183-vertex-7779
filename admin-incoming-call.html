@@ -408,6 +408,7 @@ function declineCall(){
 }
 
 function endLiveCall(){
+  notifyVisitor('ended');
   clearInterval(timerInterval);
   endOnly.style.display='none';
   liveBlock.classList.remove('active');
@@ -418,20 +419,22 @@ function endLiveCall(){
    Nothing about this page is ever opened or shown by a visitor's device. */
 if(callChannel){
   callChannel.onmessage = (e)=>{
-    if(!e.data || e.data.type !== 'call-request') return;
-    showRinging({ callId: e.data.callId, name: e.data.name, mode: e.data.mode, country: e.data.country, reason: e.data.reason });
+    if(!e.data) return;
+    if(e.data.type === 'call-request'){
+      showRinging({ callId: e.data.callId, name: e.data.name, mode: e.data.mode, country: e.data.country, reason: e.data.reason });
+    } else if(e.data.type === 'visitor-ended' && currentCall && e.data.callId === currentCall.callId){
+      // Visitor hung up while live — reflect that instead of leaving a dead timer running.
+      clearInterval(timerInterval);
+      endOnly.style.display='none';
+      liveBlock.classList.remove('active');
+      showIdle();
+    }
   };
 }
 
 /* init — this page never auto-shows a "call"; it only rings when a real
    BroadcastChannel signal arrives from a visitor's call above. */
 showIdle();
-
-/* The HTML buttons use inline onclick="acceptCall()" etc, which only look
-   in GLOBAL scope — expose these here or the buttons silently do nothing. */
-window.acceptCall = acceptCall;
-window.declineCall = declineCall;
-window.endLiveCall = endLiveCall;
 
 } // end initAfterUnlock
 </script>
