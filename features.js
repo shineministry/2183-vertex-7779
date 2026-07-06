@@ -2009,13 +2009,21 @@ async function downloadSelectedAsZip() {
   for (var i = 0; i < files.length; i++) {
     var f = files[i];
     try {
-      var isPhoto = (f.category && f.category.toUpperCase() === 'PHOTOS');
-      var fetchPath = isPhoto ? 'photos/' + f.file : 'docs/' + f.file;
-      var res = await fetch('https://backend.shinumaths989.workers.dev/' + fetchPath, {
-        headers: { 'Authorization': 'Bearer ' + token }
-      });
-      if (!res.ok) { failed.push(f.name); continue; }
-      var buffer = await res.arrayBuffer();
+      var buffer = null;
+      // Try IndexedDB cache first (available after offline sync)
+      if (typeof idbGetDoc === 'function') {
+        buffer = await idbGetDoc(f.file).catch(function() { return null; });
+      }
+      // Fall back to server if not cached
+      if (!buffer) {
+        var isPhoto = (f.category && f.category.toUpperCase() === 'PHOTOS');
+        var fetchPath = isPhoto ? 'photos/' + f.file : 'docs/' + f.file;
+        var res = await fetch('https://backend.shinumaths989.workers.dev/' + fetchPath, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) { failed.push(f.name); continue; }
+        buffer = await res.arrayBuffer();
+      }
       var decrypted = await decryptBuffer(buffer);
       if (!decrypted) { failed.push(f.name); continue; }
       var nameLower = f.name.toLowerCase();
@@ -2069,6 +2077,9 @@ function toggleBulkExport() {
   if (shown) {
     toolbar.style.display = 'none';
     clearFileSelection();
+    document.querySelectorAll('.bulk-check-label').forEach(function(lbl) {
+      lbl.style.display = 'none';
+    });
   } else {
     toolbar.style.display = 'flex';
     document.querySelectorAll('.bulk-check-label').forEach(function(lbl) {
