@@ -1,5 +1,5 @@
 /* =========================
-   INIT VAULTS
+   INIT VAULT
 ========================= */
 
 async function initVault() {
@@ -681,7 +681,7 @@ visibleFiles.forEach(file=>{
         const isPinned = pinnedDocs.some(p => p.file === file.file);
 
         card.innerHTML = `
-        <label class="bulk-check-label" onclick="event.stopPropagation();" style="position:absolute;top:8px;left:8px;z-index:2;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.85);padding:2px 6px 2px 4px;border-radius:6px;font-size:11px;cursor:pointer;">
+        <label class="bulk-check-label" onclick="event.stopPropagation();" style="position:absolute;top:8px;left:8px;z-index:2;display:none;align-items:center;gap:4px;background:rgba(255,255,255,.85);padding:2px 6px 2px 4px;border-radius:6px;font-size:11px;cursor:pointer;">
           <input type="checkbox" class="bulk-check" data-file='${JSON.stringify({name:file.name,file:file.file,category:file.category||category}).replace(/'/g,"&#39;")}' onchange="updateBulkToolbar()" style="cursor:pointer;">
         </label>
         <div style="
