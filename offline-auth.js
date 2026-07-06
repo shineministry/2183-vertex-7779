@@ -475,11 +475,21 @@ async function syncAllMembersOffline(_retried) {
             }
         }
 
-        _setOfflineProgressText(is401 && !_retried && !_offlineToken.startsWith('offline-')
-            ? '🔑 Session expired — log in again to enable offline access'
-            : '⚠️ Sync failed: ' + fetchErr.message);
-        _updateOfflineProgress(1, 1);
-    _offlineToastId = setTimeout(_hideOfflineToast, 10000);
+        if (_offlineToken.startsWith('offline-')) {
+            const hasCached = await _isOfflineDataCached();
+            if (hasCached) {
+                _setOfflineProgressDone('✓ Using offline cache');
+            } else {
+                _setOfflineProgressText('ℹ️ No server access — offline data not available');
+                _updateOfflineProgress(1, 1);
+            }
+        } else {
+            _setOfflineProgressText(is401 && !_retried
+                ? '🔑 Session expired — log in again to enable offline access'
+                : '⚠️ Sync failed: ' + fetchErr.message);
+            _updateOfflineProgress(1, 1);
+        }
+        _offlineToastId = setTimeout(_hideOfflineToast, 10000);
         return { synced: 0, failed: [], error: fetchErr.message };
     }
 
