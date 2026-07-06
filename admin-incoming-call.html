@@ -446,6 +446,11 @@ function endLiveCall(){
   showIdle();
 }
 
+// Expose to global scope so inline onclick handlers can reach them
+window.acceptCall = acceptCall;
+window.declineCall = declineCall;
+window.endLiveCall = endLiveCall;
+
 /* Listen for real incoming calls — this is the ONLY thing that makes this screen ring.
    Nothing about this page is ever opened or shown by a visitor's device. */
 if(callChannel){
