@@ -210,9 +210,9 @@
     <div class="conv-body fade-in" id="detailBody"></div>
   </div>
 
-  <!-- LIVE CALL (shown once the owner accepts, until either side hangs up) -->
+  <!-- LIVE CALL (shown once the WebRTC connection is established) -->
   <div class="screen" id="screen-call" style="justify-content:center; align-items:center; text-align:center;">
-    <div class="end-check" style="background:rgba(51,199,102,.15);"><svg viewBox="0 0 24 24" width="26" height="26" fill="none"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" fill="#33C766"/></svg></div>
+    <canvas id="audioWave" width="240" height="60" style="border-radius:12px; margin-bottom:8px; width:240px; height:60px; display:block;"></canvas>
     <h2 class="end-title">Connected with Shineil</h2>
     <p class="end-sub" id="callLiveTimer">00:00</p>
   </div>
@@ -723,8 +723,13 @@ function callOwner(){
             .then(function(r2){ return r2.json(); })
             .then(function(statusData){
               if (settled) { clearInterval(statusPollTimer); return; }
-              if (statusData.status === 'accepted') conclude(true);
-              else if (statusData.status === 'declined') conclude(false);
+              if (statusData.status === 'signaling') {
+                settled = true;
+                stopRingback();
+                if (statusPollTimer) clearInterval(statusPollTimer);
+                clearTimeout(waitTimer);
+                startWebRTC(workerCallId);
+              } else if (statusData.status === 'declined') conclude(false);
             })
             .catch(function(){});
         }, 2000);
@@ -763,7 +768,14 @@ function callOwner(){
   if(channel){
     channel.onmessage = (e)=>{
       if(!e.data || e.data.callId !== callId) return;
-      if(e.data.type === 'accepted') conclude(true);
+      if(e.data.type === 'accepted') {
+        if (settled) return;
+        settled = true;
+        stopRingback();
+        if (statusPollTimer) clearInterval(statusPollTimer);
+        clearTimeout(waitTimer);
+        startWebRTC(workerCallId || callId);
+      }
       if(e.data.type === 'declined') conclude(false);
       if(e.data.type === 'ended') endLiveCallFromRemote();
     };
@@ -794,6 +806,7 @@ function startLiveCallTimer(){
 function endLiveCallFromRemote(){
   // Owner ended the call from their side — reflect that here instead of just going silent.
   clearInterval(liveCallInterval);
+  stopAudioWave();
   if(activeCallChannel) activeCallChannel.close();
   activeCallChannel = null; activeCallId = null;
   finishFlow('Shineil ended the call. Have a nice day!');
@@ -807,6 +820,7 @@ function finishFlow(customSub){
   setTimeout(resetFlow, 3400);
 }
 function hangUp(){
+  stopAudioWave();
   if(activeCallChannel && activeCallId){
     activeCallChannel.postMessage({ callId: activeCallId, type: 'visitor-ended' });
     activeCallChannel.close();
@@ -829,6 +843,7 @@ function resetFlow(){
   synth && synth.cancel();
   stopAmbientMusic();
   stopRingback();
+  stopAudioWave();
   // Notify worker if we had a live call
   var endId = workerCallId || activeCallId;
   if (endId && WORKER_URL && !activeCallChannel) {
@@ -840,6 +855,123 @@ function resetFlow(){
   const ci=document.getElementById('countryInput'); if(ci) ci.value='';
   const ni=document.getElementById('nameInput'); if(ni) ni.value='';
   showScreen('screen-incoming');
+}
+
+/* =================== WEBRTC + AUDIO WAVE =================== */
+var RTC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+var localStream = null, pc = null, waveAnimId = null, audioWaveCtx = null;
+
+function startWebRTC(callId){
+  if (!callId) { showConnected(); return; }
+  navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    .then(function(stream){
+      localStream = stream;
+      pc = new RTCPeerConnection(RTC_CONFIG);
+      stream.getTracks().forEach(function(t){ pc.addTrack(t, stream); });
+      pc.onicecandidate = function(e){
+        if(!e.candidate || !callId) return;
+        fetch(WORKER_URL + '/api/signal/' + callId, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kind:'candidate', side:'visitor', candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex })
+        }).catch(function(){});
+      };
+      pc.ontrack = function(e){
+        var ra = document.createElement('audio');
+        ra.srcObject = e.streams[0]; ra.autoplay = true; ra.style.display = 'none';
+        document.body.appendChild(ra);
+        setupAudioWave(e.streams[0]);
+        showConnected();
+      };
+      pc.createOffer().then(function(o){ return pc.setLocalDescription(o); })
+        .then(function(){
+          return fetch(WORKER_URL + '/api/signal/' + callId, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ kind:'offer', sdp: pc.localDescription.sdp, sdpType: pc.localDescription.type })
+          });
+        })
+        .then(function(){ pollForSignal(callId, 'visitor'); })
+        .catch(function(err){ console.warn('[WebRTC]', err); showConnected(); });
+    })
+    .catch(function(err){ console.warn('[getUserMedia]', err); showConnected(); });
+}
+
+function pollForSignal(callId, side){
+  var lastCandidateCount = 0;
+  var poller = setInterval(function(){
+    fetch(WORKER_URL + '/api/signal/' + callId)
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d.success || !d.signal) return;
+        if(side === 'visitor' && d.signal.answer && pc && !pc.remoteDescription){
+          clearInterval(poller);
+          pc.setRemoteDescription(new RTCSessionDescription({ sdp: d.signal.answer.sdp, type: d.signal.answer.type })).catch(function(){});
+          lastCandidateCount = (d.signal.adminCandidates||[]).length;
+        }
+        if(side === 'admin' && d.signal.offer && pc && !pc.remoteDescription){
+          clearInterval(poller);
+          pc.setRemoteDescription(new RTCSessionDescription({ sdp: d.signal.offer.sdp, type: d.signal.offer.type }))
+            .then(function(){ return pc.createAnswer(); })
+            .then(function(a){ return pc.setLocalDescription(a); })
+            .then(function(){
+              return fetch(WORKER_URL + '/api/signal/' + callId, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ kind:'answer', sdp: pc.localDescription.sdp, sdpType: pc.localDescription.type })
+              });
+            })
+            .catch(function(err){ console.warn('[WebRTC answer]', err); });
+          lastCandidateCount = (d.signal.visitorCandidates||[]).length;
+        }
+        // Add remote candidates if any
+        if(pc && pc.remoteDescription){
+          var remoteCandidates = side === 'visitor' ? (d.signal.adminCandidates||[]) : (d.signal.visitorCandidates||[]);
+          for(var i = lastCandidateCount; i < remoteCandidates.length; i++){
+            var c = remoteCandidates[i];
+            pc.addIceCandidate(new RTCIceCandidate({ candidate: c.candidate, sdpMid: c.sdpMid, sdpMLineIndex: c.sdpMLineIndex })).catch(function(){});
+          }
+          lastCandidateCount = remoteCandidates.length;
+        }
+      })
+      .catch(function(){});
+  }, 1000);
+}
+
+function showConnected(){
+  showScreen('screen-call');
+  startLiveCallTimer();
+}
+
+function setupAudioWave(stream){
+  try{
+    var canvas = document.getElementById('audioWave');
+    if(!canvas) return;
+    var ctx = canvas.getContext('2d');
+    audioWaveCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var src = audioWaveCtx.createMediaStreamSource(stream);
+    var analyser = audioWaveCtx.createAnalyser();
+    analyser.fftSize = 128;
+    src.connect(analyser);
+    var data = new Uint8Array(analyser.frequencyBinCount);
+    document.getElementById('phone').classList.add('speaking');
+    (function draw(){
+      waveAnimId = requestAnimationFrame(draw);
+      analyser.getByteFrequencyData(data);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#D4AF7A';
+      var len = data.length, barW = canvas.width / len * 2.2;
+      for(var i = 0; i < len; i++){
+        var h = (data[i] / 255) * canvas.height;
+        ctx.fillRect(i * (barW + 2) + 4, canvas.height - h, barW, h);
+      }
+    })();
+  }catch(e){ console.warn('[AudioWave]', e); }
+}
+
+function stopAudioWave(){
+  if(waveAnimId){ cancelAnimationFrame(waveAnimId); waveAnimId = null; }
+  if(audioWaveCtx){ audioWaveCtx.close().catch(function(){}); audioWaveCtx = null; }
+  if(localStream){ localStream.getTracks().forEach(function(t){ t.stop(); }); localStream = null; }
+  if(pc){ pc.close(); pc = null; }
+  document.getElementById('phone').classList.remove('speaking');
 }
 </script>
 </body>

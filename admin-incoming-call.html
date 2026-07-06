@@ -132,6 +132,7 @@
   <!-- LIVE CALL -->
   <div class="call-live" id="liveBlock">
     <div class="avatar">👤</div>
+    <canvas id="adminAudioWave" width="240" height="60" style="border-radius:12px; margin-top:10px; width:240px; height:60px; display:block;"></canvas>
     <div class="caller-name" id="liveCallerName">Vault Visitor</div>
     <div class="timer" id="callTimer">00:00</div>
   </div>
@@ -397,24 +398,16 @@ function acceptCall(){
   clearTimeout(ringExpireTimer);
   stopCallAlerts();
   notifyVisitor('accepted');
-  // Notify worker
+  var callId = currentCall ? currentCall.callId : null;
+  // Notify worker (this sets status to "signaling")
   if (currentCall && WORKER_URL) {
     fetch(WORKER_URL + '/api/respond-call/' + currentCall.callId, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'accepted' })
     }).catch(function(){});
   }
-  ringingBlock.style.display='none';
-  ringActions.style.display='none';
-  badge.style.display='none';
-  liveBlock.classList.add('active','fade');
-  endOnly.style.display='flex';
-  timerInterval = setInterval(()=>{
-    seconds++;
-    const m = String(Math.floor(seconds/60)).padStart(2,'0');
-    const s = String(seconds%60).padStart(2,'0');
-    document.getElementById('callTimer').textContent = `${m}:${s}`;
-  }, 1000);
+  // Start WebRTC — don't show live block until media is flowing
+  startAdminWebRTC(callId);
 }
 
 function declineCall(){
@@ -434,7 +427,7 @@ function declineCall(){
 
 function endLiveCall(){
   notifyVisitor('ended');
-  // Notify worker
+  stopAdminWebRTC();
   if (currentCall && WORKER_URL) {
     fetch(WORKER_URL + '/api/end-call/' + currentCall.callId, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }
@@ -459,8 +452,11 @@ if(callChannel){
     if(e.data.type === 'call-request'){
       showRinging({ callId: e.data.callId, name: e.data.name, mode: e.data.mode, country: e.data.country, reason: e.data.reason });
     } else if(e.data.type === 'visitor-ended' && currentCall && e.data.callId === currentCall.callId){
-      // Visitor hung up while live — reflect that instead of leaving a dead timer running.
+      // Visitor hung up — clean up regardless of state
+      clearTimeout(ringExpireTimer);
+      stopCallAlerts();
       clearInterval(timerInterval);
+      stopAdminWebRTC();
       endOnly.style.display='none';
       liveBlock.classList.remove('active');
       showIdle();
@@ -567,6 +563,127 @@ checkUrlForActiveCall();
 /* init — this page never auto-shows a "call"; it only rings when a real
    BroadcastChannel signal arrives from a visitor's call above. */
 showIdle();
+
+/* =================== ADMIN WEBRTC + AUDIO WAVE =================== */
+var ADMIN_RTC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+var adminLocalStream = null, adminPc = null, adminWaveId = null, adminWaveCtx = null;
+
+function pollForSignal(callId, side){
+  var lastCandidateCount = 0;
+  var pollStart = Date.now();
+  var poller = setInterval(function(){
+    // Safety: stop polling if no signal received within 45 seconds
+    if (Date.now() - pollStart > 45000) { clearInterval(poller); stopAdminWebRTC(); showIdle(); return; }
+    fetch(WORKER_URL + '/api/signal/' + callId)
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d.success || !d.signal) return;
+        if(side === 'visitor' && d.signal.answer && adminPc && !adminPc.remoteDescription){
+          clearInterval(poller);
+          adminPc.setRemoteDescription(new RTCSessionDescription({ sdp: d.signal.answer.sdp, type: d.signal.answer.type })).catch(function(){});
+          lastCandidateCount = (d.signal.adminCandidates||[]).length;
+        }
+        if(side === 'admin' && d.signal.offer && adminPc && !adminPc.remoteDescription){
+          clearInterval(poller);
+          adminPc.setRemoteDescription(new RTCSessionDescription({ sdp: d.signal.offer.sdp, type: d.signal.offer.type }))
+            .then(function(){ return adminPc.createAnswer(); })
+            .then(function(a){ return adminPc.setLocalDescription(a); })
+            .then(function(){
+              return fetch(WORKER_URL + '/api/signal/' + callId, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ kind:'answer', sdp: adminPc.localDescription.sdp, sdpType: adminPc.localDescription.type })
+              });
+            })
+            .catch(function(err){ console.warn('[WebRTC answer]', err); });
+          lastCandidateCount = (d.signal.visitorCandidates||[]).length;
+        }
+        if(adminPc && adminPc.remoteDescription){
+          var remoteCandidates = side === 'visitor' ? (d.signal.adminCandidates||[]) : (d.signal.visitorCandidates||[]);
+          for(var i = lastCandidateCount; i < remoteCandidates.length; i++){
+            var c = remoteCandidates[i];
+            adminPc.addIceCandidate(new RTCIceCandidate({ candidate: c.candidate, sdpMid: c.sdpMid, sdpMLineIndex: c.sdpMLineIndex })).catch(function(){});
+          }
+          lastCandidateCount = remoteCandidates.length;
+        }
+      })
+      .catch(function(){});
+  }, 1000);
+}
+
+function startAdminWebRTC(callId){
+  if (!callId) { fallbackShowLive(); return; }
+  navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    .then(function(stream){
+      adminLocalStream = stream;
+      adminPc = new RTCPeerConnection(ADMIN_RTC_CONFIG);
+      stream.getTracks().forEach(function(t){ adminPc.addTrack(t, stream); });
+      adminPc.onicecandidate = function(e){
+        if(!e.candidate || !callId) return;
+        fetch(WORKER_URL + '/api/signal/' + callId, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kind:'candidate', side:'admin', candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex })
+        }).catch(function(){});
+      };
+      adminPc.ontrack = function(e){
+        var ra = document.createElement('audio');
+        ra.srcObject = e.streams[0]; ra.autoplay = true; ra.style.display = 'none';
+        document.body.appendChild(ra);
+        setupAdminAudioWave(e.streams[0]);
+        adminShowLive();
+      };
+      // Poll for the visitor's offer
+      pollForSignal(callId, 'admin');
+    })
+    .catch(function(err){ console.warn('[Admin getUserMedia]', err); fallbackShowLive(); });
+}
+
+function adminShowLive(){
+  ringingBlock.style.display='none';
+  ringActions.style.display='none';
+  badge.style.display='none';
+  liveBlock.classList.add('active','fade');
+  endOnly.style.display='flex';
+  timerInterval = setInterval(function(){
+    seconds++;
+    var m = String(Math.floor(seconds/60)).padStart(2,'0');
+    var s = String(seconds%60).padStart(2,'0');
+    document.getElementById('callTimer').textContent = m + ':' + s;
+  }, 1000);
+}
+
+function fallbackShowLive(){ adminShowLive(); } // show live block even without WebRTC
+
+function setupAdminAudioWave(stream){
+  try{
+    var canvas = document.getElementById('adminAudioWave');
+    if(!canvas) return;
+    var ctx = canvas.getContext('2d');
+    adminWaveCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var src = adminWaveCtx.createMediaStreamSource(stream);
+    var analyser = adminWaveCtx.createAnalyser();
+    analyser.fftSize = 128;
+    src.connect(analyser);
+    var data = new Uint8Array(analyser.frequencyBinCount);
+    (function draw(){
+      adminWaveId = requestAnimationFrame(draw);
+      analyser.getByteFrequencyData(data);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#D4AF7A';
+      var len = data.length, barW = canvas.width / len * 2.2;
+      for(var i = 0; i < len; i++){
+        var h = (data[i] / 255) * canvas.height;
+        ctx.fillRect(i * (barW + 2) + 4, canvas.height - h, barW, h);
+      }
+    })();
+  }catch(e){ console.warn('[AdminAudioWave]', e); }
+}
+
+function stopAdminWebRTC(){
+  if(adminWaveId){ cancelAnimationFrame(adminWaveId); adminWaveId = null; }
+  if(adminWaveCtx){ adminWaveCtx.close().catch(function(){}); adminWaveCtx = null; }
+  if(adminLocalStream){ adminLocalStream.getTracks().forEach(function(t){ t.stop(); }); adminLocalStream = null; }
+  if(adminPc){ adminPc.close(); adminPc = null; }
+}
 
 } // end initAfterUnlock
 </script>
