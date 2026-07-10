@@ -2860,3 +2860,90 @@ body.dark-mode select {
   color:#f1f5f9;
   border-color:#334155;
 }
+
+/* =========================
+   CHECKLIST (modern table)
+   ========================= */
+.vc-card{
+  background:#fff;
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  padding:18px 20px;
+  transition:box-shadow .2s, border-color .2s;
+}
+.vc-card:hover{
+  box-shadow:0 2px 12px rgba(0,0,0,.06);
+  border-color:#cbd5e1;
+}
+.vc-card-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:8px;
+}
+.vc-card-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:15px;
+  font-weight:700;
+  color:#0f172a;
+  flex:1;
+  min-width:0;
+}
+.vc-card-title span{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.vc-card-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-shrink:0;
+}
+.vc-card-desc{
+  font-size:13px;
+  color:#64748b;
+  line-height:1.55;
+  padding-left:26px;
+}
+.vc-status-select{
+  padding:5px 10px;
+  border-radius:6px;
+  border:1px solid #e2e8f0;
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  background:#f8fafc;
+  color:#334155;
+}
+.vc-status-select.vc-status-yes{ background:#dcfce7; color:#166534; border-color:#bbf7d0; }
+.vc-status-select.vc-status-no{  background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+.vc-status-select.vc-status-na{  background:#f1f5f9; color:#475569; border-color:#e2e8f0; }
+.vc-status-select.vc-status-pending{ background:#fffbeb; color:#92400e; border-color:#fde68a; }
+.vc-open-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:6px 12px;
+  border-radius:6px;
+  border:1px solid #3b82f6;
+  background:#3b82f6;
+  color:#fff;
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  transition:background .15s;
+}
+.vc-open-btn:hover{ background:#2563eb; }
+
+/* Dark mode overrides */
+body.dark .vc-card{ background:#1e293b; border-color:#334155; }
+body.dark .vc-card:hover{ border-color:#475569; box-shadow:0 2px 12px rgba(0,0,0,.25); }
+body.dark .vc-card-title{ color:#f1f5f9; }
+body.dark .vc-card-desc{ color:#94a3b8; }
+body.dark .vc-status-select{ background:#0f172a; color:#e2e8f0; border-color:#334155; }
+body.dark .vc-open-btn{ background:#2563eb; border-color:#3b82f6; }
+body.dark .vc-open-btn:hover{ background:#1d4ed8; }

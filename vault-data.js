@@ -24,7 +24,7 @@ try {
             { headers: { "Authorization": "Bearer " + sessionToken }, cache: "no-store" }
         );
 
-        // 🛡️ Firewall / backend errors
+        // Firewall / backend errors
         if (!res.ok) {
             const contentType = res.headers.get('content-type') || '';
             if (contentType.includes('text/html')) {
@@ -75,14 +75,17 @@ try {
 const _buildMode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "VIEWER";
 list.innerHTML = `
   <li id="nav-home" onclick="selectVaultCategory('HOME')" style="font-weight:700;">
-    <span style="font-size:15px;">🏠</span><span>HOME</span>
+    <span style="font-size:15px;"><i data-lucide="home" style="width:15px;height:15px;"></i></span><span>HOME</span>
   </li>
   ${_buildMode !== 'OFFICIAL' ? `
   <li id="nav-profile" onclick="selectVaultCategory('PROFILE')" style="font-weight:700;">
-    <span style="font-size:15px;">👤</span><span>PROFILE</span>
+    <span style="font-size:15px;"><i data-lucide="user" style="width:15px;height:15px;"></i></span><span>PROFILE</span>
   </li>` : ''}
   <li id="nav-photos" onclick="selectVaultCategory('PHOTOS')" style="font-weight:700;">
-    <span style="font-size:15px;">📸</span><span>PHOTOS</span>
+    <span style="font-size:15px;"><i data-lucide="camera" style="width:15px;height:15px;"></i></span><span>PHOTOS</span>
+  </li>
+  <li id="nav-checklist" onclick="selectVaultCategory('CHECKLIST')" style="font-weight:700;">
+    <span style="font-size:15px;"><i data-lucide="check-circle" style="width:15px;height:15px;"></i></span><span>CHECKLIST</span>
   </li>
 `;
 
@@ -99,22 +102,22 @@ list.innerHTML = `
 
     // Category icon map for dark sidebar
     const CAT_ICONS = {
-        'HOME': '🏠', 'PROFILE': '👤', 'Guardian': '👥', 'Visa': '✈️', 'Finance': '💰',
-        'School': '🎓', 'Personal': '👤', 'Residence': '🏡', 'Church': '✝️',
-        'Education': '📚', 'Identity': '🪪', 'Legal': '⚖️', 'Financial': '💳',
-        'Ministry': '🕊️', 'Medical': '🏥', 'Insurance': '🛡️', 'Tax': '📋',
-        'Property': '🏠', 'Vehicle': '🚗', 'Travel': '🌍', 'Work': '💼',
-        'Bank': '🏦', 'Documents': '📄', 'Certificates': '🏅'
+        'HOME': 'home', 'PROFILE': 'user', 'Guardian': 'users', 'Visa': 'plane', 'Finance': 'wallet',
+        'School': 'graduation-cap', 'Personal': 'user', 'Residence': 'house', 'Church': 'cross',
+        'Education': 'book-open', 'Identity': 'contact', 'Legal': 'scale', 'Financial': 'credit-card',
+        'Ministry': 'dove', 'Medical': 'hospital', 'Insurance': 'shield', 'Tax': 'clipboard-list',
+        'Property': 'house', 'Vehicle': 'car', 'Travel': 'globe', 'Work': 'briefcase',
+        'Bank': 'landmark', 'Documents': 'file-text', 'Certificates': 'award'
     };
     function getCatIcon(cat) {
-        return CAT_ICONS[cat] || CAT_ICONS[Object.keys(CAT_ICONS).find(k => cat.toLowerCase().includes(k.toLowerCase()))] || '📁';
+        return CAT_ICONS[cat] || CAT_ICONS[Object.keys(CAT_ICONS).find(k => cat.toLowerCase().includes(k.toLowerCase()))] || 'folder';
     }
 
     categories.forEach(cat => {
     if (cat === 'HOME' || cat === 'PROFILE' || cat === 'PHOTOS') return;
     const li = document.createElement('li');
     const icon = getCatIcon(cat);
-    li.innerHTML = `<span style="font-size:15px;">${icon}</span><span>${escHtml(cat)}</span>`;
+    li.innerHTML = `<span style="font-size:15px;"><i data-lucide="${icon}" style="width:15px;height:15px;"></i></span><span>${escHtml(cat)}</span>`;
     li.onclick = () => {
     if (typeof selectVaultCategory === 'function') {
         selectVaultCategory(cat);
@@ -126,6 +129,7 @@ list.appendChild(li);
 });
 
 // Auto-click HOME first
+if (typeof lucide !== 'undefined') lucide.createIcons();
 const homeLi = [...list.querySelectorAll('li')].find(li => li.innerText.trim().includes('HOME'));
 if (homeLi) homeLi.click();
 else if (list.querySelector('li')) list.querySelector('li').click();
@@ -145,7 +149,7 @@ else if (list.querySelector('li')) list.querySelector('li').click();
         color:var(--danger);
         font-weight:700;
     ">
-        🚨 ${escHtml(e.message) || "Failed to load secure database."}
+        <i data-lucide="alert-triangle" style="width:24px;height:24px;color:var(--danger);"></i> ${escHtml(e.message) || "Failed to load secure database."}
     </div>`;
 }
 }
@@ -392,7 +396,7 @@ function buildHomeDashboard(){
         ? recents.slice(0,8).map(r => `
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#f8fafc;border:1px solid var(--border);margin-bottom:8px;">
                 <div style="overflow:hidden;">
-                    <div style="font-weight:700;font-size:12.5px;color:var(--text-main, #0f172a);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📄 ${esc(r.name)}</div>
+                    <div style="font-weight:700;font-size:12.5px;color:var(--text-main, #0f172a);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:middle;"></i> ${esc(r.name)}</div>
                     <div style="font-size:10.5px;color:var(--muted);margin-top:2px;">${esc(r.category || '')} · ${esc(r.date || '')}</div>
                 </div>
             </div>`).join('')
@@ -401,7 +405,7 @@ function buildHomeDashboard(){
     const categoriesHTML = categories.length
         ? categories.map(c => `
             <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:12px;background:#f8fafc;border:1px solid var(--border);margin-bottom:8px;">
-                <div style="font-weight:700;font-size:12.5px;color:var(--text-main, #0f172a);">📁 ${esc(c)}</div>
+                <div style="font-weight:700;font-size:12.5px;color:var(--text-main, #0f172a);"><i data-lucide="folder" style="width:14px;height:14px;vertical-align:middle;"></i> ${esc(c)}</div>
                 <div style="font-size:11px;font-weight:800;color:var(--accent);background:#eff6ff;padding:3px 10px;border-radius:999px;">${esc((allFilesData[c]||[]).length)}</div>
             </div>`).join('')
         : `<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">No categories</div>`;
@@ -409,14 +413,14 @@ function buildHomeDashboard(){
     return `
     <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:8px;">
         <div style="background:white;border:1px solid var(--border);border-radius:20px;padding:22px;display:flex;align-items:center;gap:16px;">
-            <div style="font-size:30px;">🗂️</div>
+            <div style="font-size:30px;"><i data-lucide="folder-open" style="width:30px;height:30px;color:var(--accent);"></i></div>
             <div>
                 <div style="font-size:11px;font-weight:800;letter-spacing:.5px;color:var(--muted);">NO. OF FILES IN VAULT</div>
                 <div style="font-size:24px;font-weight:900;color:var(--accent);">${totalFiles}</div>
             </div>
         </div>
         <div style="background:white;border:1px solid var(--border);border-radius:20px;padding:22px;display:flex;align-items:center;gap:16px;">
-            <div style="font-size:30px;">🛡️</div>
+            <div style="font-size:30px;"><i data-lucide="shield" style="width:30px;height:30px;color:var(--success,#16a34a);"></i></div>
             <div>
                 <div style="font-size:11px;font-weight:800;letter-spacing:.5px;color:var(--muted);">SECURITY STATUS</div>
                 <div style="font-size:18px;font-weight:900;color:var(--success,#16a34a);">Protected · AES-256</div>
@@ -426,15 +430,16 @@ function buildHomeDashboard(){
 
     <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-bottom:8px;">
         <div class="profile-box" style="text-align:left;">
-            <h3>🕘 Files History</h3>
+            <h3><i data-lucide="clock" style="width:16px;height:16px;vertical-align:middle;"></i> Files History</h3>
             ${historyHTML}
         </div>
         <div class="profile-box" style="text-align:left;">
-            <h3>📚 Categories</h3>
+            <h3><i data-lucide="book-open" style="width:16px;height:16px;vertical-align:middle;"></i> Categories</h3>
             ${categoriesHTML}
         </div>
     </div>
     `;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 /* =========================
@@ -631,6 +636,7 @@ border-radius:18px;">
 
 `;
 
+if (typeof lucide !== 'undefined') lucide.createIcons();
 return;
 }
    
@@ -670,11 +676,11 @@ visibleFiles.forEach(file=>{
                 (new Date(file.expiry) - new Date()) / 86400000
             );
             if(daysLeft < 0){
-                expiryBadge = `<div class="expiry-badge expiry-danger">⚠️ Expired</div>`;
+                expiryBadge = `<div class="expiry-badge expiry-danger"><i data-lucide="triangle-alert" style="width:12px;height:12px;"></i> Expired</div>`;
             } else if(daysLeft <= 30){
-                expiryBadge = `<div class="expiry-badge expiry-warn">⏳ Expires in ${daysLeft}d</div>`;
+                expiryBadge = `<div class="expiry-badge expiry-warn"><i data-lucide="clock" style="width:12px;height:12px;"></i> Expires in ${daysLeft}d</div>`;
             } else {
-                expiryBadge = `<div class="expiry-badge expiry-ok">✓ Valid ${daysLeft}d</div>`;
+                expiryBadge = `<div class="expiry-badge expiry-ok"><i data-lucide="check" style="width:12px;height:12px;"></i> Valid ${daysLeft}d</div>`;
             }
         }
 
@@ -687,7 +693,7 @@ visibleFiles.forEach(file=>{
         <div style="
         font-size:48px;
         margin-bottom:12px;">
-            📄
+            <i data-lucide="file-text" style="width:48px;height:48px;color:var(--accent);"></i>
         </div>
 
         <div style="
@@ -701,15 +707,15 @@ visibleFiles.forEach(file=>{
         <div class="card-actions">
             <button class="card-btn card-btn-pin ${isPinned ? 'pinned' : ''}"
                 onclick="event.stopPropagation();togglePin(${JSON.stringify(file).replace(/"/g,'&quot;')},this)">
-                ${isPinned ? '⭐ Pinned' : '☆ Pin'}
+                ${isPinned ? '<i data-lucide="star" style="width:14px;height:14px;vertical-align:middle;fill:currentColor;"></i> Pinned' : '<i data-lucide="star" style="width:14px;height:14px;vertical-align:middle;"></i> Pin'}
             </button>
             <button class="card-btn card-btn-share"
                 onclick="event.stopPropagation();openShareModal(${JSON.stringify(file).replace(/"/g,'&quot;')})">
-                🔗 Share
+                <i data-lucide="link" style="width:14px;height:14px;vertical-align:middle;"></i> Share
             </button>
             <button class="card-btn card-btn-compare"
                 onclick="event.stopPropagation();addToCompare(${JSON.stringify(file).replace(/"/g,'&quot;')})">
-                ⚖️ Compare
+                <i data-lucide="scale" style="width:14px;height:14px;vertical-align:middle;"></i> Compare
             </button>
         </div>
         `;
@@ -723,7 +729,7 @@ visibleFiles.forEach(file=>{
 
 // HOVER QUICK PREVIEW
         card.addEventListener('mouseenter', (e) => {
-            // 📱 Check to disable hover previews on phones, tablets, and mobile touch devices
+            // Check to disable hover previews on phones, tablets, and mobile touch devices
             if (window.matchMedia("(max-width: 768px)").matches || ('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
                 return; // Stop right here, don't show the preview
             }
@@ -733,7 +739,7 @@ visibleFiles.forEach(file=>{
         });
 
         card.addEventListener('mousemove', (e) => {
-            // 📱 Check to disable position tracking on other devices
+            // Check to disable position tracking on other devices
             if (window.matchMedia("(max-width: 768px)").matches || ('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
                 return;
             }
@@ -748,6 +754,7 @@ visibleFiles.forEach(file=>{
 
     });
 
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 /* =========================
@@ -790,7 +797,7 @@ function renderPhotos() {
 
     grid.innerHTML = '';
     if (photos.length === 0) {
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;background:white;border-radius:20px;"><div style="font-size:48px;margin-bottom:12px;">📸</div><div style="font-weight:700;font-size:16px;color:#64748b;">No photos found</div><div style="font-size:13px;color:#94a3b8;margin-top:6px;">Upload images to the vault to see them here.</div></div>';
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;background:white;border-radius:20px;"><div style="margin-bottom:12px;"><i data-lucide="camera" style="width:48px;height:48px;color:var(--muted);"></i></div><div style="font-weight:700;font-size:16px;color:#64748b;">No photos found</div><div style="font-size:13px;color:#94a3b8;margin-top:6px;">Upload images to the vault to see them here.</div></div>';
         return;
     }
 
@@ -819,6 +826,7 @@ function renderPhotos() {
 
     // Store photos for lightbox
     window._galleryPhotos = photos;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 async function renderPhotoThumb(container, file, index) {
@@ -827,7 +835,7 @@ async function renderPhotoThumb(container, file, index) {
             ? await decryptPhotoShared(file)
             : null;
         if (!result) {
-            container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:12px;">⚠️</div>';
+            container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:12px;"><i data-lucide="triangle-alert" style="width:16px;height:16px;"></i></div>';
             return;
         }
         container.innerHTML = '';
@@ -838,7 +846,7 @@ async function renderPhotoThumb(container, file, index) {
         img.dataset.blobUrl = result.url;
         container.appendChild(img);
     } catch (e) {
-        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:12px;">⚠️</div>';
+        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:12px;"><i data-lucide="triangle-alert" style="width:16px;height:16px;"></i></div>';
     }
 }
 
@@ -895,10 +903,11 @@ function renderProfile(memberKey) {
     if (!profile) {
   const card = document.getElementById('profile-card');
   if (card) card.innerHTML = `<div style="padding:30px;text-align:center;color:#64748b;">
-    <div style="font-size:48px;margin-bottom:12px;">👤</div>
+    <div style="margin-bottom:12px;"><i data-lucide="user" style="width:48px;height:48px;color:var(--muted);"></i></div>
     <div style="font-weight:700;font-size:16px;">No profile data for "${escHtml(memberKey)}"</div>
     <div style="font-size:13px;margin-top:8px;">Add this member to the profiles object in vault-data.js</div>
   </div>`;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
   return;
 }
 
@@ -1035,7 +1044,7 @@ async function unifiedSearch(){
         <div style="
         font-size:48px;
         margin-bottom:12px;">
-            📄
+            <i data-lucide="file-text" style="width:48px;height:48px;color:var(--accent);"></i>
         </div>
 
         <div style="
@@ -1072,6 +1081,7 @@ async function unifiedSearch(){
 
     });
 
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 // ── Mode → allowed member keys (mirrors backend MODE_MEMBERS in worker.js) ──
@@ -1149,3 +1159,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
    renderProfile(getProfileMember());
 }); // <-- THIS MUST EXIST
+
+/* =========================
+   DOCUMENT CHECKLIST (modern table)
+   ========================= */
+// Checklist is rendered as a modern card table in the vault (see index.html).
+// Edit checklist.html standalone editor to add/modify checklist types and documents.
+// Click DEPLOY in checklist.html to push data to localStorage for the vault to read.
+// Both the vault and standalone page share the same localStorage key for statuses.

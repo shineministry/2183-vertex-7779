@@ -59,7 +59,7 @@ function _pmStartAutoLock() {
         m.style.display = 'none';
         document.querySelectorAll('#pm-entries-container input[type="text"][data-pm-pass]')
           .forEach(inp => inp.type = 'password');
-        alert('🔒 Password Manager auto-locked after inactivity.');
+        alert('<i data-lucide="lock" style="width:16px;height:16px;vertical-align:middle;"></i> Password Manager auto-locked after inactivity.');
       }
       _pmStopAutoLock();
     }, 120000);
@@ -137,7 +137,7 @@ async function savePMEntry() {
   // Verify we actually have an auth token before attempting the save
   const headers = await getAuthHeaders();
   if (!headers['Authorization'] || headers['Authorization'] === 'Bearer ') {
-    alert('❌ Not logged in. Please unlock your vault first.');
+    alert('<i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Not logged in. Please unlock your vault first.');
     return;
   }
 
@@ -173,7 +173,7 @@ async function savePMEntry() {
       const msg = data.error || data.message || `Server error ${res.status}`;
       // Entry is saved locally; warn but don't block UI
       console.warn(`[PM] Server save failed (entry kept offline): ${msg}`);
-      alert(`⚠️ Saved locally. Will sync when back online.\n(Server: ${msg})`);
+      alert(`<i data-lucide="alert-triangle" style="width:16px;height:16px;vertical-align:middle;"></i> Saved locally. Will sync when back online.\n(Server: ${msg})`);
       renderPMList();
       return;
     }
@@ -192,7 +192,7 @@ async function savePMEntry() {
   } catch (err) {
     // Network error — entry already saved to IDB above, just inform user
     console.warn('[PM] Network error during server sync (entry kept offline):', err);
-    alert(`⚠️ Saved locally (offline). Will sync when back online.`);
+    alert(`<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> Saved locally (offline). Will sync when back online.`);
     renderPMList();
   }
 }
@@ -214,9 +214,9 @@ async function copyPMPassword(id) {
     const entries = await idbGetAllPMEntries().catch(() => []);
     const entry = entries.find(e => e.id === id);
     if (entry && entry.password) {
-      _pmCopyToClipboard(entry.password, '✅ Password copied! (offline)');
+      _pmCopyToClipboard(entry.password, '<i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Password copied! (offline)');
     } else {
-      alert('❌ Password not available offline. Connect to the internet first.');
+      alert('<i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Password not available offline. Connect to the internet first.');
     }
     return;
   }
@@ -228,16 +228,16 @@ async function copyPMPassword(id) {
     });
     const data = await res.json();
     if (data.password) {
-      _pmCopyToClipboard(data.password, '✅ Password copied!');
+      _pmCopyToClipboard(data.password, '<i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Password copied!');
     }
   } catch (err) {
     // Network failed — try IDB cache
     const entries = await idbGetAllPMEntries().catch(() => []);
     const entry = entries.find(e => e.id === id);
     if (entry && entry.password) {
-      _pmCopyToClipboard(entry.password, '✅ Password copied! (cached)');
+      _pmCopyToClipboard(entry.password, '<i data-lucide="check-circle" style="width:14px;height:14px;vertical-align:middle;"></i> Password copied! (cached)');
     } else {
-      alert('❌ Could not copy password: ' + err.message);
+      alert('<i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Could not copy password: ' + err.message);
     }
   }
 }
@@ -249,7 +249,8 @@ async function renderPMList() {
     return;
   }
 
-  container.innerHTML = '<div style="text-align:center; padding:12px; color:#64748b;">⏳ Fetching credentials...</div>';
+  container.innerHTML = '<div style="text-align:center; padding:12px; color:#64748b;"><i data-lucide="loader" style="width:16px;height:16px;vertical-align:middle;"></i> Fetching credentials...</div>';
+  if (typeof lucide !== 'undefined') lucide.createIcons();
   
   try {
     const entries = await loadPMEntries();
@@ -270,15 +271,17 @@ async function renderPMList() {
           <span style="font-size:12px; color:#64748b; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHTML(entry.username || 'No username')}</span>
         </div>
         <div style="display:flex; gap:6px; flex-shrink:0;">
-          <button onclick="copyPMPassword('${entry.id}')" style="padding:6px 10px; border-radius:6px; border:1px solid #cbd5e1; background:#fff; cursor:pointer;">📋 Copy</button>
-          <button onclick="deletePMEntry('${entry.id}')" style="padding:6px 10px; border-radius:6px; border:none; background:#fee2e2; color:#ef4444; cursor:pointer;">🗑️ Delete</button>
+          <button onclick="copyPMPassword('${entry.id}')" style="padding:6px 10px; border-radius:6px; border:1px solid #cbd5e1; background:#fff; cursor:pointer;"><i data-lucide="clipboard" style="width:16px;height:16px;vertical-align:middle;"></i> Copy</button>
+          <button onclick="deletePMEntry('${entry.id}')" style="padding:6px 10px; border-radius:6px; border:none; background:#fee2e2; color:#ef4444; cursor:pointer;"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;"></i> Delete</button>
         </div>
       `;
       container.appendChild(row);
     });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   } catch (err) {
     console.error("Failed to render password vault:", err);
-    container.innerHTML = '<div style="text-align:center; color:#ef4444; padding:12px;">❌ Error loading vault list.</div>';
+    container.innerHTML = '<div style="text-align:center; color:#ef4444; padding:12px;"><i data-lucide="x-circle" style="width:14px;height:14px;vertical-align:middle;"></i> Error loading vault list.</div>';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   }
 }
 
@@ -307,7 +310,7 @@ async function deletePMEntry(id) {
     renderPMList();
   } catch (err) {
     console.error('deletePMEntry error:', err);
-    alert(`❌ Could not delete: ${err.message}`);
+    alert(`<i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Could not delete: ${err.message}`);
   }
 }
 
@@ -966,11 +969,11 @@ function togglePin(file, btn){
     if(idx === -1){
         pinnedDocs.push(file);
         btn.classList.add('pinned');
-        btn.textContent = '⭐ Pinned';
+        btn.textContent = '<i data-lucide="star" style="width:16px;height:16px;vertical-align:middle;"></i> Pinned';
     } else {
         pinnedDocs.splice(idx, 1);
         btn.classList.remove('pinned');
-        btn.textContent = '☆ Pin';
+        btn.innerHTML = '<i data-lucide="star" style="width:16px;height:16px;vertical-align:middle;"></i> Pin';
     }
     savePinned();
     renderPinnedSection();
@@ -988,7 +991,7 @@ function renderPinnedSection(){
     pinnedDocs.forEach(file=>{
         const chip = document.createElement('div');
         chip.className = 'pinned-chip';
-        chip.innerHTML = `📄 ${escHtml(file.name)} <span style="color:#ef4444;font-size:14px;margin-left:4px;" title="Unpin">✕</span>`;
+        chip.innerHTML = `<i data-lucide="file-text" style="width:16px;height:16px;vertical-align:middle;"></i> ${escHtml(file.name)} <span style="color:#ef4444;font-size:14px;margin-left:4px;cursor:pointer;" title="Unpin"><i data-lucide="x" style="width:14px;height:14px;vertical-align:middle;"></i></span>`;
 chip.onclick = ()=> openSecureFile((file.category === 'PHOTOS' ? "photos/" : "docs/") + file.file, file.name);
        chip.querySelector('span').onclick = (e)=>{
             e.stopPropagation();
@@ -1002,6 +1005,7 @@ chip.onclick = ()=> openSecureFile((file.category === 'PHOTOS' ? "photos/" : "do
         };
         grid.appendChild(chip);
     });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function showPinned(){
@@ -1010,7 +1014,7 @@ function showPinned(){
     if(pinnedDocs.length){
         section.scrollIntoView({behavior:'smooth'});
     } else {
-        alert('No pinned documents yet.\nClick ☆ Pin on any document card to favourite it.');
+        alert('No pinned documents yet.\nClick the Pin button on any document card to favourite it.');
     }
 }
 
@@ -1023,7 +1027,7 @@ let compareSide   = null; // 'left' | 'right' – for manual pick
 
 function startCompareMode(){
     if(compareQueue.length === 0){
-        alert('Click ⚖️ Compare on any two document cards first, then use this button — or use Compare from the cards directly.');
+        alert('Click <i data-lucide="scale" style="width:16px;height:16px;vertical-align:middle;"></i> Compare on any two document cards first, then use this button — or use Compare from the cards directly.');
         return;
     }
     openCompareModal();
@@ -1054,7 +1058,7 @@ function updateCompareBar(){
     } else {
         bar.style.display = 'flex';
         const names = compareQueue.map(f=>`"${f.name}"`).join(' vs ');
-        txt.textContent = `⚖️ ${compareQueue.length === 1 ? 'Pick one more: ' + compareQueue[0].name : names}`;
+        txt.textContent = `<i data-lucide="scale" style="width:16px;height:16px;vertical-align:middle;"></i> ${compareQueue.length === 1 ? 'Pick one more: ' + compareQueue[0].name : names}`;
     }
 }
 
@@ -1081,7 +1085,8 @@ async function renderComparePane(side, file){
     const titleEl = document.getElementById(`compare-${side}-title`);
     const contentEl = document.getElementById(`compare-${side}-content`);
     titleEl.textContent = file.name;
-    contentEl.innerHTML = '<div class="compare-select-prompt">⏳ Decrypting & rendering…</div>';
+    contentEl.innerHTML = '<div class="compare-select-prompt"><i data-lucide="loader" style="width:16px;height:16px;vertical-align:middle;"></i> Decrypting & rendering…</div>';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 
     try {
         const rawPassword = window.masterPassword || masterPassword;
@@ -1181,14 +1186,15 @@ async function renderComparePane(side, file){
 
     } catch (err) {
         console.error(err);
-        contentEl.innerHTML = `<div class="compare-select-prompt" style="color:var(--danger)">❌ Decryption Failed: ${escHtml(err.message)}</div>`;
+        contentEl.innerHTML = `<div class="compare-select-prompt" style="color:var(--danger)"><i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Decryption Failed: ${escHtml(err.message)}</div>`;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 }
    
 function pickCompareDoc(side){
     compareSide = side;
     closeCompareModal();
-    alert(`Click ⚖️ Compare on the document you want for side ${side === 'left' ? 'A (Left)' : 'B (Right)'}, then re-open Compare.`);
+    alert(`Click <i data-lucide="scale" style="width:16px;height:16px;vertical-align:middle;"></i> Compare on the document you want for side ${side === 'left' ? 'A (Left)' : 'B (Right)'}, then re-open Compare.`);
 }
 
 /* =========================
@@ -1595,8 +1601,9 @@ function _showNotifWelcomeBubble(notes, idx = 0) {
   const current = notes[idx];
   if (preview && current) {
     const pCls = current.priority || 'info';
-    const pEmojis = { info:'ℹ️', warning:'⚠️', urgent:'🔴' };
-    preview.innerHTML = `<strong style="color:#f8fafc;">${pEmojis[pCls]||'ℹ️'} ${escHtml(current.title || 'Admin Notification')}</strong><br><span style="color:#cbd5e1;">${escHtml((current.body || '').substring(0, 80))}${(current.body||'').length > 80 ? '…' : ''}</span>`;
+    const pEmojis = { info:'<i data-lucide="info" style="width:16px;height:16px;vertical-align:middle;"></i>', warning:'<i data-lucide="alert-triangle" style="width:16px;height:16px;vertical-align:middle;"></i>', urgent:'<i data-lucide="circle-dot" style="width:16px;height:16px;vertical-align:middle;"></i>' };
+    preview.innerHTML = `<strong style="color:#f8fafc;">${pEmojis[pCls]||'<i data-lucide="info" style="width:16px;height:16px;vertical-align:middle;"></i>'} ${escHtml(current.title || 'Admin Notification')}</strong><br><span style="color:#cbd5e1;">${escHtml((current.body || '').substring(0, 80))}${(current.body||'').length > 80 ? '…' : ''}</span>`;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   }
   // Show progress indicator when there are multiple queued notifications
   let progress = document.getElementById('bubbleNotifProgress');
@@ -1665,13 +1672,13 @@ async function _renderNotifPanel() {
     return `
     <div id="notif-item-${n.id}" onclick="markNotifRead('${n.id}')" style="padding:10px 12px;border-radius:10px;margin-bottom:6px;cursor:pointer;background:${n.read ? 'transparent' : 'rgba(59,130,246,.07)'};border:1px solid ${n.read ? 'transparent' : 'rgba(59,130,246,.15)'};transition:.2s;">
       <div style="display:flex;align-items:flex-start;gap:8px;">
-        <span style="font-size:18px;flex-shrink:0;">${n.type === 'global' ? '📢' : '🎯'}</span>
+        <span style="font-size:18px;flex-shrink:0;">${n.type === 'global' ? '<i data-lucide="megaphone" style="width:16px;height:16px;vertical-align:middle;"></i>' : '<i data-lucide="crosshair" style="width:16px;height:16px;vertical-align:middle;"></i>'}</span>
         <div style="flex:1;min-width:0;">
           <div style="font-weight:${n.read ? '600' : '800'};font-size:13px;color:#0f172a;margin-bottom:2px;">${escHtml(n.title||'Notification')}</div>
           <div style="font-size:12px;color:#475569;line-height:1.5;">${escHtml(n.body||'')}</div>
           <div style="font-size:10px;color:#94a3b8;margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
             <span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:800;background:${pc.bg};color:${pc.c};">${escHtml(pCls.toUpperCase())}</span>
-            <span>${n.type === 'global' ? '🌐 Global' : '🎯 ' + escHtml(n.targets || 'Targeted')}</span>
+            <span>${n.type === 'global' ? '<i data-lucide="globe" style="width:16px;height:16px;vertical-align:middle;"></i> Global' : '<i data-lucide="crosshair" style="width:16px;height:16px;vertical-align:middle;"></i>' + escHtml(n.targets || 'Targeted')}</span>
             <span>${n.timestamp ? new Date(n.timestamp).toLocaleString() : ''}</span>
           </div>
         </div>
@@ -1679,8 +1686,10 @@ async function _renderNotifPanel() {
       </div>
     </div>`;
   }).join('');
+  if (typeof lucide !== 'undefined') lucide.createIcons();
   } catch (e) {
-    if (listEl) listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px;">⚠️ Could not load notifications</div>';
+    if (listEl) listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px;"><i data-lucide="alert-triangle" style="width:16px;height:16px;vertical-align:middle;"></i> Could not load notifications</div>';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   }
 }
 
@@ -1755,7 +1764,7 @@ function toggleDarkMode() {
   const isDark = document.body.classList.toggle('dark-mode');
   localStorage.setItem('vaultDarkMode', isDark ? '1' : '0');
   const btn = document.getElementById('toggle-dark-mode');
-  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+  if (btn) btn.textContent = isDark ? '<i data-lucide="sun" style="width:16px;height:16px;vertical-align:middle;"></i>' : '<i data-lucide="moon" style="width:16px;height:16px;vertical-align:middle;"></i>';
 }
 
 // Restore dark mode on page load
@@ -1763,7 +1772,7 @@ function toggleDarkMode() {
   if (localStorage.getItem('vaultDarkMode') === '1') {
     document.body.classList.add('dark-mode');
     const btn = document.getElementById('toggle-dark-mode');
-    if (btn) btn.textContent = '☀️';
+    if (btn) btn.textContent = '<i data-lucide="sun" style="width:16px;height:16px;vertical-align:middle;"></i>';
   }
   // Also listen for when the button is dynamically re-created
   const obs = new MutationObserver(function() {
@@ -1771,7 +1780,7 @@ function toggleDarkMode() {
     if (btn && !btn.dataset.darkInit) {
       btn.dataset.darkInit = '1';
       if (document.body.classList.contains('dark-mode')) {
-        btn.textContent = '☀️';
+        btn.textContent = '<i data-lucide="sun" style="width:16px;height:16px;vertical-align:middle;"></i>';
       }
     }
   });
@@ -1844,14 +1853,14 @@ function renderNotesList() {
         '<div style="font-size:12px;color:var(--muted);margin-top:3px;">' + escHtml(preview) + (preview.length < decrypted.length ? '…' : '') + '</div>' +
         '<div style="font-size:11px;color:var(--accent);margin-top:4px;">' + escHtml(n.category || 'General') + '</div>' +
       '</div>' +
-      '<button onclick="event.stopPropagation();deleteNote(\'' + n.id + '\')" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px;color:var(--danger);">🗑️</button>' +
+      '<button onclick="event.stopPropagation();deleteNote(\'' + n.id + '\')" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px;color:var(--danger);"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;"></i></button>' +
     '</div>';
   }).join('');
 }
 
 function showNoteEditor() {
   _notesEditingId = null;
-  document.getElementById('noteEditorTitle').textContent = '✏️ New Note';
+  document.getElementById('noteEditorTitle').textContent = '<i data-lucide="pencil" style="width:16px;height:16px;vertical-align:middle;"></i> New Note';
   document.getElementById('noteTitle').value = '';
   document.getElementById('noteContent').value = '';
   document.getElementById('noteCategory').value = 'General';
@@ -1864,7 +1873,7 @@ function editNote(id) {
   var n = notes.find(function(x) { return x.id === id; });
   if (!n) return;
   _notesEditingId = id;
-  document.getElementById('noteEditorTitle').textContent = '✏️ Edit Note';
+  document.getElementById('noteEditorTitle').textContent = '<i data-lucide="pencil" style="width:16px;height:16px;vertical-align:middle;"></i> Edit Note';
   document.getElementById('noteTitle').value = n.title || '';
   document.getElementById('noteContent').value = _notesDecrypt(n.content || '');
   document.getElementById('noteCategory').value = n.category || 'General';
@@ -2004,7 +2013,7 @@ async function downloadSelectedAsZip() {
 
   var btn = document.getElementById('download-zip-btn');
   var origText = btn ? btn.textContent : '';
-  if (btn) btn.textContent = '⏳ 0/' + total;
+  if (btn) btn.textContent = '<i data-lucide="loader" style="width:14px;height:14px;vertical-align:middle;"></i> 0/' + total;
 
   for (var i = 0; i < files.length; i++) {
     var f = files[i];
@@ -2040,7 +2049,7 @@ async function downloadSelectedAsZip() {
       var blob = new Blob([decrypted], { type: mime });
       zip.file(f.name, blob);
       done++;
-      if (btn) btn.textContent = '⏳ ' + done + '/' + total;
+      if (btn) btn.textContent = '<i data-lucide="loader" style="width:16px;height:16px;vertical-align:middle;"></i>' + done + '/' + total;
     } catch(e) {
       failed.push(f.name);
     }
@@ -2052,7 +2061,7 @@ async function downloadSelectedAsZip() {
     return;
   }
 
-  if (btn) btn.textContent = '📦 Zipping...';
+  if (btn) btn.textContent = '<i data-lucide="package" style="width:16px;height:16px;vertical-align:middle;"></i> Zipping...';
   var zipBlob = await zip.generateAsync({ type: 'blob' });
   var url = URL.createObjectURL(zipBlob);
   var a = document.createElement('a');
@@ -2064,8 +2073,8 @@ async function downloadSelectedAsZip() {
   URL.revokeObjectURL(url);
 
   if (btn) btn.textContent = origText;
-  var msg = '✅ Downloaded ' + done + ' of ' + total + ' files';
-  if (failed.length) msg += '\n⚠️ Failed: ' + failed.join(', ');
+  var msg = '<i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Downloaded ' + done + ' of ' + total + ' files';
+  if (failed.length) msg += '\n<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> Failed: ' + failed.join(', ');
   alert(msg);
   clearFileSelection();
 }
