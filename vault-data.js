@@ -798,6 +798,7 @@ function renderPhotos() {
     grid.innerHTML = '';
     if (photos.length === 0) {
         grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;background:white;border-radius:20px;"><div style="margin-bottom:12px;"><i data-lucide="camera" style="width:48px;height:48px;color:var(--muted);"></i></div><div style="font-weight:700;font-size:16px;color:#64748b;">No photos found</div><div style="font-size:13px;color:#94a3b8;margin-top:6px;">Upload images to the vault to see them here.</div></div>';
+        if (typeof lucide !== 'undefined') lucide.createIcons({node:grid});
         return;
     }
 
@@ -836,6 +837,7 @@ async function renderPhotoThumb(container, file, index) {
             : null;
         if (!result) {
             container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:12px;"><i data-lucide="triangle-alert" style="width:16px;height:16px;"></i></div>';
+            if (window.lucide) lucide.createIcons({ node: container });
             return;
         }
         container.innerHTML = '';
@@ -847,6 +849,7 @@ async function renderPhotoThumb(container, file, index) {
         container.appendChild(img);
     } catch (e) {
         container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:12px;"><i data-lucide="triangle-alert" style="width:16px;height:16px;"></i></div>';
+        if (window.lucide) lucide.createIcons({ node: container });
     }
 }
 

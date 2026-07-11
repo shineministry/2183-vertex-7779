@@ -212,9 +212,7 @@ displayName){
 
     if(!window.masterPassword){
 
- alert(
- "Session not unlocked. Please log in again."
- );
+ toastNotify('Session not unlocked. Please log in again.', 'warning');
 
  return;
 }
@@ -862,7 +860,7 @@ downloadBtn.onclick = async () => {
 
         if (!currentDecryptedPdf) {
 
-            alert('No file loaded.');
+            toastNotify('No file loaded.', 'warning');
             return;
 
         }
@@ -904,9 +902,9 @@ await fetch(
                 !passkeyResult.success
             ) {
 
-                alert(
+                toastNotify(
                     passkeyResult.message ||
-                    'Incorrect download password.'
+                    'Incorrect download password.', 'error'
                 );
 
                 return;
@@ -916,8 +914,8 @@ await fetch(
 
             console.error(fetchErr);
 
-            alert(
-                'Could not verify password.'
+            toastNotify(
+                'Could not verify password.', 'error'
             );
 
             return;
@@ -956,7 +954,7 @@ await fetch(
 
         console.error(err);
 
-        alert('Download failed.');
+        toastNotify('Download failed.', 'error');
 
     }
 
@@ -977,9 +975,7 @@ displayName;
 
     console.error(e);
 
-    alert(
-        "Access Denied: Could not decrypt file."
-    );
+    toastNotify('Access Denied: Could not decrypt file.', 'error');
 
 }
 

@@ -59,20 +59,21 @@ window.__deviceIntegrity = (function () {
     if (!secret) return Promise.resolve(false);
     return _sha256(secret.trim()).then(function (hash) {
       if (TRUST_SECRET_HASH === 'REPLACE_WITH_YOUR_OWN_SHA256_HASH') {
-        alert('⚠️ Trust secret not configured yet.\nSet TRUST_SECRET_HASH in device-integrity.js first (see comment above it).');
+        toastNotify('Trust secret not configured yet. Set TRUST_SECRET_HASH in device-integrity.js first.', 'warning');
+
         return false;
       }
       if (hash === TRUST_SECRET_HASH) {
         if (isTrusted()) {
           unmarkTrusted();
-          alert('🔴 Trusted device removed. Aggressive checks active.');
+          toastNotify('Trusted device removed. Aggressive checks active.', 'warning');
         } else {
           markTrusted();
-          alert('🟢 Device trusted. Checks bypassed.');
+          toastNotify('Device trusted. Checks bypassed.', 'success');
         }
         return true;
       }
-      alert('❌ Incorrect secret.');
+      toastNotify('Incorrect secret.', 'error');
       return false;
     });
   }

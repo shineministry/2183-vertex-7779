@@ -355,8 +355,11 @@ async function _silentReAuth() {
         if (record && record.token) {
             const res = await fetch(`${_WORKER_URL}/check-session`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: record.token })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${record.token}`
+                },
+                body: JSON.stringify({})
             });
             if (res.ok) return record.token;
         }

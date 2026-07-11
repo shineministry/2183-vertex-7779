@@ -33,10 +33,10 @@ function toggleTrustedDevice(enabled) {
     if (!window.__deviceIntegrity) return;
     if (enabled) {
         window.__deviceIntegrity.markTrusted();
-        alert('🟢 This device is now trusted. Security checks will not block login.');
+        toastNotify('Device trusted. Security checks will not block login.', 'success');
     } else {
         window.__deviceIntegrity.unmarkTrusted();
-        alert('🔴 Trust status removed. Aggressive security checks are active.');
+        toastNotify('Trust status removed. Aggressive security checks are active.', 'warning');
     }
 }
 
@@ -192,9 +192,9 @@ function importVaultConfig(input){
             const cfg = JSON.parse(e.target.result);
             if(cfg.vaultName){ const b = document.querySelector('.brand-title'); if(b) b.textContent = cfg.vaultName; }
             if(cfg.tabTitle) document.title = cfg.tabTitle;
-            alert('✓ Vault config imported successfully!');
+            toastNotify('Config imported successfully!', 'success');
         } catch(err) {
-            alert('✗ Invalid config file.');
+            toastNotify('Invalid config file.', 'error');
         }
     };
     reader.readAsText(file);
@@ -203,8 +203,8 @@ function importVaultConfig(input){
 function advJsonRepair(){
     const raw = prompt('Paste JSON to validate:');
     if(!raw) return;
-    try { JSON.parse(raw); alert('✓ Valid JSON!'); }
-    catch(e) { alert('✗ Invalid JSON: ' + e.message); }
+    try { JSON.parse(raw); toastNotify('Valid JSON!', 'success'); }
+    catch(e) { toastNotify('Invalid JSON: ' + e.message, 'error'); }
 }
 
 function toggleStealthMode(on){

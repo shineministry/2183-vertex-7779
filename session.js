@@ -76,7 +76,7 @@ async function logout(message="") {
  _inactivityMonitorAttached = false;
 
  if (message) {
- alert(message);
+ showNotification('Session Ended', message, {type:'warning'});
  }
  notifyBackendLogout(message || "Logged out.");
  try {

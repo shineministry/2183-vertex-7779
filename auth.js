@@ -277,7 +277,7 @@ async function logoutVault( reason = "Logged out.", clearTrust = false ) {
         return;
     }
 
-    alert(reason);
+    showNotification('Session Ended', reason || 'Your session has ended.', {type:'warning'});
 
     // Hard refresh to completely clear window context
     location.reload(true);
@@ -353,14 +353,13 @@ async function searchAI() {
       .toLowerCase();
 
     if (!query) {
-      alert("Type search");
+      toastNotify('Please enter a search term.', 'warning');
       return;
     }
 
     const token =
-      localStorage.getItem(
-        "sessionToken"
-      );
+      sessionStorage.getItem('vaultSessionToken') ||
+      sessionStorage.getItem('vaultSession') || '';
 
     const res =
       await fetch(
@@ -391,26 +390,17 @@ async function searchAI() {
       !data.results ||
       data.results.length === 0
     ) {
-      alert(
-        "No matching document found"
-      );
+      toastNotify('No matching document found.', 'info');
       return;
     }
 
-    alert(
-      "Found in: " +
-      data.results
-      .map(x => x.fileName)
-      .join(", ")
-    );
+    toastNotify('Found in: ' + data.results.map(x => x.fileName).join(', '), 'success');
 
   } catch (err) {
 
     console.error(err);
 
-    alert(
-      "AI Search Failed"
-    );
+    toastNotify('AI Search failed. Please try again.', 'error');
   }
 }
 
@@ -755,7 +745,7 @@ async function loginWithTOTP() {
   const purpose = document.getElementById("user-purpose").value.trim();
 
   if (!visitorName || !purpose) {
-    alert("Username and Access Context are required.");
+    toastNotify('Username and Access Context are required.', 'error');
     return;
   }
 
@@ -1244,17 +1234,17 @@ async function indexAI(fileUrl, fileName) {
 }
 
 function updateAIBtn(state, label) {
-  const btn = document.getElementById('ai-chat-btn');
+  const btn = document.getElementById('ai-fab');
   if (!btn) return;
-  const sparkleIcon = '<i data-lucide="sparkles" style="width:14px;height:14px;vertical-align:middle;"></i>';
+  const sparkleIcon = '<i data-lucide="sparkles" style="width:24px;height:24px;"></i>';
   if (state === 'ready') {
-    btn.innerHTML = sparkleIcon + ' AI';
+    btn.innerHTML = sparkleIcon;
     btn.style.background = 'linear-gradient(135deg,#4285f4,#9b5de5,#f72585)';
     btn.style.animation = 'none';
   } else {
-    btn.innerHTML = label || (sparkleIcon + ' AI');
+    btn.innerHTML = label ? '<span style="font-size:12px;font-weight:800;">'+label+'</span>' : sparkleIcon;
     btn.style.background = 'linear-gradient(135deg,#f59e0b,#d97706)';
-    btn.style.animation = 'aiPulse 1.5s infinite';
+    btn.style.animation = 'none';
   }
   if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [btn] });
 }
@@ -1299,10 +1289,11 @@ function addSpeakButton(messageElement) {
         if (speechSynthesis.speaking) {
             speechSynthesis.cancel();
 btn.innerHTML = '<i data-lucide="volume-2" style="width:14px;height:14px;vertical-align:middle;"></i> Listen';
+            if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [btn] });
             return;
         }
         utterance.onstart = () => btn.textContent = "⏹ Stop";
-        utterance.onend = () => btn.innerHTML = '<i data-lucide="volume-2" style="width:14px;height:14px;vertical-align:middle;"></i> Listen';
+        utterance.onend = () => { btn.innerHTML = '<i data-lucide="volume-2" style="width:14px;height:14px;vertical-align:middle;"></i> Listen'; if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [btn] }); };
         speechSynthesis.speak(utterance);
     };
     messageElement.parentElement.appendChild(btn);
@@ -1423,14 +1414,18 @@ async function sendAIMessage() {
       printWordByWord();
 
     } else {
-      appendAIBubble(data.error || "An error occurred fetching detailed vault profiles.");
+      var errMsg = data.error || 'An error occurred.';
+      if (/unauthorized/i.test(errMsg)) {
+        errMsg = 'Your session has expired. Please log in again to use AI Chat.';
+      }
+      appendAIBubble(errMsg);
     }
 
   } catch (e) {
 
     console.error(e);
     showAITyping(false);
-    appendAIBubble("An error occurred fetching detailed vault profiles.");
+    appendAIBubble('Unable to reach the AI service. Please check your connection and try again.');
 
   }
 
@@ -1514,7 +1509,7 @@ async function showStep2() {
 
     if (now < lockUntil) {
         const remaining = Math.ceil((lockUntil - now) / 1000);
-        alert(`Too many wrong attempts.\nTry again in ${remaining} seconds.`);
+        showNotification('Too Many Attempts', 'Try again in '+remaining+' seconds.', {type:'warning'});
         return;
     }
 
@@ -1524,7 +1519,7 @@ async function showStep2() {
     const purpose = document.getElementById("user-purpose").value.trim();
 
     if (!visitorName || !purpose || !pass) {
-        alert("Username, Access Context, and Access Matrix Pin are required.");
+        toastNotify('Username, Access Context, and Access Matrix Pin are required.', 'error');
         return;
     }
 
@@ -1596,7 +1591,7 @@ async function showStep2() {
         // CORRECTION: Target .login-wrapper container instead of obsolete .step-card
         const card = document.querySelector('#step1 .login-wrapper');
         if (card) { card.appendChild(box); if (typeof lucide !== 'undefined') lucide.createIcons(); }
-        else alert(title + ': ' + detail);
+        else toastNotify(title + ': ' + detail, 'error');
     };
 
     const fetchWithTimeout = (url, options, ms = 12000) => {
@@ -1898,7 +1893,7 @@ sessionStorage.setItem('vaultUser', _modeUserMap[result.mode] || 'all');
 function showStep3(){
 
     if(!document.getElementById('terms-tick').checked){
-        alert("You must agree to the declaration.");
+        toastNotify('You must agree to the declaration.', 'error');
         return;
     }
 
@@ -2261,9 +2256,7 @@ let _forceLogoutInterval = null;
 
             if(data.forceLogout){
 
-                alert(
-                "Administrator terminated your session."
-                );
+                showNotification('Session Terminated', 'An administrator has ended your session.', {type:'error'});
 
                 location.reload();
 

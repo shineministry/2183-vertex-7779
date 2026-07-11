@@ -90,9 +90,7 @@ document
 
 if(!shareLink){
 
-alert(
-'Generate link first'
-);
+toastNotify('Generate link first.', 'warning');
 
 return;
 }
@@ -137,9 +135,7 @@ console.error(
 error
 );
 
-alert(
-'QR generation failed'
-);
+toastNotify('QR generation failed.', 'error');
 }
 });
 
@@ -150,7 +146,7 @@ alert(
     const shareLinkText = document.getElementById('share-link-text').textContent.trim();
     
     if (!shareLinkText || shareLinkText === "") {
-        alert("Please generate a secure link first before rendering its QR Code.");
+        toastNotify('Please generate a secure link first before rendering its QR Code.', 'warning');
         return;
     }
     
@@ -168,7 +164,7 @@ alert(
     }, function (error) {
         if (error) {
             console.error('QR Generation failed:', error);
-            alert('Could not construct QR code reference.');
+            toastNotify('Could not construct QR code reference.', 'error');
             return;
         }
         // 3. Make the hidden block visible once the matrix is cleanly generated

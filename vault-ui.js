@@ -94,7 +94,8 @@ async function openLogs(){
     'logBody'
     );
 
-    body.innerHTML = "";
+    body.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:#94a3b8;"><i data-lucide="loader" style="width:16px;height:16px;vertical-align:middle;"></i> Loading logs...</td></tr>';
+    if (window.lucide) lucide.createIcons({node: body});
 
     try{
 
@@ -111,6 +112,11 @@ const res = await fetch(
 if(!res.ok) throw new Error("Failed to load logs");
 
 const logs = await res.json();
+
+if (!Array.isArray(logs) || logs.length === 0) {
+    body.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:#94a3b8;">No access logs found.</td></tr>';
+    return;
+}
 
         var rows = logs.map(function(log){
             return '<tr>' +
@@ -130,6 +136,7 @@ const logs = await res.json();
     }catch(e){
 
         console.error(e);
+        body.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:#ef4444;">Failed to load logs. ' + escHtml(e.message || 'Unknown error') + '</td></tr>';
 
     }
 
@@ -153,7 +160,7 @@ async function requestPasskeyAccess() {
     const purpose = document.getElementById('user-purpose').value.trim();
 
     if (!visitorName || !purpose) {
-        alert("Please enter your Full Name and Purpose of Access first before submitting a passkey request.");
+        toastNotify('Please enter your Full Name and Purpose of Access.', 'warning');
         return;
     }
 
@@ -181,7 +188,7 @@ async function requestPasskeyAccess() {
             throw new Error("Failed to allocate an administrative tracking request payload identifier.");
         }
     } catch (err) {
-        alert("Failed to register access record: " + err.message);
+        toastNotify('Failed to register: ' + err.message, 'error');
         document.getElementById('passkey-wait').style.display = 'none';
         document.getElementById('step1').style.display = 'flex';
         return;
@@ -209,13 +216,13 @@ async function requestPasskeyAccess() {
                     document.getElementById('step2').style.display = 'flex';
                 } else if (data.success && data.status === 'approved') {
                     clearInterval(checkInterval);
-                    alert('Your request was approved. Please login again.');
+                    toastNotify('Your request was approved. Please login again.', 'success');
                     location.reload();
                 }
             } else if (pollRes.status === 403 || data.error) {
                 if (data.error && data.error.includes("denied")) {
                     clearInterval(checkInterval);
-                    alert("Your request for administrative authorization was declined.");
+                    toastNotify('Your request was declined.', 'error');
                     location.reload();
                 }
             }

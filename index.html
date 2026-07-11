@@ -46,7 +46,7 @@ Recommended:
         ].join(';');
         document.documentElement.appendChild(_box);
         const closeBtn = document.createElement('button');
-        closeBtn.innerHTML = '<i data-lucide="x" style="width:14px;height:14px;vertical-align:middle;"></i> Dismiss';
+        closeBtn.textContent = '\u2715 Dismiss';
         closeBtn.style.cssText = 'position:sticky;top:0;float:right;background:#fff;color:#7f1d1d;border:none;border-radius:6px;padding:4px 10px;font-weight:700;cursor:pointer;margin-bottom:6px;';
         closeBtn.onclick = function () { _box.remove(); _box = null; };
         _box.appendChild(closeBtn);
@@ -81,6 +81,7 @@ Recommended:
       });
       window.addEventListener('unhandledrejection', function (e) {
         const msg = (e.reason && (e.reason.message || e.reason)) || 'Unknown rejection';
+        if (String(msg).includes('ServiceWorker') || String(msg).includes('service worker') || String(msg).includes('sw.js')) return;
         _report('Unhandled Promise Rejection', msg);
         _reportFrontendError('promise', msg);
       });
@@ -94,7 +95,7 @@ Recommended:
     // defines it has finished loading — shows a loading hint instead.
     (function() {
       var _q = [];
-      var _stubs = ['showStep2','requestPasskeyAccess','loginWithTOTP','goToDashboard','logoutTrust','showLogin','trustedGoToDashboard','selectVaultCategory','closeLogs','showStep1','showStep3','submitTOTP','openKeypad','closeKeypad','openPasswordManager','closePasswordManager','openAIChat','closeAIChat','initVault','renderPhotos','openSecureFile','getAllPhotos','isImageFile','openNotesModal','closeNotesModal','showNoteEditor','closeNoteEditor','saveCurrentNote','deleteNote','updateBulkToolbar','selectAllFiles','clearFileSelection','downloadSelectedAsZip'];
+      var       _stubs = ['showStep2','requestPasskeyAccess','loginWithTOTP','goToDashboard','logoutTrust','showLogin','trustedGoToDashboard','selectVaultCategory','closeLogs','showStep1','showStep3','submitTOTP','openKeypad','closeKeypad','openPasswordManager','closePasswordManager','openAIChat','closeAIChat','initVault','renderPhotos','openSecureFile','getAllPhotos','isImageFile','openNotesModal','closeNotesModal','showNoteEditor','closeNoteEditor','saveCurrentNote','deleteNote','updateBulkToolbar','selectAllFiles','clearFileSelection','downloadSelectedAsZip','refreshVault','openLogs','startCompareMode','showPinned','openFeedbackModal','toggleBulkExport','exportVaultBackup','sendAIMessage','openEmergencyContact','safeShowLogoutOptions','openVaultModes','closeVaultModes','openStatusModal','toggleDarkMode','switchPage','toggleMobileMenu','toggleLandDropdown','toggleNotifications','markAllNotifsRead','revealToken','copyPMPassword','deletePMEntry','copyShareLink','generateShareLink','checkVaultHealth','runDupeScan','switchAdvPanel','closeAdvSettings','advJsonRepair','activateShareQR','closeShareModal','generatePMPassword','savePMEntry','openPMChangePin','renderPMListFiltered','openMemberProfileGuarded'];
       _stubs.forEach(function(name) {
         var orig = window[name];
         if (typeof orig === 'function') return;
@@ -130,18 +131,63 @@ Recommended:
     })();
   </script>
   <script src="/pdf.min.js" onerror="var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';document.head.appendChild(s);"></script>
-  <script>function __setIcon(el, html) { el.innerHTML = html; if (window.lucide) lucide.createIcons({ node: el }); }
+  <script nonce="opencode-2026-fix">function __setIcon(el, html) { el.innerHTML = html; if (window.lucide) lucide.createIcons({ node: el }); }
+  function toastNotify(msg, type) {
+    type = type || 'info';
+    var colors = { success:'#16a34a', error:'#ef4444', info:'#0f172a', warning:'#d97706' };
+    var icons = { success:'check-circle', error:'x-circle', info:'info', warning:'alert-triangle' };
+    var bg = colors[type] || colors.info;
+    var icon = icons[type] || icons.info;
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:'+bg+';color:#fff;padding:12px 22px;border-radius:12px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 6px 24px rgba(0,0,0,.35);max-width:90vw;text-align:center;display:flex;align-items:center;gap:8px;';
+    t.innerHTML = '<i data-lucide="'+icon+'" style="width:16px;height:16px;flex-shrink:0;"></i><span>'+_safeMsg(msg)+'</span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#fff;cursor:pointer;padding:0 0 0 8px;font-size:16px;line-height:1;opacity:.7;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.7">&times;</button>';
+    document.body.appendChild(t);
+    if (window.lucide) lucide.createIcons({node:t});
+    setTimeout(function(){ t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(function(){ t.remove(); },300); },4000);
+  }
+  function _safeMsg(s){ var d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML; }
+  function showNotification(title, message, opts) {
+    opts = opts || {};
+    var type = opts.type || 'info';
+    var colors = { success:'#16a34a', error:'#ef4444', info:'#2563eb', warning:'#d97706' };
+    var icons = { success:'check-circle', error:'x-circle', info:'info', warning:'alert-triangle' };
+    var bg = colors[type] || colors.info;
+    var icon = icons[type] || icons.info;
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:999998;background:rgba(15,23,42,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = '<div style="background:#fff;border-radius:20px;padding:32px 28px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center;">' +
+      '<div style="width:56px;height:56px;border-radius:50%;background:'+bg+'18;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;"><i data-lucide="'+icon+'" style="width:28px;height:28px;color:'+bg+';"></i></div>' +
+      '<div style="font-weight:800;font-size:17px;color:#0f172a;margin-bottom:6px;">'+_safeMsg(title)+'</div>' +
+      '<div style="font-size:13px;color:#64748b;margin-bottom:24px;line-height:1.6;">'+_safeMsg(message)+'</div>' +
+      '<button onclick="this.closest(\'div[style]\').parentElement.remove()" style="width:100%;padding:12px;border:none;border-radius:12px;background:'+bg+';color:#fff;font-weight:800;font-size:14px;cursor:pointer;">OK</button>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    if (window.lucide) lucide.createIcons({node:overlay});
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+  }
+  function lucideIcons(el) { if (window.lucide) lucide.createIcons({ node: el || document.body }); }</script>
+  <script nonce="opencode-2026-fix">
   function updateModeProfile() {
     var wrap = document.getElementById('mode-profile-wrap');
     var nameEl = document.getElementById('mode-profile-name');
     var modeEl = document.getElementById('mode-profile-mode');
+    var avatarEl = document.getElementById('mode-profile-avatar');
     if (!wrap || !nameEl || !modeEl) return;
     var member = (typeof getCurrentVaultMember === 'function') ? getCurrentVaultMember() : (sessionStorage.getItem('vaultMember') || 'shineil');
     var mode = (typeof getCurrentVaultMode === 'function') ? getCurrentVaultMode() : (sessionStorage.getItem('vaultMode') || 'ADMIN');
     var labels = { shineil:'SHINEIL', brother:'KEVIN', father:'STEPHEN', mother:'KANCHAN' };
     var modeNames = { online:'Online Mode', offline:'Offline Vault', share:'Secure Share', emergency:'Emergency Recovery', guardian:'Guardian Access', verify:'Verification', readonly:'Read-Only', timelock:'Time-Lock', legal:'Legal Archive', ministry:'Private Ministry' };
+    var profileImages = { shineil:'images/profile.png', brother:'images/ProfileK.png', father:'images/ProfileSt.png', mother:'images/mother.png' };
     nameEl.textContent = labels[member] || member.toUpperCase();
     modeEl.textContent = modeNames[mode] || mode + ' Mode';
+    if (avatarEl) {
+      var imgSrc = profileImages[member] || '';
+      if (imgSrc) {
+        avatarEl.innerHTML = '<img src="'+imgSrc+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="'+nameEl.textContent+'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;"><i data-lucide="user" style="width:20px;height:20px;color:#fff;"></i></span>';
+      } else {
+        avatarEl.innerHTML = '<i data-lucide="user" style="width:20px;height:20px;color:#fff;"></i>';
+      }
+    }
     wrap.style.display = '';
     if (window.lucide) lucide.createIcons({ node: wrap });
   }</script>
@@ -1202,6 +1248,7 @@ Recommended:
         pField.type = "password";
         eyeIcon.innerHTML = '<i data-lucide="eye" style="width:18px;height:18px;"></i>';
       }
+      lucideIcons(eyeIcon);
     }
 
     document.addEventListener('visibilitychange', () => {
@@ -1335,10 +1382,6 @@ Recommended:
         </div><!-- end dark sidebar controls wrapper -->
         <div id="sidebar-files-section">
           <ul id="cat-list"></ul>
-        </div>
-        <!-- FLOATING AI BUTTON (below sidebar) -->
-        <div style="margin-top:auto;padding-top:12px;">
-          <button id="ai-chat-btn" onclick="openAIChat()" title="Vault AI Assistant" style="width:100%;padding:12px 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 4px 16px rgba(124,77,255,0.4);transition:transform .15s;display:flex;align-items:center;justify-content:center;gap:8px;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'"><i data-lucide="sparkles" style="width:18px;height:18px;"></i> AI Assistant</button>
         </div>
         <!-- PROFILE PHOTO / MODE INDICATOR -->
         <div id="mode-profile-wrap" style="padding-top:8px;display:none;">
@@ -1561,7 +1604,7 @@ Recommended:
         navigator.serviceWorker.register('/sw.js', {
           updateViaCache: 'none'
         }).then(reg => {
-          reg.update();
+          reg.update().catch(function(){});
           // Send SKIP_WAITING to whichever SW is pending (waiting OR installing)
           const pending = reg.waiting || reg.installing;
           if (pending) pending.postMessage({ type: 'SKIP_WAITING' });
@@ -1728,9 +1771,9 @@ Recommended:
           <!-- 90-Day Uptime History (Statuspage-style) -->
           <div id="uptime-section" style="margin-bottom:18px;"></div>
           <div id="uptime-day-detail" style="display:none;margin:-4px 0 16px;padding:10px 14px;border-radius:10px;background:#0f172a;color:#f8fafc;font-size:12px;line-height:1.6;"></div>
-          <!-- Components -->
-          <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase;">Components</div>
-          <div id="status-components" style="display:flex;flex-direction:column;gap:4px;"></div>
+          <!-- Components — Live Status -->
+          <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin:8px 0 6px;text-transform:uppercase;">Live Component Status</div>
+          <div id="status-components" style="display:flex;flex-direction:column;gap:2px;"></div>
           <div id="uptimeTooltip" style="display:none;position:fixed;z-index:99999;background:#0f172a;color:#f8fafc;padding:8px 12px;border-radius:8px;font-size:11px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;max-width:230px;"></div>
           <!-- Version footer -->
           <div style="margin-top:14px;padding:10px 12px;border-radius:10px;background:#f1f5f9;text-align:center;font-size:11px;color:#64748b;"> FORTRESS ONLINE VAULT · AES-256-GCM · Session: <span id="stat-mode-label">-</span> · <span id="stat-version-label">v202606</span> </div>
@@ -3645,6 +3688,7 @@ Recommended:
         try {
           if (typeof crypto === 'undefined' || !crypto.subtle) {
             errEl.innerHTML = '<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> Secure context required (HTTPS) — PIN check unavailable.';
+            lucideIcons(errEl);
             return;
           }
 
@@ -3694,16 +3738,17 @@ Recommended:
         } catch (err) {
           console.error('[PM-PIN] submit failed:', err);
           errEl.innerHTML = '<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> Something went wrong: ' + (err && err.message ? err.message : 'unknown error');
+          lucideIcons(errEl);
         }
       }
       document.getElementById('pmMemberPickerModal').addEventListener('click', function (e) { if (e.target === this) closePMMemberPicker(); });
-      document.getElementById('pmPinModal').addEventListener('click', function (e) { if (e.target === this) closePMPinModal(); }); /* Close on overlay click */ document.getElementById('passwordManagerModal').addEventListener('click', function(e){  if(e.target === this) closePasswordManager();});/* ======== Password Strength Bar ======== */function pmStrength(val) {  const bar = document.getElementById('pm-strength-bar');  if (!bar) return;  let score = 0;  if (val.length >= 8) score++;  if (/[A-Z]/.test(val)) score++;  if (/[0-9]/.test(val)) score++;  if (/[^A-Za-z0-9]/.test(val)) score++;  const colors = ['#ef4444','#f97316','#eab308','#16a34a'];  const widths = ['25%','50%','75%','100%'];  bar.style.width = val ? widths[score-1] || '10%' : '0';  bar.style.background = val ? colors[score-1] || '#e2e8f0' : '#e2e8f0';}/* ======== Inline reveal for saved entries ======== */function toggleEntryReveal(id) {  const dots = document.getElementById('pw-dots-'+id);  const actual = document.getElementById('pw-actual-'+id);  const btn = document.getElementById('pw-reveal-btn-'+id);  if (!dots || !actual) return;  const showing = actual.style.display !== 'none';  dots.style.display = showing ? 'block' : 'none';  actual.style.display = showing ? 'none' : 'block';  btn.innerHTML = showing ? '<i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i> Show' : '<i data-lucide="eye-off" style="width:14px;height:14px;vertical-align:middle;"></i> Hide';if(window.lucide)lucide.createIcons({node:btn});}/* ======== Override renderPMList for richer UI ======== */async function renderPMList() {  const container = document.getElementById('pm-entries-container');  const countNum = document.getElementById('pm-count-num');  if (!container) return;  container.innerHTML = '<div class="pm-empty"><i data-lucide="loader" style="width:16px;height:16px;vertical-align:middle;"></i> Loading credentials…</div>';  try {    const allEntries = await loadPMEntries().catch(() => []);    const pmSearchEl = document.getElementById('pm-search'); const query = ((pmSearchEl ? pmSearchEl.value : '') || '').toLowerCase();    /* Filter by current mode's allowed members */const mode = (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');const modeAllowedMembers = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null) || ['shineil', 'brother', 'father', 'mother'];const allowedMembers = window._pmActiveMember ? [window._pmActiveMember] : modeAllowedMembers;
+      document.getElementById('pmPinModal').addEventListener('click', function (e) { if (e.target === this) closePMPinModal(); }); /* Close on overlay click */ document.getElementById('passwordManagerModal').addEventListener('click', function(e){  if(e.target === this) closePasswordManager();});/* ======== Password Strength Bar ======== */function pmStrength(val) {  const bar = document.getElementById('pm-strength-bar');  if (!bar) return;  let score = 0;  if (val.length >= 8) score++;  if (/[A-Z]/.test(val)) score++;  if (/[0-9]/.test(val)) score++;  if (/[^A-Za-z0-9]/.test(val)) score++;  const colors = ['#ef4444','#f97316','#eab308','#16a34a'];  const widths = ['25%','50%','75%','100%'];  bar.style.width = val ? widths[score-1] || '10%' : '0';  bar.style.background = val ? colors[score-1] || '#e2e8f0' : '#e2e8f0';}/* ======== Inline reveal for saved entries ======== */function toggleEntryReveal(id) {  const dots = document.getElementById('pw-dots-'+id);  const actual = document.getElementById('pw-actual-'+id);  const btn = document.getElementById('pw-reveal-btn-'+id);  if (!dots || !actual) return;  const showing = actual.style.display !== 'none';  dots.style.display = showing ? 'block' : 'none';  actual.style.display = showing ? 'none' : 'block';  btn.innerHTML = showing ? '<i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i> Show' : '<i data-lucide="eye-off" style="width:14px;height:14px;vertical-align:middle;"></i> Hide';if(window.lucide)lucide.createIcons({node:btn});}/* ======== Override renderPMList for richer UI ======== */async function renderPMList() {  const container = document.getElementById('pm-entries-container');  const countNum = document.getElementById('pm-count-num');  if (!container) return;  container.innerHTML = '<div class="pm-empty"><i data-lucide="loader" style="width:16px;height:16px;vertical-align:middle;"></i> Loading credentials…</div>';if(window.lucide)lucide.createIcons({node:container});  try {    const allEntries = await loadPMEntries().catch(() => []);    const pmSearchEl = document.getElementById('pm-search'); const query = ((pmSearchEl ? pmSearchEl.value : '') || '').toLowerCase();    /* Filter by current mode's allowed members */const mode = (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');const modeAllowedMembers = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null) || ['shineil', 'brother', 'father', 'mother'];const allowedMembers = window._pmActiveMember ? [window._pmActiveMember] : modeAllowedMembers;
       const filtered = allEntries.filter(e => {
         if (!e.member) return true;
         return allowedMembers.includes(e.member);
       });
       const entries = query ? filtered.filter(e => (e.site || '').toLowerCase().includes(query) || (e.username || '').toLowerCase().includes(query)) : filtered;
-      if (countNum) countNum.textContent = entries.length + ' saved'; /* Build member filter tabs for multi-member modes */const memberFilter = document.getElementById('pm-member-filter');const memberLabels = { shineil:'SHINEIL', brother:'KEVIN', father:'STEPHEN', mother:'KANCHAN' };if (allowedMembers.length > 1) {if (!memberFilter) {const hdr = document.querySelector('.pm-entries-header');if (hdr) {const wrap = document.createElement('div');wrap.id = 'pm-member-filter';wrap.style.cssText = 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;';hdr.after(wrap);}}if (memberFilter) {memberFilter.innerHTML = allowedMembers.map(m => `<button class="pm-member-tab" data-member="${m}" style="padding:4px 10px;border:1px solid #cbd5e1;border-radius:8px;background:transparent;cursor:pointer;font-size:11px;font-weight:600;color:#475569;transition:.15s;">${memberLabels[m] || m}</button>`).join('');memberFilter.querySelectorAll('.pm-member-tab').forEach(btn => {btn.onclick = () => {memberFilter.querySelectorAll('.pm-member-tab').forEach(b => {b.style.background = 'transparent';b.style.color = '#475569';});btn.style.background = '#2563eb';btn.style.color = '#fff';const memberKey = btn.dataset.member;renderPMListFiltered(memberKey);};});}} else if (memberFilter) {memberFilter.remove();}window._pmAllowedMembers = allowedMembers;container.innerHTML = '';if (!entries || entries.length === 0) {container.innerHTML = '<div class="pm-empty"><i data-lucide="lock" style="width:16px;height:16px;vertical-align:middle;"></i> No saved passwords yet.<br><span style="font-size:12px;color:#cbd5e1;">Add your first one above.</span></div>';return;}const siteIcons = {'google':'globe','gmail':'mail','github':'github','facebook':'user','twitter':'twitter','instagram':'camera','amazon':'package','netflix':'film','spotify':'music','apple':'apple','microsoft':'monitor','linkedin':'briefcase','youtube':'play','whatsapp':'message-circle','bank':'landmark','paypal':'credit-card'};function getSiteIcon(site) {const s = (site||'').toLowerCase();for(const k of Object.keys(siteIcons)) {if(s.includes(k)) return '<i data-lucide="'+siteIcons[k]+'" style="width:16px;height:16px;vertical-align:middle;"></i>';}return '<i data-lucide="key" style="width:16px;height:16px;vertical-align:middle;"></i>';}entries.forEach(entry => {const card = document.createElement('div');card.className = 'pm-entry-card';const icon = getSiteIcon(entry.site);const pwMasked = '••••••••••';const memberLabel = memberLabels[entry.member] || entry.member || '';card.innerHTML = `        <div class="pm-entry-top">          <div class="pm-entry-favicon">${icon}</div>          <div class="pm-entry-info">            <div class="pm-entry-site">${escapeHTML(entry.site)}</div>            <div class="pm-entry-user">${escapeHTML(entry.username || 'No username')}</div>          </div>          <div class="pm-entry-actions">            <button class="pm-act-btn" onclick="copyPMPassword('${entry.id}')" title="Copy password"><i data-lucide="clipboard" style="width:16px;height:16px;vertical-align:middle;"></i> Copy</button>            <button class="pm-act-btn pm-act-del" onclick="deletePMEntry('${entry.id}')" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;"></i></button>          </div>        </div>        <div class="pm-pw-reveal-row">          <span id="pw-dots-${entry.id}" class="pw-dots">${pwMasked}</span>          <span id="pw-actual-${entry.id}" class="pw-actual">${escapeHTML(entry.password || '')}</span>          <button id="pw-reveal-btn-${entry.id}" class="pm-reveal-btn" onclick="toggleEntryReveal('${entry.id}')"><i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;"></i> Show</button>        </div>        ${entry.notes ? `<div class="pm-notes-row"><i data-lucide="file-text" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(entry.notes)}</div>` : ''}        <div class="pm-notes-row" style="color:#6366f1;font-weight:600;"><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(memberLabel)}</div>      `;container.appendChild(card);});} catch(err) {console.error(err);container.innerHTML = '<div class="pm-empty" style="color:#ef4444;"><i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Error loading passwords.</div>';}}function renderPMListFiltered(memberKey) {const container = document.getElementById('pm-entries-container');const countNum = document.getElementById('pm-count-num');if (!container) return;loadPMEntries().catch(() => []).then(allEntries => {const allowed = window._pmAllowedMembers || ['shineil','brother','father','mother'];const pmSearch2 = document.getElementById('pm-search');const query = ((pmSearch2 ? pmSearch2.value : '') || '').toLowerCase();const filtered = allEntries.filter(e => {if (!e.member) return true;if (memberKey && e.member !== memberKey) return false;return allowed.includes(e.member);});const entries = query ? filtered.filter(e => (e.site||'').toLowerCase().includes(query) || (e.username||'').toLowerCase().includes(query)) : filtered;if (countNum) countNum.textContent = entries.length + ' saved';container.innerHTML = '';if (!entries || entries.length === 0) {container.innerHTML = '<div class="pm-empty"><i data-lucide="lock" style="width:16px;height:16px;vertical-align:middle;"></i> No passwords for this member.</div>';return;}const memberLabels = { shineil:'SHINEIL MATHIAS', brother:'KEVIN MATHIAS', father:'STEPHEN MATHIAS', mother:'KANCHAN MATHIAS' };const siteIcons = {'google':'globe','gmail':'mail','github':'github','facebook':'user','twitter':'twitter','instagram':'camera','amazon':'package','netflix':'film','spotify':'music','apple':'apple','microsoft':'monitor','linkedin':'briefcase','youtube':'play','whatsapp':'message-circle','bank':'landmark','paypal':'credit-card'};function getSiteIcon(site) {const s = (site||'').toLowerCase();for(const k of Object.keys(siteIcons)) {if(s.includes(k)) return '<i data-lucide="'+siteIcons[k]+'" style="width:16px;height:16px;vertical-align:middle;"></i>';}return '<i data-lucide="key" style="width:16px;height:16px;vertical-align:middle;"></i>';}entries.forEach(entry => {const card = document.createElement('div');card.className = 'pm-entry-card';const icon = getSiteIcon(entry.site);const pwMasked = '••••••••••';const memberLabel = memberLabels[entry.member] || entry.member || '';card.innerHTML = `        <div class="pm-entry-top">          <div class="pm-entry-favicon">${icon}</div>          <div class="pm-entry-info">            <div class="pm-entry-site">${escapeHTML(entry.site)}</div>            <div class="pm-entry-user">${escapeHTML(entry.username || 'No username')}</div>          </div>          <div class="pm-entry-actions">            <button class="pm-act-btn" onclick="copyPMPassword('${entry.id}')" title="Copy password"><i data-lucide="clipboard" style="width:16px;height:16px;vertical-align:middle;"></i> Copy</button>            <button class="pm-act-btn pm-act-del" onclick="deletePMEntry('${entry.id}')" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;"></i></button>          </div>        </div>        <div class="pm-pw-reveal-row">          <span id="pw-dots-${entry.id}" class="pw-dots">${pwMasked}</span>          <span id="pw-actual-${entry.id}" class="pw-actual">${escapeHTML(entry.password || '')}</span>          <button id="pw-reveal-btn-${entry.id}" class="pm-reveal-btn" onclick="toggleEntryReveal('${entry.id}')"><i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;"></i> Show</button>        </div>        ${entry.notes ? `<div class="pm-notes-row"><i data-lucide="file-text" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(entry.notes)}</div>` : ''}        <div class="pm-notes-row" style="color:#6366f1;font-weight:600;"><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(memberLabel)}</div>      `;container.appendChild(card);});});}/* ======== Vault Modes ======== */const VAULT_MODES = [  { id:'online',    icon:'<i data-lucide="globe" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Online Mode',           desc:'Access your vault anytime, anywhere with internet.' },  { id:'offline',   icon:'<i data-lucide="download" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Offline Vault Mode',    desc:'Access encrypted local copies without internet.' },  { id:'share',     icon:'<i data-lucide="link" style="width:14px;height:14px;vertical-align:middle;"></i>', name:'Secure Share Mode',     desc:'Share documents securely with full control and tracking.' },  { id:'emergency', icon:'<i data-lucide="alert-triangle" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Emergency Recovery',    desc:'Secure backup access during account recovery.' },  { id:'guardian',  icon:'<i data-lucide="users" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Guardian Access Mode',  desc:'Allow trusted guardians to access specific documents.' },  { id:'verify',    icon:'<i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Verification Mode',     desc:'Generate QR-secured verification for official submissions.' },  { id:'readonly',  icon:'<i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i>', name:'Read-Only Mode',        desc:'Allow view-only access without download or modification.' },  { id:'timelock',  icon:'<i data-lucide="clock" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Time-Lock Mode',        desc:'Restrict access to documents until a specific date.' },  { id:'legal',     icon:'<i data-lucide="landmark" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Legal Archive Mode',    desc:'Long-term preservation for apostille and legal documents.' },  { id:'ministry',  icon:'<i data-lucide="book-open" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Private Ministry Mode', desc:'Secure storage for ministry, pastoral, and church records.' },];let activeVaultMode = 'online';function openVaultModes() {  document.getElementById('vaultModesModal').classList.add('open');  renderVaultModes();}function closeVaultModes() {  document.getElementById('vaultModesModal').classList.remove('open');}document.getElementById('vaultModesModal').addEventListener('click', function(e){  if(e.target === this) closeVaultModes();});function renderVaultModes() {  const grid = document.getElementById('vm-modes-grid');  if (!grid) return;  grid.innerHTML = '';  VAULT_MODES.forEach(m => {    const card = document.createElement('div');    card.className = 'vm-card' + (m.id === activeVaultMode ? ' active' : '');    card.innerHTML = `<div class="vm-card-icon">${m.icon}</div><div class="vm-card-name">${m.name}</div><div class="vm-card-desc">${m.desc}</div>`;    card.onclick = () => setVaultMode(m.id);    grid.appendChild(card);  });}function setVaultMode(id) {  activeVaultMode = id;  const m = VAULT_MODES.find(x => x.id === id);  if (m) {    document.getElementById('vm-active-name').textContent = m.name;    document.getElementById('vm-active-desc').textContent = m.desc;    document.querySelector('.vm-active-badge span:first-child').innerHTML = m.icon;  }  renderVaultModes();  /* Show brief toast */  const toast = document.createElement('div');  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:99999;';  toast.textContent = `✓ ${(m ? m.name : "") || 'Mode'} activated`;  document.body.appendChild(toast);  setTimeout(() => toast.remove(), 2200);}
+      if (countNum) countNum.textContent = entries.length + ' saved'; /* Build member filter tabs for multi-member modes */const memberFilter = document.getElementById('pm-member-filter');const memberLabels = { shineil:'SHINEIL', brother:'KEVIN', father:'STEPHEN', mother:'KANCHAN' };if (allowedMembers.length > 1) {if (!memberFilter) {const hdr = document.querySelector('.pm-entries-header');if (hdr) {const wrap = document.createElement('div');wrap.id = 'pm-member-filter';wrap.style.cssText = 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;';hdr.after(wrap);}}if (memberFilter) {memberFilter.innerHTML = allowedMembers.map(m => `<button class="pm-member-tab" data-member="${m}" style="padding:4px 10px;border:1px solid #cbd5e1;border-radius:8px;background:transparent;cursor:pointer;font-size:11px;font-weight:600;color:#475569;transition:.15s;">${memberLabels[m] || m}</button>`).join('');memberFilter.querySelectorAll('.pm-member-tab').forEach(btn => {btn.onclick = () => {memberFilter.querySelectorAll('.pm-member-tab').forEach(b => {b.style.background = 'transparent';b.style.color = '#475569';});btn.style.background = '#2563eb';btn.style.color = '#fff';const memberKey = btn.dataset.member;renderPMListFiltered(memberKey);};});}} else if (memberFilter) {memberFilter.remove();}window._pmAllowedMembers = allowedMembers;container.innerHTML = '';if (!entries || entries.length === 0) {container.innerHTML = '<div class="pm-empty"><i data-lucide="lock" style="width:16px;height:16px;vertical-align:middle;"></i> No saved passwords yet.<br><span style="font-size:12px;color:#cbd5e1;">Add your first one above.</span></div>';if(window.lucide)lucide.createIcons({node:container});return;}const siteIcons = {'google':'globe','gmail':'mail','github':'github','facebook':'user','twitter':'twitter','instagram':'camera','amazon':'package','netflix':'film','spotify':'music','apple':'apple','microsoft':'monitor','linkedin':'briefcase','youtube':'play','whatsapp':'message-circle','bank':'landmark','paypal':'credit-card'};function getSiteIcon(site) {const s = (site||'').toLowerCase();for(const k of Object.keys(siteIcons)) {if(s.includes(k)) return '<i data-lucide="'+siteIcons[k]+'" style="width:16px;height:16px;vertical-align:middle;"></i>';}return '<i data-lucide="key" style="width:16px;height:16px;vertical-align:middle;"></i>';}entries.forEach(entry => {const card = document.createElement('div');card.className = 'pm-entry-card';const icon = getSiteIcon(entry.site);const pwMasked = '••••••••••';const memberLabel = memberLabels[entry.member] || entry.member || '';card.innerHTML = `        <div class="pm-entry-top">          <div class="pm-entry-favicon">${icon}</div>          <div class="pm-entry-info">            <div class="pm-entry-site">${escapeHTML(entry.site)}</div>            <div class="pm-entry-user">${escapeHTML(entry.username || 'No username')}</div>          </div>          <div class="pm-entry-actions">            <button class="pm-act-btn" onclick="copyPMPassword('${entry.id}')" title="Copy password"><i data-lucide="clipboard" style="width:16px;height:16px;vertical-align:middle;"></i> Copy</button>            <button class="pm-act-btn pm-act-del" onclick="deletePMEntry('${entry.id}')" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;"></i></button>          </div>        </div>        <div class="pm-pw-reveal-row">          <span id="pw-dots-${entry.id}" class="pw-dots">${pwMasked}</span>          <span id="pw-actual-${entry.id}" class="pw-actual">${escapeHTML(entry.password || '')}</span>          <button id="pw-reveal-btn-${entry.id}" class="pm-reveal-btn" onclick="toggleEntryReveal('${entry.id}')"><i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;"></i> Show</button>        </div>        ${entry.notes ? `<div class="pm-notes-row"><i data-lucide="file-text" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(entry.notes)}</div>` : ''}        <div class="pm-notes-row" style="color:#6366f1;font-weight:600;"><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(memberLabel)}</div>      `;      container.appendChild(card);});if(window.lucide)lucide.createIcons({node:container});} catch(err) {console.error(err);container.innerHTML = '<div class="pm-empty" style="color:#ef4444;"><i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Error loading passwords.</div>';if(window.lucide)lucide.createIcons({node:container});}}function renderPMListFiltered(memberKey) {const container = document.getElementById('pm-entries-container');const countNum = document.getElementById('pm-count-num');if (!container) return;loadPMEntries().catch(() => []).then(allEntries => {const allowed = window._pmAllowedMembers || ['shineil','brother','father','mother'];const pmSearch2 = document.getElementById('pm-search');const query = ((pmSearch2 ? pmSearch2.value : '') || '').toLowerCase();const filtered = allEntries.filter(e => {if (!e.member) return true;if (memberKey && e.member !== memberKey) return false;return allowed.includes(e.member);});const entries = query ? filtered.filter(e => (e.site||'').toLowerCase().includes(query) || (e.username||'').toLowerCase().includes(query)) : filtered;if (countNum) countNum.textContent = entries.length + ' saved';container.innerHTML = '';if (!entries || entries.length === 0) {container.innerHTML = '<div class="pm-empty"><i data-lucide="lock" style="width:16px;height:16px;vertical-align:middle;"></i> No passwords for this member.</div>';if(window.lucide)lucide.createIcons({node:container});return;}const memberLabels = { shineil:'SHINEIL MATHIAS', brother:'KEVIN MATHIAS', father:'STEPHEN MATHIAS', mother:'KANCHAN MATHIAS' };const siteIcons = {'google':'globe','gmail':'mail','github':'github','facebook':'user','twitter':'twitter','instagram':'camera','amazon':'package','netflix':'film','spotify':'music','apple':'apple','microsoft':'monitor','linkedin':'briefcase','youtube':'play','whatsapp':'message-circle','bank':'landmark','paypal':'credit-card'};function getSiteIcon(site) {const s = (site||'').toLowerCase();for(const k of Object.keys(siteIcons)) {if(s.includes(k)) return '<i data-lucide="'+siteIcons[k]+'" style="width:16px;height:16px;vertical-align:middle;"></i>';}return '<i data-lucide="key" style="width:16px;height:16px;vertical-align:middle;"></i>';}entries.forEach(entry => {const card = document.createElement('div');card.className = 'pm-entry-card';const icon = getSiteIcon(entry.site);const pwMasked = '••••••••••';const memberLabel = memberLabels[entry.member] || entry.member || '';card.innerHTML = `        <div class="pm-entry-top">          <div class="pm-entry-favicon">${icon}</div>          <div class="pm-entry-info">            <div class="pm-entry-site">${escapeHTML(entry.site)}</div>            <div class="pm-entry-user">${escapeHTML(entry.username || 'No username')}</div>          </div>          <div class="pm-entry-actions">            <button class="pm-act-btn" onclick="copyPMPassword('${entry.id}')" title="Copy password"><i data-lucide="clipboard" style="width:16px;height:16px;vertical-align:middle;"></i> Copy</button>            <button class="pm-act-btn pm-act-del" onclick="deletePMEntry('${entry.id}')" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;"></i></button>          </div>        </div>        <div class="pm-pw-reveal-row">          <span id="pw-dots-${entry.id}" class="pw-dots">${pwMasked}</span>          <span id="pw-actual-${entry.id}" class="pw-actual">${escapeHTML(entry.password || '')}</span>          <button id="pw-reveal-btn-${entry.id}" class="pm-reveal-btn" onclick="toggleEntryReveal('${entry.id}')"><i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;"></i> Show</button>        </div>        ${entry.notes ? `<div class="pm-notes-row"><i data-lucide="file-text" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(entry.notes)}</div>` : ''}        <div class="pm-notes-row" style="color:#6366f1;font-weight:600;"><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(memberLabel)}</div>      `;container.appendChild(card);});});if(window.lucide)lucide.createIcons({node:container});});}const VAULT_MODES = [  { id:'online',    icon:'<i data-lucide="globe" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Online Mode',           desc:'Access your vault anytime, anywhere with internet.' },  { id:'offline',   icon:'<i data-lucide="download" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Offline Vault Mode',    desc:'Access encrypted local copies without internet.' },  { id:'share',     icon:'<i data-lucide="link" style="width:14px;height:14px;vertical-align:middle;"></i>', name:'Secure Share Mode',     desc:'Share documents securely with full control and tracking.' },  { id:'emergency', icon:'<i data-lucide="alert-triangle" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Emergency Recovery',    desc:'Secure backup access during account recovery.' },  { id:'guardian',  icon:'<i data-lucide="users" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Guardian Access Mode',  desc:'Allow trusted guardians to access specific documents.' },  { id:'verify',    icon:'<i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Verification Mode',     desc:'Generate QR-secured verification for official submissions.' },  { id:'readonly',  icon:'<i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i>', name:'Read-Only Mode',        desc:'Allow view-only access without download or modification.' },  { id:'timelock',  icon:'<i data-lucide="clock" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Time-Lock Mode',        desc:'Restrict access to documents until a specific date.' },  { id:'legal',     icon:'<i data-lucide="landmark" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Legal Archive Mode',    desc:'Long-term preservation for apostille and legal documents.' },  { id:'ministry',  icon:'<i data-lucide="book-open" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Private Ministry Mode', desc:'Secure storage for ministry, pastoral, and church records.' },];let activeVaultMode = 'online';function openVaultModes() {  document.getElementById('vaultModesModal').classList.add('open');  renderVaultModes();}function closeVaultModes() {  document.getElementById('vaultModesModal').classList.remove('open');}document.getElementById('vaultModesModal').addEventListener('click', function(e){  if(e.target === this) closeVaultModes();});function renderVaultModes() {  const grid = document.getElementById('vm-modes-grid');  if (!grid) return;  grid.innerHTML = '';  VAULT_MODES.forEach(m => {    const card = document.createElement('div');    card.className = 'vm-card' + (m.id === activeVaultMode ? ' active' : '');    card.innerHTML = `<div class="vm-card-icon">${m.icon}</div><div class="vm-card-name">${m.name}</div><div class="vm-card-desc">${m.desc}</div>`;    card.onclick = () => setVaultMode(m.id);    grid.appendChild(card);  });if(window.lucide)lucide.createIcons({node:grid});}function setVaultMode(id) {  activeVaultMode = id;  const m = VAULT_MODES.find(x => x.id === id);  if (m) {    document.getElementById('vm-active-name').textContent = m.name;    document.getElementById('vm-active-desc').textContent = m.desc;    document.querySelector('.vm-active-badge span:first-child').innerHTML = m.icon;if(window.lucide)lucide.createIcons({node:document.querySelector('.vm-active-badge')});  }  renderVaultModes();  /* Show brief toast */  const toast = document.createElement('div');  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:99999;';  toast.textContent = `✓ ${(m ? m.name : "") || 'Mode'} activated`;  document.body.appendChild(toast);  setTimeout(() => toast.remove(), 2200);}
     </script>
     <script nonce="opencode-2026-fix">
       // MODES button is now a real HTML button in the navbar — no injection needed.
@@ -4072,6 +4117,7 @@ Recommended:
           if (prev && sel.querySelector('option[value="'+prev+'"]')) sel.value = prev;
           if (typeof lucide !== 'undefined') lucide.createIcons();
         }
+        window.initVaultChecklist = initVaultChecklist;
 
         /* ---- RENDER spreadsheet for a type ---- */
         function vcRender(type){
@@ -4096,7 +4142,9 @@ Recommended:
 
           var items = data[type];
           var statuses = _vcLoad(null,_vcStatusKey,{});
-          var typeSt = statuses[type] || {};
+          var _vcMember = (typeof getCurrentVaultMember === 'function') ? getCurrentVaultMember() : (sessionStorage.getItem('vaultMember') || 'shineil');
+          var memberSt = statuses[_vcMember] || statuses;
+          var typeSt = memberSt[type] || statuses[type] || {};
           var extraCols = _vcLoad(null,_vcExtraKey,{});
           _vcExtraCols = extraCols[type] || [];
 
@@ -4260,8 +4308,10 @@ Recommended:
           _vcSave(data,_vcDataKey);
 
           var statuses = _vcLoad(null,_vcStatusKey,{});
-          statuses[_vcCurType] = {};
-          _vcRows.forEach(function(r,i){ statuses[_vcCurType][i] = r.status; });
+          var _vcSaveMember = (typeof getCurrentVaultMember === 'function') ? getCurrentVaultMember() : (sessionStorage.getItem('vaultMember') || 'shineil');
+          if (!statuses[_vcSaveMember]) statuses[_vcSaveMember] = {};
+          statuses[_vcSaveMember][_vcCurType] = {};
+          _vcRows.forEach(function(r,i){ statuses[_vcSaveMember][_vcCurType][i] = r.status; });
           _vcSave(statuses,_vcStatusKey);
 
           var extras = _vcLoad(null,_vcExtraKey,{});
@@ -4304,7 +4354,7 @@ Recommended:
           if (!name || !name.trim()) return;
           name = name.trim();
           if (_vcCols.indexOf(name) !== -1 || _vcExtraCols.indexOf(name) !== -1){
-            alert('Column "'+name+'" already exists.'); return;
+            toastNotify('Column "'+name+'" already exists.', 'warning'); return;
           }
           _vcExtraCols.push(name);
           _vcRows.forEach(function(r){
@@ -4323,7 +4373,7 @@ Recommended:
           if (!name || !name.trim()) return;
           name = name.trim();
           var ci = _vcExtraCols.indexOf(name);
-          if (ci === -1){ alert('Column "'+name+'" not found.'); return; }
+          if (ci === -1){ toastNotify('Column "'+name+'" not found.', 'error'); return; }
           _vcExtraCols.splice(ci,1);
           _vcRows.forEach(function(r){ if (r.extra) delete r.extra[name]; });
           _vcSaveData();
@@ -4443,6 +4493,24 @@ Recommended:
           d.textContent = String(s || '');
           return d.innerHTML;
         }
+
+        window.vcRender = vcRender;
+        window.vcSortBy = vcSortBy;
+        window.vcSelectAll = vcSelectAll;
+        window.vcSortByCol = vcSortByCol;
+        window.vcClickRow = vcClickRow;
+        window.vcFocus = vcFocus;
+        window.vcEdit = vcEdit;
+        window.vcEditStatus = vcEditStatus;
+        window.vcDelRowIdx = vcDelRowIdx;
+        window.vcOpenPDF = vcOpenPDF;
+        window.vcDeploy = vcDeploy;
+        window.vcAddRow = vcAddRow;
+        window.vcDelRow = vcDelRow;
+        window.vcAddCol = vcAddCol;
+        window.vcDelCol = vcDelCol;
+        window.vcFilterRows = vcFilterRows;
+        window.vcCopySelected = vcCopySelected;
 
         function selectVaultCategory(categoryName) {
           if (categoryName === 'HOME') {
@@ -4693,42 +4761,40 @@ Recommended:
             const d = new Date(now); d.setDate(now.getDate() - i);
             const key = _dayKey(d);
             const rec = (hist[id] && hist[id][key]) || null;
-            // Days with no recorded check default to Operational (no incident on file)
             days.push({ date: d, key, state: rec ? rec.state : 'operational', detail: rec ? rec.detail : 'No incidents recorded', time: rec ? rec.time : null });
           }
           const upCount = days.filter(d => d.state === 'operational').length;
-          const pct = ((upCount / UPTIME_DAYS) * 100).toFixed(2);
+          const pct = ((upCount / UPTIME_DAYS) * 100).toFixed(1);
           const worstToday = days[days.length - 1].state;
           const overallTxt = worstToday === 'operational' ? 'Operational' : _statusText(worstToday);
           const overallColor = stateColors[worstToday] || '#22c55e';
           const bars = days.map(d => {
             const c = stateColors[d.state] || '#22c55e';
             const dstr = d.date.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
-            return '<div class="uptime-bar" data-comp="' + escHtml(label) + '" data-icon="' + icon + '" data-date="' + dstr + '" data-state="' + d.state + '" data-detail="' + escHtml(d.detail || '') + '" data-time="' + (d.time || '') + '" style="flex:1;min-width:2px;height:30px;border-radius:2px;background:' + c + ';cursor:pointer;transition:transform .12s;"></div>';
+            return '<div class="uptime-bar" data-comp="' + escHtml(label) + '" data-icon="' + icon + '" data-date="' + dstr + '" data-state="' + d.state + '" data-detail="' + escHtml(d.detail || '') + '" data-time="' + (d.time || '') + '"></div>';
           }).join('');
-          return '<div style="margin-bottom:16px;">'
-            + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'
-            +   '<div style="font-weight:700;font-size:12.5px;color:#0f172a;display:flex;align-items:center;gap:6px;"><span>' + icon + '</span><span>' + escHtml(label) + '</span></div>'
-            +   '<div style="font-size:11px;font-weight:700;color:' + overallColor + ';">' + overallTxt + '</div>'
-            + '</div>'
-            + '<div style="display:flex;gap:2px;">' + bars + '</div>'
-            + '<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:#94a3b8;">'
-            +   '<span>' + UPTIME_DAYS + ' days ago</span><span>' + pct + '% uptime</span><span>Today</span>'
-            + '</div>'
+          return '<div class="uptime-row">'
+            + '<div class="uptime-row-label">' + icon + ' ' + escHtml(label) + '</div>'
+            + '<div class="uptime-row-bars">' + bars + '</div>'
+            + '<div class="uptime-row-status" style="color:' + overallColor + ';">' + overallTxt + '</div>'
+            + '<div class="uptime-row-pct">' + pct + '%</div>'
             + '</div>';
         }
         function renderUptimeSection(results, globalHist){
-          // Use global (Firestore) history when available, fallback to local localStorage
           var hist = globalHist || _recordUptimeToday(results);
           var container = document.getElementById('uptime-section');
           if (!container) return;
           var label = globalHist ? 'Global System Uptime — Last ' + UPTIME_DAYS + ' Days (all devices)' : 'System Uptime — Last ' + UPTIME_DAYS + ' Days (this device)';
-          var html = '<div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase;">' + label + '</div>';
+          var html = '<div class="uptime-section-label">' + label + '</div>';
+          html += '<div class="uptime-grid">';
+          html += '<div class="uptime-header"><span class="uptime-row-label">Component</span><span class="uptime-row-bars">Last ' + UPTIME_DAYS + ' Days</span><span class="uptime-row-status">Status</span><span class="uptime-row-pct">Uptime</span></div>';
           UPTIME_TRACKED_IDS.forEach(id => {
             var comp = STATUS_COMPONENTS.find(function(c){return c.id===id;});
             if (!comp) return;
             html += _buildUptimeStrip(id, comp.label, comp.icon, hist);
           });
+          html += '</div>';
+          html += '<div class="uptime-legend"><span class="uptime-legend-item"><span class="uptime-dot" style="background:#22c55e;"></span>Operational</span><span class="uptime-legend-item"><span class="uptime-dot" style="background:#eab308;"></span>Degraded</span><span class="uptime-legend-item"><span class="uptime-dot" style="background:#fb923c;"></span>Partial</span><span class="uptime-legend-item"><span class="uptime-dot" style="background:#ef4444;"></span>Major</span><span class="uptime-legend-item"><span class="uptime-dot" style="background:#3b82f6;"></span>Maintenance</span></div>';
           container.innerHTML = html;
           _bindUptimeBars();
         }
@@ -4818,16 +4884,14 @@ Recommended:
 
         function _renderStatusComp(r) {
           var sc = { operational:'#22c55e', degraded:'#eab308', partial:'#fb923c', major:'#ef4444', maintenance:'#3b82f6' };
-          var sb = { operational:'#f0fdf4', degraded:'#fefce8', partial:'#fff7ed', major:'#fef2f2', maintenance:'#eff6ff' };
           var c = sc[r.state] || '#94a3b8';
-          var b = sb[r.state] || '#f8fafc';
-          var badge = { operational:'<i data-lucide="circle-check" style="width:14px;height:14px;vertical-align:middle;"></i>', degraded:'<i data-lucide="alert-circle" style="width:14px;height:14px;vertical-align:middle;"></i>', partial:'<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i>', major:'<i data-lucide="x-circle" style="width:14px;height:14px;vertical-align:middle;"></i>', maintenance:'<i data-lucide="wrench" style="width:14px;height:14px;vertical-align:middle;"></i>' }[r.state] || '<i data-lucide="circle" style="width:14px;height:14px;vertical-align:middle;"></i>';
-          var txt = { operational:'Operational', degraded:'Degraded', partial:'Partial Outage', major:'Major Outage', maintenance:'Maintenance' }[r.state] || 'Unknown';
-          return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:'+b+';border:1px solid '+(r.state==='operational'?'#e2e8f0':c+'44')+';">'
-            +'<span style="font-size:14px;width:22px;text-align:center;">'+r.icon+'</span>'
-            +'<span style="flex:1;font-weight:700;font-size:12px;color:#0f172a;">'+escHtml(r.label)+'</span>'
-            +'<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:'+c+'18;color:'+c+';font-weight:700;white-space:nowrap;">'+badge+' '+txt+'</span>'
-            +'<span style="font-size:11px;color:#64748b;max-width:180px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" title="'+escHtml(r.detail||'')+'">'+escHtml(r.labelText||r.detail||'')+'</span>'
+          var badge = { operational:'<i data-lucide="circle-check" style="width:12px;height:12px;vertical-align:middle;"></i>', degraded:'<i data-lucide="alert-circle" style="width:12px;height:12px;vertical-align:middle;"></i>', partial:'<i data-lucide="alert-triangle" style="width:12px;height:12px;vertical-align:middle;"></i>', major:'<i data-lucide="x-circle" style="width:12px;height:12px;vertical-align:middle;"></i>', maintenance:'<i data-lucide="wrench" style="width:12px;height:12px;vertical-align:middle;"></i>' }[r.state] || '<i data-lucide="circle" style="width:12px;height:12px;vertical-align:middle;"></i>';
+          var txt = { operational:'OK', degraded:'Degraded', partial:'Partial', major:'Down', maintenance:'Maint.' }[r.state] || '?';
+          return '<div class="status-comp-row">'
+            +'<span class="status-comp-icon">'+r.icon+'</span>'
+            +'<span class="status-comp-name">'+escHtml(r.label)+'</span>'
+            +'<span class="status-comp-badge" style="color:'+c+';">'+badge+' '+txt+'</span>'
+            +'<span class="status-comp-detail" title="'+escHtml(r.detail||'')+'">'+escHtml(r.labelText||r.detail||'')+'</span>'
             +'</div>';
         }
 
@@ -4840,6 +4904,7 @@ Recommended:
           var container = document.getElementById('status-components');
           if (!container) return;
           container.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;"><i data-lucide="loader" style="width:14px;height:14px;vertical-align:middle;"></i> Checking all systems...</div>';
+          if (window.lucide) lucide.createIcons({node:container});
           // Run all component checks
           var results = [];
           var worst = 'operational';
@@ -4875,12 +4940,14 @@ Recommended:
             banner.style.borderColor = m.bc;
             banner.style.color = m.c;
             banner.innerHTML = m.e + ' <span>' + m.t + '</span>';
+            if (window.lucide) lucide.createIcons({node:banner});
           }
           // Build component rows (local device status only — global is shown in the uptime bars above)
           var html = '<div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin:16px 0 8px;text-transform:uppercase;"><i data-lucide="map-pin" style="width:14px;height:14px;vertical-align:middle;"></i> Components — This Device</div>';
           html += '<div style="font-size:12px;color:#94a3b8;margin-bottom:10px;">Real-time status from your current device.</div>';
           html += results.map(function(r){ return _renderStatusComp(r); }).join('');
           container.innerHTML = html;
+          if(window.lucide) lucide.createIcons({node:container});
         }
         function _statusBadge(state) {
           const map = { operational:'<i data-lucide="circle-check" style="width:14px;height:14px;vertical-align:middle;"></i>', degraded:'<i data-lucide="alert-circle" style="width:14px;height:14px;vertical-align:middle;"></i>', partial:'<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i>', major:'<i data-lucide="x-circle" style="width:14px;height:14px;vertical-align:middle;"></i>', maintenance:'<i data-lucide="wrench" style="width:14px;height:14px;vertical-align:middle;"></i>' };
@@ -5206,6 +5273,12 @@ Recommended:
       setInterval(pinFooter, 1000);
     })();
   </script>
+
+  <!-- ===================== FLOATING AI FAB BUTTON ===================== -->
+  <div id="ai-fab" onclick="openAIChat()" title="AI Assistant" style="position:fixed;bottom:28px;right:28px;z-index:9998;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:#fff;border:none;cursor:pointer;box-shadow:0 6px 24px rgba(124,77,255,0.45);display:flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 8px 32px rgba(124,77,255,0.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 6px 24px rgba(124,77,255,0.45)'">
+    <i data-lucide="sparkles" style="width:24px;height:24px;"></i>
+  </div>
+
 </body>
 
 </html>

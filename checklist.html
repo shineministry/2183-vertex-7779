@@ -623,7 +623,7 @@ function openPDF(btn){
     if (window.parent && window.parent !== window){
         window.parent.postMessage({ type: 'openChecklistPDF', pdf: pdfPath, name: name }, '*');
     } else {
-        alert('PDF: ' + name + '\nPath: ' + pdfPath);
+        showToast('PDF: ' + name + ' — ' + pdfPath);
     }
 }
 

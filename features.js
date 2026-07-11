@@ -131,8 +131,8 @@ async function savePMEntry() {
   const password = document.getElementById('pm-password').value.trim();
   const notes    = document.getElementById('pm-notes').value.trim();
   const pmMemberEl = document.getElementById('pm-member'); const member   = (pmMemberEl ? pmMemberEl.value : '') || '';
-  if (!site || !password) { alert('Site and password are required.'); return; }
-  if (!member) { alert('Please select which member this password is for.'); return; }
+  if (!site || !password) { toastNotify('Site and password are required.', 'warning'); return; }
+  if (!member) { toastNotify('Please select which member this password is for.', 'warning'); return; }
 
   // Verify we actually have an auth token before attempting the save
   const headers = await getAuthHeaders();
@@ -579,7 +579,7 @@ async function generateShareLink(){
      // ADD THIS BLOCK ↓
   const masterPwd = window.masterPassword || masterPassword;
   if(!masterPwd) {
-    alert('Cannot create share link: vault is not unlocked.');
+    toastNotify('Cannot create share link: vault is not unlocked.', 'error');
     return;
   }
    
@@ -634,22 +634,20 @@ body: JSON.stringify({
 
         }else{
 
-            alert(
-            'Could not create share link. Check backend.'
-            );
+            toastNotify('Could not create share link. Check backend.', 'error');
 
         }
 
     }catch(err){
         console.error(err);
-        alert('Could not create share link. Backend unreachable. Please try again later.');
+        toastNotify('Could not create share link. Backend unreachable. Please try again later.', 'error');
     }
 }
 
 function copyShareLink(){
     const text = document.getElementById('share-link-text').textContent;
     navigator.clipboard.writeText(text).then(()=>{
-        alert('Link copied to clipboard!');
+        toastNotify('Link copied to clipboard!', 'success');
     }).catch(()=>{
         // Fallback
         const ta = document.createElement('textarea');
@@ -658,7 +656,7 @@ function copyShareLink(){
         ta.select();
         document.execCommand('copy');
         ta.remove();
-        alert('Link copied!');
+        toastNotify('Link copied!', 'success');
     });
 }
 
@@ -975,6 +973,7 @@ function togglePin(file, btn){
         pinnedDocs.splice(idx, 1);
         btn.classList.remove('pinned');
         btn.innerHTML = '<i data-lucide="star" style="width:16px;height:16px;vertical-align:middle;"></i> Pin';
+        if(window.lucide)lucide.createIcons({node:btn});
     }
     savePinned();
     renderPinnedSection();
@@ -1015,7 +1014,7 @@ function showPinned(){
     if(pinnedDocs.length){
         section.scrollIntoView({behavior:'smooth'});
     } else {
-        alert('No pinned documents yet.\nClick the Pin button on any document card to favourite it.');
+        toastNotify('No pinned documents yet. Click the Pin button on any document card to favourite it.', 'info');
     }
 }
 
@@ -1757,7 +1756,7 @@ function exportVaultBackup() {
     URL.revokeObjectURL(url);
   } catch(e) {
     console.error('exportVaultBackup failed:', e);
-    alert('Export failed: ' + e.message);
+    toastNotify('Export failed: ' + e.message, 'error');
   }
 }
 
@@ -1896,7 +1895,7 @@ function saveCurrentNote() {
   var title = document.getElementById('noteTitle').value.trim() || 'Untitled';
   var content = document.getElementById('noteContent').value.trim();
   var category = document.getElementById('noteCategory').value;
-  if (!content) { alert('Please enter some content.'); return; }
+  if (!content) { toastNotify('Please enter some content.', 'warning'); return; }
   var notes = _getNotes();
   if (_notesEditingId) {
     var idx = notes.findIndex(function(x) { return x.id === _notesEditingId; });
@@ -1976,7 +1975,7 @@ async function downloadSelectedAsZip() {
   var files = getSelectedFiles();
   if (!files.length) return;
   if (typeof JSZip === 'undefined') {
-    alert('JSZip library not loaded yet. Please refresh and try again.');
+    toastNotify('JSZip library not loaded yet. Please refresh and try again.', 'error');
     return;
   }
 
@@ -1992,7 +1991,7 @@ async function downloadSelectedAsZip() {
     });
     var passResult = await passRes.json();
     if (!passResult || !passResult.success) {
-      alert(passResult && passResult.message ? passResult.message : 'Incorrect download password.');
+      toastNotify(passResult && passResult.message ? passResult.message : 'Incorrect download password.', 'error');
       return;
     }
     // Restore master password from the /get-secret response so decryption works
@@ -2001,12 +2000,12 @@ async function downloadSelectedAsZip() {
     }
   } catch (fetchErr) {
     console.error(fetchErr);
-    alert('Could not verify password.');
+    toastNotify('Could not verify password.', 'error');
     return;
   }
 
   if (!window.masterPassword) {
-    alert('Session not unlocked. Log in again to enable offline access.');
+    toastNotify('Session not unlocked. Log in again to enable offline access.', 'error');
     return;
   }
 
@@ -2061,8 +2060,8 @@ async function downloadSelectedAsZip() {
   }
 
   if (!done) {
-    alert('Failed to download any files.');
-    if (btn) btn.textContent = origText;
+    toastNotify('Failed to download any files.', 'error');
+  if (btn) { btn.innerHTML = origText; if (window.lucide) lucide.createIcons({node: btn}); }
     return;
   }
 
