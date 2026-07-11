@@ -1440,20 +1440,70 @@ Recommended:
             <div style="font-size:12px;color:#64748b;" id="photo-count"></div>
           </div>
           <div id="photos-grid" class="file-grid photo-grid"></div>
-        </div><!-- end #page-photos --> <!-- ===================== CHECKLIST PAGE (MODERN TABLE) ===================== -->
-        <div id="page-checklist" class="page-container" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
-            <h2 style="margin:0;font-size:20px;font-weight:800;color:#0f172a;"><i data-lucide="check-circle" style="width:20px;height:20px;vertical-align:middle;"></i> Checklist</h2>
-            <select id="vault-checklist-select" onchange="renderVaultChecklist(this.value)" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;color:#0f172a;font-weight:600;cursor:pointer;">
-              <option value="">Select Checklist Type</option>
-            </select>
+        </div><!-- end #page-photos --> <!-- ===================== CHECKLIST PAGE (EXCEL SPREADSHEET) ===================== -->
+        <div id="page-checklist" class="page-container" style="display:none;padding:0;overflow:hidden;flex-direction:column;">
+          <!-- TOOLBAR RIBBON -->
+          <div class="vc-ribbon">
+            <div class="vc-ribbon-group">
+              <span class="vc-ribbon-label">View:</span>
+              <select id="vc-select" onchange="vcRender(this.value)"><option value="">Select Checklist</option></select>
+            </div>
+            <div class="vc-ribbon-sep"></div>
+            <div class="vc-ribbon-group">
+              <input type="text" id="vc-search" placeholder="Search..." oninput="vcFilterRows(this.value)" class="vc-search-input" />
+            </div>
+            <div class="vc-ribbon-sep"></div>
+            <div class="vc-ribbon-group">
+              <span class="vc-ribbon-label">Sort:</span>
+              <select id="vc-sort" onchange="vcSortBy(this.value)" class="vc-sort-select">
+                <option value="">None</option>
+                <option value="name-asc">Name A-Z</option>
+                <option value="name-desc">Name Z-A</option>
+                <option value="status-asc">Status A-Z</option>
+                <option value="status-desc">Status Z-A</option>
+              </select>
+            </div>
+            <div class="vc-ribbon-sep"></div>
+            <div class="vc-ribbon-group">
+              <button class="vc-rbtn" onclick="vcAddRow()" title="Add Row"><i data-lucide="plus" style="width:13px;height:13px;"></i> Row</button>
+              <button class="vc-rbtn" onclick="vcAddCol()" title="Add Column"><i data-lucide="plus" style="width:13px;height:13px;"></i> Col</button>
+              <button class="vc-rbtn vc-rbtn-del" onclick="vcDelRow()" title="Delete Selected Row"><i data-lucide="trash-2" style="width:13px;height:13px;"></i> Row</button>
+              <button class="vc-rbtn vc-rbtn-del" onclick="vcDelCol()" title="Delete Selected Column"><i data-lucide="trash-2" style="width:13px;height:13px;"></i> Col</button>
+            </div>
+            <div class="vc-ribbon-sep"></div>
+            <div class="vc-ribbon-group">
+              <button class="vc-rbtn" onclick="vcSelectAll()" title="Select All"><i data-lucide="check-square" style="width:13px;height:13px;"></i> All</button>
+              <button class="vc-rbtn" onclick="vcCopySelected()" title="Copy Selected"><i data-lucide="copy" style="width:13px;height:13px;"></i> Copy</button>
+            </div>
+            <div class="vc-ribbon-right">
+              <button class="vc-rbtn vc-rbtn-deploy" onclick="vcDeploy()" title="Deploy to storage"><i data-lucide="upload" style="width:13px;height:13px;"></i> DEPLOY</button>
+            </div>
           </div>
-          <div id="vault-checklist-empty" style="text-align:center;padding:60px 20px;">
-            <div style="width:56px;height:56px;border-radius:50%;background:rgba(100,116,139,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;"><i data-lucide="clipboard-list" style="width:28px;height:28px;color:#94a3b8;"></i></div>
-            <div style="font-size:16px;font-weight:700;color:#334155;margin-bottom:6px;">No checklist deployed yet</div>
-            <div style="font-size:13px;color:#64748b;line-height:1.5;">Open the Checklist Editor from your browser and click <strong>DEPLOY</strong> to push checklist data here.</div>
+          <!-- FORMULA BAR -->
+          <div class="vc-formula-bar">
+            <div class="vc-cell-ref" id="vc-cell-ref">A1</div>
+            <div class="vc-fx">fx</div>
+            <div class="vc-formula-input" id="vc-formula-display">Select a checklist type to begin</div>
           </div>
-          <div id="vault-checklist-grid" style="display:none;flex-direction:column;gap:12px;"></div>
+          <!-- SPREADSHEET AREA -->
+          <div id="vc-sheet-area" style="flex:1;overflow:auto;position:relative;">
+            <div id="vc-prompt" style="display:flex;align-items:center;justify-content:center;height:100%;">
+              <div style="text-align:center;padding:40px;">
+                <i data-lucide="clipboard-list" style="width:48px;height:48px;color:#217346;margin-bottom:12px;"></i>
+                <div style="font-weight:800;font-size:18px;color:#1a1a1a;margin-bottom:6px;">What checklist would you like to view?</div>
+                <div style="font-size:13px;color:#666;">Select a checklist type from the dropdown above.</div>
+              </div>
+            </div>
+            <table class="vc-sheet" id="vc-table" style="display:none;">
+              <thead id="vc-thead"></thead>
+              <tbody id="vc-tbody"></tbody>
+            </table>
+          </div>
+          <!-- STATUS BAR -->
+          <div class="vc-statusbar">
+            <div class="vc-sb-left"><i data-lucide="check-circle" style="width:12px;height:12px;"></i> Ready</div>
+            <div class="vc-sb-right"><span id="vc-sb-total"></span><span id="vc-sb-sel"></span></div>
+          </div>
         </div><!-- end #page-checklist -->
         <div style="text-align:center;padding:18px 20px;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;background:#f8fafc;line-height:1.6;margin-top:auto;flex-shrink:0;">
           Made by Shineil Keith Mathias, founder of Shine Ministry — India. &copy; 2026.
@@ -3637,7 +3687,7 @@ Recommended:
         return allowedMembers.includes(e.member);
       });
       const entries = query ? filtered.filter(e => (e.site || '').toLowerCase().includes(query) || (e.username || '').toLowerCase().includes(query)) : filtered;
-      if (countNum) countNum.textContent = entries.length + ' saved'; /* Build member filter tabs for multi-member modes */const memberFilter = document.getElementById('pm-member-filter');const memberLabels = { shineil:'SHINEIL', brother:'KEVIN', father:'STEPHEN', mother:'KANCHAN' };if (allowedMembers.length > 1) {if (!memberFilter) {const hdr = document.querySelector('.pm-entries-header');if (hdr) {const wrap = document.createElement('div');wrap.id = 'pm-member-filter';wrap.style.cssText = 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;';hdr.after(wrap);}}if (memberFilter) {memberFilter.innerHTML = allowedMembers.map(m => `<button class="pm-member-tab" data-member="${m}" style="padding:4px 10px;border:1px solid #cbd5e1;border-radius:8px;background:transparent;cursor:pointer;font-size:11px;font-weight:600;color:#475569;transition:.15s;">${memberLabels[m] || m}</button>`).join('');memberFilter.querySelectorAll('.pm-member-tab').forEach(btn => {btn.onclick = () => {memberFilter.querySelectorAll('.pm-member-tab').forEach(b => {b.style.background = 'transparent';b.style.color = '#475569';});btn.style.background = '#2563eb';btn.style.color = '#fff';const memberKey = btn.dataset.member;renderPMListFiltered(memberKey);};});}} else if (memberFilter) {memberFilter.remove();}window._pmAllowedMembers = allowedMembers;container.innerHTML = '';if (!entries || entries.length === 0) {container.innerHTML = '<div class="pm-empty"><i data-lucide="lock" style="width:16px;height:16px;vertical-align:middle;"></i> No saved passwords yet.<br><span style="font-size:12px;color:#cbd5e1;">Add your first one above.</span></div>';return;}const siteIcons = {'google':'globe','gmail':'mail','github':'github','facebook':'user','twitter':'twitter','instagram':'camera','amazon':'package','netflix':'film','spotify':'music','apple':'apple','microsoft':'monitor','linkedin':'briefcase','youtube':'play','whatsapp':'message-circle','bank':'landmark','paypal':'credit-card'};function getSiteIcon(site) {const s = (site||'').toLowerCase();for(const k of Object.keys(siteIcons)) {if(s.includes(k)) return '<i data-lucide="'+siteIcons[k]+'" style="width:16px;height:16px;vertical-align:middle;"></i>';}return '<i data-lucide="key" style="width:16px;height:16px;vertical-align:middle;"></i>';}entries.forEach(entry => {const card = document.createElement('div');card.className = 'pm-entry-card';const icon = getSiteIcon(entry.site);const pwMasked = '••••••••••';const memberLabel = memberLabels[entry.member] || entry.member || '';card.innerHTML = `        <div class="pm-entry-top">          <div class="pm-entry-favicon">${icon}</div>          <div class="pm-entry-info">            <div class="pm-entry-site">${escapeHTML(entry.site)}</div>            <div class="pm-entry-user">${escapeHTML(entry.username || 'No username')}</div>          </div>          <div class="pm-entry-actions">            <button class="pm-act-btn" onclick="copyPMPassword('${entry.id}')" title="Copy password"><i data-lucide="clipboard" style="width:16px;height:16px;vertical-align:middle;"></i> Copy</button>            <button class="pm-act-btn pm-act-del" onclick="deletePMEntry('${entry.id}')" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;"></i></button>          </div>        </div>        <div class="pm-pw-reveal-row">          <span id="pw-dots-${entry.id}" class="pw-dots">${pwMasked}</span>          <span id="pw-actual-${entry.id}" class="pw-actual">${escapeHTML(entry.password || '')}</span>          <button id="pw-reveal-btn-${entry.id}" class="pm-reveal-btn" onclick="toggleEntryReveal('${entry.id}')"><i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;"></i> Show</button>        </div>        ${entry.notes ? `<div class="pm-notes-row"><i data-lucide="file-text" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(entry.notes)}</div>` : ''}        <div class="pm-notes-row" style="color:#6366f1;font-weight:600;"><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(memberLabel)}</div>      `;container.appendChild(card);});} catch(err) {console.error(err);container.innerHTML = '<div class="pm-empty" style="color:#ef4444;"><i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Error loading passwords.</div>';}}function renderPMListFiltered(memberKey) {const container = document.getElementById('pm-entries-container');const countNum = document.getElementById('pm-count-num');if (!container) return;loadPMEntries().catch(() => []).then(allEntries => {const allowed = window._pmAllowedMembers || ['shineil','brother','father','mother'];const pmSearch2 = document.getElementById('pm-search');const query = ((pmSearch2 ? pmSearch2.value : '') || '').toLowerCase();const filtered = allEntries.filter(e => {if (!e.member) return true;if (memberKey && e.member !== memberKey) return false;return allowed.includes(e.member);});const entries = query ? filtered.filter(e => (e.site||'').toLowerCase().includes(query) || (e.username||'').toLowerCase().includes(query)) : filtered;if (countNum) countNum.textContent = entries.length + ' saved';container.innerHTML = '';if (!entries || entries.length === 0) {container.innerHTML = '<div class="pm-empty"><i data-lucide="lock" style="width:16px;height:16px;vertical-align:middle;"></i> No passwords for this member.</div>';return;}const memberLabels = { shineil:'SHINEIL MATHIAS', brother:'KEVIN MATHIAS', father:'STEPHEN MATHIAS', mother:'KANCHAN MATHIAS' };const siteIcons = {'google':'globe','gmail':'mail','github':'github','facebook':'user','twitter':'twitter','instagram':'camera','amazon':'package','netflix':'film','spotify':'music','apple':'apple','microsoft':'monitor','linkedin':'briefcase','youtube':'play','whatsapp':'message-circle','bank':'landmark','paypal':'credit-card'};function getSiteIcon(site) {const s = (site||'').toLowerCase();for(const k of Object.keys(siteIcons)) {if(s.includes(k)) return <i data-lucide="siteIcons[k]" style="width:16px;height:16px;vertical-align:middle;"></i>;}return <i data-lucide="key" style="width:16px;height:16px;vertical-align:middle;"></i>;}entries.forEach(entry => {const card = document.createElement('div');card.className = 'pm-entry-card';const icon = getSiteIcon(entry.site);const pwMasked = '••••••••••';const memberLabel = memberLabels[entry.member] || entry.member || '';card.innerHTML = `        <div class="pm-entry-top">          <div class="pm-entry-favicon">${icon}</div>          <div class="pm-entry-info">            <div class="pm-entry-site">${escapeHTML(entry.site)}</div>            <div class="pm-entry-user">${escapeHTML(entry.username || 'No username')}</div>          </div>          <div class="pm-entry-actions">            <button class="pm-act-btn" onclick="copyPMPassword('${entry.id}')" title="Copy password"><i data-lucide="clipboard" style="width:16px;height:16px;vertical-align:middle;"></i> Copy</button>            <button class="pm-act-btn pm-act-del" onclick="deletePMEntry('${entry.id}')" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;"></i></button>          </div>        </div>        <div class="pm-pw-reveal-row">          <span id="pw-dots-${entry.id}" class="pw-dots">${pwMasked}</span>          <span id="pw-actual-${entry.id}" class="pw-actual">${escapeHTML(entry.password || '')}</span>          <button id="pw-reveal-btn-${entry.id}" class="pm-reveal-btn" onclick="toggleEntryReveal('${entry.id}')"><i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;"></i> Show</button>        </div>        ${entry.notes ? `<div class="pm-notes-row"><i data-lucide="file-text" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(entry.notes)}</div>` : ''}        <div class="pm-notes-row" style="color:#6366f1;font-weight:600;"><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(memberLabel)}</div>      `;container.appendChild(card);});});}/* ======== Vault Modes ======== */const VAULT_MODES = [  { id:'online',    icon:'<i data-lucide="globe" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Online Mode',           desc:'Access your vault anytime, anywhere with internet.' },  { id:'offline',   icon:'<i data-lucide="download" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Offline Vault Mode',    desc:'Access encrypted local copies without internet.' },  { id:'share',     icon:'<i data-lucide="link" style="width:14px;height:14px;vertical-align:middle;"></i>', name:'Secure Share Mode',     desc:'Share documents securely with full control and tracking.' },  { id:'emergency', icon:'<i data-lucide="alert-triangle" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Emergency Recovery',    desc:'Secure backup access during account recovery.' },  { id:'guardian',  icon:'<i data-lucide="users" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Guardian Access Mode',  desc:'Allow trusted guardians to access specific documents.' },  { id:'verify',    icon:'<i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Verification Mode',     desc:'Generate QR-secured verification for official submissions.' },  { id:'readonly',  icon:'<i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i>', name:'Read-Only Mode',        desc:'Allow view-only access without download or modification.' },  { id:'timelock',  icon:'<i data-lucide="clock" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Time-Lock Mode',        desc:'Restrict access to documents until a specific date.' },  { id:'legal',     icon:'<i data-lucide="landmark" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Legal Archive Mode',    desc:'Long-term preservation for apostille and legal documents.' },  { id:'ministry',  icon:'<i data-lucide="book-open" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Private Ministry Mode', desc:'Secure storage for ministry, pastoral, and church records.' },];let activeVaultMode = 'online';function openVaultModes() {  document.getElementById('vaultModesModal').classList.add('open');  renderVaultModes();}function closeVaultModes() {  document.getElementById('vaultModesModal').classList.remove('open');}document.getElementById('vaultModesModal').addEventListener('click', function(e){  if(e.target === this) closeVaultModes();});function renderVaultModes() {  const grid = document.getElementById('vm-modes-grid');  if (!grid) return;  grid.innerHTML = '';  VAULT_MODES.forEach(m => {    const card = document.createElement('div');    card.className = 'vm-card' + (m.id === activeVaultMode ? ' active' : '');    card.innerHTML = `<div class="vm-card-icon">${m.icon}</div><div class="vm-card-name">${m.name}</div><div class="vm-card-desc">${m.desc}</div>`;    card.onclick = () => setVaultMode(m.id);    grid.appendChild(card);  });}function setVaultMode(id) {  activeVaultMode = id;  const m = VAULT_MODES.find(x => x.id === id);  if (m) {    document.getElementById('vm-active-name').textContent = m.name;    document.getElementById('vm-active-desc').textContent = m.desc;    document.querySelector('.vm-active-badge span:first-child').innerHTML = m.icon;  }  renderVaultModes();  /* Show brief toast */  const toast = document.createElement('div');  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:99999;';  toast.textContent = `✓ ${(m ? m.name : "") || 'Mode'} activated`;  document.body.appendChild(toast);  setTimeout(() => toast.remove(), 2200);}
+      if (countNum) countNum.textContent = entries.length + ' saved'; /* Build member filter tabs for multi-member modes */const memberFilter = document.getElementById('pm-member-filter');const memberLabels = { shineil:'SHINEIL', brother:'KEVIN', father:'STEPHEN', mother:'KANCHAN' };if (allowedMembers.length > 1) {if (!memberFilter) {const hdr = document.querySelector('.pm-entries-header');if (hdr) {const wrap = document.createElement('div');wrap.id = 'pm-member-filter';wrap.style.cssText = 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;';hdr.after(wrap);}}if (memberFilter) {memberFilter.innerHTML = allowedMembers.map(m => `<button class="pm-member-tab" data-member="${m}" style="padding:4px 10px;border:1px solid #cbd5e1;border-radius:8px;background:transparent;cursor:pointer;font-size:11px;font-weight:600;color:#475569;transition:.15s;">${memberLabels[m] || m}</button>`).join('');memberFilter.querySelectorAll('.pm-member-tab').forEach(btn => {btn.onclick = () => {memberFilter.querySelectorAll('.pm-member-tab').forEach(b => {b.style.background = 'transparent';b.style.color = '#475569';});btn.style.background = '#2563eb';btn.style.color = '#fff';const memberKey = btn.dataset.member;renderPMListFiltered(memberKey);};});}} else if (memberFilter) {memberFilter.remove();}window._pmAllowedMembers = allowedMembers;container.innerHTML = '';if (!entries || entries.length === 0) {container.innerHTML = '<div class="pm-empty"><i data-lucide="lock" style="width:16px;height:16px;vertical-align:middle;"></i> No saved passwords yet.<br><span style="font-size:12px;color:#cbd5e1;">Add your first one above.</span></div>';return;}const siteIcons = {'google':'globe','gmail':'mail','github':'github','facebook':'user','twitter':'twitter','instagram':'camera','amazon':'package','netflix':'film','spotify':'music','apple':'apple','microsoft':'monitor','linkedin':'briefcase','youtube':'play','whatsapp':'message-circle','bank':'landmark','paypal':'credit-card'};function getSiteIcon(site) {const s = (site||'').toLowerCase();for(const k of Object.keys(siteIcons)) {if(s.includes(k)) return '<i data-lucide="'+siteIcons[k]+'" style="width:16px;height:16px;vertical-align:middle;"></i>';}return '<i data-lucide="key" style="width:16px;height:16px;vertical-align:middle;"></i>';}entries.forEach(entry => {const card = document.createElement('div');card.className = 'pm-entry-card';const icon = getSiteIcon(entry.site);const pwMasked = '••••••••••';const memberLabel = memberLabels[entry.member] || entry.member || '';card.innerHTML = `        <div class="pm-entry-top">          <div class="pm-entry-favicon">${icon}</div>          <div class="pm-entry-info">            <div class="pm-entry-site">${escapeHTML(entry.site)}</div>            <div class="pm-entry-user">${escapeHTML(entry.username || 'No username')}</div>          </div>          <div class="pm-entry-actions">            <button class="pm-act-btn" onclick="copyPMPassword('${entry.id}')" title="Copy password"><i data-lucide="clipboard" style="width:16px;height:16px;vertical-align:middle;"></i> Copy</button>            <button class="pm-act-btn pm-act-del" onclick="deletePMEntry('${entry.id}')" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;"></i></button>          </div>        </div>        <div class="pm-pw-reveal-row">          <span id="pw-dots-${entry.id}" class="pw-dots">${pwMasked}</span>          <span id="pw-actual-${entry.id}" class="pw-actual">${escapeHTML(entry.password || '')}</span>          <button id="pw-reveal-btn-${entry.id}" class="pm-reveal-btn" onclick="toggleEntryReveal('${entry.id}')"><i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;"></i> Show</button>        </div>        ${entry.notes ? `<div class="pm-notes-row"><i data-lucide="file-text" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(entry.notes)}</div>` : ''}        <div class="pm-notes-row" style="color:#6366f1;font-weight:600;"><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(memberLabel)}</div>      `;container.appendChild(card);});} catch(err) {console.error(err);container.innerHTML = '<div class="pm-empty" style="color:#ef4444;"><i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Error loading passwords.</div>';}}function renderPMListFiltered(memberKey) {const container = document.getElementById('pm-entries-container');const countNum = document.getElementById('pm-count-num');if (!container) return;loadPMEntries().catch(() => []).then(allEntries => {const allowed = window._pmAllowedMembers || ['shineil','brother','father','mother'];const pmSearch2 = document.getElementById('pm-search');const query = ((pmSearch2 ? pmSearch2.value : '') || '').toLowerCase();const filtered = allEntries.filter(e => {if (!e.member) return true;if (memberKey && e.member !== memberKey) return false;return allowed.includes(e.member);});const entries = query ? filtered.filter(e => (e.site||'').toLowerCase().includes(query) || (e.username||'').toLowerCase().includes(query)) : filtered;if (countNum) countNum.textContent = entries.length + ' saved';container.innerHTML = '';if (!entries || entries.length === 0) {container.innerHTML = '<div class="pm-empty"><i data-lucide="lock" style="width:16px;height:16px;vertical-align:middle;"></i> No passwords for this member.</div>';return;}const memberLabels = { shineil:'SHINEIL MATHIAS', brother:'KEVIN MATHIAS', father:'STEPHEN MATHIAS', mother:'KANCHAN MATHIAS' };const siteIcons = {'google':'globe','gmail':'mail','github':'github','facebook':'user','twitter':'twitter','instagram':'camera','amazon':'package','netflix':'film','spotify':'music','apple':'apple','microsoft':'monitor','linkedin':'briefcase','youtube':'play','whatsapp':'message-circle','bank':'landmark','paypal':'credit-card'};function getSiteIcon(site) {const s = (site||'').toLowerCase();for(const k of Object.keys(siteIcons)) {if(s.includes(k)) return '<i data-lucide="'+siteIcons[k]+'" style="width:16px;height:16px;vertical-align:middle;"></i>';}return '<i data-lucide="key" style="width:16px;height:16px;vertical-align:middle;"></i>';}entries.forEach(entry => {const card = document.createElement('div');card.className = 'pm-entry-card';const icon = getSiteIcon(entry.site);const pwMasked = '••••••••••';const memberLabel = memberLabels[entry.member] || entry.member || '';card.innerHTML = `        <div class="pm-entry-top">          <div class="pm-entry-favicon">${icon}</div>          <div class="pm-entry-info">            <div class="pm-entry-site">${escapeHTML(entry.site)}</div>            <div class="pm-entry-user">${escapeHTML(entry.username || 'No username')}</div>          </div>          <div class="pm-entry-actions">            <button class="pm-act-btn" onclick="copyPMPassword('${entry.id}')" title="Copy password"><i data-lucide="clipboard" style="width:16px;height:16px;vertical-align:middle;"></i> Copy</button>            <button class="pm-act-btn pm-act-del" onclick="deletePMEntry('${entry.id}')" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;"></i></button>          </div>        </div>        <div class="pm-pw-reveal-row">          <span id="pw-dots-${entry.id}" class="pw-dots">${pwMasked}</span>          <span id="pw-actual-${entry.id}" class="pw-actual">${escapeHTML(entry.password || '')}</span>          <button id="pw-reveal-btn-${entry.id}" class="pm-reveal-btn" onclick="toggleEntryReveal('${entry.id}')"><i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;"></i> Show</button>        </div>        ${entry.notes ? `<div class="pm-notes-row"><i data-lucide="file-text" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(entry.notes)}</div>` : ''}        <div class="pm-notes-row" style="color:#6366f1;font-weight:600;"><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(memberLabel)}</div>      `;container.appendChild(card);});});}/* ======== Vault Modes ======== */const VAULT_MODES = [  { id:'online',    icon:'<i data-lucide="globe" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Online Mode',           desc:'Access your vault anytime, anywhere with internet.' },  { id:'offline',   icon:'<i data-lucide="download" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Offline Vault Mode',    desc:'Access encrypted local copies without internet.' },  { id:'share',     icon:'<i data-lucide="link" style="width:14px;height:14px;vertical-align:middle;"></i>', name:'Secure Share Mode',     desc:'Share documents securely with full control and tracking.' },  { id:'emergency', icon:'<i data-lucide="alert-triangle" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Emergency Recovery',    desc:'Secure backup access during account recovery.' },  { id:'guardian',  icon:'<i data-lucide="users" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Guardian Access Mode',  desc:'Allow trusted guardians to access specific documents.' },  { id:'verify',    icon:'<i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Verification Mode',     desc:'Generate QR-secured verification for official submissions.' },  { id:'readonly',  icon:'<i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i>', name:'Read-Only Mode',        desc:'Allow view-only access without download or modification.' },  { id:'timelock',  icon:'<i data-lucide="clock" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Time-Lock Mode',        desc:'Restrict access to documents until a specific date.' },  { id:'legal',     icon:'<i data-lucide="landmark" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Legal Archive Mode',    desc:'Long-term preservation for apostille and legal documents.' },  { id:'ministry',  icon:'<i data-lucide="book-open" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Private Ministry Mode', desc:'Secure storage for ministry, pastoral, and church records.' },];let activeVaultMode = 'online';function openVaultModes() {  document.getElementById('vaultModesModal').classList.add('open');  renderVaultModes();}function closeVaultModes() {  document.getElementById('vaultModesModal').classList.remove('open');}document.getElementById('vaultModesModal').addEventListener('click', function(e){  if(e.target === this) closeVaultModes();});function renderVaultModes() {  const grid = document.getElementById('vm-modes-grid');  if (!grid) return;  grid.innerHTML = '';  VAULT_MODES.forEach(m => {    const card = document.createElement('div');    card.className = 'vm-card' + (m.id === activeVaultMode ? ' active' : '');    card.innerHTML = `<div class="vm-card-icon">${m.icon}</div><div class="vm-card-name">${m.name}</div><div class="vm-card-desc">${m.desc}</div>`;    card.onclick = () => setVaultMode(m.id);    grid.appendChild(card);  });}function setVaultMode(id) {  activeVaultMode = id;  const m = VAULT_MODES.find(x => x.id === id);  if (m) {    document.getElementById('vm-active-name').textContent = m.name;    document.getElementById('vm-active-desc').textContent = m.desc;    document.querySelector('.vm-active-badge span:first-child').innerHTML = m.icon;  }  renderVaultModes();  /* Show brief toast */  const toast = document.createElement('div');  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:99999;';  toast.textContent = `✓ ${(m ? m.name : "") || 'Mode'} activated`;  document.body.appendChild(toast);  setTimeout(() => toast.remove(), 2200);}
     </script>
     <script nonce="opencode-2026-fix">
       // MODES button is now a real HTML button in the navbar — no injection needed.
@@ -3972,106 +4022,407 @@ Recommended:
         }
 
         /* ================================================================
-           VAULT CHECKLIST — Modern table, reads from localStorage DEPLOY
+           VAULT CHECKLIST — Excel spreadsheet engine
            ================================================================ */
-        const _vcDataKey = 'checklistDeployedData';
+        const _vcDataKey  = 'checklistDeployedData';
         const _vcStatusKey = 'checklistStatuses';
-        function _vcLoadData(){ try { return JSON.parse(localStorage.getItem(_vcDataKey) || 'null'); } catch(e){ return null; } }
-        function _vcLoadStatuses(){ try { return JSON.parse(localStorage.getItem(_vcStatusKey) || '{}'); } catch(e){ return {}; } }
-        function _vcSaveStatuses(s){ try { localStorage.setItem(_vcStatusKey, JSON.stringify(s)); } catch(e){} }
+        const _vcExtraKey  = 'checklistExtraCols';
+        let _vcCurType = '';
+        let _vcRows    = [];
+        let _vcCols    = [];
+        let _vcExtraCols = [];
+        let _vcSelCell  = null;
+        let _vcSelRow   = -1;
+        let _vcFilter   = '';
 
+        function _vcLoad(s,k,d){ try { return JSON.parse(localStorage.getItem(k)||JSON.stringify(d)); } catch(e){ return d; } }
+        function _vcSave(s,k){ try { localStorage.setItem(k,JSON.stringify(s)); } catch(e){} }
+
+        /* ---- INIT: populate dropdown ---- */
         function initVaultChecklist(){
-          const data = _vcLoadData();
-          const sel  = document.getElementById('vault-checklist-select');
-          const empty= document.getElementById('vault-checklist-empty');
-          const grid = document.getElementById('vault-checklist-grid');
-          if (!sel || !empty || !grid) return;
-
-          sel.innerHTML = '<option value="">Select Checklist Type</option>';
-          if (!data || !Object.keys(data).length){
-            empty.style.display = '';
-            grid.style.display  = 'none';
-            return;
+          var data = _vcLoad(null,_vcDataKey,null);
+          var sel  = document.getElementById('vc-select');
+          if (!sel) return;
+          var prev = sel.value;
+          sel.innerHTML = '<option value="">Select Checklist</option>';
+          if (data && Object.keys(data).length){
+            Object.keys(data).forEach(function(t){
+              var o = document.createElement('option');
+              o.value = t; o.textContent = t;
+              sel.appendChild(o);
+            });
           }
-          Object.keys(data).forEach(type => {
-            const opt = document.createElement('option');
-            opt.value = type; opt.textContent = type;
-            sel.appendChild(opt);
-          });
-          empty.style.display = 'none';
-          grid.style.display  = 'none';
+          if (prev && sel.querySelector('option[value="'+prev+'"]')) sel.value = prev;
           if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        function renderVaultChecklist(type){
-          const data  = _vcLoadData();
-          const grid  = document.getElementById('vault-checklist-grid');
-          const empty = document.getElementById('vault-checklist-empty');
-          if (!grid || !empty) return;
+        /* ---- RENDER spreadsheet for a type ---- */
+        function vcRender(type){
+          _vcCurType = type;
+          _vcFilter = '';
+          var sf = document.getElementById('vc-search');
+          if (sf) sf.value = '';
+          var data = _vcLoad(null,_vcDataKey,null);
+          var prompt = document.getElementById('vc-prompt');
+          var table  = document.getElementById('vc-table');
+          var disp   = document.getElementById('vc-formula-display');
+          if (!prompt || !table) return;
 
           if (!type || !data || !data[type]){
-            grid.style.display = 'none';
-            empty.style.display = data && Object.keys(data).length ? 'none' : '';
+            prompt.style.display = 'flex';
+            table.style.display  = 'none';
+            if (disp) disp.textContent = 'Select a checklist type to begin';
+            _vcRows = []; _vcCols = []; _vcExtraCols = [];
+            _vcUpdateSB();
             return;
           }
 
-          const items = data[type];
-          const statuses = _vcLoadStatuses();
-          const typeStatuses = statuses[type] || {};
+          var items = data[type];
+          var statuses = _vcLoad(null,_vcStatusKey,{});
+          var typeSt = statuses[type] || {};
+          var extraCols = _vcLoad(null,_vcExtraKey,{});
+          _vcExtraCols = extraCols[type] || [];
 
-          grid.innerHTML = '';
-          grid.style.display = 'flex';
-
-          items.forEach((item, idx) => {
-            const status = typeStatuses[idx] || 'pending';
-            const card = document.createElement('div');
-            card.className = 'vc-card';
-            card.innerHTML =
-              '<div class="vc-card-header">' +
-                '<div class="vc-card-title">' +
-                  '<i data-lucide="file-text" style="width:18px;height:18px;color:#3b82f6;flex-shrink:0;"></i>' +
-                  '<span>' + _vcEsc(item.name) + '</span>' +
-                '</div>' +
-                '<div class="vc-card-actions">' +
-                  '<select class="vc-status-select vc-status-' + status + '" data-type="' + _vcEsc(type) + '" data-idx="' + idx + '" onchange="_vcSetStatus(this)">' +
-                    '<option value="pending"' + (status === 'pending' ? ' selected' : '') + '>Pending</option>' +
-                    '<option value="yes"' + (status === 'yes' ? ' selected' : '') + '>YES</option>' +
-                    '<option value="no"' + (status === 'no' ? ' selected' : '') + '>NO</option>' +
-                    '<option value="na"' + (status === 'na' ? ' selected' : '') + '>N/A</option>' +
-                  '</select>' +
-                '</div>' +
-              '</div>' +
-              '<div class="vc-card-desc">' + _vcEsc(item.desc || 'No description') + '</div>';
-            if (item.pdf) {
-              const openBtn = document.createElement('button');
-              openBtn.className = 'vc-open-btn';
-              openBtn.innerHTML = '<i data-lucide="external-link" style="width:14px;height:14px;"></i> Open PDF';
-              openBtn.onclick = (function(pdf, name){ return function(){ _vcOpenPDF(pdf, name); }; })(item.pdf, item.name);
-              card.querySelector('.vc-card-actions').appendChild(openBtn);
-            }
-            grid.appendChild(card);
+          _vcRows = items.map(function(it,i){
+            return {
+              name: it.name || '',
+              desc: it.desc || '',
+              pdf:  it.pdf  || '',
+              status: typeSt[i] || 'pending',
+              extra: it.extra || {}
+            };
           });
+          _vcCols = ['Name','Description','Status','PDF'];
 
+          prompt.style.display = 'none';
+          table.style.display  = '';
+          if (disp) disp.textContent = type;
+          _vcBuildHead();
+          _vcBuildBody();
+          _vcUpdateSB();
+          _vcSelCell = null; _vcSelRow = -1;
           if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        function _vcSetStatus(sel){
-          const type = sel.getAttribute('data-type');
-          const idx  = parseInt(sel.getAttribute('data-idx'), 10);
-          const val  = sel.value;
-          const statuses = _vcLoadStatuses();
-          if (!statuses[type]) statuses[type] = {};
-          statuses[type][idx] = val;
-          _vcSaveStatuses(statuses);
-          sel.className = 'vc-status-select vc-status-' + val;
+        /* ---- BUILD table header ---- */
+        function _vcBuildHead(){
+          var thead = document.getElementById('vc-thead');
+          if (!thead) return;
+          var cols = _vcCols.concat(_vcExtraCols);
+          var html = '<tr><th class="vc-corner" onclick="vcSelectAll()"></th>';
+          cols.forEach(function(c,i){
+            var lbl = _vcColLetter(i) + ' — ' + c;
+            html += '<th class="vc-col-head" data-ci="'+i+'" onclick="vcSortByCol('+i+')" title="Click to sort">'+lbl+'</th>';
+          });
+          html += '<th class="vc-col-head" style="width:60px;">Actions</th></tr>';
+          thead.innerHTML = html;
         }
 
-        function _vcOpenPDF(pdf, name){
-          if (typeof openSecureFile === 'function') openSecureFile(pdf, name);
+        function _vcColLetter(i){
+          var s = '';
+          while (i >= 0){ s = String.fromCharCode(65 + (i % 26)) + s; i = Math.floor(i/26) - 1; }
+          return s;
         }
 
+        /* ---- BUILD table body ---- */
+        function _vcBuildBody(){
+          var tbody = document.getElementById('vc-tbody');
+          if (!tbody) return;
+          var rows = _vcFilteredRows();
+          var html = '';
+          rows.forEach(function(r,vi){
+            var ri = r._origIdx;
+            var cls = (vi % 2 === 0 ? 'vc-row-even' : 'vc-row-odd') + (r._origIdx === _vcSelRow ? ' vc-sel' : '');
+            html += '<tr class="'+cls+'" data-ri="'+ri+'">';
+            html += '<td class="vc-row-head vc-cell-num" onclick="vcClickRow('+ri+')">'+(ri+1)+'</td>';
+            _vcCols.forEach(function(c,ci){
+              html += _vcCellHTML(ri,ci,c);
+            });
+            _vcExtraCols.forEach(function(c,ci){
+              html += '<td class="vc-cell"><input class="vc-cell-edit" value="'+_vcEsc(r.extra[c]||'')+'" data-ri="'+ri+'" data-ci="'+(_vcCols.length+ci)+'" data-field="extra:'+c+'" onfocus="vcFocus(this)" onchange="vcEdit(this)" /></td>';
+            });
+            html += '<td class="vc-cell" style="text-align:center;width:60px;">';
+            html += '<button class="vc-del-btn" onclick="vcDelRowIdx('+ri+')" title="Delete row"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>';
+            html += '</td></tr>';
+          });
+          tbody.innerHTML = html;
+        }
+
+        function _vcCellHTML(ri,ci,col){
+          var r = _vcRows[ri];
+          if (!r) return '<td class="vc-cell"></td>';
+          var val, h = '';
+          switch(col){
+            case 'Name':
+              val = _vcEsc(r.name);
+              h = '<td class="vc-cell vc-cell-name"><input class="vc-cell-edit" value="'+val+'" data-ri="'+ri+'" data-ci="'+ci+'" data-field="name" onfocus="vcFocus(this)" onchange="vcEdit(this)" /></td>';
+              break;
+            case 'Description':
+              val = _vcEsc(r.desc);
+              h = '<td class="vc-cell vc-cell-desc"><input class="vc-cell-edit" value="'+val+'" data-ri="'+ri+'" data-ci="'+ci+'" data-field="desc" onfocus="vcFocus(this)" onchange="vcEdit(this)" /></td>';
+              break;
+            case 'Status':
+              h = '<td class="vc-cell" style="text-align:center;"><select class="vc-st-select vc-st-'+r.status+'" data-ri="'+ri+'" onchange="vcEditStatus(this)">';
+              ['pending','yes','no','na'].forEach(function(s){
+                var labels = {pending:'Pending',yes:'YES',no:'NO',na:'N/A'};
+                h += '<option value="'+s+'"'+(r.status===s?' selected':'')+'>'+labels[s]+'</option>';
+              });
+              h += '</select></td>';
+              break;
+            case 'PDF':
+              val = _vcEsc(r.pdf);
+              h = '<td class="vc-cell" style="white-space:normal;">';
+              if (r.pdf){
+                h += '<div style="display:flex;align-items:center;gap:6px;">';
+                h += '<input class="vc-cell-edit" style="flex:1;min-width:0;" value="'+val+'" data-ri="'+ri+'" data-ci="'+ci+'" data-field="pdf" onfocus="vcFocus(this)" onchange="vcEdit(this)" />';
+                h += '<button class="vc-pdf-btn" onclick="vcOpenPDF('+ri+')" title="Open PDF"><i data-lucide="external-link" style="width:12px;height:12px;"></i> Open</button>';
+                h += '</div>';
+              } else {
+                h += '<input class="vc-cell-edit" value="" placeholder="No PDF" data-ri="'+ri+'" data-ci="'+ci+'" data-field="pdf" onfocus="vcFocus(this)" onchange="vcEdit(this)" />';
+              }
+              h += '</td>';
+              break;
+            default:
+              h = '<td class="vc-cell"><input class="vc-cell-edit" value="'+_vcEsc(r[col]||'')+'" data-ri="'+ri+'" data-ci="'+ci+'" data-field="'+col+'" onfocus="vcFocus(this)" onchange="vcEdit(this)" /></td>';
+          }
+          return h;
+        }
+
+        /* ---- CELL EDIT ---- */
+        function vcEdit(inp){
+          var ri = parseInt(inp.dataset.ri,10);
+          var field = inp.dataset.field;
+          if (!_vcRows[ri]) return;
+          if (field.indexOf('extra:')===0){
+            var cn = field.substring(6);
+            if (!_vcRows[ri].extra) _vcRows[ri].extra = {};
+            _vcRows[ri].extra[cn] = inp.value;
+          } else {
+            _vcRows[ri][field] = inp.value;
+          }
+          _vcSaveData();
+        }
+
+        function vcEditStatus(sel){
+          var ri = parseInt(sel.dataset.ri,10);
+          if (!_vcRows[ri]) return;
+          _vcRows[ri].status = sel.value;
+          sel.className = 'vc-st-select vc-st-' + sel.value;
+          _vcSaveData();
+        }
+
+        function vcFocus(inp){
+          var ri = parseInt(inp.dataset.ri,10);
+          var ci = parseInt(inp.dataset.ci,10);
+          _vcSelCell = inp;
+          _vcSelRow = ri;
+          var ref = document.getElementById('vc-cell-ref');
+          var disp = document.getElementById('vc-formula-display');
+          if (ref) ref.textContent = _vcColLetter(ci) + (ri+1);
+          if (disp) disp.textContent = inp.value || '';
+          _vcHighlightRow(ri);
+        }
+
+        function _vcHighlightRow(ri){
+          var tbody = document.getElementById('vc-tbody');
+          if (!tbody) return;
+          tbody.querySelectorAll('tr').forEach(function(tr){
+            tr.classList.toggle('vc-sel', parseInt(tr.dataset.ri,10) === ri);
+          });
+        }
+
+        /* ---- SAVE back to localStorage ---- */
+        function _vcSaveData(){
+          var data = _vcLoad(null,_vcDataKey,{});
+          if (!_vcCurType || !data) return;
+          data[_vcCurType] = _vcRows.map(function(r){
+            var o = {name:r.name,desc:r.desc,pdf:r.pdf};
+            if (r.extra && Object.keys(r.extra).length) o.extra = r.extra;
+            return o;
+          });
+          _vcSave(data,_vcDataKey);
+
+          var statuses = _vcLoad(null,_vcStatusKey,{});
+          statuses[_vcCurType] = {};
+          _vcRows.forEach(function(r,i){ statuses[_vcCurType][i] = r.status; });
+          _vcSave(statuses,_vcStatusKey);
+
+          var extras = _vcLoad(null,_vcExtraKey,{});
+          extras[_vcCurType] = _vcExtraCols;
+          _vcSave(extras,_vcExtraKey);
+
+          _vcUpdateSB();
+        }
+
+        /* ---- ADD / DELETE ROWS ---- */
+        function vcAddRow(){
+          if (!_vcCurType) return;
+          _vcRows.push({name:'New Item',desc:'',pdf:'',status:'pending',extra:{}});
+          _vcSaveData();
+          _vcBuildBody();
+          _vcUpdateSB();
+          if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function vcDelRow(){
+          if (_vcSelRow < 0 || _vcSelRow >= _vcRows.length) return;
+          vcDelRowIdx(_vcSelRow);
+        }
+
+        function vcDelRowIdx(ri){
+          if (!_vcCurType || ri < 0 || ri >= _vcRows.length) return;
+          _vcRows.splice(ri,1);
+          if (_vcSelRow === ri) _vcSelRow = -1;
+          else if (_vcSelRow > ri) _vcSelRow--;
+          _vcSaveData();
+          _vcBuildBody();
+          _vcUpdateSB();
+          if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        /* ---- ADD / DELETE COLUMNS ---- */
+        function vcAddCol(){
+          if (!_vcCurType) return;
+          var name = prompt('Enter column name:');
+          if (!name || !name.trim()) return;
+          name = name.trim();
+          if (_vcCols.indexOf(name) !== -1 || _vcExtraCols.indexOf(name) !== -1){
+            alert('Column "'+name+'" already exists.'); return;
+          }
+          _vcExtraCols.push(name);
+          _vcRows.forEach(function(r){
+            if (!r.extra) r.extra = {};
+            if (!(name in r.extra)) r.extra[name] = '';
+          });
+          _vcSaveData();
+          _vcBuildHead();
+          _vcBuildBody();
+          if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function vcDelCol(){
+          if (!_vcCurType || !_vcExtraCols.length) return;
+          var name = prompt('Delete which extra column?\nExtra columns: ' + _vcExtraCols.join(', '));
+          if (!name || !name.trim()) return;
+          name = name.trim();
+          var ci = _vcExtraCols.indexOf(name);
+          if (ci === -1){ alert('Column "'+name+'" not found.'); return; }
+          _vcExtraCols.splice(ci,1);
+          _vcRows.forEach(function(r){ if (r.extra) delete r.extra[name]; });
+          _vcSaveData();
+          _vcBuildHead();
+          _vcBuildBody();
+          if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        /* ---- SORT ---- */
+        function vcSortBy(val){
+          if (!val || !_vcRows.length) return;
+          var parts = val.split('-');
+          var key = parts[0], dir = parts[1];
+          _vcRows.sort(function(a,b){
+            var va = (a[key]||'').toLowerCase(), vb = (b[key]||'').toLowerCase();
+            if (va < vb) return dir==='asc' ? -1 : 1;
+            if (va > vb) return dir==='asc' ? 1 : -1;
+            return 0;
+          });
+          _vcBuildBody();
+        }
+
+        function vcSortByCol(ci){
+          var col = _vcCols[ci] || _vcExtraCols[ci - _vcCols.length];
+          if (!col) return;
+          var key = null;
+          if (col === 'Name') key = 'name';
+          else if (col === 'Description') key = 'desc';
+          else if (col === 'Status') key = 'status';
+          else if (col === 'PDF') key = 'pdf';
+          if (!key) return;
+          var dd = document.getElementById('vc-sort');
+          var cur = dd ? dd.value : '';
+          var nv = (cur === key+'-asc') ? key+'-desc' : key+'-asc';
+          if (dd) dd.value = nv;
+          vcSortBy(nv);
+        }
+
+        /* ---- SEARCH / FILTER ---- */
+        function vcFilterRows(q){
+          _vcFilter = (q||'').toLowerCase();
+          _vcBuildBody();
+        }
+
+        function _vcFilteredRows(){
+          if (!_vcFilter) return _vcRows.map(function(r,i){ r._origIdx=i; return r; });
+          return _vcRows.reduce(function(acc,r,i){
+            if ((r.name||'').toLowerCase().indexOf(_vcFilter)!==-1 ||
+                (r.desc||'').toLowerCase().indexOf(_vcFilter)!==-1 ||
+                (r.status||'').toLowerCase().indexOf(_vcFilter)!==-1 ||
+                (r.pdf||'').toLowerCase().indexOf(_vcFilter)!==-1){
+              r._origIdx = i; acc.push(r);
+            }
+            return acc;
+          },[]);
+        }
+
+        /* ---- SELECT ALL / COPY ---- */
+        function vcSelectAll(){
+          var tbody = document.getElementById('vc-tbody');
+          if (!tbody) return;
+          tbody.querySelectorAll('tr').forEach(function(tr){ tr.classList.add('vc-sel'); });
+          _vcSelRow = -2;
+          _vcUpdateSB();
+        }
+
+        function vcCopySelected(){
+          if (_vcSelRow < 0) return;
+          var r = _vcRows[_vcSelRow];
+          if (!r) return;
+          var txt = r.name + '\t' + r.desc + '\t' + r.status + '\t' + r.pdf;
+          if (navigator.clipboard){
+            navigator.clipboard.writeText(txt).then(function(){ _vcToast('Row copied!'); });
+          }
+        }
+
+        /* ---- CLICK ROW HEAD ---- */
+        function vcClickRow(ri){
+          _vcSelRow = ri;
+          _vcHighlightRow(ri);
+          _vcUpdateSB();
+        }
+
+        /* ---- OPEN PDF ---- */
+        function vcOpenPDF(ri){
+          var r = _vcRows[ri];
+          if (r && r.pdf && typeof openSecureFile === 'function') openSecureFile(r.pdf, r.name);
+        }
+
+        /* ---- DEPLOY (re-push to localStorage) ---- */
+        function vcDeploy(){
+          _vcSaveData();
+          _vcToast('Deployed!');
+        }
+
+        /* ---- STATUS BAR ---- */
+        function _vcUpdateSB(){
+          var tot = document.getElementById('vc-sb-total');
+          var sel = document.getElementById('vc-sb-sel');
+          if (tot) tot.textContent = 'Rows: ' + _vcRows.length;
+          if (sel) sel.textContent = _vcSelRow >= 0 ? 'Selected: Row ' + (_vcSelRow+1) : '';
+        }
+
+        /* ---- TOAST ---- */
+        function _vcToast(msg){
+          var t = document.createElement('div');
+          t.style.cssText = 'position:fixed;bottom:40px;right:16px;background:#217346;color:#fff;padding:10px 18px;border-radius:6px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;';
+          t.textContent = msg;
+          document.body.appendChild(t);
+          requestAnimationFrame(function(){ t.style.opacity='1'; });
+          setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){ t.remove(); },300); }, 2000);
+        }
+
+        /* ---- ESCAPE HTML ---- */
         function _vcEsc(s){
-          const d = document.createElement('div');
+          var d = document.createElement('div');
           d.textContent = String(s || '');
           return d.innerHTML;
         }
