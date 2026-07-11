@@ -782,14 +782,15 @@ function initSecurityQuotes() {
   if (!el) { setTimeout(initSecurityQuotes, 100); return; }
   let idx = 0;
   el.innerHTML = '<i data-lucide="message-circle" style="width:16px;height:16px;vertical-align:middle;"></i> ' + SECURITY_QUOTES[0];
-  if (typeof lucide !== 'undefined') lucide.createIcons();
+  if (typeof lucide !== 'undefined') lucide.createIcons({node:el});
   if (window._securityQuotesTimer) clearInterval(window._securityQuotesTimer);
   window._securityQuotesTimer = setInterval(() => {
+    if (el.offsetParent === null) return;
     idx = (idx + 1) % SECURITY_QUOTES.length;
     el.style.opacity = '0';
     setTimeout(() => {
       el.innerHTML = '<i data-lucide="message-circle" style="width:16px;height:16px;vertical-align:middle;"></i> ' + SECURITY_QUOTES[idx];
-      if (typeof lucide !== 'undefined') lucide.createIcons();
+      if (typeof lucide !== 'undefined') lucide.createIcons({node:el});
       el.style.opacity = '1';
     }, 300);
   }, 10000);
