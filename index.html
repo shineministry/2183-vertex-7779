@@ -4779,7 +4779,7 @@ Recommended:
           const bars = days.map(d => {
             const c = stateColors[d.state] || '#22c55e';
             const dstr = d.date.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
-            return '<div class="uptime-bar" data-comp="' + escHtml(label) + '" data-icon="' + icon + '" data-date="' + dstr + '" data-state="' + d.state + '" data-detail="' + escHtml(d.detail || '') + '" data-time="' + (d.time || '') + '" style="flex:1;min-width:2px;height:30px;border-radius:2px;background:' + c + ';cursor:pointer;transition:transform .12s;"></div>';
+            return '<div class="uptime-bar" data-comp="' + escHtml(label) + '" data-icon="' + escHtml(icon) + '" data-date="' + dstr + '" data-state="' + d.state + '" data-detail="' + escHtml(d.detail || '') + '" data-time="' + (d.time || '') + '" style="flex:1;min-width:2px;height:30px;border-radius:2px;background:' + c + ';cursor:pointer;transition:transform .12s;"></div>';
           }).join('');
           return '<div style="margin-bottom:16px;">'
             + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'
@@ -5285,7 +5285,11 @@ Recommended:
   </script>
 
   <!-- ===================== FLOATING AI FAB BUTTON ===================== -->
-  <div id="ai-fab" onclick="openAIChat()" title="AI Assistant" style="position:fixed;bottom:28px;right:28px;z-index:9998;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:#fff;border:none;cursor:pointer;box-shadow:0 6px 24px rgba(124,77,255,0.45);display:flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 8px 32px rgba(124,77,255,0.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 6px 24px rgba(124,77,255,0.45)'">
+  <style>
+    #ai-fab { position:fixed; bottom:100px; right:28px; z-index:9998; width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585); color:#fff; border:none; cursor:pointer; box-shadow:0 6px 24px rgba(124,77,255,0.45); display:flex; align-items:center; justify-content:center; transition:transform .2s,box-shadow .2s; }
+    @media (max-width:480px) { #ai-fab { bottom:90px; right:18px; width:50px; height:50px; } }
+  </style>
+  <div id="ai-fab" onclick="openAIChat()" title="AI Assistant" onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 8px 32px rgba(124,77,255,0.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 6px 24px rgba(124,77,255,0.45)'"
     <i data-lucide="sparkles" style="width:24px;height:24px;"></i>
   </div>
 
