@@ -186,7 +186,7 @@ Recommended:
     var mode = (typeof getCurrentVaultMode === 'function') ? getCurrentVaultMode() : (sessionStorage.getItem('vaultMode') || 'ADMIN');
     var labels = { shineil:'SHINEIL', brother:'KEVIN', father:'STEPHEN', mother:'KANCHAN' };
     var modeNames = { online:'Online Mode', offline:'Offline Vault', share:'Secure Share', emergency:'Emergency Recovery', guardian:'Guardian Access', verify:'Verification', readonly:'Read-Only', timelock:'Time-Lock', legal:'Legal Archive', ministry:'Private Ministry' };
-    var profileImages = { shineil:'images/profile.png', brother:'images/ProfileK.png', father:'images/ProfileSt.png', mother:'images/mother.png' };
+    var profileImages = { shineil:'profile.png', brother:'ProfileK.png', father:'ProfileSt.png', mother:'ProfileKa.png' };
     nameEl.textContent = labels[member] || member.toUpperCase();
     modeEl.textContent = modeNames[mode] || mode + ' Mode';
     if (avatarEl) {
@@ -3898,7 +3898,7 @@ Recommended:
           shineil: { initial:'S', name:'Shineil Mathias', role:'Primary Owner', bg:'linear-gradient(135deg,#2563eb,#4f46e5)', img:'profile.png' },
           brother: { initial:'K', name:'Kevin Mathias',    role:'Brother',       bg:'linear-gradient(135deg,#059669,#0891b2)', img:'ProfileK.png' },
           father:  { initial:'S', name:'Stephen Mathias',  role:'Father',        bg:'linear-gradient(135deg,#d97706,#dc2626)', img:'ProfileSt.png' },
-          mother:  { initial:'K', name:'Kanchan Mathias',  role:'Mother',        bg:'linear-gradient(135deg,#be185d,#9b5de5)', img:'mother.png' }
+          mother:  { initial:'K', name:'Kanchan Mathias',  role:'Mother',        bg:'linear-gradient(135deg,#be185d,#9b5de5)', img:'ProfileKa.png' }
         };
 
         const mode = typeof getCurrentVaultMode === 'function'
