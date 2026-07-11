@@ -773,8 +773,13 @@ button{
     height: 100%;
 }
 
-#cat-list{
+#sidebar-files-section {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
 
+#cat-list{
     list-style:none;
 }
 
@@ -2543,6 +2548,8 @@ button{
   height: 100% !important;
   flex-shrink: 0 !important;
   box-shadow: 4px 0 20px rgba(0,0,0,.18) !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 /* Member select — dark themed */
@@ -2862,88 +2869,100 @@ body.dark-mode select {
 }
 
 /* =========================
-   CHECKLIST (modern table)
+   CHECKLIST (Excel spreadsheet)
    ========================= */
-.vc-card{
-  background:#fff;
-  border:1px solid #e2e8f0;
-  border-radius:12px;
-  padding:18px 20px;
-  transition:box-shadow .2s, border-color .2s;
-}
-.vc-card:hover{
-  box-shadow:0 2px 12px rgba(0,0,0,.06);
-  border-color:#cbd5e1;
-}
-.vc-card-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  margin-bottom:8px;
-}
-.vc-card-title{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  font-size:15px;
-  font-weight:700;
-  color:#0f172a;
-  flex:1;
-  min-width:0;
-}
-.vc-card-title span{
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-.vc-card-actions{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  flex-shrink:0;
-}
-.vc-card-desc{
-  font-size:13px;
-  color:#64748b;
-  line-height:1.55;
-  padding-left:26px;
-}
-.vc-status-select{
-  padding:5px 10px;
-  border-radius:6px;
-  border:1px solid #e2e8f0;
-  font-size:12px;
-  font-weight:600;
-  cursor:pointer;
-  background:#f8fafc;
-  color:#334155;
-}
-.vc-status-select.vc-status-yes{ background:#dcfce7; color:#166534; border-color:#bbf7d0; }
-.vc-status-select.vc-status-no{  background:#fee2e2; color:#991b1b; border-color:#fecaca; }
-.vc-status-select.vc-status-na{  background:#f1f5f9; color:#475569; border-color:#e2e8f0; }
-.vc-status-select.vc-status-pending{ background:#fffbeb; color:#92400e; border-color:#fde68a; }
-.vc-open-btn{
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  padding:6px 12px;
-  border-radius:6px;
-  border:1px solid #3b82f6;
-  background:#3b82f6;
-  color:#fff;
-  font-size:12px;
-  font-weight:600;
-  cursor:pointer;
-  transition:background .15s;
-}
-.vc-open-btn:hover{ background:#2563eb; }
 
-/* Dark mode overrides */
-body.dark .vc-card{ background:#1e293b; border-color:#334155; }
-body.dark .vc-card:hover{ border-color:#475569; box-shadow:0 2px 12px rgba(0,0,0,.25); }
-body.dark .vc-card-title{ color:#f1f5f9; }
-body.dark .vc-card-desc{ color:#94a3b8; }
-body.dark .vc-status-select{ background:#0f172a; color:#e2e8f0; border-color:#334155; }
-body.dark .vc-open-btn{ background:#2563eb; border-color:#3b82f6; }
-body.dark .vc-open-btn:hover{ background:#1d4ed8; }
+/* RIBBON TOOLBAR */
+.vc-ribbon{background:#f3f3f3;border-bottom:1px solid #d6d6d6;padding:5px 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:38px;}
+.vc-ribbon-group{display:flex;align-items:center;gap:5px;}
+.vc-ribbon-sep{width:1px;height:24px;background:#d6d6d6;}
+.vc-ribbon-label{font-size:12px;color:#444;font-weight:600;white-space:nowrap;}
+.vc-ribbon select,.vc-sort-select{padding:5px 8px;border:1px solid #ababab;border-radius:3px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a1a;cursor:pointer;}
+.vc-ribbon select:focus,.vc-sort-select:focus{outline:1px solid #217346;}
+.vc-search-input{padding:5px 10px;border:1px solid #ababab;border-radius:3px;font-size:13px;font-family:inherit;width:160px;background:#fff;color:#1a1a1a;}
+.vc-search-input:focus{outline:1px solid #217346;border-color:#217346;}
+.vc-rbtn{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid #ababab;border-radius:3px;background:#f8f8f8;font-size:12px;font-family:inherit;font-weight:600;color:#444;cursor:pointer;white-space:nowrap;}
+.vc-rbtn:hover{background:#e0e0e0;border-color:#999;}
+.vc-rbtn-del{color:#c62828;}
+.vc-rbtn-del:hover{background:#fde7e7;border-color:#c62828;}
+.vc-rbtn-deploy{background:#217346;color:#fff;border-color:#1a5c38;}
+.vc-rbtn-deploy:hover{background:#1a5c38;}
+.vc-ribbon-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+
+/* FORMULA BAR */
+.vc-formula-bar{display:flex;align-items:center;height:28px;border-bottom:1px solid #d6d6d6;background:#fff;user-select:none;}
+.vc-cell-ref{width:72px;text-align:center;font-size:12px;font-weight:600;color:#333;border-right:1px solid #d6d6d6;height:100%;display:flex;align-items:center;justify-content:center;}
+.vc-fx{font-size:12px;font-style:italic;font-weight:700;color:#555;margin:0 8px 0 4px;}
+.vc-formula-input{flex:1;font-size:14px;color:#333;padding:0 8px;height:100%;display:flex;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+
+/* SPREADSHEET TABLE */
+.vc-sheet{border-collapse:collapse;width:100%;table-layout:fixed;font-size:15px;}
+.vc-sheet th,.vc-sheet td{border:1px solid #d6d6d6;padding:0;position:relative;}
+.vc-corner{width:50px;min-width:50px;background:#f3f3f3;border-right:2px solid #b0b0b0;border-bottom:2px solid #b0b0b0;}
+.vc-col-head{background:#f3f3f3;text-align:center;font-weight:700;font-size:13px;color:#333;height:26px;border-bottom:2px solid #b0b0b0;cursor:pointer;user-select:none;}
+.vc-col-head:hover{background:#e2e2e2;}
+.vc-col-head-sel{background:#d4e4fc !important;}
+.vc-row-head{background:#f3f3f3;text-align:center;font-weight:700;font-size:13px;color:#333;width:50px;min-width:50px;border-right:2px solid #b0b0b0;cursor:default;}
+.vc-row-head:hover{background:#e2e2e2;}
+.vc-cell{height:34px;padding:6px 10px;font-size:15px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:cell;}
+.vc-cell-edit{width:100%;border:1px solid transparent;border-radius:2px;padding:4px 6px;font:inherit;font-size:15px;background:transparent;color:inherit;}
+.vc-cell-edit:focus{border-color:#217346;background:#fff;outline:none;box-shadow:0 0 0 1px #217346;}
+.vc-row-even .vc-cell{background:#fff;}
+.vc-row-odd .vc-cell{background:#f5f9fd;}
+.vc-sheet tbody tr:hover .vc-cell{background:#e8f0fe !important;}
+.vc-sheet tbody tr.vc-sel .vc-cell{background:#d4e4fc !important;}
+.vc-sheet tbody tr.vc-sel .vc-row-head{background:#b8d4f8 !important;}
+.vc-cell-num{text-align:center;font-weight:700;color:#555;font-size:13px;}
+.vc-cell-name{font-weight:700;color:#1a1a1a;}
+.vc-cell-desc{color:#555;white-space:normal;word-wrap:break-word;}
+
+/* STATUS SELECT IN CELL */
+.vc-st-select{width:100%;padding:4px 6px;border:1px solid #ababab;border-radius:3px;font-size:13px;font-family:inherit;font-weight:700;text-align:center;cursor:pointer;background:#fff;color:#333;}
+.vc-st-select:focus{outline:1px solid #217346;}
+.vc-st-yes{color:#0d7a3e;background:#e6f4ea;border-color:#a8d5ba;}
+.vc-st-no{color:#c62828;background:#fde7e7;border-color:#f0b0b0;}
+.vc-st-na{color:#666;background:#f0f0f0;border-color:#c0c0c0;}
+.vc-st-pending{color:#92400e;background:#fffbeb;border-color:#fde68a;}
+
+/* PDF + DELETE BUTTONS IN CELL */
+.vc-pdf-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid #ababab;border-radius:3px;background:#f8f8f8;font-size:12px;font-family:inherit;font-weight:600;color:#1a73e8;cursor:pointer;white-space:nowrap;}
+.vc-pdf-btn:hover{background:#e8f0fe;border-color:#1a73e8;}
+.vc-del-btn{width:26px;height:26px;border:1px solid #ccc;border-radius:3px;background:#f8f8f8;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:#888;}
+.vc-del-btn:hover{background:#fde7e7;border-color:#c62828;color:#c62828;}
+
+/* STATUS BAR */
+.vc-statusbar{display:flex;align-items:center;justify-content:space-between;height:26px;background:#217346;padding:0 12px;user-select:none;flex-shrink:0;}
+.vc-sb-left,.vc-sb-right{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.85);font-size:12px;}
+.vc-sb-right span{margin-left:10px;}
+
+/* DARK MODE */
+body.dark .vc-ribbon{background:#2d2d2d;border-color:#444;}
+body.dark .vc-ribbon select,body.dark .vc-sort-select{background:#3a3a3a;color:#e0e0e0;border-color:#555;}
+body.dark .vc-rbtn{color:#ccc;background:#3a3a3a;border-color:#555;}
+body.dark .vc-rbtn:hover{background:#444;border-color:#666;}
+body.dark .vc-rbtn-deploy{background:#1a5c38;color:#fff;}
+body.dark .vc-rbtn-deploy:hover{background:#217346;}
+body.dark .vc-search-input{background:#3a3a3a;color:#e0e0e0;border-color:#555;}
+body.dark .vc-ribbon-sep{background:#555;}
+body.dark .vc-formula-bar{background:#2d2d2d;border-color:#444;}
+body.dark .vc-cell-ref{color:#aaa;border-color:#444;}
+body.dark .vc-formula-input{color:#ddd;}
+body.dark .vc-corner{background:#2d2d2d;border-color:#555;}
+body.dark .vc-col-head,body.dark .vc-row-head{background:#2d2d2d;color:#ccc;border-color:#555;}
+body.dark .vc-col-head:hover,body.dark .vc-row-head:hover{background:#3a3a3a;}
+body.dark .vc-col-head-sel{background:#2a4a7a !important;}
+body.dark .vc-cell{color:#e0e0e0;}
+body.dark .vc-cell-num{color:#999;}
+body.dark .vc-cell-name{color:#f0f0f0;}
+body.dark .vc-cell-desc{color:#aaa;}
+body.dark .vc-row-even .vc-cell{background:#2a2a2a;}
+body.dark .vc-row-odd .vc-cell{background:#333;}
+body.dark .vc-sheet tbody tr:hover .vc-cell{background:#3a4a5a !important;}
+body.dark .vc-sheet tbody tr.vc-sel .vc-cell{background:#2a4a7a !important;}
+body.dark .vc-st-select{background:#3a3a3a;color:#e0e0e0;border-color:#555;}
+body.dark .vc-pdf-btn{background:#3a3a3a;color:#6db3f2;border-color:#555;}
+body.dark .vc-pdf-btn:hover{background:#2a4a7a;border-color:#6db3f2;}
+body.dark .vc-del-btn{background:#3a3a3a;border-color:#555;color:#aaa;}
+body.dark .vc-del-btn:hover{background:#5a2a2a;color:#f87171;}
+body.dark .vc-cell-edit{color:#e0e0e0;}
+body.dark .vc-cell-edit:focus{background:#3a3a3a;}

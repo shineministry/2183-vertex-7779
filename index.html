@@ -46,10 +46,11 @@ Recommended:
         ].join(';');
         document.documentElement.appendChild(_box);
         const closeBtn = document.createElement('button');
-        closeBtn.textContent = '<i data-lucide="x" style="width:14px;height:14px;vertical-align:middle;"></i> Dismiss';
+        closeBtn.innerHTML = '<i data-lucide="x" style="width:14px;height:14px;vertical-align:middle;"></i> Dismiss';
         closeBtn.style.cssText = 'position:sticky;top:0;float:right;background:#fff;color:#7f1d1d;border:none;border-radius:6px;padding:4px 10px;font-weight:700;cursor:pointer;margin-bottom:6px;';
         closeBtn.onclick = function () { _box.remove(); _box = null; };
         _box.appendChild(closeBtn);
+        if (window.lucide) lucide.createIcons({ node: _box });
         return _box;
       }
 
@@ -120,14 +121,30 @@ Recommended:
           if (btn && !btn.dataset.stubWarned) {
             btn.dataset.stubWarned = '1';
             var txt = btn.textContent;
-            btn.textContent = '<i data-lucide="loader" style="width:14px;height:14px;vertical-align:middle;"></i> Loading...';
-            setTimeout(function() { btn.textContent = txt; }, 2000);
+            btn.innerHTML = '<i data-lucide="loader" style="width:14px;height:14px;vertical-align:middle;"></i> Loading...';
+            if (window.lucide) lucide.createIcons({ node: btn });
+            setTimeout(function() { btn.innerHTML = txt; if (window.lucide) lucide.createIcons({ node: btn }); }, 2000);
           }
         };
       });
     })();
   </script>
   <script src="/pdf.min.js" onerror="var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';document.head.appendChild(s);"></script>
+  <script>function __setIcon(el, html) { el.innerHTML = html; if (window.lucide) lucide.createIcons({ node: el }); }
+  function updateModeProfile() {
+    var wrap = document.getElementById('mode-profile-wrap');
+    var nameEl = document.getElementById('mode-profile-name');
+    var modeEl = document.getElementById('mode-profile-mode');
+    if (!wrap || !nameEl || !modeEl) return;
+    var member = (typeof getCurrentVaultMember === 'function') ? getCurrentVaultMember() : (sessionStorage.getItem('vaultMember') || 'shineil');
+    var mode = (typeof getCurrentVaultMode === 'function') ? getCurrentVaultMode() : (sessionStorage.getItem('vaultMode') || 'ADMIN');
+    var labels = { shineil:'SHINEIL', brother:'KEVIN', father:'STEPHEN', mother:'KANCHAN' };
+    var modeNames = { online:'Online Mode', offline:'Offline Vault', share:'Secure Share', emergency:'Emergency Recovery', guardian:'Guardian Access', verify:'Verification', readonly:'Read-Only', timelock:'Time-Lock', legal:'Legal Archive', ministry:'Private Ministry' };
+    nameEl.textContent = labels[member] || member.toUpperCase();
+    modeEl.textContent = modeNames[mode] || mode + ' Mode';
+    wrap.style.display = '';
+    if (window.lucide) lucide.createIcons({ node: wrap });
+  }</script>
   <script src="pdfjs-init.js"></script>
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
@@ -1306,8 +1323,8 @@ Recommended:
         <div class="nav-brand">
           <div class="brand-title"> <span class="brand-full">FORTRESS ONLINE VAULT</span> <span class="brand-short"><i data-lucide="lock" style="width:16px;height:16px;vertical-align:middle;"></i> F.O.V</span> </div>
         </div> <!-- RIGHT: DESKTOP BUTTONS (hidden on mobile) -->
-        <div class="nav-auth nav-auth-desktop"> <button id="vaultModesNavBtn" class="btn-outline" onclick="openVaultModes()"><i data-lucide="zap" style="width:14px;height:14px;vertical-align:middle;"></i> MODES</button> <button class="btn-outline icon-btn" data-tip="Status" onclick="openStatusModal()"><i data-lucide="bar-chart-2" style="width:16px;height:16px;"></i></button> <button class="btn-outline icon-btn" data-tip="Favourites" onclick="showPinned()"><i data-lucide="star" style="width:16px;height:16px;"></i></button> <button class="btn-outline icon-btn" data-tip="Compare Documents" onclick="startCompareMode()" id="compareNavBtn"><i data-lucide="scale" style="width:16px;height:16px;"></i></button> <button class="btn-outline icon-btn" data-tip="Access Log" onclick="openLogs()"><i data-lucide="clipboard-list" style="width:16px;height:16px;"></i></button> <button class="btn-outline icon-btn" data-tip="Password Manager" onclick="openPasswordManager()"><i data-lucide="key" style="width:16px;height:16px;"></i></button> <button class="btn-solid icon-btn" data-tip="Emergency Contact" onclick="openEmergencyContact()"><i data-lucide="siren" style="width:16px;height:16px;"></i></button> <button class="icon-btn" data-tip="Vault AI Assistant" onclick="openAIChat()" style="width:42px;height:42px;padding:0;border:none;border-radius:10px;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 2px 10px rgba(124,77,255,0.35);transition:transform .15s;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'"><i data-lucide="sparkles" style="width:20px;height:20px;"></i></button> <button class="btn-outline icon-btn" data-tip="Refresh Vault" onclick="refreshVault()" style="font-size:13px;font-weight:700;"><i data-lucide="refresh-cw" style="width:16px;height:16px;"></i></button><button class="btn-outline icon-btn" data-tip="Feedback" onclick="openFeedbackModal()" style="font-size:13px;font-weight:700;"><i data-lucide="message-circle" style="width:16px;height:16px;"></i></button><button class="btn-logout icon-btn" data-tip="Logout" onclick="safeShowLogoutOptions()"><i data-lucide="log-out" style="width:16px;height:16px;"></i></button> </div> <!-- RIGHT: MOBILE BUTTONS (hidden on desktop) -->
-        <div class="nav-auth-mobile"> <button class="nav-icon-btn nav-emergency-btn" onclick="openEmergencyContact()" title="Emergency Contact"><i data-lucide="siren" style="width:18px;height:18px;"></i></button> <button onclick="openAIChat()" title="Vault AI" style="width:38px;height:38px;border:none;border-radius:50%;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(124,77,255,0.4);flex-shrink:0;"><i data-lucide="sparkles" style="width:18px;height:18px;"></i></button> <button class="nav-icon-btn nav-logout-btn" onclick="safeShowLogoutOptions()" title="Logout"><i data-lucide="log-out" style="width:18px;height:18px;"></i></button> <button class="nav-icon-btn nav-menu-btn" onclick="toggleMobileMenu()" title="More options" id="mobileMenuBtn"><i data-lucide="menu" style="width:18px;height:18px;"></i></button> </div>
+        <div class="nav-auth nav-auth-desktop"> <button id="vaultModesNavBtn" class="btn-outline" onclick="openVaultModes()"><i data-lucide="zap" style="width:14px;height:14px;vertical-align:middle;"></i> MODES</button> <button class="btn-outline icon-btn" data-tip="Status" onclick="openStatusModal()"><i data-lucide="bar-chart-2" style="width:16px;height:16px;"></i></button> <button class="btn-outline icon-btn" data-tip="Favourites" onclick="showPinned()"><i data-lucide="star" style="width:16px;height:16px;"></i></button> <button class="btn-outline icon-btn" data-tip="Compare Documents" onclick="startCompareMode()" id="compareNavBtn"><i data-lucide="scale" style="width:16px;height:16px;"></i></button> <button class="btn-outline icon-btn" data-tip="Access Log" onclick="openLogs()"><i data-lucide="clipboard-list" style="width:16px;height:16px;"></i></button> <button class="btn-outline icon-btn" data-tip="Password Manager" onclick="openPasswordManager()"><i data-lucide="key" style="width:16px;height:16px;"></i></button> <button class="btn-solid icon-btn" data-tip="Emergency Contact" onclick="openEmergencyContact()"><i data-lucide="siren" style="width:16px;height:16px;"></i></button> <button class="btn-outline icon-btn" data-tip="Refresh Vault" onclick="refreshVault()" style="font-size:13px;font-weight:700;"><i data-lucide="refresh-cw" style="width:16px;height:16px;"></i></button><button class="btn-outline icon-btn" data-tip="Feedback" onclick="openFeedbackModal()" style="font-size:13px;font-weight:700;"><i data-lucide="message-circle" style="width:16px;height:16px;"></i></button><button class="btn-logout icon-btn" data-tip="Logout" onclick="safeShowLogoutOptions()"><i data-lucide="log-out" style="width:16px;height:16px;"></i></button> </div> <!-- RIGHT: MOBILE BUTTONS (hidden on desktop) -->
+        <div class="nav-auth-mobile"> <button class="nav-icon-btn nav-emergency-btn" onclick="openEmergencyContact()" title="Emergency Contact"><i data-lucide="siren" style="width:18px;height:18px;"></i></button> <button class="nav-icon-btn nav-logout-btn" onclick="safeShowLogoutOptions()" title="Logout"><i data-lucide="log-out" style="width:18px;height:18px;"></i></button> <button class="nav-icon-btn nav-menu-btn" onclick="toggleMobileMenu()" title="More options" id="mobileMenuBtn"><i data-lucide="menu" style="width:18px;height:18px;"></i></button> </div>
       </div> <!-- MOBILE DROPDOWN MENU -->
       <div id="mobile-nav-menu" class="mobile-nav-menu"> <button onclick="openStatusModal();toggleMobileMenu()"><i data-lucide="bar-chart-2" style="width:14px;height:14px;vertical-align:middle;"></i> Status</button> <button id="vaultModesMobileBtn" onclick="openVaultModes();toggleMobileMenu()"><i data-lucide="zap" style="width:14px;height:14px;vertical-align:middle;"></i> Vault Modes</button> <button onclick="showPinned();toggleMobileMenu()"><i data-lucide="star" style="width:14px;height:14px;vertical-align:middle;"></i> Favourites</button> <button onclick="openPasswordManager();toggleMobileMenu()"><i data-lucide="key" style="width:14px;height:14px;vertical-align:middle;"></i> Passwords</button> <button onclick="startCompareMode();toggleMobileMenu()" id="compareNavBtn"><i data-lucide="scale" style="width:14px;height:14px;vertical-align:middle;"></i> Compare</button> <button onclick="openLogs();toggleMobileMenu()"><i data-lucide="clipboard-list" style="width:14px;height:14px;vertical-align:middle;"></i> Access Log</button> <button onclick="openFeedbackModal();toggleMobileMenu()"><i data-lucide="message-circle" style="width:14px;height:14px;vertical-align:middle;"></i> Feedback</button> <button onclick="refreshVault();toggleMobileMenu()"><i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;"></i> Refresh Vault</button> <button onclick="toggleMobileMenu();exportVaultBackup()"><i data-lucide="download" style="width:14px;height:14px;vertical-align:middle;"></i> Export Backup</button> <button onclick="toggleMobileMenu();openNotesModal()"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:middle;"></i> Notes</button> </div>
     </div>
@@ -1318,6 +1335,20 @@ Recommended:
         </div><!-- end dark sidebar controls wrapper -->
         <div id="sidebar-files-section">
           <ul id="cat-list"></ul>
+        </div>
+        <!-- FLOATING AI BUTTON (below sidebar) -->
+        <div style="margin-top:auto;padding-top:12px;">
+          <button id="ai-chat-btn" onclick="openAIChat()" title="Vault AI Assistant" style="width:100%;padding:12px 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);color:white;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 4px 16px rgba(124,77,255,0.4);transition:transform .15s;display:flex;align-items:center;justify-content:center;gap:8px;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'"><i data-lucide="sparkles" style="width:18px;height:18px;"></i> AI Assistant</button>
+        </div>
+        <!-- PROFILE PHOTO / MODE INDICATOR -->
+        <div id="mode-profile-wrap" style="padding-top:8px;display:none;">
+          <div id="mode-profile-badge" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:8px 12px;">
+            <div id="mode-profile-avatar" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4285f4,#9b5de5);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i data-lucide="user" style="width:20px;height:20px;color:#fff;"></i></div>
+            <div style="min-width:0;flex:1;">
+              <div id="mode-profile-name" style="font-size:12px;font-weight:700;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ADMIN</div>
+              <div id="mode-profile-mode" style="font-size:10px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Online Mode</div>
+            </div>
+          </div>
         </div>
       </aside>
       <main class="content-view" style="display:flex;flex-direction:column;min-height:100%;">
@@ -1440,7 +1471,7 @@ Recommended:
             <div style="font-size:12px;color:#64748b;" id="photo-count"></div>
           </div>
           <div id="photos-grid" class="file-grid photo-grid"></div>
-        </div><!-- end #page-photos --> <!-- ===================== CHECKLIST PAGE (EXCEL SPREADSHEET) ===================== -->
+        </div><!-- end #page-photos --> <!-- ===================== CHECKLIST PAGE (READ-ONLY) ===================== -->
         <div id="page-checklist" class="page-container" style="display:none;padding:0;overflow:hidden;flex-direction:column;">
           <!-- TOOLBAR RIBBON -->
           <div class="vc-ribbon">
@@ -1462,21 +1493,6 @@ Recommended:
                 <option value="status-asc">Status A-Z</option>
                 <option value="status-desc">Status Z-A</option>
               </select>
-            </div>
-            <div class="vc-ribbon-sep"></div>
-            <div class="vc-ribbon-group">
-              <button class="vc-rbtn" onclick="vcAddRow()" title="Add Row"><i data-lucide="plus" style="width:13px;height:13px;"></i> Row</button>
-              <button class="vc-rbtn" onclick="vcAddCol()" title="Add Column"><i data-lucide="plus" style="width:13px;height:13px;"></i> Col</button>
-              <button class="vc-rbtn vc-rbtn-del" onclick="vcDelRow()" title="Delete Selected Row"><i data-lucide="trash-2" style="width:13px;height:13px;"></i> Row</button>
-              <button class="vc-rbtn vc-rbtn-del" onclick="vcDelCol()" title="Delete Selected Column"><i data-lucide="trash-2" style="width:13px;height:13px;"></i> Col</button>
-            </div>
-            <div class="vc-ribbon-sep"></div>
-            <div class="vc-ribbon-group">
-              <button class="vc-rbtn" onclick="vcSelectAll()" title="Select All"><i data-lucide="check-square" style="width:13px;height:13px;"></i> All</button>
-              <button class="vc-rbtn" onclick="vcCopySelected()" title="Copy Selected"><i data-lucide="copy" style="width:13px;height:13px;"></i> Copy</button>
-            </div>
-            <div class="vc-ribbon-right">
-              <button class="vc-rbtn vc-rbtn-deploy" onclick="vcDeploy()" title="Deploy to storage"><i data-lucide="upload" style="width:13px;height:13px;"></i> DEPLOY</button>
             </div>
           </div>
           <!-- FORMULA BAR -->
@@ -1815,7 +1831,7 @@ Recommended:
             <div class="adv-menu-item" onclick="switchAdvPanel('doc-integrity')"><span class="adv-icon"><i data-lucide="flask-conical" style="width:16px;height:16px;"></i></span><span>Document Integrity</span></div>
             <div class="adv-menu-item" onclick="switchAdvPanel('session-token')"><span class="adv-icon"><i data-lucide="ticket" style="width:16px;height:16px;"></i></span><span>Session Token Viewer</span></div>
             <div class="adv-menu-section">Maintenance</div>
-            <div class="adv-menu-item" onclick="switchAdvPanel('cache-cleaner')"><span class="adv-icon"><i data-lucide="broom" style="width:16px;height:16px;"></i></span><span>Auto Cache Cleaner</span></div>
+            <div class="adv-menu-item" onclick="switchAdvPanel('cache-cleaner')"><span class="adv-icon"><i data-lucide="brush" style="width:16px;height:16px;"></i></span><span>Auto Cache Cleaner</span></div>
             <div class="adv-menu-item" onclick="switchAdvPanel('temp-cleaner')"><span class="adv-icon"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></span><span>Temp Files Cleaner</span></div>
             <div class="adv-menu-item" onclick="switchAdvPanel('dupe-scanner')"><span class="adv-icon"><i data-lucide="scan-search" style="width:16px;height:16px;"></i></span><span>Duplicate File Scanner</span></div>
             <div class="adv-menu-item" onclick="switchAdvPanel('missing-doc')"><span class="adv-icon"><i data-lucide="alert-triangle" style="width:16px;height:16px;"></i></span><span>Missing Doc Detector</span></div>
@@ -2204,7 +2220,7 @@ Recommended:
                 <div class="setting-row-left">
                   <div class="setting-row-label">Last Sync</div>
                   <div class="setting-row-hint" id="lastSyncTime">Checking...</div>
-                </div> <button class="adv-action-btn adv-btn-green" onclick="document.getElementById('lastSyncTime').textContent='Synced just now <i data-lucide="check" style="width:14px;height:14px;vertical-align:middle;"></i>'"><i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;"></i> Sync Now</button>
+                </div> <button class="adv-action-btn adv-btn-green" onclick="__setIcon(document.getElementById('lastSyncTime'),'Synced just now <i data-lucide=\"check\" style=\"width:14px;height:14px;vertical-align:middle;\"></i>')"><i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;"></i> Sync Now</button>
               </div>
             </div> <!-- 20. DEVELOPER MODE -->
             <div class="adv-panel" id="panel-dev-mode">
@@ -2299,7 +2315,7 @@ Recommended:
                 <div class="setting-row-left">
                   <div class="setting-row-label">Run Full Scan Now</div>
                   <div class="setting-row-hint">Scans all listed documents for integrity</div>
-                </div> <button class="adv-action-btn adv-btn-purple" onclick="this.textContent='<i data-lucide="check" style="width:14px;height:14px;vertical-align:middle;"></i> All files verified'"><i data-lucide="flask-conical" style="width:14px;height:14px;vertical-align:middle;"></i> Run Scan</button>
+                </div> <button class="adv-action-btn adv-btn-purple" onclick="__setIcon(this,'<i data-lucide=\"check\" style=\"width:14px;height:14px;vertical-align:middle;\"></i> All files verified')"><i data-lucide="flask-conical" style="width:14px;height:14px;vertical-align:middle;"></i> Run Scan</button>
               </div>
             </div> <!-- 26. SESSION TOKEN VIEWER -->
             <div class="adv-panel" id="panel-session-token">
@@ -2309,10 +2325,10 @@ Recommended:
                 <div class="setting-row-label">Active Session Token</div>
                 <div class="adv-log-box" id="tokenDisplayBox" style="width:100%;font-size:10.5px;word-break:break-all;">Click "Show Token" to reveal</div>
               </div>
-              <div style="margin-top:10px;display:flex;gap:10px;"> <button class="adv-action-btn adv-btn-blue" onclick="revealToken()"><i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i> <i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;"></i> Show Token</button> <button class="adv-action-btn adv-btn-red" onclick="document.getElementById('tokenDisplayBox').textContent='[HIDDEN]'"><i data-lucide="eye-off" style="width:14px;height:14px;vertical-align:middle;"></i> Hide</button> </div>
+              <div style="margin-top:10px;display:flex;gap:10px;"> <button class="adv-action-btn adv-btn-blue" onclick="revealToken()"><i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i> Show Token</button> <button class="adv-action-btn adv-btn-red" onclick="document.getElementById('tokenDisplayBox').textContent='[HIDDEN]'"><i data-lucide="eye-off" style="width:14px;height:14px;vertical-align:middle;"></i> Hide</button> </div>
             </div> <!-- 27. AUTO CACHE CLEANER -->
             <div class="adv-panel" id="panel-cache-cleaner">
-              <div class="adv-panel-title"><i data-lucide="broom" style="width:16px;height:16px;vertical-align:middle;"></i> Auto Cache Cleaner</div>
+              <div class="adv-panel-title"><i data-lucide="brush" style="width:16px;height:16px;vertical-align:middle;"></i> Auto Cache Cleaner</div>
               <div class="adv-panel-desc">Automatically purge stale cache entries to free memory.</div>
               <div class="setting-row">
                 <div class="setting-row-left">
@@ -2324,7 +2340,7 @@ Recommended:
                 <div class="setting-row-left">
                   <div class="setting-row-label">Clear Cache Now</div>
                   <div class="setting-row-hint">Immediately purge all cached PDF blobs</div>
-                </div> <button class="adv-action-btn adv-btn-red" onclick="this.textContent='<i data-lucide="check" style="width:14px;height:14px;vertical-align:middle;"></i> Cache cleared';sessionStorage.clear();"><i data-lucide="broom" style="width:14px;height:14px;vertical-align:middle;"></i> Clear Now</button>
+                </div> <button class="adv-action-btn adv-btn-red" onclick="__setIcon(this,'<i data-lucide=\"check\" style=\"width:14px;height:14px;vertical-align:middle;\"></i> Cache cleared');sessionStorage.clear();"><i data-lucide="brush" style="width:14px;height:14px;vertical-align:middle;"></i> Clear Now</button>
               </div>
             </div> <!-- 28. TEMPORARY FILES CLEANER -->
             <div class="adv-panel" id="panel-temp-cleaner">
@@ -2340,7 +2356,7 @@ Recommended:
                 <div class="setting-row-left">
                   <div class="setting-row-label">Clean Temp Files Now</div>
                   <div class="setting-row-hint">Manually trigger a temp cleanup pass</div>
-                </div> <button class="adv-action-btn adv-btn-amber" onclick="this.textContent='<i data-lucide="check" style="width:14px;height:14px;vertical-align:middle;"></i> Done';if(window.currentBlobUrl){URL.revokeObjectURL(window.currentBlobUrl);}"><i data-lucide="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i> Clean Now</button>
+                </div> <button class="adv-action-btn adv-btn-amber" onclick="__setIcon(this,'<i data-lucide=\"check\" style=\"width:14px;height:14px;vertical-align:middle;\"></i> Done');if(window.currentBlobUrl){URL.revokeObjectURL(window.currentBlobUrl);}"><i data-lucide="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i> Clean Now</button>
               </div>
             </div> <!-- 29. DUPLICATE FILE SCANNER -->
             <div class="adv-panel" id="panel-dupe-scanner">
@@ -2361,7 +2377,7 @@ Recommended:
                 <div class="setting-row-left">
                   <div class="setting-row-label">Run Missing Doc Scan</div>
                   <div class="setting-row-hint">Checks all file references for broken or missing entries</div>
-                </div> <button class="adv-action-btn adv-btn-red" onclick="this.textContent='<i data-lucide="check" style="width:14px;height:14px;vertical-align:middle;"></i> No missing docs found'"><i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> Scan Now</button>
+                </div> <button class="adv-action-btn adv-btn-red" onclick="__setIcon(this,'<i data-lucide=\"check\" style=\"width:14px;height:14px;vertical-align:middle;\"></i> No missing docs found')"><i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> Scan Now</button>
               </div>
             </div> <!-- 31. SMART FOLDER OPTIMIZATION -->
             <div class="adv-panel" id="panel-smart-folder">
@@ -2377,7 +2393,7 @@ Recommended:
                 <div class="setting-row-left">
                   <div class="setting-row-label">Reset Category Order</div>
                   <div class="setting-row-hint">Restore the original default category order</div>
-                </div> <button class="adv-action-btn adv-btn-amber" onclick="this.textContent='<i data-lucide="check" style="width:14px;height:14px;vertical-align:middle;"></i> Reset done'"><i data-lucide="rotate-ccw" style="width:14px;height:14px;vertical-align:middle;"></i> Reset Order</button>
+                </div> <button class="adv-action-btn adv-btn-amber" onclick="__setIcon(this,'<i data-lucide=\"check\" style=\"width:14px;height:14px;vertical-align:middle;\"></i> Reset done')"><i data-lucide="rotate-ccw" style="width:14px;height:14px;vertical-align:middle;"></i> Reset Order</button>
               </div>
             </div> <!-- 32. BACKGROUND SYNC MANAGER -->
             <div class="adv-panel" id="panel-bg-sync">
@@ -3628,7 +3644,7 @@ Recommended:
 
         try {
           if (typeof crypto === 'undefined' || !crypto.subtle) {
-            errEl.textContent = '<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> Secure context required (HTTPS) — PIN check unavailable.';
+            errEl.innerHTML = '<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> Secure context required (HTTPS) — PIN check unavailable.';
             return;
           }
 
@@ -3677,11 +3693,11 @@ Recommended:
           }
         } catch (err) {
           console.error('[PM-PIN] submit failed:', err);
-          errEl.textContent = '<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> Something went wrong: ' + (err && err.message ? err.message : 'unknown error');
+          errEl.innerHTML = '<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> Something went wrong: ' + (err && err.message ? err.message : 'unknown error');
         }
       }
       document.getElementById('pmMemberPickerModal').addEventListener('click', function (e) { if (e.target === this) closePMMemberPicker(); });
-      document.getElementById('pmPinModal').addEventListener('click', function (e) { if (e.target === this) closePMPinModal(); }); /* Close on overlay click */ document.getElementById('passwordManagerModal').addEventListener('click', function(e){  if(e.target === this) closePasswordManager();});/* ======== Password Strength Bar ======== */function pmStrength(val) {  const bar = document.getElementById('pm-strength-bar');  if (!bar) return;  let score = 0;  if (val.length >= 8) score++;  if (/[A-Z]/.test(val)) score++;  if (/[0-9]/.test(val)) score++;  if (/[^A-Za-z0-9]/.test(val)) score++;  const colors = ['#ef4444','#f97316','#eab308','#16a34a'];  const widths = ['25%','50%','75%','100%'];  bar.style.width = val ? widths[score-1] || '10%' : '0';  bar.style.background = val ? colors[score-1] || '#e2e8f0' : '#e2e8f0';}/* ======== Inline reveal for saved entries ======== */function toggleEntryReveal(id) {  const dots = document.getElementById('pw-dots-'+id);  const actual = document.getElementById('pw-actual-'+id);  const btn = document.getElementById('pw-reveal-btn-'+id);  if (!dots || !actual) return;  const showing = actual.style.display !== 'none';  dots.style.display = showing ? 'block' : 'none';  actual.style.display = showing ? 'none' : 'block';  btn.textContent = showing ? '<i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i> Show' : '<i data-lucide="eye-off" style="width:14px;height:14px;vertical-align:middle;"></i> Hide';}/* ======== Override renderPMList for richer UI ======== */async function renderPMList() {  const container = document.getElementById('pm-entries-container');  const countNum = document.getElementById('pm-count-num');  if (!container) return;  container.innerHTML = '<div class="pm-empty"><i data-lucide="loader" style="width:16px;height:16px;vertical-align:middle;"></i> Loading credentials…</div>';  try {    const allEntries = await loadPMEntries().catch(() => []);    const pmSearchEl = document.getElementById('pm-search'); const query = ((pmSearchEl ? pmSearchEl.value : '') || '').toLowerCase();    /* Filter by current mode's allowed members */const mode = (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');const modeAllowedMembers = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null) || ['shineil', 'brother', 'father', 'mother'];const allowedMembers = window._pmActiveMember ? [window._pmActiveMember] : modeAllowedMembers;
+      document.getElementById('pmPinModal').addEventListener('click', function (e) { if (e.target === this) closePMPinModal(); }); /* Close on overlay click */ document.getElementById('passwordManagerModal').addEventListener('click', function(e){  if(e.target === this) closePasswordManager();});/* ======== Password Strength Bar ======== */function pmStrength(val) {  const bar = document.getElementById('pm-strength-bar');  if (!bar) return;  let score = 0;  if (val.length >= 8) score++;  if (/[A-Z]/.test(val)) score++;  if (/[0-9]/.test(val)) score++;  if (/[^A-Za-z0-9]/.test(val)) score++;  const colors = ['#ef4444','#f97316','#eab308','#16a34a'];  const widths = ['25%','50%','75%','100%'];  bar.style.width = val ? widths[score-1] || '10%' : '0';  bar.style.background = val ? colors[score-1] || '#e2e8f0' : '#e2e8f0';}/* ======== Inline reveal for saved entries ======== */function toggleEntryReveal(id) {  const dots = document.getElementById('pw-dots-'+id);  const actual = document.getElementById('pw-actual-'+id);  const btn = document.getElementById('pw-reveal-btn-'+id);  if (!dots || !actual) return;  const showing = actual.style.display !== 'none';  dots.style.display = showing ? 'block' : 'none';  actual.style.display = showing ? 'none' : 'block';  btn.innerHTML = showing ? '<i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i> Show' : '<i data-lucide="eye-off" style="width:14px;height:14px;vertical-align:middle;"></i> Hide';if(window.lucide)lucide.createIcons({node:btn});}/* ======== Override renderPMList for richer UI ======== */async function renderPMList() {  const container = document.getElementById('pm-entries-container');  const countNum = document.getElementById('pm-count-num');  if (!container) return;  container.innerHTML = '<div class="pm-empty"><i data-lucide="loader" style="width:16px;height:16px;vertical-align:middle;"></i> Loading credentials…</div>';  try {    const allEntries = await loadPMEntries().catch(() => []);    const pmSearchEl = document.getElementById('pm-search'); const query = ((pmSearchEl ? pmSearchEl.value : '') || '').toLowerCase();    /* Filter by current mode's allowed members */const mode = (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');const modeAllowedMembers = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null) || ['shineil', 'brother', 'father', 'mother'];const allowedMembers = window._pmActiveMember ? [window._pmActiveMember] : modeAllowedMembers;
       const filtered = allEntries.filter(e => {
         if (!e.member) return true;
         return allowedMembers.includes(e.member);
@@ -3775,7 +3791,8 @@ Recommended:
         // Random tip
         const tipEl = document.getElementById('home-tip-text');
         if (tipEl) {
-          tipEl.textContent = VAULT_TIPS[Math.floor(Math.random() * VAULT_TIPS.length)];
+          tipEl.innerHTML = VAULT_TIPS[Math.floor(Math.random() * VAULT_TIPS.length)];
+          if (window.lucide) lucide.createIcons({ node: tipEl });
         }
 
         // Stats — read from vault data if available
@@ -5007,6 +5024,7 @@ Recommended:
             if (typeof vaultPostInit === 'function') vaultPostInit();
             setProgress(100, 'Ready!');
             if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (typeof updateModeProfile === 'function') updateModeProfile();
           } catch (e) {
             console.warn('[goToDashboard] Fatal error during vault load:', e);
             try { await _vaultFallbackToIDB(); } catch (e2) {}
@@ -5030,7 +5048,7 @@ Recommended:
             const _fbMode = window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN';
             list.innerHTML = '<li id="nav-home" onclick="selectVaultCategory(\'HOME\')" style="font-weight:700;"><span style="font-size:15px;"><i data-lucide="home" style="width:15px;height:15px;"></i></span><span>HOME</span></li>' + (_fbMode !== 'OFFICIAL' ? '<li id="nav-profile" onclick="selectVaultCategory(\'PROFILE\')" style="font-weight:700;"><span style="font-size:15px;"><i data-lucide="user" style="width:15px;height:15px;"></i></span><span>PROFILE</span></li>' : '') + '<li id="nav-photos" onclick="selectVaultCategory(\'PHOTOS\')" style="font-weight:700;"><span style="font-size:15px;"><i data-lucide="camera" style="width:15px;height:15px;"></i></span><span>PHOTOS</span></li>' + '<li id="nav-checklist" onclick="selectVaultCategory(\'CHECKLIST\')" style="font-weight:700;"><span style="font-size:15px;"><i data-lucide="check-circle" style="width:15px;height:15px;"></i></span><span>CHECKLIST</span></li>';
             const categories = Object.keys(cached).filter(c => c !== 'HOME' && c !== 'PROFILE' && c !== 'PHOTOS');
-            const catIcons = { 'Guardian':'users','Visa':'plane','Finance':'wallet','School':'graduation-cap','Personal':'user','Residence':'home','Church':'church','Education':'book-open','Identity':'id-card','Legal':'scale','Financial':'credit-card','Ministry':'dove','Medical':'heart-pulse','Insurance':'shield','Tax':'file-text','Property':'building','Vehicle':'car','Travel':'globe','Work':'briefcase','Bank':'landmark','Documents':'file-text','Certificates':'award' };
+            const catIcons = { 'Guardian':'users','Visa':'plane','Finance':'wallet','School':'graduation-cap','Personal':'user','Residence':'home','Church':'cross','Education':'book-open','Identity':'contact','Legal':'scale','Financial':'credit-card','Ministry':'bird','Medical':'stethoscope','Insurance':'shield','Tax':'clipboard-list','Property':'home','Vehicle':'car','Travel':'globe','Work':'briefcase','Bank':'landmark','Documents':'file-text','Certificates':'award' };
             categories.forEach(cat => {
               const li = document.createElement('li');
               const iconKey = Object.keys(catIcons).find(k => cat.toLowerCase().includes(k.toLowerCase()));
@@ -5042,6 +5060,7 @@ Recommended:
             const dash = document.getElementById('vault-dashboard');
             if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
             if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (typeof updateModeProfile === 'function') updateModeProfile();
             // Auto-click HOME
             const homeLi = [...list.querySelectorAll('li')].find(li => li.innerText.trim().includes('HOME'));
             if (homeLi) homeLi.click();
@@ -5081,7 +5100,7 @@ Recommended:
             }
             const nameMap = { shineil:'Shineil Mathias', brother:'Kevin Mathias', father:'Stephen Mathias', mother:'Kanchan Mathias', official:'Official' };
             document.getElementById('ddName').textContent = nameMap[trust.member] || trust.member || 'Member';
-            document.getElementById('ddMode').textContent = ' <i data-lucide="lock" style="width:14px;height:14px;vertical-align:middle;"></i> Trusted Device (expires ' + new Date(trust.expiry).toLocaleDateString() + ')';
+            __setIcon(document.getElementById('ddMode'), ' <i data-lucide="lock" style="width:14px;height:14px;vertical-align:middle;"></i> Trusted Device (expires ' + new Date(trust.expiry).toLocaleDateString() + ')');
             document.getElementById('dd-signed-in').style.display = '';
             document.getElementById('dd-signed-out').style.display = 'none';
           }
@@ -5095,7 +5114,7 @@ Recommended:
 
         window.refreshVault = async function refreshVault() {
           const btn = document.querySelector('[data-tip="Refresh Vault"]');
-          if (btn) { btn.textContent = '<i data-lucide="loader" style="width:14px;height:14px;vertical-align:middle;"></i>'; btn.style.pointerEvents = 'none'; }
+          if (btn) { btn.innerHTML = '<i data-lucide="loader" style="width:14px;height:14px;vertical-align:middle;"></i>'; if (window.lucide) lucide.createIcons({ node: btn }); btn.style.pointerEvents = 'none'; }
 
           const currentPage = _currentPage;
           const activeCat = document.querySelector('#cat-list li.active');
@@ -5147,7 +5166,7 @@ Recommended:
           if (typeof updateHomeStats === 'function') updateHomeStats();
           if (typeof initVaultNotifications === 'function') initVaultNotifications().catch(() => {});
 
-          if (btn) { btn.textContent = '<i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;"></i>'; btn.style.pointerEvents = ''; }
+          if (btn) { btn.innerHTML = '<i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;"></i>'; if (window.lucide) lucide.createIcons({ node: btn }); btn.style.pointerEvents = ''; }
         };
       })();
     </script>

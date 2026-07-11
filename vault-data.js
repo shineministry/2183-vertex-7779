@@ -103,10 +103,10 @@ list.innerHTML = `
     // Category icon map for dark sidebar
     const CAT_ICONS = {
         'HOME': 'home', 'PROFILE': 'user', 'Guardian': 'users', 'Visa': 'plane', 'Finance': 'wallet',
-        'School': 'graduation-cap', 'Personal': 'user', 'Residence': 'house', 'Church': 'cross',
+        'School': 'graduation-cap', 'Personal': 'user', 'Residence': 'home', 'Church': 'cross',
         'Education': 'book-open', 'Identity': 'contact', 'Legal': 'scale', 'Financial': 'credit-card',
-        'Ministry': 'dove', 'Medical': 'hospital', 'Insurance': 'shield', 'Tax': 'clipboard-list',
-        'Property': 'house', 'Vehicle': 'car', 'Travel': 'globe', 'Work': 'briefcase',
+        'Ministry': 'bird', 'Medical': 'stethoscope', 'Insurance': 'shield', 'Tax': 'clipboard-list',
+        'Property': 'home', 'Vehicle': 'car', 'Travel': 'globe', 'Work': 'briefcase',
         'Bank': 'landmark', 'Documents': 'file-text', 'Certificates': 'award'
     };
     function getCatIcon(cat) {

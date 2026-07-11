@@ -59,7 +59,7 @@ function _pmStartAutoLock() {
         m.style.display = 'none';
         document.querySelectorAll('#pm-entries-container input[type="text"][data-pm-pass]')
           .forEach(inp => inp.type = 'password');
-        alert('<i data-lucide="lock" style="width:16px;height:16px;vertical-align:middle;"></i> Password Manager auto-locked after inactivity.');
+        toastNotify('Password Manager auto-locked after inactivity.');
       }
       _pmStopAutoLock();
     }, 120000);
@@ -137,7 +137,7 @@ async function savePMEntry() {
   // Verify we actually have an auth token before attempting the save
   const headers = await getAuthHeaders();
   if (!headers['Authorization'] || headers['Authorization'] === 'Bearer ') {
-    alert('<i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Not logged in. Please unlock your vault first.');
+    toastNotify('Not logged in. Please unlock your vault first.');
     return;
   }
 
@@ -173,7 +173,7 @@ async function savePMEntry() {
       const msg = data.error || data.message || `Server error ${res.status}`;
       // Entry is saved locally; warn but don't block UI
       console.warn(`[PM] Server save failed (entry kept offline): ${msg}`);
-      alert(`<i data-lucide="alert-triangle" style="width:16px;height:16px;vertical-align:middle;"></i> Saved locally. Will sync when back online.\n(Server: ${msg})`);
+      toastNotify(`Saved locally. Will sync when back online.\n(Server: ${msg})`);
       renderPMList();
       return;
     }
@@ -192,7 +192,7 @@ async function savePMEntry() {
   } catch (err) {
     // Network error — entry already saved to IDB above, just inform user
     console.warn('[PM] Network error during server sync (entry kept offline):', err);
-    alert(`<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> Saved locally (offline). Will sync when back online.`);
+    toastNotify(`Saved locally (offline). Will sync when back online.`);
     renderPMList();
   }
 }
@@ -202,7 +202,7 @@ async function savePMEntry() {
 // app or person could paste it later.
 function _pmCopyToClipboard(text, label) {
   navigator.clipboard.writeText(text);
-  alert(label + ' (clipboard clears in 20s)');
+  toastNotify(label + ' (clipboard clears in 20s)');
   setTimeout(() => {
     navigator.clipboard.writeText('').catch(() => {});
   }, 20000);
@@ -214,9 +214,9 @@ async function copyPMPassword(id) {
     const entries = await idbGetAllPMEntries().catch(() => []);
     const entry = entries.find(e => e.id === id);
     if (entry && entry.password) {
-      _pmCopyToClipboard(entry.password, '<i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Password copied! (offline)');
+      _pmCopyToClipboard(entry.password, 'Password copied! (offline)');
     } else {
-      alert('<i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Password not available offline. Connect to the internet first.');
+      toastNotify('Password not available offline. Connect to the internet first.');
     }
     return;
   }
@@ -228,16 +228,16 @@ async function copyPMPassword(id) {
     });
     const data = await res.json();
     if (data.password) {
-      _pmCopyToClipboard(data.password, '<i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Password copied!');
+      _pmCopyToClipboard(data.password, 'Password copied!');
     }
   } catch (err) {
     // Network failed — try IDB cache
     const entries = await idbGetAllPMEntries().catch(() => []);
     const entry = entries.find(e => e.id === id);
     if (entry && entry.password) {
-      _pmCopyToClipboard(entry.password, '<i data-lucide="check-circle" style="width:14px;height:14px;vertical-align:middle;"></i> Password copied! (cached)');
+      _pmCopyToClipboard(entry.password, 'Password copied! (cached)');
     } else {
-      alert('<i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Could not copy password: ' + err.message);
+      toastNotify('Could not copy password: ' + err.message);
     }
   }
 }
@@ -310,7 +310,7 @@ async function deletePMEntry(id) {
     renderPMList();
   } catch (err) {
     console.error('deletePMEntry error:', err);
-    alert(`<i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Could not delete: ${err.message}`);
+    toastNotify(`Could not delete: ${err.message}`);
   }
 }
 
@@ -969,7 +969,8 @@ function togglePin(file, btn){
     if(idx === -1){
         pinnedDocs.push(file);
         btn.classList.add('pinned');
-        btn.textContent = '<i data-lucide="star" style="width:16px;height:16px;vertical-align:middle;"></i> Pinned';
+        btn.innerHTML = '<i data-lucide="star" style="width:16px;height:16px;vertical-align:middle;"></i> Pinned';
+        if(window.lucide)lucide.createIcons({node:btn});
     } else {
         pinnedDocs.splice(idx, 1);
         btn.classList.remove('pinned');
@@ -1027,7 +1028,7 @@ let compareSide   = null; // 'left' | 'right' – for manual pick
 
 function startCompareMode(){
     if(compareQueue.length === 0){
-        alert('Click <i data-lucide="scale" style="width:16px;height:16px;vertical-align:middle;"></i> Compare on any two document cards first, then use this button — or use Compare from the cards directly.');
+        toastNotify('Click Compare on any two document cards first, then use this button — or use Compare from the cards directly.');
         return;
     }
     openCompareModal();
@@ -1058,7 +1059,8 @@ function updateCompareBar(){
     } else {
         bar.style.display = 'flex';
         const names = compareQueue.map(f=>`"${f.name}"`).join(' vs ');
-        txt.textContent = `<i data-lucide="scale" style="width:16px;height:16px;vertical-align:middle;"></i> ${compareQueue.length === 1 ? 'Pick one more: ' + compareQueue[0].name : names}`;
+        txt.innerHTML = `<i data-lucide="scale" style="width:16px;height:16px;vertical-align:middle;"></i> ${compareQueue.length === 1 ? 'Pick one more: ' + compareQueue[0].name : names}`;
+        if(window.lucide)lucide.createIcons({node:txt});
     }
 }
 
@@ -1194,7 +1196,7 @@ async function renderComparePane(side, file){
 function pickCompareDoc(side){
     compareSide = side;
     closeCompareModal();
-    alert(`Click <i data-lucide="scale" style="width:16px;height:16px;vertical-align:middle;"></i> Compare on the document you want for side ${side === 'left' ? 'A (Left)' : 'B (Right)'}, then re-open Compare.`);
+    toastNotify(`Click Compare on the document you want for side ${side === 'left' ? 'A (Left)' : 'B (Right)'}, then re-open Compare.`);
 }
 
 /* =========================
@@ -1764,7 +1766,7 @@ function toggleDarkMode() {
   const isDark = document.body.classList.toggle('dark-mode');
   localStorage.setItem('vaultDarkMode', isDark ? '1' : '0');
   const btn = document.getElementById('toggle-dark-mode');
-  if (btn) btn.textContent = isDark ? '<i data-lucide="sun" style="width:16px;height:16px;vertical-align:middle;"></i>' : '<i data-lucide="moon" style="width:16px;height:16px;vertical-align:middle;"></i>';
+  if (btn) { btn.innerHTML = isDark ? '<i data-lucide="sun" style="width:16px;height:16px;vertical-align:middle;"></i>' : '<i data-lucide="moon" style="width:16px;height:16px;vertical-align:middle;"></i>'; if(window.lucide)lucide.createIcons({node:btn}); }
 }
 
 // Restore dark mode on page load
@@ -1772,7 +1774,7 @@ function toggleDarkMode() {
   if (localStorage.getItem('vaultDarkMode') === '1') {
     document.body.classList.add('dark-mode');
     const btn = document.getElementById('toggle-dark-mode');
-    if (btn) btn.textContent = '<i data-lucide="sun" style="width:16px;height:16px;vertical-align:middle;"></i>';
+    if (btn) { btn.innerHTML = '<i data-lucide="sun" style="width:16px;height:16px;vertical-align:middle;"></i>'; if(window.lucide)lucide.createIcons({node:btn}); }
   }
   // Also listen for when the button is dynamically re-created
   const obs = new MutationObserver(function() {
@@ -1780,7 +1782,8 @@ function toggleDarkMode() {
     if (btn && !btn.dataset.darkInit) {
       btn.dataset.darkInit = '1';
       if (document.body.classList.contains('dark-mode')) {
-        btn.textContent = '<i data-lucide="sun" style="width:16px;height:16px;vertical-align:middle;"></i>';
+        btn.innerHTML = '<i data-lucide="sun" style="width:16px;height:16px;vertical-align:middle;"></i>';
+        if(window.lucide)lucide.createIcons({node:btn});
       }
     }
   });
@@ -1860,7 +1863,8 @@ function renderNotesList() {
 
 function showNoteEditor() {
   _notesEditingId = null;
-  document.getElementById('noteEditorTitle').textContent = '<i data-lucide="pencil" style="width:16px;height:16px;vertical-align:middle;"></i> New Note';
+  document.getElementById('noteEditorTitle').innerHTML = '<i data-lucide="pencil" style="width:16px;height:16px;vertical-align:middle;"></i> New Note';
+  if(window.lucide)lucide.createIcons({node:document.getElementById('noteEditorTitle')});
   document.getElementById('noteTitle').value = '';
   document.getElementById('noteContent').value = '';
   document.getElementById('noteCategory').value = 'General';
@@ -1873,7 +1877,8 @@ function editNote(id) {
   var n = notes.find(function(x) { return x.id === id; });
   if (!n) return;
   _notesEditingId = id;
-  document.getElementById('noteEditorTitle').textContent = '<i data-lucide="pencil" style="width:16px;height:16px;vertical-align:middle;"></i> Edit Note';
+  document.getElementById('noteEditorTitle').innerHTML = '<i data-lucide="pencil" style="width:16px;height:16px;vertical-align:middle;"></i> Edit Note';
+  if(window.lucide)lucide.createIcons({node:document.getElementById('noteEditorTitle')});
   document.getElementById('noteTitle').value = n.title || '';
   document.getElementById('noteContent').value = _notesDecrypt(n.content || '');
   document.getElementById('noteCategory').value = n.category || 'General';
@@ -2013,7 +2018,7 @@ async function downloadSelectedAsZip() {
 
   var btn = document.getElementById('download-zip-btn');
   var origText = btn ? btn.textContent : '';
-  if (btn) btn.textContent = '<i data-lucide="loader" style="width:14px;height:14px;vertical-align:middle;"></i> 0/' + total;
+  if (btn) { btn.innerHTML = '<i data-lucide="loader" style="width:14px;height:14px;vertical-align:middle;"></i> 0/' + total; if(window.lucide)lucide.createIcons({node:btn}); }
 
   for (var i = 0; i < files.length; i++) {
     var f = files[i];
@@ -2049,7 +2054,7 @@ async function downloadSelectedAsZip() {
       var blob = new Blob([decrypted], { type: mime });
       zip.file(f.name, blob);
       done++;
-      if (btn) btn.textContent = '<i data-lucide="loader" style="width:16px;height:16px;vertical-align:middle;"></i>' + done + '/' + total;
+      if (btn) { btn.innerHTML = '<i data-lucide="loader" style="width:16px;height:16px;vertical-align:middle;"></i>' + done + '/' + total; if(window.lucide)lucide.createIcons({node:btn}); }
     } catch(e) {
       failed.push(f.name);
     }
@@ -2061,7 +2066,7 @@ async function downloadSelectedAsZip() {
     return;
   }
 
-  if (btn) btn.textContent = '<i data-lucide="package" style="width:16px;height:16px;vertical-align:middle;"></i> Zipping...';
+  if (btn) { btn.innerHTML = '<i data-lucide="package" style="width:16px;height:16px;vertical-align:middle;"></i> Zipping...'; if(window.lucide)lucide.createIcons({node:btn}); }
   var zipBlob = await zip.generateAsync({ type: 'blob' });
   var url = URL.createObjectURL(zipBlob);
   var a = document.createElement('a');
@@ -2073,9 +2078,9 @@ async function downloadSelectedAsZip() {
   URL.revokeObjectURL(url);
 
   if (btn) btn.textContent = origText;
-  var msg = '<i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Downloaded ' + done + ' of ' + total + ' files';
-  if (failed.length) msg += '\n<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> Failed: ' + failed.join(', ');
-  alert(msg);
+  var msg = 'Downloaded ' + done + ' of ' + total + ' files';
+  if (failed.length) msg += '\nFailed: ' + failed.join(', ');
+  toastNotify(msg);
   clearFileSelection();
 }
 
