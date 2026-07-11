@@ -892,7 +892,7 @@ Recommended:
           background: rgba(255, 255, 255, 0.12);
         }
       </style>
-      <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" crossorigin="anonymous"></script>
       <style>
         /* ── LANDING PAGE ── */
         #landing {
@@ -1050,7 +1050,7 @@ Recommended:
           .land-dropdown { width: 260px; right: -10px; }
         }
       </style>
-      <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+      <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -1682,7 +1682,7 @@ Recommended:
   <style>
     .grecaptcha-badge { visibility: visible !important; z-index: 99999; bottom: 14px !important; box-shadow: 0 2px 12px rgba(0,0,0,.15) !important; border-radius: 8px !important; }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
   <script src="vault-ui.js"></script>
     <div id="logModal" class="modal">
       <div class="modal-content">
@@ -1790,7 +1790,7 @@ Recommended:
       </div>
     </div>
     <script src="datetime.js"></script><!-- ADVANCED SETTINGS MODAL injected below -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js" crossorigin="anonymous"></script>
     <script src="security.js"></script><!-- =========================     COMPARE MODAL========================= -->
     <div id="compareModal" class="modal">
       <div class="modal-content" style="height:95%;">
@@ -5289,9 +5289,26 @@ Recommended:
     #ai-fab { position:fixed; bottom:100px; right:28px; z-index:9998; width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585); color:#fff; border:none; cursor:pointer; box-shadow:0 6px 24px rgba(124,77,255,0.45); display:flex; align-items:center; justify-content:center; transition:transform .2s,box-shadow .2s; }
     @media (max-width:480px) { #ai-fab { bottom:90px; right:18px; width:50px; height:50px; } }
   </style>
-  <div id="ai-fab" onclick="openAIChat()" title="AI Assistant" onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 8px 32px rgba(124,77,255,0.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 6px 24px rgba(124,77,255,0.45)'"
+  <div id="ai-fab" onclick="openAIChat()" title="AI Assistant" style="display:none;" onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 8px 32px rgba(124,77,255,0.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 6px 24px rgba(124,77,255,0.45)'">
     <i data-lucide="sparkles" style="width:24px;height:24px;"></i>
   </div>
+  <script>
+    // Show the AI FAB only once the vault dashboard is actually visible
+    // (i.e. logged in) — never on the landing/homepage.
+    (function () {
+      var fab = document.getElementById('ai-fab');
+      var dash = document.getElementById('vault-dashboard');
+      if (!fab || !dash) return;
+      function syncFab() {
+        var loggedIn = dash.style.display === 'flex';
+        fab.style.display = loggedIn ? 'flex' : 'none';
+      }
+      syncFab();
+      if (window.MutationObserver) {
+        new MutationObserver(syncFab).observe(dash, { attributes: true, attributeFilter: ['style', 'class'] });
+      }
+    })();
+  </script>
 
 </body>
 
