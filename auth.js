@@ -1301,7 +1301,13 @@ btn.innerHTML = '<i data-lucide="volume-2" style="width:14px;height:14px;vertica
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
+let _aiMessageInFlight = false;
+
 async function sendAIMessage() {
+  // Guard against duplicate fires (Enter + click, or rapid repeat Enter)
+  // stacking multiple error bubbles for a single question.
+  if (_aiMessageInFlight) return;
+
   const input = document.getElementById('ai-input');
   const question = input.value.trim();
   if (!question) return;
@@ -1315,7 +1321,10 @@ async function sendAIMessage() {
   aiChatHistory.push({ role: 'user', parts: [{ text: question }] });
 
   showAITyping(true);
-   
+  _aiMessageInFlight = true;
+  const sendBtn = document.getElementById('ai-send-btn');
+  if (sendBtn) sendBtn.disabled = true;
+
   try {
     let token = sessionStorage.getItem('vaultSessionToken') ||
                   sessionStorage.getItem('vaultSession') || '';
@@ -1328,6 +1337,14 @@ async function sendAIMessage() {
         sessionStorage.setItem('vaultSessionToken', fresh);
         sessionStorage.setItem('vaultSession', fresh);
       }
+    }
+
+    // Still only an offline placeholder — AI chat needs a real backend
+    // session, so don't fire a request that's doomed to fail; say so plainly.
+    if (token.startsWith('offline-')) {
+      showAITyping(false);
+      appendAIBubble('AI Chat needs an online connection to reach the assistant. You appear to be in offline mode — please reconnect and log in again.');
+      return;
     }
 
     let res = await fetch('https://backend.shinumaths989.workers.dev/ai-search', {
@@ -1428,6 +1445,9 @@ async function sendAIMessage() {
     showAITyping(false);
     appendAIBubble('Unable to reach the AI service. Please check your connection and try again.');
 
+  } finally {
+    _aiMessageInFlight = false;
+    if (sendBtn) sendBtn.disabled = false;
   }
 
 }
