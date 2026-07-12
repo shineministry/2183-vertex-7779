@@ -318,22 +318,23 @@ const DEFAULT_CHECKLIST_DATA = {
     ]
 };
 
-function _loadAllMemberData(){ try { return JSON.parse(localStorage.getItem(DATA_KEY)||'{}'); } catch(e){ return {}; } }
-function _saveAllMemberData(d){ try { localStorage.setItem(DATA_KEY, JSON.stringify(d)); } catch(e){} }
-function _loadCurrentMemberData(){
-    var all = _loadAllMemberData();
-    var mem = currentMember();
-    if (all[mem]) return all[mem];
-    return JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_DATA));
-}
-let CHECKLIST_DATA = _loadCurrentMemberData();
-
 /* ================================================================
    STATUS PERSISTENCE
    ================================================================ */
 const STATUS_KEY = 'checklistStatuses';
 const DATA_KEY = 'checklistDeployedData';
 const MEMBER_KEY = 'checklistActiveMember';
+
+function _loadAllMemberData(){ try { return JSON.parse(localStorage.getItem(DATA_KEY)||'{}'); } catch(e){ return {}; } }
+function _saveAllMemberData(d){ try { localStorage.setItem(DATA_KEY, JSON.stringify(d)); } catch(e){} }
+function _loadCurrentMemberData(){
+    var all = _loadAllMemberData();
+    var mem = localStorage.getItem(MEMBER_KEY) || 'shineil';
+    if (all[mem]) return all[mem];
+    return JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_DATA));
+}
+let CHECKLIST_DATA = _loadCurrentMemberData();
+
 function loadStatuses(){ try { return JSON.parse(localStorage.getItem(STATUS_KEY)||'{}'); } catch(e){ return {}; } }
 function saveStatuses(s){ try { localStorage.setItem(STATUS_KEY, JSON.stringify(s)); } catch(e){} }
 function setStatus(type, idx, val){
