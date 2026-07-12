@@ -4295,7 +4295,8 @@ Recommended:
             case 'PDF':
               h = '<td class="vc-cell vc-cell-pdf" style="white-space:normal;text-align:center;">';
               if (r.pdf){
-                h += '<input class="vc-pdf-doc-name vc-pdf-doc-input" value="' + _vcEsc(r.pdf) + '" data-ri="'+ri+'" onchange="vcEditPDFPath('+ri+',this.value)" onfocus="this.select()" title="Edit document path" />'; 
+                var _docName = r.pdf.replace(/^.*[\\\/]/, '').replace(/\.pdf$/i, '');
+                h += '<div class="vc-pdf-doc-name" title="' + _vcEsc(r.pdf) + '">' + _vcEsc(_docName) + '</div>';
                 h += '<button class="vc-pdf-btn" onclick="vcOpenPDF('+ri+')" title="Open PDF"><i data-lucide="external-link" style="width:12px;height:12px;"></i> Open</button>';
               } else {
                 h += '<span style="color:#94a3b8;">No PDF</span>';
@@ -4403,19 +4404,6 @@ Recommended:
           var p = r.pdf;
           if (!/^(?:docs\/|photos\/|file\/)/.test(p)) p = 'docs/' + p;
           openSecureFile(p, r.name);
-        }
-
-        /* ---- EDIT PDF PATH ---- */
-        function vcEditPDFPath(ri, newPath){
-          var r = _vcRows[ri];
-          if (!r) return;
-          if (newPath && !/^(?:docs\/|photos\/|file\/)/.test(newPath)) newPath = 'docs/' + newPath;
-          r.pdf = newPath;
-          var data = _vcLoad(null, _vcDataKey, null);
-          if (data && data[_vcCurType] && data[_vcCurType][ri]){
-            data[_vcCurType][ri].pdf = newPath;
-            _vcSave(data, _vcDataKey);
-          }
         }
 
         /* ---- SET STATUS (dropdown) ---- */
