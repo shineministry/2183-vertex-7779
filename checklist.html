@@ -470,7 +470,7 @@ function renderChecklist(type){
         // (so paths can be corrected) plus an "Open PDF" button.
         const docHtml = docs.length
             ? docs.map((d, di) => {
-                const docFileName = d.replace(/^.*[\\\/]/, '').replace(/\.(pdf|enc)$/i, '');
+                const docFileName = (item._docNames && item._docNames[di] != null) ? item._docNames[di] : d.replace(/^.*[\\\/]/, '').replace(/\.(pdf|enc)$/i, '');
                 return '<div style="margin-bottom:5px;">' +
                 '<input class="xl-cell-edit xl-cell-doc-name" style="width:100%;text-align:center;font-size:10px;font-weight:700;color:#217346;margin-bottom:2px;" value="' + escAttr(docFileName) + '" data-field="docname" data-type="' + escAttr(type) + '" data-idx="' + i + '" data-doc-idx="' + di + '" onchange="onDocNameEdit(this)" title="Document name" />' +
                 '<div style="display:flex;align-items:center;gap:4px;">' +
@@ -549,13 +549,8 @@ function onDocNameEdit(input){
     const idx = parseInt(input.dataset.idx);
     const di = parseInt(input.dataset.docIdx);
     const item = CHECKLIST_DATA[type][idx];
-    const docs = Array.isArray(item.docs) ? item.docs : (item.pdf ? [item.pdf] : []);
-    const oldPath = docs[di] || '';
-    const fileName = input.value.trim().replace(/[^a-zA-Z0-9_\-\.\/\\]/g, '');
-    if (!fileName) return;
-    const newPath = oldPath.replace(/^.*[\\\/]/, fileName);
-    if (Array.isArray(item.docs)) item.docs[di] = newPath;
-    else if (di === 0) item.pdf = newPath;
+    if (!item._docNames) item._docNames = {};
+    item._docNames[di] = input.value.trim();
     renderChecklist(type);
 }
 function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
