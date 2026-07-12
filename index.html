@@ -1818,7 +1818,7 @@ Recommended:
         </div>
         <div style="overflow-y:auto;flex:1;padding:16px 20px 20px;">
           <!-- Overall Status Banner -->
-          <div id="overall-status-banner" style="padding:14px 18px;border-radius:14px;margin-bottom:16px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;color:#166534;"> <i data-lucide="circle-check" style="width:18px;height:18px;color:#16a34a;"></i> <span>All Systems Operational</span> </div>
+          <div id="overall-status-banner" style="padding:14px 18px;border-radius:14px;margin-bottom:16px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;color:#166534;"> <i data-lucide="check-circle" style="width:18px;height:18px;color:#16a34a;"></i> <span>All Systems Operational</span> </div>
           <!-- 90-Day Uptime History (Statuspage-style) -->
           <div id="uptime-section" style="margin-bottom:18px;"></div>
           <div id="uptime-day-detail" style="display:none;margin:-4px 0 16px;padding:10px 14px;border-radius:10px;background:#0f172a;color:#f8fafc;font-size:12px;line-height:1.6;"></div>
@@ -3517,11 +3517,9 @@ Recommended:
                      : (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');
         const allowed = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null)
                         || ['shineil', 'brother', 'father', 'mother'];
-        // Pull the latest PIN hashes from the server BEFORE deciding whether
-        // to show the "set a PIN" or "enter your PIN" screen — otherwise a
-        // PIN change made on another device wouldn't be picked up here until
-        // after the gate had already rendered against stale local data.
-        await loadPinHashesFromServer();
+        // Refresh PIN hashes from server in the background — don't block
+        // the UI on the network call; localStorage already has cached hashes.
+        loadPinHashesFromServer().catch(()=>{});
         if (allowed.length > 1) {
           openPMMemberPicker(allowed);
         } else {
@@ -4286,18 +4284,19 @@ Recommended:
               h = '<td class="vc-cell vc-cell-desc">'+_vcEsc(r.desc)+'</td>';
               break;
             case 'Status':
-              var stMap = {
-                'done':     { cls:'vc-st-yes',     label:'YES' },
-                'not-done': { cls:'vc-st-no',      label:'NO' },
-                'na':       { cls:'vc-st-na',       label:'N/A' },
-                '':         { cls:'vc-st-pending', label:'Pending' }
-              };
-              var st = stMap[r.status] || stMap[''];
-              h = '<td class="vc-cell" style="text-align:center;"><span class="vc-st-badge '+st.cls+'">'+st.label+'</span></td>';
+              h = '<td class="vc-cell vc-cell-status" style="text-align:center;">';
+              h += '<select class="vc-st-select" onchange="vcSetStatus('+ri+',this.value)">';
+              h += '<option value=""' + (!r.status ? ' selected' : '') + '>\u2014</option>';
+              h += '<option value="done"' + (r.status === 'done' ? ' selected' : '') + '>YES</option>';
+              h += '<option value="not-done"' + (r.status === 'not-done' ? ' selected' : '') + '>NO</option>';
+              h += '<option value="na"' + (r.status === 'na' ? ' selected' : '') + '>N/A</option>';
+              h += '</select></td>';
               break;
             case 'PDF':
-              h = '<td class="vc-cell" style="white-space:normal;text-align:center;">';
+              h = '<td class="vc-cell vc-cell-pdf" style="white-space:normal;text-align:center;">';
               if (r.pdf){
+                var _docName = r.pdf.replace(/^.*[\\\/]/, '').replace(/\.pdf$/i, '');
+                h += '<div class="vc-pdf-doc-name" title="' + _vcEsc(r.pdf) + '">' + _vcEsc(_docName) + '</div>';
                 h += '<button class="vc-pdf-btn" onclick="vcOpenPDF('+ri+')" title="Open PDF"><i data-lucide="external-link" style="width:12px;height:12px;"></i> Open</button>';
               } else {
                 h += '<span style="color:#94a3b8;">No PDF</span>';
@@ -4404,6 +4403,21 @@ Recommended:
           if (r && r.pdf && typeof openSecureFile === 'function') openSecureFile(r.pdf, r.name);
         }
 
+        /* ---- SET STATUS (dropdown) ---- */
+        function vcSetStatus(ri, val){
+          var r = _vcRows[ri];
+          if (!r) return;
+          r.status = val;
+          var statuses = _vcLoad(null, _vcStatusKey, {});
+          var _vcMember = (typeof getCurrentVaultMember === 'function') ? getCurrentVaultMember() : (sessionStorage.getItem('vaultMember') || 'shineil');
+          if (!statuses[_vcMember]) statuses[_vcMember] = {};
+          if (!statuses[_vcMember][_vcCurType]) statuses[_vcMember][_vcCurType] = {};
+          statuses[_vcMember][_vcCurType][ri] = val;
+          _vcSave(statuses, _vcStatusKey);
+          _vcBuildBody();
+          if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
         /* ---- STATUS BAR ---- */
         function _vcUpdateSB(){
           var tot = document.getElementById('vc-sb-total');
@@ -4435,6 +4449,7 @@ Recommended:
         window.vcSortByCol = vcSortByCol;
         window.vcClickRow = vcClickRow;
         window.vcOpenPDF = vcOpenPDF;
+        window.vcSetStatus = vcSetStatus;
         window.vcFilterRows = vcFilterRows;
         window.vcCopySelected = vcCopySelected;
 
@@ -4813,7 +4828,7 @@ Recommended:
           var sb = { operational:'#f0fdf4', degraded:'#fefce8', partial:'#fff7ed', major:'#fef2f2', maintenance:'#eff6ff' };
           var c = sc[r.state] || '#94a3b8';
           var b = sb[r.state] || '#f8fafc';
-          var badge = { operational:'<i data-lucide="circle-check" style="width:12px;height:12px;vertical-align:middle;"></i>', degraded:'<i data-lucide="alert-circle" style="width:12px;height:12px;vertical-align:middle;"></i>', partial:'<i data-lucide="alert-triangle" style="width:12px;height:12px;vertical-align:middle;"></i>', major:'<i data-lucide="x-circle" style="width:12px;height:12px;vertical-align:middle;"></i>', maintenance:'<i data-lucide="wrench" style="width:12px;height:12px;vertical-align:middle;"></i>' }[r.state] || '<i data-lucide="circle" style="width:12px;height:12px;vertical-align:middle;"></i>';
+          var badge = { operational:'<i data-lucide="check-circle" style="width:12px;height:12px;vertical-align:middle;color:'+sc.operational+';"></i>', degraded:'<i data-lucide="alert-circle" style="width:12px;height:12px;vertical-align:middle;color:'+sc.degraded+';"></i>', partial:'<i data-lucide="alert-triangle" style="width:12px;height:12px;vertical-align:middle;color:'+sc.partial+';"></i>', major:'<i data-lucide="x-circle" style="width:12px;height:12px;vertical-align:middle;color:'+sc.major+';"></i>', maintenance:'<i data-lucide="wrench" style="width:12px;height:12px;vertical-align:middle;color:'+sc.maintenance+';"></i>' }[r.state] || '<i data-lucide="circle" style="width:12px;height:12px;vertical-align:middle;"></i>';
           var txt = { operational:'Operational', degraded:'Degraded', partial:'Partial Outage', major:'Major Outage', maintenance:'Maintenance' }[r.state] || 'Unknown';
           return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:'+b+';border:1px solid '+(r.state==='operational'?'#e2e8f0':c+'44')+';">'
             +'<span style="font-size:14px;width:22px;text-align:center;">'+r.icon+'</span>'
@@ -4858,11 +4873,11 @@ Recommended:
           // Update overall banner
           var banner = document.getElementById('overall-status-banner');
           if (banner) {
-            var bm = { operational:{ e:'<i data-lucide="circle-check" style="width:14px;height:14px;vertical-align:middle;"></i>', bg:'linear-gradient(135deg,#f0fdf4,#dcfce7)', bc:'#86efac', c:'#166534', t:'All Systems Operational' },
-              degraded:{ e:'<i data-lucide="alert-circle" style="width:14px;height:14px;vertical-align:middle;"></i>', bg:'linear-gradient(135deg,#fefce8,#fef9c3)', bc:'#facc15', c:'#854d0e', t:'Partial System Outage' },
-              partial:{ e:'<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i>', bg:'linear-gradient(135deg,#fff7ed,#ffedd5)', bc:'#fb923c', c:'#9a3412', t:'Partial System Outage' },
-              major:{ e:'<i data-lucide="x-circle" style="width:14px;height:14px;vertical-align:middle;"></i>', bg:'linear-gradient(135deg,#fef2f2,#fecaca)', bc:'#f87171', c:'#991b1b', t:'Major Service Outage' },
-              maintenance:{ e:'<i data-lucide="wrench" style="width:14px;height:14px;vertical-align:middle;"></i>', bg:'linear-gradient(135deg,#eff6ff,#dbeafe)', bc:'#60a5fa', c:'#1e40af', t:'Under Maintenance' } };
+            var bm = { operational:{ e:'<i data-lucide="check-circle" style="width:18px;height:18px;vertical-align:middle;color:#16a34a;"></i>', bg:'linear-gradient(135deg,#f0fdf4,#dcfce7)', bc:'#86efac', c:'#166534', t:'All Systems Operational' },
+              degraded:{ e:'<i data-lucide="alert-circle" style="width:18px;height:18px;vertical-align:middle;color:#ca8a04;"></i>', bg:'linear-gradient(135deg,#fefce8,#fef9c3)', bc:'#facc15', c:'#854d0e', t:'Partial System Outage' },
+              partial:{ e:'<i data-lucide="alert-triangle" style="width:18px;height:18px;vertical-align:middle;color:#ea580c;"></i>', bg:'linear-gradient(135deg,#fff7ed,#ffedd5)', bc:'#fb923c', c:'#9a3412', t:'Partial System Outage' },
+              major:{ e:'<i data-lucide="x-circle" style="width:18px;height:18px;vertical-align:middle;color:#dc2626;"></i>', bg:'linear-gradient(135deg,#fef2f2,#fecaca)', bc:'#f87171', c:'#991b1b', t:'Major Service Outage' },
+              maintenance:{ e:'<i data-lucide="wrench" style="width:18px;height:18px;vertical-align:middle;color:#2563eb;"></i>', bg:'linear-gradient(135deg,#eff6ff,#dbeafe)', bc:'#60a5fa', c:'#1e40af', t:'Under Maintenance' } };
             var m = bm[worst] || bm.operational;
             banner.style.background = m.bg;
             banner.style.borderColor = m.bc;
@@ -4878,7 +4893,7 @@ Recommended:
           if(window.lucide) lucide.createIcons({node:container});
         }
         function _statusBadge(state) {
-          const map = { operational:'<i data-lucide="circle-check" style="width:14px;height:14px;vertical-align:middle;"></i>', degraded:'<i data-lucide="alert-circle" style="width:14px;height:14px;vertical-align:middle;"></i>', partial:'<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i>', major:'<i data-lucide="x-circle" style="width:14px;height:14px;vertical-align:middle;"></i>', maintenance:'<i data-lucide="wrench" style="width:14px;height:14px;vertical-align:middle;"></i>' };
+          const map = { operational:'<i data-lucide="check-circle" style="width:14px;height:14px;vertical-align:middle;"></i>', degraded:'<i data-lucide="alert-circle" style="width:14px;height:14px;vertical-align:middle;"></i>', partial:'<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i>', major:'<i data-lucide="x-circle" style="width:14px;height:14px;vertical-align:middle;"></i>', maintenance:'<i data-lucide="wrench" style="width:14px;height:14px;vertical-align:middle;"></i>' };
           return map[state] || '<i data-lucide="circle" style="width:14px;height:14px;vertical-align:middle;"></i>';
         }
         function _statusText(state) {

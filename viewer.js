@@ -210,6 +210,11 @@ displayName){
         }
     }
 
+    // If masterPassword isn't set yet, wait for the trusted session restore
+    if (!window.masterPassword && window._trustSessionReady) {
+        await window._trustSessionReady;
+    }
+
     if(!window.masterPassword){
 
  toastNotify('Session not unlocked. Please log in again.', 'warning');

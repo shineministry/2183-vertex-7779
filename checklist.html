@@ -50,7 +50,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 .xl-col-resize:hover,.xl-col-resize.active{background:#217346;}
 .xl-row-head{background:#f3f3f3;text-align:center;font-weight:700;font-size:11px;color:#333;width:46px;min-width:46px;border-right:2px solid #b0b0b0;border-bottom:1px solid #d6d6d6;cursor:default;}
 .xl-row-head:hover{background:#e2e2e2;}
-.xl-cell{height:32px;padding:4px 8px;font-size:14px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:cell;text-align:center;}
+.xl-cell{height:36px;padding:6px 10px;font-size:14px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:cell;text-align:center;}
 .xl-cell-num{text-align:center;font-weight:700;color:#555;font-size:11px;}
 .xl-cell-name{font-weight:700;color:#1a1a1a;}
 .xl-cell-desc{font-size:11px;color:#666;line-height:1.4;white-space:normal;word-wrap:break-word;text-align:center;}
@@ -195,7 +195,7 @@ body.dark .xl-modal-btns .xl-modal-cancel{background:#444;color:#ccc;}
   .xl-corner{width:32px;min-width:32px;}
   .xl-row-head{width:32px;min-width:32px;font-size:10px;}
   .xl-col-head{font-size:9px;}
-  .xl-cell{font-size:13px;padding:6px 6px;}
+  .xl-cell{font-size:13px;padding:6px 8px;}
   .xl-pdf-btn{padding:6px 10px;font-size:11px;}
   .xl-status-select{padding:6px 4px;font-size:11px;}
   .xl-row-action{width:26px;height:26px;}
@@ -469,11 +469,16 @@ function renderChecklist(type){
         // File column: each attached document gets an editable path input
         // (so paths can be corrected) plus an "Open PDF" button.
         const docHtml = docs.length
-            ? docs.map((d, di) => '<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">' +
+            ? docs.map((d, di) => {
+                const docFileName = d.replace(/^.*[\\\/]/, '').replace(/\.pdf$/i, '');
+                return '<div style="margin-bottom:5px;">' +
+                '<div style="font-size:10px;font-weight:700;color:#217346;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escAttr(d) + '">' + escHtml(docFileName) + '</div>' +
+                '<div style="display:flex;align-items:center;gap:4px;">' +
                 '<input class="xl-cell-edit" style="flex:1;min-width:90px;font-size:11px;text-align:left;" value="' + escAttr(d) + '" data-field="docpath" data-type="' + escAttr(type) + '" data-idx="' + i + '" data-doc-idx="' + di + '" onchange="onDocPathEdit(this)" placeholder="docs/file.pdf" />' +
                 '<button class="xl-pdf-btn" data-pdf="' + escAttr(d) + '" data-name="' + escAttr(item.name) + '" onclick="openPDF(this)" title="Open PDF"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Open' + (docs.length > 1 ? ' ' + (di+1) : '') + '</button>' +
                 '<button class="xl-row-action del" title="Remove this document" onclick="removeDocFromRow(\'' + escAttr(type) + '\',' + i + ',' + di + ')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>' +
-              '</div>').join('')
+                '</div></div>';
+              }).join('')
             : '<span style="color:#999;font-size:11px;">No file</span>';
         const addDocBtn = '<button class="xl-pdf-btn" style="background:#e6f4ea;border-color:#217346;color:#21734a;" onclick="addDocToRow(\'' + escAttr(type) + '\',' + i + ')" title="Add document"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Doc</button>';
 
