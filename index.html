@@ -1566,7 +1566,7 @@ Recommended:
           </div>
           <div id="photos-grid" class="file-grid photo-grid"></div>
         </div><!-- end #page-photos --> <!-- ===================== CHECKLIST PAGE (READ-ONLY) ===================== -->
-        <div id="page-checklist" class="page-container" style="display:none;padding:0;overflow:hidden;flex-direction:column;">
+        <div id="page-checklist" class="page-container" style="display:none;padding:0;overflow-y:auto;flex-direction:column;">
           <!-- TOOLBAR RIBBON -->
           <div class="vc-ribbon">
             <div class="vc-ribbon-group">
@@ -4170,7 +4170,9 @@ Recommended:
           var prev = sel.value;
           sel.innerHTML = '<option value="">Select Checklist</option>';
           if (data && Object.keys(data).length){
-            Object.keys(data).forEach(function(t){
+            var _vcMember = (typeof getCurrentVaultMember === 'function') ? getCurrentVaultMember() : (sessionStorage.getItem('vaultMember') || 'shineil');
+            var memberData = data[_vcMember] || data;
+            Object.keys(memberData).forEach(function(t){
               var o = document.createElement('option');
               o.value = t; o.textContent = t;
               sel.appendChild(o);
@@ -4225,6 +4227,7 @@ Recommended:
               name: it.name || '',
               desc: it.desc || '',
               docs: docs,
+              docNames: it._docNames || {},
               pdf:  it.pdf || (docs.length ? docs[0] : ''),
               status: (typeSt[i] !== undefined ? typeSt[i] : ''),
               extra: it.extra || {}
@@ -4308,7 +4311,7 @@ Recommended:
               var docList = (r.docs && r.docs.length) ? r.docs : (r.pdf ? [r.pdf] : []);
               if (docList.length){
                 docList.forEach(function(d, di){
-                  var _docName = d.replace(/^.*[\\\/]/, '').replace(/\.(pdf|enc)$/i, '');
+                  var _docName = (r.docNames && r.docNames[di] != null) ? r.docNames[di] : d.replace(/^.*[\\\/]/, '').replace(/\.(pdf|enc)$/i, '');
                   h += '<div class="vc-pdf-doc-name" title="' + _vcEsc(d) + '">' + _vcEsc(_docName) + '</div>';
                   h += '<button class="vc-pdf-btn" onclick="vcOpenPDF('+ri+','+di+')" title="Open"><i data-lucide="external-link" style="width:12px;height:12px;"></i> Open' + (docList.length > 1 ? ' ' + (di+1) : '') + '</button>';
                 });
