@@ -263,9 +263,10 @@ body.dark .xl-modal-btns .xl-modal-cancel{background:#444;color:#ccc;}
             <tr>
               <th class="xl-corner"></th>
               <th class="xl-col-head" style="width:60px;min-width:46px;"><div class="xl-col-head-text">#</div><div class="xl-col-resize" data-idx="0"></div></th>
-              <th class="xl-col-head" style="width:46%;min-width:180px;"><div class="xl-col-head-text">Document</div><div class="xl-col-resize" data-idx="1"></div></th>
-              <th class="xl-col-head" style="width:150px;min-width:110px;"><div class="xl-col-head-text">Status</div><div class="xl-col-resize" data-idx="2"></div></th>
-              <th class="xl-col-head" style="width:150px;min-width:110px;"><div class="xl-col-head-text">File</div><div class="xl-col-resize" data-idx="3"></div></th>
+              <th class="xl-col-head" style="width:26%;min-width:140px;"><div class="xl-col-head-text">Name</div><div class="xl-col-resize" data-idx="1"></div></th>
+              <th class="xl-col-head" style="width:26%;min-width:160px;"><div class="xl-col-head-text">Description</div><div class="xl-col-resize" data-idx="2"></div></th>
+              <th class="xl-col-head" style="width:130px;min-width:100px;"><div class="xl-col-head-text">Status</div><div class="xl-col-resize" data-idx="3"></div></th>
+              <th class="xl-col-head" style="width:200px;min-width:160px;"><div class="xl-col-head-text">File</div><div class="xl-col-resize" data-idx="4"></div></th>
               <th class="xl-col-head" style="width:70px;min-width:50px;"><div class="xl-col-head-text">Actions</div></th>
             </tr>
           </thead>
@@ -465,10 +466,14 @@ function renderChecklist(type){
         const statusVal = statuses[i] || '';
         const stClass = statusVal === 'done' ? 'st-done' : (statusVal === 'not-done' ? 'st-no' : (statusVal === 'na' ? 'st-na' : ''));
         const docs = Array.isArray(item.docs) ? item.docs : (item.pdf ? [item.pdf] : []);
-        // File column: never show the raw path/filename — just an "Open PDF"
-        // button per attached document (numbered only if there's more than one).
+        // File column: each attached document gets an editable path input
+        // (so paths can be corrected) plus an "Open PDF" button.
         const docHtml = docs.length
-            ? docs.map((d, di) => '<button class="xl-pdf-btn" data-pdf="' + escAttr(d) + '" data-name="' + escAttr(item.name) + '" onclick="openPDF(this)"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Open PDF' + (docs.length > 1 ? ' ' + (di+1) : '') + '</button>').join(' ')
+            ? docs.map((d, di) => '<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">' +
+                '<input class="xl-cell-edit" style="flex:1;min-width:90px;font-size:11px;text-align:left;" value="' + escAttr(d) + '" data-field="docpath" data-type="' + escAttr(type) + '" data-idx="' + i + '" data-doc-idx="' + di + '" onchange="onDocPathEdit(this)" placeholder="docs/file.pdf" />' +
+                '<button class="xl-pdf-btn" data-pdf="' + escAttr(d) + '" data-name="' + escAttr(item.name) + '" onclick="openPDF(this)" title="Open PDF"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Open' + (docs.length > 1 ? ' ' + (di+1) : '') + '</button>' +
+                '<button class="xl-row-action del" title="Remove this document" onclick="removeDocFromRow(\'' + escAttr(type) + '\',' + i + ',' + di + ')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>' +
+              '</div>').join('')
             : '<span style="color:#999;font-size:11px;">No file</span>';
         const addDocBtn = '<button class="xl-pdf-btn" style="background:#e6f4ea;border-color:#217346;color:#21734a;" onclick="addDocToRow(\'' + escAttr(type) + '\',' + i + ')" title="Add document"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Doc</button>';
 
@@ -476,8 +481,10 @@ function renderChecklist(type){
             '<td class="xl-cell xl-row-head" style="position:relative;">' + (i+1) +
             '<div class="xl-add-btn xl-row-add" title="Add Row Below" onclick="addRowAfter(' + i + ')">+</div></td>' +
             '<td class="xl-cell xl-cell-num">' + (i+1) + '</td>' +
-            '<td class="xl-cell xl-cell-doc-wrap">' +
+            '<td class="xl-cell xl-cell-name">' +
                 '<input class="xl-cell-edit xl-cell-doc-name" style="text-align:center;" value="' + escAttr(item.name) + '" data-field="name" data-type="' + escAttr(type) + '" data-idx="' + i + '" onchange="onEdit(this)" />' +
+            '</td>' +
+            '<td class="xl-cell xl-cell-desc-col">' +
                 '<input class="xl-cell-edit xl-cell-desc" style="text-align:center;" value="' + escAttr(item.desc) + '" data-field="desc" data-type="' + escAttr(type) + '" data-idx="' + i + '" onchange="onEdit(this)" />' +
             '</td>' +
             '<td class="xl-cell xl-cell-center"><select class="xl-status-select ' + stClass + '" data-type="' + escAttr(type) + '" data-idx="' + i + '" onchange="onStatusChange(this)">' +
@@ -486,7 +493,7 @@ function renderChecklist(type){
             '<option value="not-done"' + (statusVal === 'not-done' ? ' selected' : '') + '>NO (Not Done)</option>' +
             '<option value="na"' + (statusVal === 'na' ? ' selected' : '') + '>N/A</option>' +
             '</select></td>' +
-            '<td class="xl-cell xl-cell-btn" style="white-space:normal;overflow:visible;">' + docHtml + ' ' + addDocBtn + '</td>' +
+            '<td class="xl-cell xl-cell-btn" style="white-space:normal;overflow:visible;">' + docHtml + addDocBtn + '</td>' +
             '<td class="xl-cell"><div class="xl-row-actions">' +
             '<button class="xl-row-action del" title="Delete item" onclick="deleteItem(\'' + escAttr(type) + '\',' + i + ')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
             '</div></td>';

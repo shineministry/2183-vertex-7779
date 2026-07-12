@@ -1211,7 +1211,7 @@ Recommended:
   <div id="step1" class="overlay" style="display:none;">
     <div class="login-wrapper">
       <div class="header-section">
-        <div class="main-logo-container"><i data-lucide="lock" style="width:48px;height:48px;"></i></div>
+        <div class="main-logo-container"><img src="OnlineVault.png" alt="Online Vault" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.style.display='none';this.parentElement.innerHTML='&lt;i data-lucide=&quot;lock&quot; style=&quot;width:48px;height:48px;&quot;&gt;&lt;/i&gt;';if(typeof lucide!=='undefined')lucide.createIcons();"></div>
         <h1>ONLINE VAULT</h1>
         <div class="subtitle">Secure Storage Infrastructure Management</div>
       </div>
@@ -4240,8 +4240,7 @@ Recommended:
           var cols = _vcCols.concat(_vcExtraCols);
           var html = '<tr><th class="vc-corner" onclick="vcSelectAll()"></th>';
           cols.forEach(function(c,i){
-            var lbl = _vcColLetter(i) + ' — ' + c;
-            html += '<th class="vc-col-head" data-ci="'+i+'" onclick="vcSortByCol('+i+')" title="Click to sort">'+lbl+'</th>';
+            html += '<th class="vc-col-head" data-ci="'+i+'" onclick="vcSortByCol('+i+')" title="Click to sort">'+c+'</th>';
           });
           html += '</tr>';
           thead.innerHTML = html;
@@ -4297,13 +4296,9 @@ Recommended:
               h = '<td class="vc-cell" style="text-align:center;"><span class="vc-st-badge '+st.cls+'">'+st.label+'</span></td>';
               break;
             case 'PDF':
-              val = _vcEsc(r.pdf);
-              h = '<td class="vc-cell" style="white-space:normal;">';
+              h = '<td class="vc-cell" style="white-space:normal;text-align:center;">';
               if (r.pdf){
-                h += '<div style="display:flex;align-items:center;gap:6px;">';
-                h += '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">'+val+'</span>';
                 h += '<button class="vc-pdf-btn" onclick="vcOpenPDF('+ri+')" title="Open PDF"><i data-lucide="external-link" style="width:12px;height:12px;"></i> Open</button>';
-                h += '</div>';
               } else {
                 h += '<span style="color:#94a3b8;">No PDF</span>';
               }
