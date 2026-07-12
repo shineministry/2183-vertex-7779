@@ -3385,7 +3385,11 @@ Recommended:
       }
 
       .vm-card.active::after {
-        content: '<i data-lucide="check" style="width:14px;height:14px;vertical-align:middle;"></i> ACTIVE';
+        /* CSS content: can only render literal text, never HTML/icon tags —
+           the previous value printed the raw <i data-lucide="check">...
+           markup on screen instead of an icon. A plain checkmark glyph
+           renders correctly everywhere with no JS/icon-library dependency. */
+        content: '\2713 ACTIVE';
         position: absolute;
         top: 10px;
         right: 10px;
@@ -3508,17 +3512,21 @@ Recommended:
 
       // Entry point wired to the key nav buttons. Gates access behind a
       // per-member 4-digit PIN before any saved credential is ever rendered.
-      function openPasswordManager() {
+      async function openPasswordManager() {
         const mode = (typeof getCurrentVaultMode === 'function') ? getCurrentVaultMode()
                      : (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');
         const allowed = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null)
                         || ['shineil', 'brother', 'father', 'mother'];
+        // Pull the latest PIN hashes from the server BEFORE deciding whether
+        // to show the "set a PIN" or "enter your PIN" screen — otherwise a
+        // PIN change made on another device wouldn't be picked up here until
+        // after the gate had already rendered against stale local data.
+        await loadPinHashesFromServer();
         if (allowed.length > 1) {
           openPMMemberPicker(allowed);
         } else {
           pmGateForMember(allowed[0] || 'shineil');
         }
-        loadPinHashesFromServer();
       }
 
       function closePasswordManager() {
@@ -3565,10 +3573,16 @@ Recommended:
           if (!res.ok) return;
           const data = await res.json();
           if (data.success && data.hashes) {
+            // The server (Firestore) is the single source of truth across
+            // devices — always overwrite the local cache with whatever the
+            // server has, rather than only filling it in when empty. The
+            // old "only if not already stored" logic meant a PIN changed on
+            // one device would never reach any device that had already
+            // cached an older PIN hash.
             for (const memberKey in data.hashes) {
-              const stored = localStorage.getItem('pmPinHash_' + memberKey);
-              if (!stored) {
-                localStorage.setItem('pmPinHash_' + memberKey, data.hashes[memberKey]);
+              const serverHash = data.hashes[memberKey];
+              if (serverHash) {
+                localStorage.setItem('pmPinHash_' + memberKey, serverHash);
               }
             }
           }

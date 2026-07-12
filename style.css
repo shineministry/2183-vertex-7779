@@ -786,12 +786,18 @@ button{
     border-right: 1px solid var(--border);
     padding: 25px 18px;
     overflow-y: auto;
+    /* Without an explicit overflow-x, the browser silently promotes it to
+       "auto" too (per spec, whenever overflow-y isn't visible) — so the
+       4px hover translateX() on #cat-list li items was enough to trigger
+       a real, visible horizontal scrollbar on every hover. */
+    overflow-x: hidden;
     height: 100%;
 }
 
 #sidebar-files-section {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
 }
 

@@ -50,10 +50,12 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 .xl-col-resize:hover,.xl-col-resize.active{background:#217346;}
 .xl-row-head{background:#f3f3f3;text-align:center;font-weight:700;font-size:11px;color:#333;width:46px;min-width:46px;border-right:2px solid #b0b0b0;border-bottom:1px solid #d6d6d6;cursor:default;}
 .xl-row-head:hover{background:#e2e2e2;}
-.xl-cell{height:32px;padding:4px 8px;font-size:14px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:cell;}
+.xl-cell{height:32px;padding:4px 8px;font-size:14px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:cell;text-align:center;}
 .xl-cell-num{text-align:center;font-weight:700;color:#555;font-size:11px;}
 .xl-cell-name{font-weight:700;color:#1a1a1a;}
-.xl-cell-desc{font-size:11px;color:#666;line-height:1.4;white-space:normal;word-wrap:break-word;}
+.xl-cell-desc{font-size:11px;color:#666;line-height:1.4;white-space:normal;word-wrap:break-word;text-align:center;}
+.xl-cell-doc-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;}
+.xl-cell-doc-name{font-weight:700;color:#1a1a1a;text-align:center;white-space:normal;}
 .xl-cell-center{text-align:center;}
 .xl-cell-btn{text-align:center;}
 .xl-row-even .xl-cell{background:#fff;}
@@ -170,6 +172,35 @@ body.dark .xl-row-action.del:hover{background:#5a2a2a;color:#f87171;}
 body.dark .xl-modal{background:#2d2d2d;color:#e0e0e0;}
 body.dark .xl-modal input,.body.dark .xl-modal textarea{background:#3a3a3a;color:#e0e0e0;border-color:#555;}
 body.dark .xl-modal-btns .xl-modal-cancel{background:#444;color:#ccc;}
+
+/* ====== REAL COLUMN LABELS (replace Excel-style A/B/C/D letters) ====== */
+.xl-col-head-text{font-size:10px;letter-spacing:.3px;text-transform:uppercase;}
+
+/* ====== MOBILE / SMALL SCREEN SUPPORT ======
+   The sheet previously assumed a desktop-width viewport (fixed min-widths
+   summing well past 100vw, mouse-only column resize, no touch scroll
+   momentum) so on phones the grid was effectively unusable — nothing
+   scrolled and rows/controls fell outside the visible area. */
+.xl-sheet-area{-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;}
+@media (max-width:760px){
+  html,body{overflow:auto;}
+  .xl-titlebar-text{font-size:11px;}
+  .xl-ribbon{gap:6px;padding:6px;}
+  .xl-ribbon select{min-width:110px;font-size:12px;}
+  .xl-ribbon-label{display:none;}
+  .xl-formula-bar{height:auto;flex-wrap:wrap;padding:4px 0;}
+  .xl-cell-ref{width:56px;font-size:10px;}
+  .xl-formula-input{font-size:11px;}
+  .xl-sheet-area{-webkit-overflow-scrolling:touch;}
+  .xl-corner{width:32px;min-width:32px;}
+  .xl-row-head{width:32px;min-width:32px;font-size:10px;}
+  .xl-col-head{font-size:9px;}
+  .xl-cell{font-size:13px;padding:6px 6px;}
+  .xl-pdf-btn{padding:6px 10px;font-size:11px;}
+  .xl-status-select{padding:6px 4px;font-size:11px;}
+  .xl-row-action{width:26px;height:26px;}
+  .xl-statusbar span{font-size:10px;}
+}
 </style>
 </head>
 <body>
@@ -231,12 +262,11 @@ body.dark .xl-modal-btns .xl-modal-cancel{background:#444;color:#ccc;}
           <thead>
             <tr>
               <th class="xl-corner"></th>
-              <th class="xl-col-head" style="width:60px;min-width:46px;"><div class="xl-col-head-text">A</div><div class="xl-col-resize" data-idx="0"></div></th>
-              <th class="xl-col-head" style="width:36%;min-width:180px;"><div class="xl-col-head-text">B</div><div class="xl-col-resize" data-idx="1"></div></th>
-              <th class="xl-col-head" style="width:30%;min-width:160px;"><div class="xl-col-head-text">C</div><div class="xl-col-resize" data-idx="2"></div></th>
-              <th class="xl-col-head" style="width:130px;min-width:80px;"><div class="xl-col-head-text">D</div><div class="xl-col-resize" data-idx="3"></div></th>
-              <th class="xl-col-head" style="width:130px;min-width:80px;"><div class="xl-col-head-text">E</div><div class="xl-col-resize" data-idx="4"></div></th>
-              <th class="xl-col-head" style="width:70px;min-width:50px;"><div class="xl-col-head-text">F</div></th>
+              <th class="xl-col-head" style="width:60px;min-width:46px;"><div class="xl-col-head-text">#</div><div class="xl-col-resize" data-idx="0"></div></th>
+              <th class="xl-col-head" style="width:46%;min-width:180px;"><div class="xl-col-head-text">Document</div><div class="xl-col-resize" data-idx="1"></div></th>
+              <th class="xl-col-head" style="width:150px;min-width:110px;"><div class="xl-col-head-text">Status</div><div class="xl-col-resize" data-idx="2"></div></th>
+              <th class="xl-col-head" style="width:150px;min-width:110px;"><div class="xl-col-head-text">File</div><div class="xl-col-resize" data-idx="3"></div></th>
+              <th class="xl-col-head" style="width:70px;min-width:50px;"><div class="xl-col-head-text">Actions</div></th>
             </tr>
           </thead>
           <tbody id="xl-tbody"></tbody>
@@ -435,22 +465,28 @@ function renderChecklist(type){
         const statusVal = statuses[i] || '';
         const stClass = statusVal === 'done' ? 'st-done' : (statusVal === 'not-done' ? 'st-no' : (statusVal === 'na' ? 'st-na' : ''));
         const docs = Array.isArray(item.docs) ? item.docs : (item.pdf ? [item.pdf] : []);
-        const docHtml = docs.map((d, di) => '<button class="xl-pdf-btn" data-pdf="' + escAttr(d) + '" data-name="' + escAttr(item.name) + '" onclick="openPDF(this)"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> ' + escHtml(d.split('/').pop()) + '</button>').join(' ');
+        // File column: never show the raw path/filename — just an "Open PDF"
+        // button per attached document (numbered only if there's more than one).
+        const docHtml = docs.length
+            ? docs.map((d, di) => '<button class="xl-pdf-btn" data-pdf="' + escAttr(d) + '" data-name="' + escAttr(item.name) + '" onclick="openPDF(this)"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Open PDF' + (docs.length > 1 ? ' ' + (di+1) : '') + '</button>').join(' ')
+            : '<span style="color:#999;font-size:11px;">No file</span>';
         const addDocBtn = '<button class="xl-pdf-btn" style="background:#e6f4ea;border-color:#217346;color:#21734a;" onclick="addDocToRow(\'' + escAttr(type) + '\',' + i + ')" title="Add document"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Doc</button>';
 
         tr.innerHTML =
             '<td class="xl-cell xl-row-head" style="position:relative;">' + (i+1) +
             '<div class="xl-add-btn xl-row-add" title="Add Row Below" onclick="addRowAfter(' + i + ')">+</div></td>' +
             '<td class="xl-cell xl-cell-num">' + (i+1) + '</td>' +
-            '<td class="xl-cell"><input class="xl-cell-edit" value="' + escAttr(item.name) + '" data-field="name" data-type="' + escAttr(type) + '" data-idx="' + i + '" onchange="onEdit(this)" /></td>' +
-            '<td class="xl-cell"><input class="xl-cell-edit" value="' + escAttr(item.desc) + '" data-field="desc" data-type="' + escAttr(type) + '" data-idx="' + i + '" onchange="onEdit(this)" /></td>' +
-            '<td class="xl-cell xl-cell-btn" style="white-space:normal;overflow:visible;">' + docHtml + ' ' + addDocBtn + '</td>' +
+            '<td class="xl-cell xl-cell-doc-wrap">' +
+                '<input class="xl-cell-edit xl-cell-doc-name" style="text-align:center;" value="' + escAttr(item.name) + '" data-field="name" data-type="' + escAttr(type) + '" data-idx="' + i + '" onchange="onEdit(this)" />' +
+                '<input class="xl-cell-edit xl-cell-desc" style="text-align:center;" value="' + escAttr(item.desc) + '" data-field="desc" data-type="' + escAttr(type) + '" data-idx="' + i + '" onchange="onEdit(this)" />' +
+            '</td>' +
             '<td class="xl-cell xl-cell-center"><select class="xl-status-select ' + stClass + '" data-type="' + escAttr(type) + '" data-idx="' + i + '" onchange="onStatusChange(this)">' +
             '<option value=""' + (!statusVal ? ' selected' : '') + '>\u2014</option>' +
             '<option value="done"' + (statusVal === 'done' ? ' selected' : '') + '>YES (Done)</option>' +
             '<option value="not-done"' + (statusVal === 'not-done' ? ' selected' : '') + '>NO (Not Done)</option>' +
             '<option value="na"' + (statusVal === 'na' ? ' selected' : '') + '>N/A</option>' +
             '</select></td>' +
+            '<td class="xl-cell xl-cell-btn" style="white-space:normal;overflow:visible;">' + docHtml + ' ' + addDocBtn + '</td>' +
             '<td class="xl-cell"><div class="xl-row-actions">' +
             '<button class="xl-row-action del" title="Delete item" onclick="deleteItem(\'' + escAttr(type) + '\',' + i + ')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
             '</div></td>';
