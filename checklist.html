@@ -293,28 +293,28 @@ body.dark .xl-modal-btns .xl-modal-cancel{background:#444;color:#ccc;}
    ================================================================ */
 let CHECKLIST_DATA = {
     "Residence Permit": [
-        { name: "Passport", desc: "Valid passport with minimum 6 months validity. Must include bio-data page copy.", pdf: "docs/passport.pdf" },
-        { name: "Visa Application Form", desc: "Completed and signed residence permit application form (as per local authority template).", pdf: "docs/visa-application.pdf" },
-        { name: "Proof of Residence", desc: "Rental agreement, utility bill, or property ownership document showing current address.", pdf: "docs/proof-of-residence.pdf" },
-        { name: "Employment Letter", desc: "Official letter from employer confirming position, salary, and duration of employment.", pdf: "docs/employment-letter.pdf" },
-        { name: "Bank Statements", desc: "Last 3-6 months of bank statements showing financial stability.", pdf: "docs/bank-statements.pdf" },
-        { name: "Health Insurance", desc: "Valid health insurance policy covering the duration of stay.", pdf: "docs/health-insurance.pdf" },
-        { name: "Passport Photos", desc: "Recent passport-sized photographs (as per specification - size, background, etc.).", pdf: "docs/passport-photos.pdf" },
-        { name: "Police Clearance Certificate", desc: "Criminal background check from country of origin or current residence.", pdf: "docs/police-clearance.pdf" },
-        { name: "Proof of Accommodation", desc: "Hotel booking, host declaration, or tenancy agreement.", pdf: "docs/proof-of-accommodation.pdf" },
-        { name: "Cover Letter", desc: "Personal cover letter explaining the purpose and duration of stay.", pdf: "docs/cover-letter.pdf" }
+        { name: "Passport", desc: "Valid passport with minimum 6 months validity. Must include bio-data page copy.", pdf: "docs/passport.enc" },
+        { name: "Visa Application Form", desc: "Completed and signed residence permit application form (as per local authority template).", pdf: "docs/visa-application.enc" },
+        { name: "Proof of Residence", desc: "Rental agreement, utility bill, or property ownership document showing current address.", pdf: "docs/proof-of-residence.enc" },
+        { name: "Employment Letter", desc: "Official letter from employer confirming position, salary, and duration of employment.", pdf: "docs/employment-letter.enc" },
+        { name: "Bank Statements", desc: "Last 3-6 months of bank statements showing financial stability.", pdf: "docs/bank-statements.enc" },
+        { name: "Health Insurance", desc: "Valid health insurance policy covering the duration of stay.", pdf: "docs/health-insurance.enc" },
+        { name: "Passport Photos", desc: "Recent passport-sized photographs (as per specification - size, background, etc.).", pdf: "docs/passport-photos.enc" },
+        { name: "Police Clearance Certificate", desc: "Criminal background check from country of origin or current residence.", pdf: "docs/police-clearance.enc" },
+        { name: "Proof of Accommodation", desc: "Hotel booking, host declaration, or tenancy agreement.", pdf: "docs/proof-of-accommodation.enc" },
+        { name: "Cover Letter", desc: "Personal cover letter explaining the purpose and duration of stay.", pdf: "docs/cover-letter.enc" }
     ],
     "Visa D": [
-        { name: "National Visa Application Form", desc: "Long-stay (Type D) visa application form, fully completed and signed.", pdf: "docs/visa-d-application.pdf" },
-        { name: "Valid Passport", desc: "Original passport with at least 2 blank pages and valid for 3+ months beyond planned stay.", pdf: "docs/passport.pdf" },
-        { name: "Passport Photos", desc: "Two recent biometric passport photographs meeting Schengen/local specifications.", pdf: "docs/passport-photos.pdf" },
-        { name: "Proof of Purpose", desc: "Document confirming the main purpose: work contract, university admission, family reunification letter.", pdf: "docs/proof-of-purpose.pdf" },
-        { name: "Financial Means", desc: "Bank statements or sponsorship letter proving sufficient funds for the stay.", pdf: "docs/financial-means.pdf" },
-        { name: "Travel Insurance", desc: "Travel medical insurance with minimum 30,000 EUR coverage valid in the destination country.", pdf: "docs/travel-insurance.pdf" },
-        { name: "Accommodation Proof", desc: "Confirmed accommodation arrangement - hotel booking, rental contract, or host invitation.", pdf: "docs/accommodation-proof.pdf" },
-        { name: "Flight Itinerary", desc: "Round-trip flight reservation or travel itinerary.", pdf: "docs/flight-itinerary.pdf" },
-        { name: "Cover Letter", desc: "Detailed cover letter explaining trip purpose, duration, and itinerary.", pdf: "docs/cover-letter.pdf" },
-        { name: "Previous Visa Copies", desc: "Copies of previous visas or travel history (if applicable).", pdf: "docs/previous-visas.pdf" }
+        { name: "National Visa Application Form", desc: "Long-stay (Type D) visa application form, fully completed and signed.", pdf: "docs/visa-d-application.enc" },
+        { name: "Valid Passport", desc: "Original passport with at least 2 blank pages and valid for 3+ months beyond planned stay.", pdf: "docs/passport.enc" },
+        { name: "Passport Photos", desc: "Two recent biometric passport photographs meeting Schengen/local specifications.", pdf: "docs/passport-photos.enc" },
+        { name: "Proof of Purpose", desc: "Document confirming the main purpose: work contract, university admission, family reunification letter.", pdf: "docs/proof-of-purpose.enc" },
+        { name: "Financial Means", desc: "Bank statements or sponsorship letter proving sufficient funds for the stay.", pdf: "docs/financial-means.enc" },
+        { name: "Travel Insurance", desc: "Travel medical insurance with minimum 30,000 EUR coverage valid in the destination country.", pdf: "docs/travel-insurance.enc" },
+        { name: "Accommodation Proof", desc: "Confirmed accommodation arrangement - hotel booking, rental contract, or host invitation.", pdf: "docs/accommodation-proof.enc" },
+        { name: "Flight Itinerary", desc: "Round-trip flight reservation or travel itinerary.", pdf: "docs/flight-itinerary.enc" },
+        { name: "Cover Letter", desc: "Detailed cover letter explaining trip purpose, duration, and itinerary.", pdf: "docs/cover-letter.enc" },
+        { name: "Previous Visa Copies", desc: "Copies of previous visas or travel history (if applicable).", pdf: "docs/previous-visas.enc" }
     ]
 };
 
@@ -470,11 +470,11 @@ function renderChecklist(type){
         // (so paths can be corrected) plus an "Open PDF" button.
         const docHtml = docs.length
             ? docs.map((d, di) => {
-                const docFileName = d.replace(/^.*[\\\/]/, '').replace(/\.pdf$/i, '');
+                const docFileName = d.replace(/^.*[\\\/]/, '').replace(/\.(pdf|enc)$/i, '');
                 return '<div style="margin-bottom:5px;">' +
-                '<div style="font-size:10px;font-weight:700;color:#217346;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escAttr(d) + '">' + escHtml(docFileName) + '</div>' +
+                '<input class="xl-cell-edit xl-cell-doc-name" style="width:100%;text-align:center;font-size:10px;font-weight:700;color:#217346;margin-bottom:2px;" value="' + escAttr(docFileName) + '" data-field="docname" data-type="' + escAttr(type) + '" data-idx="' + i + '" data-doc-idx="' + di + '" onchange="onDocNameEdit(this)" title="Document name" />' +
                 '<div style="display:flex;align-items:center;gap:4px;">' +
-                '<input class="xl-cell-edit" style="flex:1;min-width:90px;font-size:11px;text-align:left;" value="' + escAttr(d) + '" data-field="docpath" data-type="' + escAttr(type) + '" data-idx="' + i + '" data-doc-idx="' + di + '" onchange="onDocPathEdit(this)" placeholder="docs/file.pdf" />' +
+                '<input class="xl-cell-edit" style="flex:1;min-width:90px;font-size:11px;text-align:left;" value="' + escAttr(d) + '" data-field="docpath" data-type="' + escAttr(type) + '" data-idx="' + i + '" data-doc-idx="' + di + '" onchange="onDocPathEdit(this)" placeholder="docs/file.enc" />' +
                 '<button class="xl-pdf-btn" data-pdf="' + escAttr(d) + '" data-name="' + escAttr(item.name) + '" onclick="openPDF(this)" title="Open PDF"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Open' + (docs.length > 1 ? ' ' + (di+1) : '') + '</button>' +
                 '<button class="xl-row-action del" title="Remove this document" onclick="removeDocFromRow(\'' + escAttr(type) + '\',' + i + ',' + di + ')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>' +
                 '</div></div>';
@@ -535,6 +535,28 @@ function onEdit(input){
     const idx = parseInt(input.dataset.idx);
     const field = input.dataset.field;
     CHECKLIST_DATA[type][idx][field] = input.value;
+}
+function onDocPathEdit(input){
+    const type = input.dataset.type;
+    const idx = parseInt(input.dataset.idx);
+    const di = parseInt(input.dataset.docIdx);
+    const item = CHECKLIST_DATA[type][idx];
+    if (Array.isArray(item.docs)) item.docs[di] = input.value;
+    else if (di === 0) item.pdf = input.value;
+}
+function onDocNameEdit(input){
+    const type = input.dataset.type;
+    const idx = parseInt(input.dataset.idx);
+    const di = parseInt(input.dataset.docIdx);
+    const item = CHECKLIST_DATA[type][idx];
+    const docs = Array.isArray(item.docs) ? item.docs : (item.pdf ? [item.pdf] : []);
+    const oldPath = docs[di] || '';
+    const fileName = input.value.trim().replace(/[^a-zA-Z0-9_\-\.\/\\]/g, '');
+    if (!fileName) return;
+    const newPath = oldPath.replace(/^.*[\\\/]/, fileName);
+    if (Array.isArray(item.docs)) item.docs[di] = newPath;
+    else if (di === 0) item.pdf = newPath;
+    renderChecklist(type);
 }
 function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escAttr(s){ return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -630,7 +652,7 @@ function addCol(){
     showToast('Column added (description field extended).');
 }
 function addDocToRow(type, idx){
-    const url = prompt('Enter document path (e.g. docs/file.pdf) or R2 URL:');
+    const url = prompt('Enter document path (e.g. docs/file.enc) or R2 URL:');
     if (!url) return;
     const item = CHECKLIST_DATA[type][idx];
     if (!Array.isArray(item.docs)) item.docs = item.pdf ? [item.pdf] : [];

@@ -286,8 +286,10 @@ displayName){
                 const cached = await idbGetDoc(docKey);
                 if (cached) {
                     buffer = cached;
-                } else {
+                } else if (!navigator.onLine) {
                     throw new Error('Document not available offline. Open it online first to cache it.');
+                } else {
+                    throw new Error('Failed to load document: ' + (netErr.message || netErr));
                 }
             } else {
                 throw netErr;
