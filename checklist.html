@@ -289,9 +289,9 @@ body.dark .xl-modal-btns .xl-modal-cancel{background:#444;color:#ccc;}
 
 <script>
 /* ================================================================
-   CHECKLIST DATA — Edit here. DEPLOY pushes to vault.
+   CHECKLIST DATA — Each member gets their own separate lists.
    ================================================================ */
-let CHECKLIST_DATA = {
+const DEFAULT_CHECKLIST_DATA = {
     "Residence Permit": [
         { name: "Passport", desc: "Valid passport with minimum 6 months validity. Must include bio-data page copy.", pdf: "docs/passport.enc" },
         { name: "Visa Application Form", desc: "Completed and signed residence permit application form (as per local authority template).", pdf: "docs/visa-application.enc" },
@@ -318,6 +318,16 @@ let CHECKLIST_DATA = {
     ]
 };
 
+function _loadAllMemberData(){ try { return JSON.parse(localStorage.getItem(DATA_KEY)||'{}'); } catch(e){ return {}; } }
+function _saveAllMemberData(d){ try { localStorage.setItem(DATA_KEY, JSON.stringify(d)); } catch(e){} }
+function _loadCurrentMemberData(){
+    var all = _loadAllMemberData();
+    var mem = currentMember();
+    if (all[mem]) return all[mem];
+    return JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_DATA));
+}
+let CHECKLIST_DATA = _loadCurrentMemberData();
+
 /* ================================================================
    STATUS PERSISTENCE
    ================================================================ */
@@ -337,7 +347,15 @@ function setStatus(type, idx, val){
     updateStatusBar(type);
 }
 function currentMember(){ return localStorage.getItem(MEMBER_KEY) || 'shineil'; }
-function switchMember(m){ localStorage.setItem(MEMBER_KEY, m); renderChecklist(currentType); }
+function switchMember(m){
+    var all = _loadAllMemberData();
+    all[currentMember()] = CHECKLIST_DATA;
+    _saveAllMemberData(all);
+    localStorage.setItem(MEMBER_KEY, m);
+    CHECKLIST_DATA = _loadCurrentMemberData();
+    initDropdown();
+    renderChecklist(currentType);
+}
 function loadMemberStatuses(type){ const s = loadStatuses(); const mem = currentMember(); return (s[mem] && s[mem][type]) || {}; }
 
 /* ================================================================
@@ -345,7 +363,9 @@ function loadMemberStatuses(type){ const s = loadStatuses(); const mem = current
    ================================================================ */
 function deploy(){
     try {
-        localStorage.setItem(DATA_KEY, JSON.stringify(CHECKLIST_DATA));
+        var all = _loadAllMemberData();
+        all[currentMember()] = CHECKLIST_DATA;
+        _saveAllMemberData(all);
         const btn = document.getElementById('deploy-btn');
         btn.classList.add('deployed');
         btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 12 2 2 4-4"/></svg> Deployed!';
@@ -357,6 +377,7 @@ function deploy(){
     } catch(e) {
         showToast('Deploy failed: ' + e.message);
     }
+}
 }
 
 function showToast(msg){
@@ -655,6 +676,19 @@ function addDocToRow(type, idx){
     delete item.pdf;
     renderChecklist(type);
     showToast('Document added. Click DEPLOY to push changes.');
+}
+function removeDocFromRow(type, idx, di){
+    const item = CHECKLIST_DATA[type][idx];
+    if (!item) return;
+    const docs = Array.isArray(item.docs) ? item.docs : (item.pdf ? [item.pdf] : []);
+    if (di < 0 || di >= docs.length) return;
+    if (!confirm('Remove document ' + (di+1) + ' from "' + item.name + '"?')) return;
+    docs.splice(di, 1);
+    if (docs.length === 1) { item.pdf = docs[0]; delete item.docs; }
+    else if (docs.length === 0) { delete item.pdf; delete item.docs; }
+    else item.docs = docs;
+    renderChecklist(type);
+    showToast('Document removed. Click DEPLOY to push changes.');
 }
 
 /* ================================================================

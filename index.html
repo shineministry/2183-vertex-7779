@@ -4202,19 +4202,30 @@ Recommended:
             return;
           }
 
-          var items = data[type];
-          var statuses = _vcLoad(null,_vcStatusKey,{});
           var _vcMember = (typeof getCurrentVaultMember === 'function') ? getCurrentVaultMember() : (sessionStorage.getItem('vaultMember') || 'shineil');
+          var memberData = data[_vcMember] || data;
+          var items = memberData[type];
+          if (!items) {
+            prompt.style.display = 'flex';
+            table.style.display  = 'none';
+            if (disp) disp.textContent = 'No data for member: ' + _vcMember;
+            _vcRows = []; _vcCols = []; _vcExtraCols = [];
+            _vcUpdateSB();
+            return;
+          }
+          var statuses = _vcLoad(null,_vcStatusKey,{});
           var memberSt = statuses[_vcMember] || statuses;
           var typeSt = memberSt[type] || statuses[type] || {};
           var extraCols = _vcLoad(null,_vcExtraKey,{});
           _vcExtraCols = extraCols[type] || [];
 
           _vcRows = items.map(function(it,i){
+            var docs = Array.isArray(it.docs) ? it.docs : (it.pdf ? [it.pdf] : []);
             return {
               name: it.name || '',
               desc: it.desc || '',
-              pdf:  it.pdf  || '',
+              docs: docs,
+              pdf:  it.pdf || (docs.length ? docs[0] : ''),
               status: (typeSt[i] !== undefined ? typeSt[i] : ''),
               extra: it.extra || {}
             };
@@ -4294,10 +4305,13 @@ Recommended:
               break;
             case 'PDF':
               h = '<td class="vc-cell vc-cell-pdf" style="white-space:normal;text-align:center;">';
-              if (r.pdf){
-                var _docName = r.pdf.replace(/^.*[\\\/]/, '').replace(/\.pdf$/i, '');
-                h += '<div class="vc-pdf-doc-name" title="' + _vcEsc(r.pdf) + '">' + _vcEsc(_docName) + '</div>';
-                h += '<button class="vc-pdf-btn" onclick="vcOpenPDF('+ri+')" title="Open PDF"><i data-lucide="external-link" style="width:12px;height:12px;"></i> Open</button>';
+              var docList = (r.docs && r.docs.length) ? r.docs : (r.pdf ? [r.pdf] : []);
+              if (docList.length){
+                docList.forEach(function(d, di){
+                  var _docName = d.replace(/^.*[\\\/]/, '').replace(/\.(pdf|enc)$/i, '');
+                  h += '<div class="vc-pdf-doc-name" title="' + _vcEsc(d) + '">' + _vcEsc(_docName) + '</div>';
+                  h += '<button class="vc-pdf-btn" onclick="vcOpenPDF('+ri+','+di+')" title="Open"><i data-lucide="external-link" style="width:12px;height:12px;"></i> Open' + (docList.length > 1 ? ' ' + (di+1) : '') + '</button>';
+                });
               } else {
                 h += '<span style="color:#94a3b8;">No PDF</span>';
               }
@@ -4356,10 +4370,11 @@ Recommended:
         function _vcFilteredRows(){
           if (!_vcFilter) return _vcRows.map(function(r,i){ r._origIdx=i; return r; });
           return _vcRows.reduce(function(acc,r,i){
+            var docStr = (r.docs && r.docs.length) ? r.docs.join(' ') : (r.pdf||'');
             if ((r.name||'').toLowerCase().indexOf(_vcFilter)!==-1 ||
                 (r.desc||'').toLowerCase().indexOf(_vcFilter)!==-1 ||
                 (r.status||'').toLowerCase().indexOf(_vcFilter)!==-1 ||
-                (r.pdf||'').toLowerCase().indexOf(_vcFilter)!==-1){
+                docStr.toLowerCase().indexOf(_vcFilter)!==-1){
               r._origIdx = i; acc.push(r);
             }
             return acc;
@@ -4379,7 +4394,8 @@ Recommended:
           if (_vcSelRow < 0) return;
           var r = _vcRows[_vcSelRow];
           if (!r) return;
-          var txt = r.name + '\t' + r.desc + '\t' + r.status + '\t' + r.pdf;
+          var docStr = (r.docs && r.docs.length) ? r.docs.join(', ') : (r.pdf || '');
+          var txt = r.name + '\t' + r.desc + '\t' + r.status + '\t' + docStr;
           if (navigator.clipboard){
             navigator.clipboard.writeText(txt).then(function(){ _vcToast('Row copied!'); });
           }
@@ -4398,10 +4414,12 @@ Recommended:
         }
 
         /* ---- OPEN PDF (view-only) ---- */
-        function vcOpenPDF(ri){
+        function vcOpenPDF(ri, di){
           var r = _vcRows[ri];
-          if (!r || !r.pdf || typeof openSecureFile !== 'function') return;
-          var p = r.pdf;
+          if (!r || typeof openSecureFile !== 'function') return;
+          var docList = (r.docs && r.docs.length) ? r.docs : (r.pdf ? [r.pdf] : []);
+          var p = docList[di || 0];
+          if (!p) return;
           if (!/^(?:docs\/|photos\/|file\/)/.test(p)) p = 'docs/' + p;
           openSecureFile(p, r.name);
         }
