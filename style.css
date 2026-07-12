@@ -69,6 +69,20 @@ body{
 
 }
 
+@media screen and (max-width:767.98px){
+    ::-webkit-scrollbar{
+        width:0 !important;
+        height:0 !important;
+        display:none !important;
+    }
+    #mode-profile-wrap{
+        display:none !important;
+    }
+    #mode-profile-wrap-mobile{
+        display:flex !important;
+    }
+}
+
 /* =========================
    ANIMATIONS
 ========================= */
@@ -569,6 +583,8 @@ button{
     min-width:0;
     overflow:hidden;
     max-width:55%;
+    display:flex;
+    align-items:center;
 }
 
 .brand-title{
@@ -2919,6 +2935,7 @@ body.dark-mode select {
 /* STATUS SELECT IN CELL */
 .vc-st-select{width:100%;padding:4px 6px;border:1px solid #ababab;border-radius:3px;font-size:13px;font-family:inherit;font-weight:700;text-align:center;cursor:pointer;background:#fff;color:#333;}
 .vc-st-select:focus{outline:1px solid #217346;}
+.vc-st-badge{display:inline-block;padding:3px 10px;border-radius:10px;border:1px solid #ababab;font-size:12px;font-weight:700;}
 .vc-st-yes{color:#0d7a3e;background:#e6f4ea;border-color:#a8d5ba;}
 .vc-st-no{color:#c62828;background:#fde7e7;border-color:#f0b0b0;}
 .vc-st-na{color:#666;background:#f0f0f0;border-color:#c0c0c0;}

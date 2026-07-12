@@ -176,6 +176,23 @@ Recommended:
   }
   function lucideIcons(el) { if (window.lucide) lucide.createIcons({ node: el || document.body }); }</script>
   <script nonce="opencode-2026-fix">
+  function _pieAvatarSVG(imgSrcs) {
+    var n = imgSrcs.length;
+    var cx = 50, cy = 50, r = 50, step = 360 / n;
+    var defs = '', slices = '';
+    for (var i = 0; i < n; i++) {
+      var startDeg = -90 + i * step, endDeg = startDeg + step;
+      var startRad = startDeg * Math.PI / 180, endRad = endDeg * Math.PI / 180;
+      var x1 = (cx + r * Math.cos(startRad)).toFixed(2), y1 = (cy + r * Math.sin(startRad)).toFixed(2);
+      var x2 = (cx + r * Math.cos(endRad)).toFixed(2),   y2 = (cy + r * Math.sin(endRad)).toFixed(2);
+      var largeArc = step > 180 ? 1 : 0;
+      var clipId = 'pieWedge' + i + '_' + Math.random().toString(36).slice(2, 8);
+      defs += '<clipPath id="' + clipId + '"><path d="M ' + cx + ',' + cy + ' L ' + x1 + ',' + y1 + ' A ' + r + ',' + r + ' 0 ' + largeArc + ' 1 ' + x2 + ',' + y2 + ' Z"/></clipPath>';
+      slices += '<image href="' + imgSrcs[i] + '" x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid slice" clip-path="url(#' + clipId + ')" onerror="this.setAttribute(\'opacity\',\'0\')" />';
+    }
+    return '<svg viewBox="0 0 100 100" style="width:100%;height:100%;border-radius:50%;display:block;"><defs>' + defs + '</defs><circle cx="50" cy="50" r="50" fill="#94a3b8"/>' + slices + '<circle cx="50" cy="50" r="49.5" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1"/></svg>';
+  }
+
   function updateModeProfile() {
     var wrap = document.getElementById('mode-profile-wrap');
     var nameEl = document.getElementById('mode-profile-name');
@@ -189,12 +206,33 @@ Recommended:
     var profileImages = { shineil:'profile.png', brother:'ProfileK.png', father:'ProfileSt.png', mother:'ProfileKa.png' };
     nameEl.textContent = labels[member] || member.toUpperCase();
     modeEl.textContent = modeNames[mode] || mode + ' Mode';
+    var groupMembers = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null) || [member];
+    var groupImgs = groupMembers.map(function (m) { return profileImages[m]; }).filter(Boolean);
     if (avatarEl) {
-      var imgSrc = profileImages[member] || '';
-      if (imgSrc) {
-        avatarEl.innerHTML = '<img src="'+imgSrc+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="'+nameEl.textContent+'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;"><i data-lucide="user" style="width:20px;height:20px;color:#fff;"></i></span>';
+      if (groupImgs.length > 1) {
+        avatarEl.innerHTML = _pieAvatarSVG(groupImgs);
       } else {
-        avatarEl.innerHTML = '<i data-lucide="user" style="width:20px;height:20px;color:#fff;"></i>';
+        var imgSrc = profileImages[member] || '';
+        if (imgSrc) {
+          avatarEl.innerHTML = '<img src="'+imgSrc+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="'+nameEl.textContent+'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;"><i data-lucide="user" style="width:20px;height:20px;color:#fff;"></i></span>';
+        } else {
+          avatarEl.innerHTML = '<i data-lucide="user" style="width:20px;height:20px;color:#fff;"></i>';
+        }
+      }
+    }
+    var avatarElMobile = document.getElementById('mode-profile-avatar-mobile');
+    var nameElMobile = document.getElementById('mode-profile-name-mobile');
+    if (nameElMobile) nameElMobile.textContent = labels[member] || member.toUpperCase();
+    if (avatarElMobile) {
+      if (groupImgs.length > 1) {
+        avatarElMobile.innerHTML = _pieAvatarSVG(groupImgs);
+      } else {
+        var imgSrcM = profileImages[member] || '';
+        if (imgSrcM) {
+          avatarElMobile.innerHTML = '<img src="'+imgSrcM+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="'+(labels[member]||member)+'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;"><i data-lucide="user" style="width:13px;height:13px;color:#fff;"></i></span>';
+        } else {
+          avatarElMobile.innerHTML = '<i data-lucide="user" style="width:13px;height:13px;color:#fff;"></i>';
+        }
       }
     }
     wrap.style.display = '';
@@ -1378,6 +1416,10 @@ Recommended:
       <div class="passport-main-nav"> <!-- LEFT: BRAND -->
         <div class="nav-brand">
           <div class="brand-title"> <span class="brand-full">FORTRESS ONLINE VAULT</span> <span class="brand-short"><i data-lucide="lock" style="width:16px;height:16px;vertical-align:middle;"></i> F.O.V</span> </div>
+          <div id="mode-profile-wrap-mobile" style="display:none;align-items:center;gap:6px;margin-left:10px;">
+            <div id="mode-profile-avatar-mobile" style="width:24px;height:24px;border-radius:50%;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#4285f4,#9b5de5);display:flex;align-items:center;justify-content:center;"><i data-lucide="user" style="width:13px;height:13px;color:#fff;"></i></div>
+            <div id="mode-profile-name-mobile" style="font-size:10px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70px;line-height:1.2;"></div>
+          </div>
         </div> <!-- RIGHT: DESKTOP BUTTONS (hidden on mobile) -->
         <div class="nav-auth nav-auth-desktop"> <button id="vaultModesNavBtn" class="btn-outline" onclick="openVaultModes()"><i data-lucide="zap" style="width:14px;height:14px;vertical-align:middle;"></i> MODES</button> <button class="btn-outline icon-btn" data-tip="Status" onclick="openStatusModal()"><i data-lucide="bar-chart-2" style="width:16px;height:16px;"></i></button> <button class="btn-outline icon-btn" data-tip="Favourites" onclick="showPinned()"><i data-lucide="star" style="width:16px;height:16px;"></i></button> <button class="btn-outline icon-btn" data-tip="Compare Documents" onclick="startCompareMode()" id="compareNavBtn"><i data-lucide="scale" style="width:16px;height:16px;"></i></button> <button class="btn-outline icon-btn" data-tip="Access Log" onclick="openLogs()"><i data-lucide="clipboard-list" style="width:16px;height:16px;"></i></button> <button class="btn-outline icon-btn" data-tip="Password Manager" onclick="openPasswordManager()"><i data-lucide="key" style="width:16px;height:16px;"></i></button> <button class="btn-solid icon-btn" data-tip="Emergency Contact" onclick="openEmergencyContact()"><i data-lucide="siren" style="width:16px;height:16px;"></i></button> <button class="btn-outline icon-btn" data-tip="Refresh Vault" onclick="refreshVault()" style="font-size:13px;font-weight:700;"><i data-lucide="refresh-cw" style="width:16px;height:16px;"></i></button><button class="btn-outline icon-btn" data-tip="Feedback" onclick="openFeedbackModal()" style="font-size:13px;font-weight:700;"><i data-lucide="message-circle" style="width:16px;height:16px;"></i></button><button class="btn-logout icon-btn" data-tip="Logout" onclick="safeShowLogoutOptions()"><i data-lucide="log-out" style="width:16px;height:16px;"></i></button> </div> <!-- RIGHT: MOBILE BUTTONS (hidden on desktop) -->
         <div class="nav-auth-mobile"> <button class="nav-icon-btn nav-emergency-btn" onclick="openEmergencyContact()" title="Emergency Contact"><i data-lucide="siren" style="width:18px;height:18px;"></i></button> <button class="nav-icon-btn nav-logout-btn" onclick="safeShowLogoutOptions()" title="Logout"><i data-lucide="log-out" style="width:18px;height:18px;"></i></button> <button class="nav-icon-btn nav-menu-btn" onclick="toggleMobileMenu()" title="More options" id="mobileMenuBtn"><i data-lucide="menu" style="width:18px;height:18px;"></i></button> </div>
@@ -4161,7 +4203,7 @@ Recommended:
               name: it.name || '',
               desc: it.desc || '',
               pdf:  it.pdf  || '',
-              status: typeSt[i] || 'pending',
+              status: (typeSt[i] !== undefined ? typeSt[i] : ''),
               extra: it.extra || {}
             };
           });
@@ -4187,7 +4229,7 @@ Recommended:
             var lbl = _vcColLetter(i) + ' — ' + c;
             html += '<th class="vc-col-head" data-ci="'+i+'" onclick="vcSortByCol('+i+')" title="Click to sort">'+lbl+'</th>';
           });
-          html += '<th class="vc-col-head" style="width:60px;">Actions</th></tr>';
+          html += '</tr>';
           thead.innerHTML = html;
         }
 
@@ -4211,12 +4253,10 @@ Recommended:
             _vcCols.forEach(function(c,ci){
               html += _vcCellHTML(ri,ci,c);
             });
-            _vcExtraCols.forEach(function(c,ci){
-              html += '<td class="vc-cell"><input class="vc-cell-edit" value="'+_vcEsc(r.extra[c]||'')+'" data-ri="'+ri+'" data-ci="'+(_vcCols.length+ci)+'" data-field="extra:'+c+'" onfocus="vcFocus(this)" onchange="vcEdit(this)" /></td>';
+            _vcExtraCols.forEach(function(c){
+              html += '<td class="vc-cell">'+_vcEsc(r.extra[c]||'')+'</td>';
             });
-            html += '<td class="vc-cell" style="text-align:center;width:60px;">';
-            html += '<button class="vc-del-btn" onclick="vcDelRowIdx('+ri+')" title="Delete row"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>';
-            html += '</td></tr>';
+            html += '</tr>';
           });
           tbody.innerHTML = html;
         }
@@ -4227,75 +4267,41 @@ Recommended:
           var val, h = '';
           switch(col){
             case 'Name':
-              val = _vcEsc(r.name);
-              h = '<td class="vc-cell vc-cell-name"><input class="vc-cell-edit" value="'+val+'" data-ri="'+ri+'" data-ci="'+ci+'" data-field="name" onfocus="vcFocus(this)" onchange="vcEdit(this)" /></td>';
+              h = '<td class="vc-cell vc-cell-name">'+_vcEsc(r.name)+'</td>';
               break;
             case 'Description':
-              val = _vcEsc(r.desc);
-              h = '<td class="vc-cell vc-cell-desc"><input class="vc-cell-edit" value="'+val+'" data-ri="'+ri+'" data-ci="'+ci+'" data-field="desc" onfocus="vcFocus(this)" onchange="vcEdit(this)" /></td>';
+              h = '<td class="vc-cell vc-cell-desc">'+_vcEsc(r.desc)+'</td>';
               break;
             case 'Status':
-              h = '<td class="vc-cell" style="text-align:center;"><select class="vc-st-select vc-st-'+r.status+'" data-ri="'+ri+'" onchange="vcEditStatus(this)">';
-              ['pending','yes','no','na'].forEach(function(s){
-                var labels = {pending:'Pending',yes:'YES',no:'NO',na:'N/A'};
-                h += '<option value="'+s+'"'+(r.status===s?' selected':'')+'>'+labels[s]+'</option>';
-              });
-              h += '</select></td>';
+              var stMap = {
+                'done':     { cls:'vc-st-yes',     label:'YES' },
+                'not-done': { cls:'vc-st-no',      label:'NO' },
+                'na':       { cls:'vc-st-na',       label:'N/A' },
+                '':         { cls:'vc-st-pending', label:'Pending' }
+              };
+              var st = stMap[r.status] || stMap[''];
+              h = '<td class="vc-cell" style="text-align:center;"><span class="vc-st-badge '+st.cls+'">'+st.label+'</span></td>';
               break;
             case 'PDF':
               val = _vcEsc(r.pdf);
               h = '<td class="vc-cell" style="white-space:normal;">';
               if (r.pdf){
                 h += '<div style="display:flex;align-items:center;gap:6px;">';
-                h += '<input class="vc-cell-edit" style="flex:1;min-width:0;" value="'+val+'" data-ri="'+ri+'" data-ci="'+ci+'" data-field="pdf" onfocus="vcFocus(this)" onchange="vcEdit(this)" />';
+                h += '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">'+val+'</span>';
                 h += '<button class="vc-pdf-btn" onclick="vcOpenPDF('+ri+')" title="Open PDF"><i data-lucide="external-link" style="width:12px;height:12px;"></i> Open</button>';
                 h += '</div>';
               } else {
-                h += '<input class="vc-cell-edit" value="" placeholder="No PDF" data-ri="'+ri+'" data-ci="'+ci+'" data-field="pdf" onfocus="vcFocus(this)" onchange="vcEdit(this)" />';
+                h += '<span style="color:#94a3b8;">No PDF</span>';
               }
               h += '</td>';
               break;
             default:
-              h = '<td class="vc-cell"><input class="vc-cell-edit" value="'+_vcEsc(r[col]||'')+'" data-ri="'+ri+'" data-ci="'+ci+'" data-field="'+col+'" onfocus="vcFocus(this)" onchange="vcEdit(this)" /></td>';
+              h = '<td class="vc-cell">'+_vcEsc(r[col]||'')+'</td>';
           }
           return h;
         }
 
-        /* ---- CELL EDIT ---- */
-        function vcEdit(inp){
-          var ri = parseInt(inp.dataset.ri,10);
-          var field = inp.dataset.field;
-          if (!_vcRows[ri]) return;
-          if (field.indexOf('extra:')===0){
-            var cn = field.substring(6);
-            if (!_vcRows[ri].extra) _vcRows[ri].extra = {};
-            _vcRows[ri].extra[cn] = inp.value;
-          } else {
-            _vcRows[ri][field] = inp.value;
-          }
-          _vcSaveData();
-        }
-
-        function vcEditStatus(sel){
-          var ri = parseInt(sel.dataset.ri,10);
-          if (!_vcRows[ri]) return;
-          _vcRows[ri].status = sel.value;
-          sel.className = 'vc-st-select vc-st-' + sel.value;
-          _vcSaveData();
-        }
-
-        function vcFocus(inp){
-          var ri = parseInt(inp.dataset.ri,10);
-          var ci = parseInt(inp.dataset.ci,10);
-          _vcSelCell = inp;
-          _vcSelRow = ri;
-          var ref = document.getElementById('vc-cell-ref');
-          var disp = document.getElementById('vc-formula-display');
-          if (ref) ref.textContent = _vcColLetter(ci) + (ri+1);
-          if (disp) disp.textContent = inp.value || '';
-          _vcHighlightRow(ri);
-        }
-
+        /* ---- READ-ONLY: row selection / highlight (informational only) ---- */
         function _vcHighlightRow(ri){
           var tbody = document.getElementById('vc-tbody');
           if (!tbody) return;
@@ -4303,93 +4309,6 @@ Recommended:
             tr.classList.toggle('vc-sel', parseInt(tr.dataset.ri,10) === ri);
           });
         }
-
-        /* ---- SAVE back to localStorage ---- */
-        function _vcSaveData(){
-          var data = _vcLoad(null,_vcDataKey,{});
-          if (!_vcCurType || !data) return;
-          data[_vcCurType] = _vcRows.map(function(r){
-            var o = {name:r.name,desc:r.desc,pdf:r.pdf};
-            if (r.extra && Object.keys(r.extra).length) o.extra = r.extra;
-            return o;
-          });
-          _vcSave(data,_vcDataKey);
-
-          var statuses = _vcLoad(null,_vcStatusKey,{});
-          var _vcSaveMember = (typeof getCurrentVaultMember === 'function') ? getCurrentVaultMember() : (sessionStorage.getItem('vaultMember') || 'shineil');
-          if (!statuses[_vcSaveMember]) statuses[_vcSaveMember] = {};
-          statuses[_vcSaveMember][_vcCurType] = {};
-          _vcRows.forEach(function(r,i){ statuses[_vcSaveMember][_vcCurType][i] = r.status; });
-          _vcSave(statuses,_vcStatusKey);
-
-          var extras = _vcLoad(null,_vcExtraKey,{});
-          extras[_vcCurType] = _vcExtraCols;
-          _vcSave(extras,_vcExtraKey);
-
-          _vcUpdateSB();
-        }
-
-        /* ---- ADD / DELETE ROWS ---- */
-        function vcAddRow(){
-          if (!_vcCurType) return;
-          _vcRows.push({name:'New Item',desc:'',pdf:'',status:'pending',extra:{}});
-          _vcSaveData();
-          _vcBuildBody();
-          _vcUpdateSB();
-          if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-
-        function vcDelRow(){
-          if (_vcSelRow < 0 || _vcSelRow >= _vcRows.length) return;
-          vcDelRowIdx(_vcSelRow);
-        }
-
-        function vcDelRowIdx(ri){
-          if (!_vcCurType || ri < 0 || ri >= _vcRows.length) return;
-          _vcRows.splice(ri,1);
-          if (_vcSelRow === ri) _vcSelRow = -1;
-          else if (_vcSelRow > ri) _vcSelRow--;
-          _vcSaveData();
-          _vcBuildBody();
-          _vcUpdateSB();
-          if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-
-        /* ---- ADD / DELETE COLUMNS ---- */
-        function vcAddCol(){
-          if (!_vcCurType) return;
-          var name = prompt('Enter column name:');
-          if (!name || !name.trim()) return;
-          name = name.trim();
-          if (_vcCols.indexOf(name) !== -1 || _vcExtraCols.indexOf(name) !== -1){
-            toastNotify('Column "'+name+'" already exists.', 'warning'); return;
-          }
-          _vcExtraCols.push(name);
-          _vcRows.forEach(function(r){
-            if (!r.extra) r.extra = {};
-            if (!(name in r.extra)) r.extra[name] = '';
-          });
-          _vcSaveData();
-          _vcBuildHead();
-          _vcBuildBody();
-          if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-
-        function vcDelCol(){
-          if (!_vcCurType || !_vcExtraCols.length) return;
-          var name = prompt('Delete which extra column?\nExtra columns: ' + _vcExtraCols.join(', '));
-          if (!name || !name.trim()) return;
-          name = name.trim();
-          var ci = _vcExtraCols.indexOf(name);
-          if (ci === -1){ toastNotify('Column "'+name+'" not found.', 'error'); return; }
-          _vcExtraCols.splice(ci,1);
-          _vcRows.forEach(function(r){ if (r.extra) delete r.extra[name]; });
-          _vcSaveData();
-          _vcBuildHead();
-          _vcBuildBody();
-          if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-
         /* ---- SORT ---- */
         function vcSortBy(val){
           if (!val || !_vcRows.length) return;
@@ -4458,23 +4377,22 @@ Recommended:
           }
         }
 
-        /* ---- CLICK ROW HEAD ---- */
+        /* ---- CLICK ROW HEAD (view-only) ---- */
         function vcClickRow(ri){
           _vcSelRow = ri;
           _vcHighlightRow(ri);
           _vcUpdateSB();
+          var r = _vcRows[ri];
+          var ref = document.getElementById('vc-cell-ref');
+          var disp = document.getElementById('vc-formula-display');
+          if (ref) ref.textContent = 'A' + (ri+1);
+          if (disp && r) disp.textContent = r.name || '';
         }
 
-        /* ---- OPEN PDF ---- */
+        /* ---- OPEN PDF (view-only) ---- */
         function vcOpenPDF(ri){
           var r = _vcRows[ri];
           if (r && r.pdf && typeof openSecureFile === 'function') openSecureFile(r.pdf, r.name);
-        }
-
-        /* ---- DEPLOY (re-push to localStorage) ---- */
-        function vcDeploy(){
-          _vcSaveData();
-          _vcToast('Deployed!');
         }
 
         /* ---- STATUS BAR ---- */
@@ -4507,16 +4425,7 @@ Recommended:
         window.vcSelectAll = vcSelectAll;
         window.vcSortByCol = vcSortByCol;
         window.vcClickRow = vcClickRow;
-        window.vcFocus = vcFocus;
-        window.vcEdit = vcEdit;
-        window.vcEditStatus = vcEditStatus;
-        window.vcDelRowIdx = vcDelRowIdx;
         window.vcOpenPDF = vcOpenPDF;
-        window.vcDeploy = vcDeploy;
-        window.vcAddRow = vcAddRow;
-        window.vcDelRow = vcDelRow;
-        window.vcAddCol = vcAddCol;
-        window.vcDelCol = vcDelCol;
         window.vcFilterRows = vcFilterRows;
         window.vcCopySelected = vcCopySelected;
 
@@ -5292,7 +5201,7 @@ Recommended:
   <div id="ai-fab" onclick="openAIChat()" title="AI Assistant" style="display:none;" onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 8px 32px rgba(124,77,255,0.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 6px 24px rgba(124,77,255,0.45)'">
     <i data-lucide="sparkles" style="width:24px;height:24px;"></i>
   </div>
-  <script>
+  <script nonce="opencode-2026-fix">
     // Show the AI FAB only once the vault dashboard is actually visible
     // (i.e. logged in) — never on the landing/homepage.
     (function () {
