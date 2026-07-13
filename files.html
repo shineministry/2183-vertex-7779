@@ -412,7 +412,15 @@ async function doLogin(){
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ hash: hash })
     });
-    var result = await res.json();
+    var text = await res.text();
+    var result;
+    try { result = JSON.parse(text); } catch(pe){
+      errEl.innerHTML = 'Cannot reach backend (CORS/firewall). <a href="#" onclick="goOffline()" style="color:#1a73e8;font-weight:600;">Work Offline</a> with cached data.';
+      errEl.style.display = 'block';
+      btn.textContent = 'Unlock';
+      btn.disabled = false;
+      return;
+    }
     if (!result.success || !result.sessionToken){
       errEl.textContent = result.error || 'Wrong password';
       errEl.style.display = 'block';
@@ -429,11 +437,20 @@ async function doLogin(){
     toast('Authenticated — loading files...');
     await _autoLoad();
   } catch(e){
-    errEl.textContent = 'Connection failed: ' + e.message;
+    errEl.innerHTML = 'Connection failed. <a href="#" onclick="goOffline()" style="color:#1a73e8;font-weight:600;">Work Offline</a> with cached data.';
     errEl.style.display = 'block';
     btn.textContent = 'Unlock';
     btn.disabled = false;
   }
+}
+
+function goOffline(){
+  _loadFromStorage();
+  document.getElementById('loginOverlay').classList.remove('show');
+  var cats = Object.keys(_data);
+  if (cats.length) _selectCat(cats[0]);
+  document.getElementById('statusRight').textContent = 'Offline mode — editing cached data only';
+  toast('Offline mode — changes saved locally only');
 }
 
 async function _autoLoad(){
