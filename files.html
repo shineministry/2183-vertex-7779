@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Files Manager — Vault Studio</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<meta name="theme-color" content="#1a73e8">
+<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;color:#1e293b;background:#f8fafc;}
+
+/* ====== TITLE BAR ====== */
+.fm-titlebar{display:flex;align-items:center;height:36px;background:linear-gradient(135deg,#1a73e8,#1557b0);padding:0 14px;gap:8px;user-select:none;flex-shrink:0;}
+.fm-titlebar svg{width:18px;height:18px;color:#fff;}
+.fm-titlebar-text{color:#fff;font-size:13px;font-weight:700;flex:1;letter-spacing:.3px;}
+.fm-titlebar-btn{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;padding:2px 6px;border-radius:4px;font-size:16px;line-height:1;}
+.fm-titlebar-btn:hover{color:#fff;background:rgba(255,255,255,.15);}
+
+/* ====== TOOLBAR ====== */
+.fm-toolbar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#fff;border-bottom:1px solid #e2e8f0;flex-wrap:wrap;flex-shrink:0;}
+.fm-tb-group{display:flex;align-items:center;gap:4px;}
+.fm-tb-sep{width:1px;height:22px;background:#e2e8f0;margin:0 4px;}
+.fm-tb-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.fm-tb-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:11px;font-weight:600;color:#475569;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.fm-tb-btn:hover{background:#f1f5f9;border-color:#cbd5e1;color:#1e293b;}
+.fm-tb-btn svg{width:13px;height:13px;}
+.fm-tb-btn.primary{background:#1a73e8;color:#fff;border-color:#1557b0;}
+.fm-tb-btn.primary:hover{background:#1557b0;}
+.fm-tb-btn.success{background:#0d9488;color:#fff;border-color:#0f766e;}
+.fm-tb-btn.success:hover{background:#0f766e;}
+.fm-tb-btn.danger{background:#dc2626;color:#fff;border-color:#b91c1c;}
+.fm-tb-btn.danger:hover{background:#b91c1c;}
+.fm-tb-search{display:flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;flex:1;min-width:140px;max-width:280px;}
+.fm-tb-search svg{width:13px;height:13px;color:#94a3b8;flex-shrink:0;}
+.fm-tb-search input{border:none;background:none;outline:none;font-size:12px;width:100%;color:#1e293b;font-family:inherit;}
+.fm-tb-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+
+/* ====== LAYOUT ====== */
+.fm-layout{display:flex;flex:1;overflow:hidden;}
+
+/* ====== SIDEBAR (CATEGORIES) ====== */
+.fm-sidebar{width:240px;min-width:200px;background:#fff;border-right:1px solid #e2e8f0;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+.fm-sidebar-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;}
+.fm-sidebar-head span{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;}
+.fm-sidebar-head button{background:none;border:1px solid #e2e8f0;border-radius:5px;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#475569;transition:all .15s;}
+.fm-sidebar-head button:hover{background:#f1f5f9;border-color:#cbd5e1;}
+.fm-sidebar-head button svg{width:14px;height:14px;}
+.fm-cat-list{flex:1;overflow-y:auto;padding:6px;}
+.fm-cat-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:#475569;transition:all .12s;margin-bottom:2px;position:relative;}
+.fm-cat-item:hover{background:#f1f5f9;}
+.fm-cat-item.active{background:#eff6ff;color:#1a73e8;font-weight:700;}
+.fm-cat-item svg{width:15px;height:15px;flex-shrink:0;}
+.fm-cat-item .fm-cat-count{margin-left:auto;font-size:10px;font-weight:700;color:#94a3b8;background:#f1f5f9;padding:1px 6px;border-radius:8px;}
+.fm-cat-item.active .fm-cat-count{background:#dbeafe;color:#1a73e8;}
+.fm-cat-item .fm-cat-del{display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#94a3b8;cursor:pointer;padding:2px;border-radius:3px;}
+.fm-cat-item .fm-cat-del:hover{color:#dc2626;background:#fef2f2;}
+.fm-cat-item:hover .fm-cat-del{display:flex;}
+.fm-cat-item .fm-cat-del svg{width:12px;height:12px;}
+
+/* ====== MAIN AREA ====== */
+.fm-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ====== CATEGORY HEADER ====== */
+.fm-cat-header{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid #e2e8f0;background:#fff;flex-shrink:0;}
+.fm-cat-header h2{font-size:16px;font-weight:800;color:#1e293b;flex:1;}
+.fm-cat-header .fm-cat-badge{font-size:11px;font-weight:600;color:#64748b;background:#f1f5f9;padding:3px 10px;border-radius:12px;}
+
+/* ====== CARDS GRID ====== */
+.fm-cards{flex:1;overflow-y:auto;padding:16px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-content:start;}
+
+/* ====== FILE CARD ====== */
+.fm-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:14px;cursor:default;transition:all .15s;position:relative;display:flex;flex-direction:column;gap:8px;}
+.fm-card:hover{border-color:#cbd5e1;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.fm-card.dragging{opacity:.5;border-style:dashed;}
+.fm-card.drag-over{border-color:#1a73e8;background:#f0f7ff;}
+.fm-card-top{display:flex;align-items:flex-start;gap:10px;}
+.fm-card-icon{width:38px;height:38px;border-radius:8px;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.fm-card-icon svg{width:20px;height:20px;color:#1a73e8;}
+.fm-card-info{flex:1;min-width:0;}
+.fm-card-name{font-size:13px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fm-card-file{font-size:11px;color:#64748b;font-family:'Cascadia Code','Fira Code',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.fm-card-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:#94a3b8;flex-wrap:wrap;}
+.fm-card-meta svg{width:11px;height:11px;}
+.fm-card-meta span{display:flex;align-items:center;gap:3px;}
+.fm-card-members{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
+.fm-member-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .12s;}
+.fm-member-chip.on{background:#dcfce7;color:#166534;border-color:#86efac;}
+.fm-member-chip.off{background:#f1f5f9;color:#94a3b8;border-color:#e2e8f0;}
+.fm-member-chip.on:hover{background:#bbf7d0;}
+.fm-member-chip.off:hover{background:#e2e8f0;}
+.fm-card-actions{display:flex;gap:4px;position:absolute;top:10px;right:10px;opacity:0;transition:opacity .15s;}
+.fm-card:hover .fm-card-actions{opacity:1;}
+.fm-card-act{width:26px;height:26px;border:1px solid #e2e8f0;border-radius:5px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;transition:all .12s;}
+.fm-card-act:hover{background:#f1f5f9;color:#1e293b;}
+.fm-card-act.del:hover{background:#fef2f2;color:#dc2626;border-color:#fecaca;}
+.fm-card-act svg{width:13px;height:13px;}
+
+/* ====== ADD CARD ====== */
+.fm-add-card{background:#f8fafc;border:2px dashed #cbd5e1;border-radius:8px;padding:20px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#94a3b8;transition:all .15s;min-height:120px;}
+.fm-add-card:hover{border-color:#1a73e8;color:#1a73e8;background:#f0f7ff;}
+.fm-add-card svg{width:24px;height:24px;}
+.fm-add-card span{font-size:12px;font-weight:600;}
+
+/* ====== EMPTY STATE ====== */
+.fm-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;color:#94a3b8;}
+.fm-empty svg{width:48px;height:48px;margin-bottom:12px;opacity:.4;}
+.fm-empty h3{font-size:15px;font-weight:700;color:#64748b;margin-bottom:4px;}
+.fm-empty p{font-size:12px;}
+
+/* ====== JSON PANEL ====== */
+.fm-json-panel{width:0;overflow:hidden;background:#1e293b;border-left:1px solid #334155;display:flex;flex-direction:column;transition:width .2s;flex-shrink:0;}
+.fm-json-panel.open{width:380px;}
+.fm-json-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #334155;}
+.fm-json-head span{font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;}
+.fm-json-head button{background:none;border:none;color:#94a3b8;cursor:pointer;padding:2px;}
+.fm-json-head button:hover{color:#fff;}
+.fm-json-head button svg{width:14px;height:14px;}
+.fm-json-body{flex:1;overflow:auto;padding:10px;}
+.fm-json-body pre{font-family:'Cascadia Code','Fira Code',monospace;font-size:11px;color:#e2e8f0;line-height:1.5;white-space:pre-wrap;word-break:break-all;margin:0;}
+.fm-json-body .jk{color:#7dd3fc;}
+.fm-json-body .js{color:#86efac;}
+.fm-json-body .jn{color:#fbbf24;}
+.fm-json-body .jb{color:#c084fc;}
+
+/* ====== MODAL ====== */
+.fm-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999;}
+.fm-modal-overlay.show{display:flex;}
+.fm-modal{background:#fff;border-radius:10px;padding:0;width:420px;max-width:92vw;box-shadow:0 16px 48px rgba(0,0,0,.2);overflow:hidden;}
+.fm-modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e2e8f0;}
+.fm-modal-head h3{font-size:14px;font-weight:700;color:#1e293b;}
+.fm-modal-head button{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:18px;line-height:1;}
+.fm-modal-head button:hover{color:#dc2626;}
+.fm-modal-body{padding:16px 18px;display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;}
+.fm-modal-body label{font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.3px;}
+.fm-modal-body input,.fm-modal-body select{padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font:inherit;font-size:13px;color:#1e293b;background:#fff;}
+.fm-modal-body input:focus,.fm-modal-body select:focus{outline:2px solid #1a73e8;outline-offset:-1px;border-color:#1a73e8;}
+.fm-modal-body .fm-field-row{display:flex;gap:8px;}
+.fm-modal-body .fm-field-row>div{flex:1;}
+.fm-modal-foot{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid #e2e8f0;background:#f8fafc;}
+.fm-modal-foot button{padding:7px 18px;border-radius:6px;border:1px solid #e2e8f0;font:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .12s;}
+.fm-modal-foot .fm-save{background:#1a73e8;color:#fff;border-color:#1557b0;}
+.fm-modal-foot .fm-save:hover{background:#1557b0;}
+.fm-modal-foot .fm-cancel{background:#fff;color:#475569;}
+.fm-modal-foot .fm-cancel:hover{background:#f1f5f9;}
+
+/* ====== MEMBER TOGGLES IN MODAL ====== */
+.fm-modal-members{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;}
+
+/* ====== TOAST ====== */
+.fm-toast{position:fixed;bottom:40px;right:16px;background:#1e293b;color:#fff;padding:10px 18px;border-radius:8px;font-size:12px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.25);opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;}
+.fm-toast.show{opacity:1;transform:translateY(0);}
+
+/* ====== STATUS BAR ====== */
+.fm-statusbar{display:flex;align-items:center;justify-content:space-between;height:24px;background:#1e293b;padding:0 14px;flex-shrink:0;}
+.fm-statusbar span{color:rgba(255,255,255,.65);font-size:11px;display:flex;align-items:center;gap:4px;}
+.fm-statusbar svg{width:11px;height:11px;color:rgba(255,255,255,.65);}
+
+/* ====== DARK MODE ====== */
+body.dark{background:#0f172a;color:#e2e8f0;}
+body.dark .fm-toolbar{background:#1e293b;border-color:#334155;}
+body.dark .fm-tb-btn{background:#1e293b;color:#94a3b8;border-color:#334155;}
+body.dark .fm-tb-btn:hover{background:#334155;color:#e2e8f0;}
+body.dark .fm-tb-search{background:#1e293b;border-color:#334155;}
+body.dark .fm-tb-search input{color:#e2e8f0;}
+body.dark .fm-sidebar{background:#1e293b;border-color:#334155;}
+body.dark .fm-sidebar-head{border-color:#334155;}
+body.dark .fm-sidebar-head button{border-color:#334155;color:#94a3b8;}
+body.dark .fm-cat-item{color:#94a3b8;}
+body.dark .fm-cat-item:hover{background:#334155;}
+body.dark .fm-cat-item.active{background:#1e3a5f;color:#60a5fa;}
+body.dark .fm-cat-item .fm-cat-count{background:#334155;color:#64748b;}
+body.dark .fm-cat-item.active .fm-cat-count{background:#1e3a5f;color:#60a5fa;}
+body.dark .fm-cat-header{background:#1e293b;border-color:#334155;}
+body.dark .fm-cat-header h2{color:#e2e8f0;}
+body.dark .fm-card{background:#1e293b;border-color:#334155;}
+body.dark .fm-card:hover{border-color:#475569;}
+body.dark .fm-card-icon{background:#334155;}
+body.dark .fm-card-icon svg{color:#60a5fa;}
+body.dark .fm-card-name{color:#e2e8f0;}
+body.dark .fm-card-act{background:#334155;border-color:#475569;color:#94a3b8;}
+body.dark .fm-card-act:hover{background:#475569;color:#e2e8f0;}
+body.dark .fm-add-card{background:#1e293b;border-color:#334155;color:#64748b;}
+body.dark .fm-add-card:hover{border-color:#60a5fa;color:#60a5fa;background:#1e3a5f;}
+body.dark .fm-modal{background:#1e293b;}
+body.dark .fm-modal-head{border-color:#334155;}
+body.dark .fm-modal-head h3{color:#e2e8f0;}
+body.dark .fm-modal-body input,.body.dark .fm-modal-body select{background:#334155;color:#e2e8f0;border-color:#475569;}
+body.dark .fm-modal-foot{background:#1e293b;border-color:#334155;}
+body.dark .fm-modal-foot .fm-cancel{background:#334155;color:#94a3b8;}
+
+/* ====== MOBILE ====== */
+@media(max-width:768px){
+  .fm-sidebar{width:180px;min-width:140px;}
+  .fm-json-panel.open{width:280px;}
+  .fm-cards{grid-template-columns:1fr;padding:10px;}
+  .fm-tb-search{max-width:160px;}
+}
+@media(max-width:560px){
+  .fm-sidebar{display:none;}
+  .fm-json-panel.open{position:fixed;right:0;top:0;bottom:0;width:90vw;z-index:9998;}
+}
+</style>
+</head>
+<body>
+
+<div style="display:flex;flex-direction:column;height:100vh;width:100vw;">
+
+  <!-- TITLE BAR -->
+  <div class="fm-titlebar">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+    <div class="fm-titlebar-text">Files Manager — Vault Studio</div>
+    <button class="fm-titlebar-btn" onclick="toggleDark()" title="Toggle dark mode"><i data-lucide="moon" style="width:16px;height:16px;"></i></button>
+    <button class="fm-titlebar-btn" onclick="toggleJsonPanel()" title="Toggle JSON preview"><i data-lucide="code" style="width:16px;height:16px;"></i></button>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="fm-toolbar">
+    <div class="fm-tb-group">
+      <button class="fm-tb-btn primary" onclick="loadFromBucket()" title="Load from R2 bucket"><i data-lucide="download" style="width:13px;height:13px;"></i> Load</button>
+      <button class="fm-tb-btn success" onclick="deployToBucket()" title="Save to R2 bucket"><i data-lucide="upload" style="width:13px;height:13px;"></i> Deploy</button>
+    </div>
+    <div class="fm-tb-sep"></div>
+    <div class="fm-tb-group">
+      <button class="fm-tb-btn" onclick="exportJSON()" title="Export as JSON file"><i data-lucide="file-down" style="width:13px;height:13px;"></i> Export</button>
+      <button class="fm-tb-btn" onclick="importJSON()" title="Import JSON file"><i data-lucide="file-up" style="width:13px;height:13px;"></i> Import</button>
+      <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(event)">
+    </div>
+    <div class="fm-tb-sep"></div>
+    <div class="fm-tb-search">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="Search files, categories..." oninput="filterCards(this.value)">
+    </div>
+    <div class="fm-tb-right">
+      <span style="font-size:11px;color:#64748b;" id="statInfo">0 categories, 0 files</span>
+    </div>
+  </div>
+
+  <!-- LAYOUT -->
+  <div class="fm-layout">
+
+    <!-- SIDEBAR -->
+    <div class="fm-sidebar">
+      <div class="fm-sidebar-head">
+        <span>Categories</span>
+        <button onclick="addCategory()" title="Add category"><i data-lucide="plus" style="width:14px;height:14px;"></i></button>
+      </div>
+      <div class="fm-cat-list" id="catList"></div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="fm-main">
+      <div class="fm-cat-header" id="catHeader" style="display:none;">
+        <h2 id="catTitle">—</h2>
+        <span class="fm-cat-badge" id="catBadge">0 files</span>
+        <button class="fm-tb-btn" onclick="renameCategory()" title="Rename category"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>
+        <button class="fm-tb-btn danger" onclick="deleteCategory()" title="Delete category"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
+      </div>
+      <div class="fm-cards" id="cardsGrid"></div>
+    </div>
+
+    <!-- JSON PANEL -->
+    <div class="fm-json-panel" id="jsonPanel">
+      <div class="fm-json-head">
+        <span>JSON Preview</span>
+        <button onclick="toggleJsonPanel()"><i data-lucide="x" style="width:14px;height:14px;"></i></button>
+      </div>
+      <div class="fm-json-body">
+        <pre id="jsonPre">{}
+</pre>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="fm-statusbar">
+    <span><i data-lucide="database" style="width:11px;height:11px;"></i> Vault Files Manager v1.0</span>
+    <span id="statusRight">Not loaded</span>
+  </div>
+
+</div>
+
+<!-- ADD/EDIT FILE MODAL -->
+<div class="fm-modal-overlay" id="fileModal">
+  <div class="fm-modal">
+    <div class="fm-modal-head">
+      <h3 id="fileModalTitle">Add File Entry</h3>
+      <button onclick="closeFileModal()">&times;</button>
+    </div>
+    <div class="fm-modal-body">
+      <div>
+        <label>Display Name</label>
+        <input type="text" id="fmName" placeholder="e.g. Birth Certificate">
+      </div>
+      <div>
+        <label>File Path</label>
+        <input type="text" id="fmFile" placeholder="e.g. docs/birth_cert.enc">
+      </div>
+      <div class="fm-field-row">
+        <div>
+          <label>Primary Member</label>
+          <select id="fmMember">
+            <option value="shineil">Shineil</option>
+            <option value="brother">Brother</option>
+            <option value="father">Father</option>
+            <option value="mother">Mother</option>
+          </select>
+        </div>
+        <div>
+          <label>Date</label>
+          <input type="date" id="fmDate">
+        </div>
+      </div>
+      <div>
+        <label>Expiry Date (optional)</label>
+        <input type="date" id="fmExpiry">
+      </div>
+      <div>
+        <label>Visible To Members</label>
+        <div class="fm-modal-members" id="fmMembers">
+          <label class="fm-member-chip on" data-m="shineil"><input type="checkbox" checked style="display:none;"> shineil</label>
+          <label class="fm-member-chip on" data-m="brother"><input type="checkbox" checked style="display:none;"> brother</label>
+          <label class="fm-member-chip on" data-m="father"><input type="checkbox" checked style="display:none;"> father</label>
+          <label class="fm-member-chip on" data-m="mother"><input type="checkbox" checked style="display:none;"> mother</label>
+        </div>
+      </div>
+    </div>
+    <div class="fm-modal-foot">
+      <button class="fm-cancel" onclick="closeFileModal()">Cancel</button>
+      <button class="fm-save" onclick="saveFileEntry()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="fm-toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   FILES MANAGER — INNOVATIVE files.json EDITOR
+   ================================================================ */
+
+var _data = {};
+var _activeCat = '';
+var _editIdx = -1;
+var _searchQ = '';
+var _dragCat = '';
+
+/* ---- INIT ---- */
+(function(){
+  _loadFromStorage();
+  _renderSidebar();
+  if (_activeCat && _data[_activeCat]) _selectCat(_activeCat);
+  else { var cats = Object.keys(_data); if (cats.length) _selectCat(cats[0]); }
+  _updateStats();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+})();
+
+/* ---- MEMBER CHIPS TOGGLE ---- */
+document.getElementById('fmMembers').addEventListener('click', function(e){
+  var chip = e.target.closest('.fm-member-chip');
+  if (!chip) return;
+  var cb = chip.querySelector('input');
+  cb.checked = !cb.checked;
+  chip.classList.toggle('on', cb.checked);
+  chip.classList.toggle('off', !cb.checked);
+});
+
+/* ---- LOCAL STORAGE ---- */
+function _saveToStorage(){ try { localStorage.setItem('filesManagerData', JSON.stringify(_data)); } catch(e){} }
+function _loadFromStorage(){ try { _data = JSON.parse(localStorage.getItem('filesManagerData') || '{}'); } catch(e){ _data = {}; } }
+
+/* ---- SIDEBAR ---- */
+function _renderSidebar(){
+  var el = document.getElementById('catList');
+  var cats = Object.keys(_data);
+  el.innerHTML = cats.map(function(c){
+    var cnt = Array.isArray(_data[c]) ? _data[c].length : 0;
+    var active = c === _activeCat ? ' active' : '';
+    return '<div class="fm-cat-item'+active+'" data-cat="'+_esc(c)+'" onclick="_selectCat(\''+_esc(c).replace(/'/g,"\\'")+'\')" draggable="true" ondragstart="_catDragStart(event,\''+_esc(c).replace(/'/g,"\\'")+'\')" ondragover="event.preventDefault()" ondrop="_catDrop(event,\''+_esc(c).replace(/'/g,"\\'")+'\')">'
+      + _catIcon(c)
+      + '<span>'+_esc(c)+'</span>'
+      + '<span class="fm-cat-count">'+cnt+'</span>'
+      + '<button class="fm-cat-del" onclick="event.stopPropagation();deleteSingleCategory(\''+_esc(c).replace(/'/g,"\\'")+'\')" title="Delete"><i data-lucide="x" style="width:12px;height:12px;"></i></button>'
+      + '</div>';
+  }).join('');
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function _catIcon(c){
+  var icons = {passport:'plane',visa:'plane',finance:'wallet',school:'graduation-cap',personal:'user',residence:'home',church:'cross',education:'book-open',identity:'contact',legal:'scale','financial':'credit-card',ministry:'bird',medical:'stethoscope',insurance:'shield',tax:'clipboard-list',property:'home',vehicle:'car',travel:'globe',work:'briefcase',bank:'landmark',documents:'file-text',certificates:'award',photos:'camera',home:'home',profile:'user'};
+  var key = Object.keys(icons).find(function(k){ return c.toLowerCase().indexOf(k) !== -1; });
+  var icon = key ? icons[key] : 'folder';
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>';
+}
+
+/* ---- SELECT CATEGORY ---- */
+function _selectCat(cat){
+  _activeCat = cat;
+  _renderSidebar();
+  document.getElementById('catHeader').style.display = 'flex';
+  document.getElementById('catTitle').textContent = cat;
+  var items = Array.isArray(_data[cat]) ? _data[cat] : [];
+  document.getElementById('catBadge').textContent = items.length + ' file' + (items.length !== 1 ? 's' : '');
+  _renderCards();
+  _updateJson();
+  _updateStats();
+}
+
+/* ---- RENDER CARDS ---- */
+function _renderCards(){
+  var grid = document.getElementById('cardsGrid');
+  var items = Array.isArray(_data[_activeCat]) ? _data[_activeCat] : [];
+  var q = _searchQ.toLowerCase();
+
+  var filtered = items.map(function(it,i){ return {it:it,idx:i}; }).filter(function(o){
+    if (!q) return true;
+    return (o.it.name||'').toLowerCase().indexOf(q)!==-1
+        || (o.it.file||'').toLowerCase().indexOf(q)!==-1
+        || (o.it.member||'').toLowerCase().indexOf(q)!==-1
+        || _activeCat.toLowerCase().indexOf(q)!==-1;
+  });
+
+  if (!filtered.length){
+    grid.innerHTML = '<div class="fm-empty"><i data-lucide="folder-open" style="width:48px;height:48px;"></i><h3>'+(q?'No matching files':'No files yet')+'</h3><p>'+(q?'Try a different search':'Click "+ Add File" to create your first entry')+'</p></div>';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    return;
+  }
+
+  var html = filtered.map(function(o){
+    var it = o.it;
+    var idx = o.idx;
+    var members = Array.isArray(it.members) ? it.members : (it.member ? [it.member] : []);
+    var allM = ['shineil','brother','father','mother'];
+    var memberChips = allM.map(function(m){
+      var on = members.indexOf(m) !== -1;
+      return '<span class="fm-member-chip '+(on?'on':'off')+'" onclick="toggleFileMember('+idx+',\''+m+'\')">'+m+'</span>';
+    }).join('');
+
+    var dateStr = it.date || '';
+    var expiryStr = it.expiry || '';
+    var expiryBadge = '';
+    if (it.expiry){
+      var days = Math.ceil((new Date(it.expiry) - new Date()) / 86400000);
+      if (days < 0) expiryBadge = '<span style="color:#dc2626;font-weight:700;">Expired</span>';
+      else if (days <= 30) expiryBadge = '<span style="color:#ea580c;font-weight:700;">Expires in '+days+'d</span>';
+      else expiryBadge = '<span style="color:#16a34a;">Valid '+days+'d</span>';
+    }
+
+    return '<div class="fm-card" draggable="true" ondragstart="_fileDragStart(event,'+idx+')" ondragover="event.preventDefault();this.classList.add(\'drag-over\')" ondragleave="this.classList.remove(\'drag-over\')" ondrop="_fileDrop(event,'+idx+');this.classList.remove(\'drag-over\')">'
+      + '<div class="fm-card-actions">'
+      + '  <button class="fm-card-act" onclick="editFileEntry('+idx+')" title="Edit"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>'
+      + '  <button class="fm-card-act" onclick="duplicateFileEntry('+idx+')" title="Duplicate"><i data-lucide="copy" style="width:13px;height:13px;"></i></button>'
+      + '  <button class="fm-card-act del" onclick="deleteFileEntry('+idx+')" title="Delete"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>'
+      + '</div>'
+      + '<div class="fm-card-top">'
+      + '  <div class="fm-card-icon"><i data-lucide="file-text" style="width:20px;height:20px;"></i></div>'
+      + '  <div class="fm-card-info">'
+      + '    <div class="fm-card-name" title="'+_esc(it.name||'')+'">'+_esc(it.name||'Untitled')+'</div>'
+      + '    <div class="fm-card-file" title="'+_esc(it.file||'')+'">'+_esc(it.file||'—')+'</div>'
+      + '  </div>'
+      + '</div>'
+      + '<div class="fm-card-meta">'
+      + (dateStr ? '<span><i data-lucide="calendar" style="width:11px;height:11px;"></i> '+dateStr+'</span>' : '')
+      + (expiryBadge ? '<span>'+expiryBadge+'</span>' : '')
+      + '</div>'
+      + '<div class="fm-card-members">'+memberChips+'</div>'
+      + '</div>';
+  }).join('');
+
+  /* add-card button */
+  html += '<div class="fm-add-card" onclick="addFileEntry()"><i data-lucide="plus" style="width:24px;height:24px;"></i><span>Add File</span></div>';
+
+  grid.innerHTML = html;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+/* ---- FILTER ---- */
+function filterCards(q){
+  _searchQ = q;
+  _renderCards();
+}
+
+/* ---- ADD CATEGORY ---- */
+function addCategory(){
+  var name = prompt('Category name:');
+  if (!name || !name.trim()) return;
+  name = name.trim();
+  if (_data[name]){ toast('Category already exists'); return; }
+  _data[name] = [];
+  _saveToStorage();
+  _renderSidebar();
+  _selectCat(name);
+  toast('Category "'+name+'" created');
+}
+
+/* ---- RENAME CATEGORY ---- */
+function renameCategory(){
+  if (!_activeCat) return;
+  var name = prompt('Rename category:', _activeCat);
+  if (!name || !name.trim() || name.trim() === _activeCat) return;
+  name = name.trim();
+  if (_data[name]){ toast('Category already exists'); return; }
+  _data[name] = _data[_activeCat];
+  delete _data[_activeCat];
+  _saveToStorage();
+  _renderSidebar();
+  _selectCat(name);
+  toast('Renamed to "'+name+'"');
+}
+
+/* ---- DELETE CATEGORY ---- */
+function deleteCategory(){
+  if (!_activeCat) return;
+  if (!confirm('Delete category "'+_activeCat+'" and all its files?')) return;
+  delete _data[_activeCat];
+  _activeCat = '';
+  _saveToStorage();
+  _renderSidebar();
+  document.getElementById('catHeader').style.display = 'none';
+  document.getElementById('cardsGrid').innerHTML = '';
+  _updateJson();
+  _updateStats();
+  var cats = Object.keys(_data);
+  if (cats.length) _selectCat(cats[0]);
+  toast('Category deleted');
+}
+
+function deleteSingleCategory(cat){
+  if (!confirm('Delete category "'+cat+'" and all its files?')) return;
+  delete _data[cat];
+  if (_activeCat === cat) _activeCat = '';
+  _saveToStorage();
+  _renderSidebar();
+  document.getElementById('catHeader').style.display = 'none';
+  document.getElementById('cardsGrid').innerHTML = '';
+  _updateJson();
+  _updateStats();
+  var cats = Object.keys(_data);
+  if (cats.length) _selectCat(cats[0]);
+  toast('Category deleted');
+}
+
+/* ---- ADD FILE ---- */
+function addFileEntry(){
+  _editIdx = -1;
+  document.getElementById('fileModalTitle').textContent = 'Add File Entry';
+  document.getElementById('fmName').value = '';
+  document.getElementById('fmFile').value = '';
+  document.getElementById('fmMember').value = 'shineil';
+  document.getElementById('fmDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('fmExpiry').value = '';
+  _resetMemberChips(['shineil','brother','father','mother']);
+  document.getElementById('fileModal').classList.add('show');
+}
+
+/* ---- EDIT FILE ---- */
+function editFileEntry(idx){
+  var items = _data[_activeCat];
+  if (!items || !items[idx]) return;
+  var it = items[idx];
+  _editIdx = idx;
+  document.getElementById('fileModalTitle').textContent = 'Edit File Entry';
+  document.getElementById('fmName').value = it.name || '';
+  document.getElementById('fmFile').value = it.file || '';
+  document.getElementById('fmMember').value = it.member || 'shineil';
+  document.getElementById('fmDate').value = it.date || '';
+  document.getElementById('fmExpiry').value = it.expiry || '';
+  var members = Array.isArray(it.members) ? it.members : (it.member ? [it.member] : ['shineil']);
+  _resetMemberChips(members);
+  document.getElementById('fileModal').classList.add('show');
+}
+
+/* ---- DUPLICATE FILE ---- */
+function duplicateFileEntry(idx){
+  var items = _data[_activeCat];
+  if (!items || !items[idx]) return;
+  var copy = JSON.parse(JSON.stringify(items[idx]));
+  copy.name = (copy.name || 'File') + ' (copy)';
+  items.splice(idx + 1, 0, copy);
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+  _updateStats();
+  toast('File duplicated');
+}
+
+/* ---- DELETE FILE ---- */
+function deleteFileEntry(idx){
+  if (!confirm('Delete this file entry?')) return;
+  _data[_activeCat].splice(idx, 1);
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+  _updateStats();
+  document.getElementById('catBadge').textContent = _data[_activeCat].length + ' files';
+  toast('File deleted');
+}
+
+/* ---- SAVE FILE ---- */
+function saveFileEntry(){
+  var name = document.getElementById('fmName').value.trim();
+  var file = document.getElementById('fmFile').value.trim();
+  var member = document.getElementById('fmMember').value;
+  var date = document.getElementById('fmDate').value;
+  var expiry = document.getElementById('fmExpiry').value;
+  if (!name){ toast('Name is required'); return; }
+  if (!file){ toast('File path is required'); return; }
+
+  var members = _getSelectedMembers();
+  if (!members.length) members = [member];
+
+  var entry = { name:name, file:file, member:member, members:members };
+  if (date) entry.date = date;
+  if (expiry) entry.expiry = expiry;
+
+  if (!_data[_activeCat]) _data[_activeCat] = [];
+
+  if (_editIdx >= 0){
+    _data[_activeCat][_editIdx] = entry;
+    toast('File updated');
+  } else {
+    _data[_activeCat].push(entry);
+    toast('File added');
+  }
+
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+  _updateStats();
+  document.getElementById('catBadge').textContent = _data[_activeCat].length + ' files';
+  closeFileModal();
+}
+
+function closeFileModal(){
+  document.getElementById('fileModal').classList.remove('show');
+  _editIdx = -1;
+}
+
+/* ---- MEMBER CHIP HELPERS ---- */
+function _resetMemberChips(arr){
+  document.querySelectorAll('#fmMembers .fm-member-chip').forEach(function(el){
+    var m = el.dataset.m;
+    var on = arr.indexOf(m) !== -1;
+    el.classList.toggle('on', on);
+    el.classList.toggle('off', !on);
+    el.querySelector('input').checked = on;
+  });
+}
+
+function _getSelectedMembers(){
+  var r = [];
+  document.querySelectorAll('#fmMembers .fm-member-chip.on').forEach(function(el){ r.push(el.dataset.m); });
+  return r;
+}
+
+/* ---- TOGGLE MEMBER ON CARD ---- */
+function toggleFileMember(idx, member){
+  var it = _data[_activeCat][idx];
+  if (!it) return;
+  if (!it.members) it.members = it.member ? [it.member] : [];
+  var i = it.members.indexOf(member);
+  if (i !== -1) it.members.splice(i, 1);
+  else it.members.push(member);
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+}
+
+/* ---- EXPORT ---- */
+function exportJSON(){
+  var blob = new Blob([JSON.stringify(_data, null, 2)], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'files.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Exported files.json');
+}
+
+/* ---- IMPORT ---- */
+function importJSON(){
+  document.getElementById('importFileInput').click();
+}
+
+function handleImportFile(e){
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    try {
+      var obj = JSON.parse(ev.target.result);
+      if (typeof obj !== 'object' || obj === null || Array.isArray(obj)){
+        toast('Invalid files.json format');
+        return;
+      }
+      _data = obj;
+      _saveToStorage();
+      _renderSidebar();
+      var cats = Object.keys(_data);
+      if (cats.length) _selectCat(cats[0]);
+      else { document.getElementById('catHeader').style.display = 'none'; document.getElementById('cardsGrid').innerHTML = ''; }
+      _updateJson();
+      _updateStats();
+      toast('Imported '+cats.length+' categories');
+    } catch(err){
+      toast('Parse error: '+err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+/* ---- BUCKET LOAD/DEPLOY ---- */
+async function loadFromBucket(){
+  var token = sessionStorage.getItem('vaultSession');
+  if (!token){ toast('No active session — log in first'); return; }
+  toast('Loading from bucket...');
+  try {
+    var res = await fetch('https://backend.shinumaths989.workers.dev/files.json?_t='+Date.now(), {
+      headers:{'Authorization':'Bearer '+token},
+      cache:'no-store'
+    });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    var raw = await res.json();
+    if (Array.isArray(raw)){
+      var obj = {};
+      raw.forEach(function(f){
+        var cat = f.category || f.type || 'Documents';
+        if (!obj[cat]) obj[cat] = [];
+        obj[cat].push(f);
+      });
+      _data = obj;
+    } else if (raw && typeof raw === 'object'){
+      _data = raw;
+    }
+    _saveToStorage();
+    _renderSidebar();
+    var cats = Object.keys(_data);
+    if (cats.length) _selectCat(cats[0]);
+    else { document.getElementById('catHeader').style.display = 'none'; document.getElementById('cardsGrid').innerHTML = ''; }
+    _updateJson();
+    _updateStats();
+    document.getElementById('statusRight').textContent = 'Loaded from bucket';
+    toast('Loaded '+cats.length+' categories from bucket');
+  } catch(e){
+    toast('Load failed: '+e.message);
+  }
+}
+
+async function deployToBucket(){
+  var token = sessionStorage.getItem('vaultSession');
+  if (!token){ toast('No active session — log in first'); return; }
+  if (!confirm('Deploy files.json to bucket? This overwrites the remote version.')) return;
+  toast('Deploying...');
+  try {
+    var body = JSON.stringify(_data, null, 2);
+    var res = await fetch('https://backend.shinumaths989.workers.dev/upload/files.json', {
+      method:'PUT',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body:body
+    });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    document.getElementById('statusRight').textContent = 'Deployed at '+new Date().toLocaleTimeString();
+    toast('Deployed successfully!');
+  } catch(e){
+    toast('Deploy failed: '+e.message);
+  }
+}
+
+/* ---- JSON PANEL ---- */
+function toggleJsonPanel(){
+  document.getElementById('jsonPanel').classList.toggle('open');
+  _updateJson();
+}
+
+function _updateJson(){
+  var panel = document.getElementById('jsonPanel');
+  if (!panel.classList.contains('open')) return;
+  var str = JSON.stringify(_data, null, 2);
+  document.getElementById('jsonPre').innerHTML = _syntaxHighlight(str);
+}
+
+function _syntaxHighlight(json){
+  return json.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"([^"]+)"(?=\s*:)/g, '<span class="jk">"$1"</span>')
+    .replace(/"([^"]*)"/g, '<span class="js">"$1"</span>')
+    .replace(/\b(\d+)\b/g, '<span class="jn">$1</span>')
+    .replace(/\b(true|false|null)\b/g, '<span class="jb">$1</span>');
+}
+
+/* ---- DARK MODE ---- */
+function toggleDark(){
+  document.body.classList.toggle('dark');
+  localStorage.setItem('filesManagerDark', document.body.classList.contains('dark') ? '1' : '0');
+}
+(function(){
+  if (localStorage.getItem('filesManagerDark') === '1') document.body.classList.add('dark');
+})();
+
+/* ---- DRAG & DROP FILES ---- */
+var _dragIdx = -1;
+function _fileDragStart(e, idx){ _dragIdx = idx; e.dataTransfer.effectAllowed = 'move'; }
+function _fileDrop(e, targetIdx){
+  e.preventDefault();
+  if (_dragIdx < 0 || _dragIdx === targetIdx) return;
+  var items = _data[_activeCat];
+  var moved = items.splice(_dragIdx, 1)[0];
+  items.splice(targetIdx, 0, moved);
+  _dragIdx = -1;
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+}
+
+/* ---- DRAG & DROP CATEGORIES ---- */
+function _catDragStart(e, cat){ _dragCat = cat; e.dataTransfer.effectAllowed = 'move'; }
+function _catDrop(e, targetCat){
+  e.preventDefault();
+  if (!_dragCat || _dragCat === targetCat) return;
+  var keys = Object.keys(_data);
+  var fromIdx = keys.indexOf(_dragCat);
+  var toIdx = keys.indexOf(targetCat);
+  if (fromIdx < 0 || toIdx < 0) return;
+  var newObj = {};
+  keys.forEach(function(k,i){
+    if (i === fromIdx) return;
+    if (i < toIdx || (i > fromIdx && i <= toIdx)) newObj[k] = _data[k];
+  });
+  newObj[_dragCat] = _data[_dragCat];
+  keys.forEach(function(k,i){
+    if (newObj[k]) return;
+    if (i > toIdx || i < fromIdx) newObj[k] = _data[k];
+  });
+  _data = newObj;
+  _dragCat = '';
+  _saveToStorage();
+  _renderSidebar();
+  _updateJson();
+}
+
+/* ---- HELPERS ---- */
+function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function _updateStats(){
+  var cats = Object.keys(_data).length;
+  var files = 0;
+  Object.values(_data).forEach(function(arr){ if (Array.isArray(arr)) files += arr.length; });
+  document.getElementById('statInfo').textContent = cats+' categories, '+files+' files';
+}
+
+function toast(msg){
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.classList.remove('show'); }, 2200);
+}
+
+/* ---- KEYBOARD ---- */
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') closeFileModal();
+  if (e.key === 'n' && (e.ctrlKey || e.metaKey)){
+    e.preventDefault();
+    if (_activeCat) addFileEntry();
+  }
+});
+</script>
+</body>
+</html>
