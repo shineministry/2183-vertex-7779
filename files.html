@@ -716,7 +716,7 @@ function editFileEntry(idx){
   var filePath = it.file || '';
   var prefix = 'docs/';
   var fileName = filePath;
-  ['docs/','photos/','file/'].forEach(function(p){
+  ['photos/','docs/','file/'].forEach(function(p){
     if (filePath.indexOf(p) === 0){ prefix = p; fileName = filePath.slice(p.length); }
   });
   document.getElementById('fmPrefix').value = prefix;
@@ -762,15 +762,16 @@ function saveFileEntry(){
   if (!name){ toast('Name is required'); return; }
   if (!fileName){ toast('File name is required'); return; }
 
-  var file = prefix + fileName;
   var members = _getSelectedMembers();
   if (!members.length) members = ['shineil'];
 
-  var entry = { name:name, file:file, members:members };
+  var entry = { name:name, file:fileName, members:members };
   if (date) entry.date = date;
 
   if (_pendingEncBlob){
-    _pendingUploads.push({ path: file, blob: _pendingEncBlob });
+    var uploadPath = prefix.replace(/\/$/, '') + '/' + fileName;
+    uploadPath = uploadPath.replace(/^(docs|file)\//, '');
+    _pendingUploads.push({ path: uploadPath, blob: _pendingEncBlob });
     _updateDeployBadge();
     toast('Encrypted file queued for upload');
   }
@@ -1003,7 +1004,8 @@ async function deployToBucket(){
     for (var i = 0; i < _pendingUploads.length; i++){
       var u = _pendingUploads[i];
       try {
-        var res = await fetch(_apiBase + '/upload/' + u.path, {
+        var uploadPath = u.path.replace(/^(docs|file)\//, '');
+        var res = await fetch(_apiBase + '/upload/' + uploadPath, {
           method:'PUT',
           headers:{'Authorization':'Bearer '+token,'Content-Type':'application/octet-stream'},
           body: u.blob
