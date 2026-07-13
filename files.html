@@ -403,7 +403,7 @@ function _getToken(){
   if (typeof lucide !== 'undefined') lucide.createIcons();
   var token = _getToken();
   var onDomain = location.origin === 'https://72oe-v2sx.shine-ministry.com';
-  if (token && onDomain){
+  if (token && onDomain && window.masterPassword){
     document.getElementById('loginOverlay').classList.remove('show');
     _autoLoad();
   } else if (onDomain){
@@ -829,14 +829,17 @@ async function processUploadFile(file){
   document.getElementById('fmUploadArea').style.display = 'none';
   if (typeof lucide !== 'undefined') lucide.createIcons();
 
+  var pass = window.masterPassword;
+  if (!pass){
+    toast('Enter master password first — click Unlock');
+    clearFileUpload();
+    document.getElementById('loginOverlay').classList.add('show');
+    document.getElementById('loginPass').focus();
+    return;
+  }
+
   try {
     var arrayBuf = await file.arrayBuffer();
-    var pass = window.masterPassword || _getToken();
-    if (!pass){
-      toast('No master password available — cannot encrypt');
-      clearFileUpload();
-      return;
-    }
     _pendingEncBlob = await encryptVaultFile(arrayBuf, pass);
     _pendingOrigName = name;
     document.getElementById('fmFileInfoText').textContent = name + ' → ' + encName + ' (encrypted, ready to deploy)';
