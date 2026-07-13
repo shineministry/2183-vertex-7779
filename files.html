@@ -72,6 +72,11 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 .fm-cards{flex:1;overflow-y:auto;padding:16px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-content:start;}
 
 /* ====== FILE CARD ====== */
+.fm-upload-area{border:2px dashed #cbd5e1;border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:6px;color:#94a3b8;font-size:12px;font-weight:600;}
+.fm-upload-area:hover,.fm-upload-area.drag-over{border-color:#1a73e8;color:#1a73e8;background:#f0f7ff;}
+.fm-upload-area span{pointer-events:none;}
+.fm-upload-info{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;color:#166534;margin-top:6px;}
+.fm-upload-info span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .fm-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:14px;cursor:default;transition:all .15s;position:relative;display:flex;flex-direction:column;gap:8px;}
 .fm-card:hover{border-color:#cbd5e1;box-shadow:0 2px 8px rgba(0,0,0,.06);}
 .fm-card.dragging{opacity:.5;border-style:dashed;}
@@ -220,7 +225,7 @@ body.dark .fm-modal-foot .fm-cancel{background:#334155;color:#94a3b8;}
   <div class="fm-toolbar">
     <div class="fm-tb-group">
       <button class="fm-tb-btn primary" onclick="loadFromBucket()" title="Load from R2 bucket"><i data-lucide="download" style="width:13px;height:13px;"></i> Load</button>
-      <button class="fm-tb-btn success" onclick="deployToBucket()" title="Save to R2 bucket"><i data-lucide="upload" style="width:13px;height:13px;"></i> Deploy</button>
+      <button class="fm-tb-btn success" id="deployBtn" onclick="deployToBucket()" title="Save to R2 bucket"><i data-lucide="upload" style="width:13px;height:13px;"></i> Deploy</button>
     </div>
     <div class="fm-tb-sep"></div>
     <div class="fm-tb-group">
@@ -297,26 +302,36 @@ body.dark .fm-modal-foot .fm-cancel{background:#334155;color:#94a3b8;}
       </div>
       <div>
         <label>File Path</label>
-        <input type="text" id="fmFile" placeholder="e.g. docs/birth_cert.enc">
-      </div>
-      <div class="fm-field-row">
-        <div>
-          <label>Primary Member</label>
-          <select id="fmMember">
-            <option value="shineil">Shineil</option>
-            <option value="brother">Brother</option>
-            <option value="father">Father</option>
-            <option value="mother">Mother</option>
-          </select>
-        </div>
-        <div>
-          <label>Date</label>
-          <input type="date" id="fmDate">
+        <div class="fm-field-row">
+          <div style="flex:0 0 110px;">
+            <select id="fmPrefix">
+              <option value="docs/">docs/</option>
+              <option value="photos/">photos/</option>
+              <option value="file/">file/</option>
+              <option value="">none/</option>
+            </select>
+          </div>
+          <div style="flex:1;">
+            <input type="text" id="fmFile" placeholder="e.g. birth_cert.enc">
+          </div>
         </div>
       </div>
       <div>
-        <label>Expiry Date (optional)</label>
-        <input type="date" id="fmExpiry">
+        <label>Upload & Encrypt (PDF → .enc)</label>
+        <div id="fmUploadArea" class="fm-upload-area" onclick="document.getElementById('fmFileInput').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleFileDrop(event)">
+          <i data-lucide="upload-cloud" style="width:28px;height:28px;color:#94a3b8;"></i>
+          <span>Drop PDF here or click to browse</span>
+        </div>
+        <input type="file" id="fmFileInput" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx" style="display:none" onchange="handleFileSelect(event)">
+        <div id="fmFileInfo" style="display:none;" class="fm-upload-info">
+          <i data-lucide="file-check" style="width:14px;height:14px;color:#16a34a;"></i>
+          <span id="fmFileInfoText"></span>
+          <button onclick="clearFileUpload()" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;line-height:1;">&times;</button>
+        </div>
+      </div>
+      <div>
+        <label>Date</label>
+        <input type="date" id="fmDate">
       </div>
       <div>
         <label>Visible To Members</label>
@@ -584,14 +599,6 @@ function _renderCards(){
     }).join('');
 
     var dateStr = it.date || '';
-    var expiryStr = it.expiry || '';
-    var expiryBadge = '';
-    if (it.expiry){
-      var days = Math.ceil((new Date(it.expiry) - new Date()) / 86400000);
-      if (days < 0) expiryBadge = '<span style="color:#dc2626;font-weight:700;">Expired</span>';
-      else if (days <= 30) expiryBadge = '<span style="color:#ea580c;font-weight:700;">Expires in '+days+'d</span>';
-      else expiryBadge = '<span style="color:#16a34a;">Valid '+days+'d</span>';
-    }
 
     return '<div class="fm-card" draggable="true" ondragstart="_fileDragStart(event,'+idx+')" ondragover="event.preventDefault();this.classList.add(\'drag-over\')" ondragleave="this.classList.remove(\'drag-over\')" ondrop="_fileDrop(event,'+idx+');this.classList.remove(\'drag-over\')">'
       + '<div class="fm-card-actions">'
@@ -608,7 +615,6 @@ function _renderCards(){
       + '</div>'
       + '<div class="fm-card-meta">'
       + (dateStr ? '<span><i data-lucide="calendar" style="width:11px;height:11px;"></i> '+dateStr+'</span>' : '')
-      + (expiryBadge ? '<span>'+expiryBadge+'</span>' : '')
       + '</div>'
       + '<div class="fm-card-members">'+memberChips+'</div>'
       + '</div>';
@@ -692,10 +698,9 @@ function addFileEntry(){
   _editIdx = -1;
   document.getElementById('fileModalTitle').textContent = 'Add File Entry';
   document.getElementById('fmName').value = '';
+  document.getElementById('fmPrefix').value = 'docs/';
   document.getElementById('fmFile').value = '';
-  document.getElementById('fmMember').value = 'shineil';
   document.getElementById('fmDate').value = new Date().toISOString().slice(0,10);
-  document.getElementById('fmExpiry').value = '';
   _resetMemberChips(['shineil','brother','father','mother']);
   document.getElementById('fileModal').classList.add('show');
 }
@@ -708,10 +713,15 @@ function editFileEntry(idx){
   _editIdx = idx;
   document.getElementById('fileModalTitle').textContent = 'Edit File Entry';
   document.getElementById('fmName').value = it.name || '';
-  document.getElementById('fmFile').value = it.file || '';
-  document.getElementById('fmMember').value = it.member || 'shineil';
+  var filePath = it.file || '';
+  var prefix = 'docs/';
+  var fileName = filePath;
+  ['docs/','photos/','file/'].forEach(function(p){
+    if (filePath.indexOf(p) === 0){ prefix = p; fileName = filePath.slice(p.length); }
+  });
+  document.getElementById('fmPrefix').value = prefix;
+  document.getElementById('fmFile').value = fileName;
   document.getElementById('fmDate').value = it.date || '';
-  document.getElementById('fmExpiry').value = it.expiry || '';
   var members = Array.isArray(it.members) ? it.members : (it.member ? [it.member] : ['shineil']);
   _resetMemberChips(members);
   document.getElementById('fileModal').classList.add('show');
@@ -746,19 +756,24 @@ function deleteFileEntry(idx){
 /* ---- SAVE FILE ---- */
 function saveFileEntry(){
   var name = document.getElementById('fmName').value.trim();
-  var file = document.getElementById('fmFile').value.trim();
-  var member = document.getElementById('fmMember').value;
+  var prefix = document.getElementById('fmPrefix').value;
+  var fileName = document.getElementById('fmFile').value.trim();
   var date = document.getElementById('fmDate').value;
-  var expiry = document.getElementById('fmExpiry').value;
   if (!name){ toast('Name is required'); return; }
-  if (!file){ toast('File path is required'); return; }
+  if (!fileName){ toast('File name is required'); return; }
 
+  var file = prefix + fileName;
   var members = _getSelectedMembers();
-  if (!members.length) members = [member];
+  if (!members.length) members = ['shineil'];
 
-  var entry = { name:name, file:file, member:member, members:members };
+  var entry = { name:name, file:file, members:members };
   if (date) entry.date = date;
-  if (expiry) entry.expiry = expiry;
+
+  if (_pendingEncBlob){
+    _pendingUploads.push({ path: file, blob: _pendingEncBlob });
+    _updateDeployBadge();
+    toast('Encrypted file queued for upload');
+  }
 
   if (!_data[_activeCat]) _data[_activeCat] = [];
 
@@ -781,6 +796,83 @@ function saveFileEntry(){
 function closeFileModal(){
   document.getElementById('fileModal').classList.remove('show');
   _editIdx = -1;
+  clearFileUpload();
+}
+
+/* ---- FILE UPLOAD & ENCRYPT ---- */
+var _pendingEncBlob = null;
+var _pendingOrigName = '';
+
+function handleFileSelect(e){
+  var file = e.target.files[0];
+  if (!file) return;
+  processUploadFile(file);
+  e.target.value = '';
+}
+
+function handleFileDrop(e){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  var file = e.dataTransfer.files[0];
+  if (!file) return;
+  processUploadFile(file);
+}
+
+async function processUploadFile(file){
+  var name = file.name;
+  var encName = name.replace(/\.[^.]+$/, '') + '.enc';
+  document.getElementById('fmName').value = name.replace(/\.[^.]+$/, '');
+  document.getElementById('fmFile').value = encName;
+  document.getElementById('fmFileInfoText').textContent = name + ' → ' + encName + ' (encrypting...)';
+  document.getElementById('fmFileInfo').style.display = 'flex';
+  document.getElementById('fmUploadArea').style.display = 'none';
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+
+  try {
+    var arrayBuf = await file.arrayBuffer();
+    var pass = window.masterPassword || _getToken();
+    if (!pass){
+      toast('No master password available — cannot encrypt');
+      clearFileUpload();
+      return;
+    }
+    _pendingEncBlob = await encryptVaultFile(arrayBuf, pass);
+    _pendingOrigName = name;
+    document.getElementById('fmFileInfoText').textContent = name + ' → ' + encName + ' (encrypted, ready to deploy)';
+    toast('File encrypted successfully');
+  } catch(e){
+    toast('Encryption failed: ' + e.message);
+    clearFileUpload();
+  }
+}
+
+async function encryptVaultFile(data, password){
+  var enc = new TextEncoder();
+  var passwordHash = new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(password)));
+  var salt = crypto.getRandomValues(new Uint8Array(16));
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  var keyMaterial = await crypto.subtle.importKey('raw', passwordHash, 'PBKDF2', false, ['deriveKey']);
+  var key = await crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:300000,hash:'SHA-256'}, keyMaterial, {name:'AES-GCM',length:256}, false, ['encrypt','decrypt']);
+  var encrypted = await crypto.subtle.encrypt({name:'AES-GCM',iv:iv}, key, data);
+  var settings = {version:2,method:'HASH_DERIVED_KEY',algorithm:'AES-GCM',hash:'SHA-256',iterations:300000};
+  var settingsBytes = new TextEncoder().encode(JSON.stringify(settings));
+  var settingsLength = new Uint32Array([settingsBytes.length]);
+  return new Blob([settingsLength,settingsBytes,salt,iv,new Uint8Array(encrypted)],{type:'application/octet-stream'});
+}
+
+function clearFileUpload(){
+  _pendingEncBlob = null;
+  _pendingOrigName = '';
+  document.getElementById('fmFileInfo').style.display = 'none';
+  document.getElementById('fmUploadArea').style.display = 'flex';
+}
+
+function _updateDeployBadge(){
+  var btn = document.getElementById('deployBtn');
+  if (!btn) return;
+  var n = _pendingUploads.length;
+  btn.innerHTML = '<i data-lucide="upload" style="width:13px;height:13px;"></i> Deploy' + (n ? ' ('+n+')' : '');
+  if (typeof lucide !== 'undefined') lucide.createIcons({ node: btn });
 }
 
 /* ---- MEMBER CHIP HELPERS ---- */
@@ -894,21 +986,43 @@ async function loadFromBucket(){
   }
 }
 
+/* ---- PENDING FILE UPLOADS ---- */
+var _pendingUploads = [];
+
 async function deployToBucket(){
   var token = _getToken();
   if (!token){ toast('No active session — log in first'); return; }
-  if (!confirm('Deploy files.json to R2? This overwrites the remote version.')) return;
+  var uploadCount = _pendingUploads.length;
+  var msg = uploadCount
+    ? 'Upload '+uploadCount+' file(s) and deploy files.json to R2?'
+    : 'Deploy files.json to R2? This overwrites the remote version.';
+  if (!confirm(msg)) return;
   toast('Deploying...');
   try {
-    var body = JSON.stringify(_data, null, 2);
-    var res = await fetch(_apiBase + '/upload/files.json', {
+    var ok = 0, fail = 0;
+    for (var i = 0; i < _pendingUploads.length; i++){
+      var u = _pendingUploads[i];
+      try {
+        var res = await fetch(_apiBase + '/upload/' + u.path, {
+          method:'PUT',
+          headers:{'Authorization':'Bearer '+token,'Content-Type':'application/octet-stream'},
+          body: u.blob
+        });
+        if (res.ok) ok++; else fail++;
+      } catch(e){ fail++; }
+    }
+    _pendingUploads = [];
+    _updateDeployBadge();
+    var res2 = await fetch(_apiBase + '/upload/files.json', {
       method:'PUT',
       headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
-      body:body
+      body: JSON.stringify(_data, null, 2)
     });
-    if (!res.ok) throw new Error('HTTP '+res.status);
+    if (!res2.ok) throw new Error('files.json upload failed: HTTP '+res2.status);
+    var summary = ok ? ok+' file(s) uploaded' : '';
+    if (fail) summary += (summary ? ', ' : '')+fail+' failed';
     document.getElementById('statusRight').textContent = 'Deployed at '+new Date().toLocaleTimeString();
-    toast('Deployed successfully!');
+    toast(summary ? summary+'. files.json deployed.' : 'files.json deployed!');
   } catch(e){
     toast('Deploy failed: '+e.message);
   }
