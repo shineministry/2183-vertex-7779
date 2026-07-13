@@ -387,12 +387,15 @@ function _getToken(){
   _updateStats();
   if (typeof lucide !== 'undefined') lucide.createIcons();
   var token = _getToken();
-  if (token){
+  var onDomain = location.origin === 'https://72oe-v2sx.shine-ministry.com';
+  if (token && onDomain){
     document.getElementById('loginOverlay').classList.remove('show');
     _autoLoad();
-  } else {
+  } else if (onDomain){
     document.getElementById('loginOverlay').classList.add('show');
     setTimeout(function(){ document.getElementById('loginPass').focus(); }, 100);
+  } else {
+    goOffline();
   }
 })();
 
