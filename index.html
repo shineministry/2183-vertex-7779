@@ -4179,7 +4179,8 @@ Recommended:
             });
           }
           if (prev && sel.querySelector('option[value="'+prev+'"]')) sel.value = prev;
-          if (typeof lucide !== 'undefined') lucide.createIcons();
+          var _vcEl = document.getElementById('page-checklist');
+          if (_vcEl && typeof lucide !== 'undefined') lucide.createIcons({ node: _vcEl });
         }
         window.initVaultChecklist = initVaultChecklist;
 
@@ -4242,7 +4243,8 @@ Recommended:
           _vcBuildBody();
           _vcUpdateSB();
           _vcSelCell = null; _vcSelRow = -1;
-          if (typeof lucide !== 'undefined') lucide.createIcons();
+          var _vcEl = document.getElementById('page-checklist');
+          if (_vcEl && typeof lucide !== 'undefined') lucide.createIcons({ node: _vcEl });
         }
 
         /* ---- BUILD table header ---- */
@@ -4439,7 +4441,8 @@ Recommended:
           statuses[_vcMember][_vcCurType][ri] = val;
           _vcSave(statuses, _vcStatusKey);
           _vcBuildBody();
-          if (typeof lucide !== 'undefined') lucide.createIcons();
+          var _vcEl = document.getElementById('page-checklist');
+          if (_vcEl && typeof lucide !== 'undefined') lucide.createIcons({ node: _vcEl });
         }
 
         /* ---- STATUS BAR ---- */
@@ -4604,7 +4607,11 @@ Recommended:
           };
           window._repairRefresh = refresh;
           const msEl2 = document.getElementById('member-select'); if (msEl2) msEl2.addEventListener('change', function() {
-            setTimeout(refresh, 250);
+            setTimeout(function(){
+              refresh();
+              if (typeof initVaultChecklist === 'function') initVaultChecklist();
+              if (typeof vcRender === 'function' && _vcCurType) vcRender(_vcCurType);
+            }, 250);
           });
         });
         window._getCategoryEntries = getCategoryEntries;
@@ -5057,7 +5064,8 @@ Recommended:
             if (typeof listenForForceLogout === 'function') listenForForceLogout();
             if (typeof vaultPostInit === 'function') vaultPostInit();
             setProgress(100, 'Ready!');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            var _dashEl = document.getElementById('vault-dashboard');
+            if (_dashEl && typeof lucide !== 'undefined') lucide.createIcons({ node: _dashEl });
             if (typeof updateModeProfile === 'function') updateModeProfile();
           } catch (e) {
             console.warn('[goToDashboard] Fatal error during vault load:', e);
@@ -5093,7 +5101,7 @@ Recommended:
             });
             const dash = document.getElementById('vault-dashboard');
             if (dash) { dash.style.display = 'flex'; dash.classList.add('dashboard-enter'); }
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (dash && typeof lucide !== 'undefined') lucide.createIcons({ node: dash });
             if (typeof updateModeProfile === 'function') updateModeProfile();
             // Auto-click HOME
             const homeLi = [...list.querySelectorAll('li')].find(li => li.innerText.trim().includes('HOME'));

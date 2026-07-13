@@ -175,6 +175,16 @@ body.dark .xl-modal{background:#2d2d2d;color:#e0e0e0;}
 body.dark .xl-modal input,.body.dark .xl-modal textarea{background:#3a3a3a;color:#e0e0e0;border-color:#555;}
 body.dark .xl-modal-btns .xl-modal-cancel{background:#444;color:#ccc;}
 
+/* ====== ROW CONTEXT MENU ====== */
+.xl-ctx-menu{position:fixed;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:10001;min-width:160px;padding:4px 0;display:none;}
+.xl-ctx-menu.show{display:block;}
+.xl-ctx-item{padding:7px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#333;white-space:nowrap;}
+.xl-ctx-item:hover{background:#f0f4ff;color:#1a73e8;}
+.xl-ctx-item.danger:hover{background:#fde7e7;color:#c62828;}
+body.dark .xl-ctx-menu{background:#2d2d2d;border-color:#555;}
+body.dark .xl-ctx-item{color:#e0e0e0;}
+body.dark .xl-ctx-item:hover{background:#3a4a5a;color:#6db3f2;}
+
 /* ====== WEB VIEWER MODAL ====== */
 .xl-web-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:10000;}
 .xl-web-overlay.active{display:flex;}
@@ -315,6 +325,14 @@ body.dark .xl-web-bar-close{color:#aaa;}
     </div>
     <iframe id="webFrame" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
   </div>
+</div>
+
+<!-- ROW CONTEXT MENU -->
+<div class="xl-ctx-menu" id="ctxMenu">
+  <div class="xl-ctx-item" onclick="ctxAddRowAbove()">Add Row Above</div>
+  <div class="xl-ctx-item" onclick="ctxAddRowBelow()">Add Row Below</div>
+  <div class="xl-ctx-item" onclick="ctxDuplicateRow()">Duplicate Row</div>
+  <div class="xl-ctx-item danger" onclick="ctxDeleteRow()">Delete Row</div>
 </div>
 
 <script>
@@ -558,6 +576,15 @@ function renderChecklist(type){
             if (e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.classList.contains('xl-cell-edit')) return;
             selectRow(tr, i, item);
         });
+        tr.addEventListener('contextmenu', function(e){
+            e.preventDefault();
+            ctxRowIndex = i;
+            ctxType = type;
+            var menu = document.getElementById('ctxMenu');
+            menu.style.left = e.clientX + 'px';
+            menu.style.top = e.clientY + 'px';
+            menu.classList.add('show');
+        });
         tbody.appendChild(tr);
     });
 
@@ -764,6 +791,51 @@ function closeWebOverlay(){
     document.getElementById('webFrame').src = '';
     document.getElementById('webOverlay').classList.remove('active');
 }
+
+/* ================================================================
+   ROW CONTEXT MENU
+   ================================================================ */
+var ctxRowIndex = -1;
+var ctxType = '';
+
+function ctxAddRowAbove(){
+    hideCtxMenu();
+    if (!ctxType || ctxRowIndex < 0) return;
+    CHECKLIST_DATA[ctxType].splice(ctxRowIndex, 0, { name: 'New Item', desc: '', docs: [] });
+    renderChecklist(ctxType);
+    showToast('Row added above. Click DEPLOY to push changes.');
+}
+function ctxAddRowBelow(){
+    hideCtxMenu();
+    if (!ctxType || ctxRowIndex < 0) return;
+    CHECKLIST_DATA[ctxType].splice(ctxRowIndex + 1, 0, { name: 'New Item', desc: '', docs: [] });
+    renderChecklist(ctxType);
+    showToast('Row added below. Click DEPLOY to push changes.');
+}
+function ctxDuplicateRow(){
+    hideCtxMenu();
+    if (!ctxType || ctxRowIndex < 0) return;
+    var orig = CHECKLIST_DATA[ctxType][ctxRowIndex];
+    var copy = JSON.parse(JSON.stringify(orig));
+    copy.name = copy.name + ' (copy)';
+    CHECKLIST_DATA[ctxType].splice(ctxRowIndex + 1, 0, copy);
+    renderChecklist(ctxType);
+    showToast('Row duplicated. Click DEPLOY to push changes.');
+}
+function ctxDeleteRow(){
+    hideCtxMenu();
+    if (!ctxType || ctxRowIndex < 0) return;
+    var item = CHECKLIST_DATA[ctxType][ctxRowIndex];
+    if (!confirm('Delete "' + (item.name || 'row') + '"?')) return;
+    CHECKLIST_DATA[ctxType].splice(ctxRowIndex, 1);
+    renderChecklist(ctxType);
+    showToast('Row deleted. Click DEPLOY to push changes.');
+}
+function hideCtxMenu(){
+    document.getElementById('ctxMenu').classList.remove('show');
+}
+document.addEventListener('click', hideCtxMenu);
+document.addEventListener('contextmenu', function(e){ if (!e.target.closest('#xl-tbody')) hideCtxMenu(); });
 
 /* ================================================================
    COLUMN RESIZE
