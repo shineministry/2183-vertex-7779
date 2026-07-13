@@ -277,7 +277,7 @@ body.dark .fm-modal-foot .fm-cancel{background:#334155;color:#94a3b8;}
   <!-- STATUS BAR -->
   <div class="fm-statusbar">
     <span><i data-lucide="database" style="width:11px;height:11px;"></i> Vault Files Manager v1.0</span>
-    <span id="statusRight">Not loaded</span>
+    <span id="statusRight">Initializing...</span>
   </div>
 
 </div>
@@ -347,16 +347,67 @@ var _activeCat = '';
 var _editIdx = -1;
 var _searchQ = '';
 var _dragCat = '';
+var _apiBase = 'https://backend.shinumaths989.workers.dev';
+
+function _getToken(){
+  return sessionStorage.getItem('vaultSessionToken')
+      || sessionStorage.getItem('vaultSession')
+      || '';
+}
 
 /* ---- INIT ---- */
-(function(){
-  _loadFromStorage();
+(async function(){
   _renderSidebar();
-  if (_activeCat && _data[_activeCat]) _selectCat(_activeCat);
-  else { var cats = Object.keys(_data); if (cats.length) _selectCat(cats[0]); }
   _updateStats();
   if (typeof lucide !== 'undefined') lucide.createIcons();
+  await _autoLoad();
 })();
+
+async function _autoLoad(){
+  var token = _getToken();
+  if (!token){
+    _loadFromStorage();
+    var cats = Object.keys(_data);
+    if (cats.length) _selectCat(cats[0]);
+    document.getElementById('statusRight').textContent = 'No session — using cached data';
+    return;
+  }
+  document.getElementById('statusRight').textContent = 'Loading from R2...';
+  try {
+    var res = await fetch(_apiBase + '/files.json?_t=' + Date.now(), {
+      headers:{'Authorization':'Bearer '+token},
+      cache:'no-store'
+    });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    var raw = await res.json();
+    if (Array.isArray(raw)){
+      var obj = {};
+      raw.forEach(function(f){
+        var cat = f.category || f.type || 'Documents';
+        if (!obj[cat]) obj[cat] = [];
+        obj[cat].push(f);
+      });
+      _data = obj;
+    } else if (raw && typeof raw === 'object'){
+      _data = raw;
+    }
+    _saveToStorage();
+    _renderSidebar();
+    var cats = Object.keys(_data);
+    if (cats.length) _selectCat(cats[0]);
+    else { document.getElementById('catHeader').style.display = 'none'; document.getElementById('cardsGrid').innerHTML = ''; }
+    _updateJson();
+    _updateStats();
+    document.getElementById('statusRight').textContent = 'Loaded from R2 at '+new Date().toLocaleTimeString();
+    toast('Loaded '+cats.length+' categories from R2');
+  } catch(e){
+    _loadFromStorage();
+    var cats = Object.keys(_data);
+    if (cats.length) _selectCat(cats[0]);
+    document.getElementById('statusRight').textContent = 'Offline — using cached data';
+    toast('Offline — loaded cached data');
+  }
+}
 
 /* ---- MEMBER CHIPS TOGGLE ---- */
 document.getElementById('fmMembers').addEventListener('click', function(e){
@@ -715,11 +766,11 @@ function handleImportFile(e){
 
 /* ---- BUCKET LOAD/DEPLOY ---- */
 async function loadFromBucket(){
-  var token = sessionStorage.getItem('vaultSession');
+  var token = _getToken();
   if (!token){ toast('No active session — log in first'); return; }
   toast('Loading from bucket...');
   try {
-    var res = await fetch('https://backend.shinumaths989.workers.dev/files.json?_t='+Date.now(), {
+    var res = await fetch(_apiBase + '/files.json?_t='+Date.now(), {
       headers:{'Authorization':'Bearer '+token},
       cache:'no-store'
     });
@@ -743,7 +794,7 @@ async function loadFromBucket(){
     else { document.getElementById('catHeader').style.display = 'none'; document.getElementById('cardsGrid').innerHTML = ''; }
     _updateJson();
     _updateStats();
-    document.getElementById('statusRight').textContent = 'Loaded from bucket';
+    document.getElementById('statusRight').textContent = 'Loaded from bucket at '+new Date().toLocaleTimeString();
     toast('Loaded '+cats.length+' categories from bucket');
   } catch(e){
     toast('Load failed: '+e.message);
@@ -751,13 +802,13 @@ async function loadFromBucket(){
 }
 
 async function deployToBucket(){
-  var token = sessionStorage.getItem('vaultSession');
+  var token = _getToken();
   if (!token){ toast('No active session — log in first'); return; }
-  if (!confirm('Deploy files.json to bucket? This overwrites the remote version.')) return;
+  if (!confirm('Deploy files.json to R2? This overwrites the remote version.')) return;
   toast('Deploying...');
   try {
     var body = JSON.stringify(_data, null, 2);
-    var res = await fetch('https://backend.shinumaths989.workers.dev/upload/files.json', {
+    var res = await fetch(_apiBase + '/upload/files.json', {
       method:'PUT',
       headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
       body:body
