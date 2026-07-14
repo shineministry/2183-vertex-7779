@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#1a73e8">
 <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
 <script src="sha256.js"></script>
+<script src="offline-auth.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;color:#1e293b;background:#f8fafc;}
@@ -442,12 +443,24 @@ function _getToken(){
 }
 
 /* ---- INIT ---- */
-(function(){
+(async function(){
   _renderSidebar();
   _updateStats();
   if (typeof lucide !== 'undefined') lucide.createIcons();
-  var token = _getToken();
   var onDomain = location.origin === 'https://72oe-v2sx.shine-ministry.com';
+
+  // A per-tab sessionStorage token (and in-memory window.masterPassword) is
+  // wiped on every reload/new tab, which made files.html show the login
+  // screen even though the device was still "remembered" (vaultTrustInfo in
+  // localStorage, same as index.html). Try to silently restore that trusted
+  // session before falling back to the login overlay.
+  if (onDomain && (!_getToken() || !window.masterPassword) &&
+      typeof _isTrustDevice === 'function' && _isTrustDevice() &&
+      typeof restoreTrustSession === 'function') {
+    try { await restoreTrustSession(); } catch(e){ console.warn('[files.html] restoreTrustSession failed:', e); }
+  }
+
+  var token = _getToken();
   if (token && onDomain && window.masterPassword){
     document.getElementById('loginOverlay').classList.remove('show');
     _autoLoad();
