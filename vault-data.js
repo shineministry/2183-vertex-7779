@@ -836,7 +836,9 @@ async function renderPhotoThumb(container, file, index) {
             ? await decryptPhotoShared(file)
             : null;
         if (!result) {
-            container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:12px;"><i data-lucide="triangle-alert" style="width:16px;height:16px;"></i></div>';
+            const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '').replace(/^\/photos\/|^photos\//, '');
+            const reason = (window._photoDecryptErrors && window._photoDecryptErrors.get(docKey)) || 'Unknown error';
+            container.innerHTML = '<div title="'+escHtml(reason)+'" style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:12px;"><i data-lucide="triangle-alert" style="width:16px;height:16px;"></i></div>';
             if (window.lucide) lucide.createIcons({ node: container });
             return;
         }

@@ -139,6 +139,8 @@ async function _decryptPhotoOnce(file, docKey, attempt) {
             await new Promise(r => setTimeout(r, 400 * attempt));
             return _decryptPhotoOnce(file, docKey, attempt + 1);
         }
+        window._photoDecryptErrors = window._photoDecryptErrors || new Map();
+        window._photoDecryptErrors.set(docKey, e.message || String(e));
         console.warn(`[Photo decrypt] Failed for ${docKey} after ${attempt} attempt(s):`, e.message);
         return null;
     }
@@ -982,10 +984,52 @@ displayName;
 
     console.error(e);
 
-    toastNotify('Access Denied: Could not decrypt file.', 'error');
+    toastNotify(_describeOpenFileError(e), 'error');
 
 }
 
+}
+
+/* Map the various errors openSecureFile() can throw to a message that
+   actually tells the user what went wrong, instead of a single generic
+   "Access Denied: Could not decrypt file" for every failure mode. This is
+   what was making a missing-from-R2 file (HTTP 404) look identical to a
+   genuine decryption failure — they need different fixes (re-upload vs.
+   re-login vs. wrong password). */
+function _describeOpenFileError(e) {
+    const msg = (e && e.message) || '';
+
+    if (/HTTP 404/.test(msg)) {
+        return 'This file was never fully uploaded to storage (not found in R2). Ask the admin to re-upload it from Files Manager.';
+    }
+    if (/HTTP 401|HTTP 403/.test(msg)) {
+        return 'Your session has expired. Please log in again.';
+    }
+    if (/HTTP 5\d\d/.test(msg)) {
+        return 'Storage server error (' + msg.replace('Server error: ', '') + '). Please try again in a moment.';
+    }
+    if (/Corrupted file header/.test(msg)) {
+        return 'This file is missing or corrupted in storage — the backend did not return a valid encrypted file. Ask the admin to re-upload it.';
+    }
+    if (/Missing vault session token/.test(msg)) {
+        return 'Session not found. Please log in again.';
+    }
+    if (/Document not available offline/.test(msg)) {
+        return msg;
+    }
+    if (/PDF viewer not available offline/.test(msg)) {
+        return msg;
+    }
+    if (/Failed to load document/.test(msg)) {
+        return msg;
+    }
+    if (e && e.name === 'OperationError') {
+        // AES-GCM decrypt threw — either the wrong master password was used,
+        // or the encrypted bytes are corrupted/truncated.
+        return 'Could not decrypt this file — wrong password, or the file is corrupted in storage.';
+    }
+
+    return msg ? ('Could not open file: ' + msg) : 'Access Denied: Could not decrypt file.';
 }
 /* =========================
    CLOSE MODAL
