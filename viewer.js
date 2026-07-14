@@ -853,11 +853,28 @@ sidebar.appendChild(thumbWrap);
     }
 }
 
-// INITIAL RENDER
-await renderAllPages();
+// SHOW MODAL FIRST — renderAllPages() measures container.clientWidth, which
+// is only meaningful once the modal is actually visible. Showing it now
+// (instead of after rendering) means we can render pages just once instead
+// of the previous approach of rendering everything, then re-rendering
+// everything again 150ms later once the modal had settled — which was
+// silently doubling the time every document took to open.
+document.getElementById(
+    'modal'
+).style.display = 'block';
 
-// Second render after modal layout settles (so container.clientWidth is accurate)
-setTimeout(async () => { await renderAllPages(); scrollToPage(1); }, 150);
+document.getElementById(
+    'modal-title'
+).textContent =
+displayName;
+
+// Wait a frame so the browser has committed layout for the now-visible
+// modal before we measure container.clientWidth inside renderAllPages().
+await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+// SINGLE RENDER PASS
+await renderAllPages();
+scrollToPage(1);
 
 // =========================
 // DOWNLOAD SECURELY
@@ -968,17 +985,6 @@ await fetch(
     }
 
 };
-
-// SHOW MODAL
-
-document.getElementById(
-    'modal'
-).style.display = 'block';
-
-document.getElementById(
-    'modal-title'
-).textContent =
-displayName;
 
 } catch (e) {
 
