@@ -351,11 +351,9 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
         <label>File Path</label>
         <div class="fm-field-row">
           <div style="flex:0 0 110px;">
-            <select id="fmPrefix">
+            <select id="fmPrefix" title="Automatic: set by the file's category (PHOTOS category = photos/, everything else = docs/)">
               <option value="docs/">docs/</option>
               <option value="photos/">photos/</option>
-              <option value="file/">file/</option>
-              <option value="">none/</option>
             </select>
           </div>
           <div style="flex:1;">
@@ -595,6 +593,23 @@ function _renderSidebar(){
   if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
+/* ---- PHOTOS category auto-routing ----
+   The main vault app (features.js / vault-data.js) decides whether to fetch
+   a file from /photos/ or /docs/ purely by checking file.category === 'PHOTOS'
+   (exact, case-sensitive) — category being whatever the object key in
+   files.json is. If this category was ever created as "Photos" or "photos"
+   instead of exactly "PHOTOS", every file in it silently fell back to /docs/,
+   even though the Add/Edit File modal's prefix dropdown said "photos/".
+   That dropdown never actually forced anything - it was purely cosmetic.
+   These helpers make the prefix automatic and tied to the category name,
+   so it can't drift out of sync again. */
+function _isPhotosCategory(cat){
+  return String(cat || '').trim().toUpperCase() === 'PHOTOS';
+}
+function _prefixForActiveCat(){
+  return _isPhotosCategory(_activeCat) ? 'photos/' : 'docs/';
+}
+
 function _catIcon(c){
   var icons = {passport:'plane',visa:'plane',finance:'wallet',school:'graduation-cap',personal:'user',residence:'home',church:'cross',education:'book-open',identity:'contact',legal:'scale','financial':'credit-card',ministry:'bird',medical:'stethoscope',insurance:'shield',tax:'clipboard-list',property:'home',vehicle:'car',travel:'globe',work:'briefcase',bank:'landmark',documents:'file-text',certificates:'award',photos:'camera',home:'home',profile:'user'};
   var key = Object.keys(icons).find(function(k){ return c.toLowerCase().indexOf(k) !== -1; });
@@ -697,6 +712,9 @@ function addCategory(){
   var name = prompt('Category name:');
   if (!name || !name.trim()) return;
   name = name.trim();
+  /* Force exact "PHOTOS" casing so the vault app's file.category === 'PHOTOS'
+     check (features.js / vault-data.js) always matches and routes to /photos/. */
+  if (_isPhotosCategory(name)) name = 'PHOTOS';
   if (_data[name]){ toast('Category already exists'); return; }
   _data[name] = [];
   _saveToStorage();
@@ -710,6 +728,8 @@ function renameCategory(){
   if (!_activeCat) return;
   var name = prompt('Rename category:', _activeCat);
   if (!name || !name.trim() || name.trim() === _activeCat) return;
+  name = name.trim();
+  if (_isPhotosCategory(name)) name = 'PHOTOS';
   name = name.trim();
   if (_data[name]){ toast('Category already exists'); return; }
   _data[name] = _data[_activeCat];
@@ -757,7 +777,8 @@ function addFileEntry(){
   _editIdx = -1;
   document.getElementById('fileModalTitle').textContent = 'Add File Entry';
   document.getElementById('fmName').value = '';
-  document.getElementById('fmPrefix').value = 'docs/';
+  document.getElementById('fmPrefix').value = _prefixForActiveCat();
+  document.getElementById('fmPrefix').disabled = true;
   document.getElementById('fmFile').value = '';
   document.getElementById('fmDate').value = new Date().toISOString().slice(0,10);
   _resetMemberChips(['shineil','brother','father','mother']);
@@ -773,12 +794,16 @@ function editFileEntry(idx){
   document.getElementById('fileModalTitle').textContent = 'Edit File Entry';
   document.getElementById('fmName').value = it.name || '';
   var filePath = it.file || '';
-  var prefix = 'docs/';
   var fileName = filePath;
+  /* Strip any legacy stored prefix from the filename itself — the prefix is
+     no longer inferred from the stored path, it is always derived from the
+     category (see _prefixForActiveCat), so PHOTOS files always resolve to
+     /photos/ and everything else always resolves to /docs/. */
   ['photos/','docs/','file/'].forEach(function(p){
-    if (filePath.indexOf(p) === 0){ prefix = p; fileName = filePath.slice(p.length); }
+    if (filePath.indexOf(p) === 0){ fileName = filePath.slice(p.length); }
   });
-  document.getElementById('fmPrefix').value = prefix;
+  document.getElementById('fmPrefix').value = _prefixForActiveCat();
+  document.getElementById('fmPrefix').disabled = true;
   document.getElementById('fmFile').value = fileName;
   document.getElementById('fmDate').value = it.date || '';
   var members = Array.isArray(it.members) ? it.members : (it.member ? [it.member] : ['shineil']);
@@ -815,7 +840,11 @@ function deleteFileEntry(idx){
 /* ---- SAVE FILE ---- */
 function saveFileEntry(){
   var name = document.getElementById('fmName').value.trim();
-  var prefix = document.getElementById('fmPrefix').value;
+  /* Prefix is always derived from the active category (PHOTOS -> photos/,
+     everything else -> docs/), never read from the dropdown — this is what
+     keeps the bucket key and the file.category-based routing in the main
+     vault app permanently in sync, regardless of file type. */
+  var prefix = _prefixForActiveCat();
   var fileName = document.getElementById('fmFile').value.trim();
   var date = document.getElementById('fmDate').value;
   if (!name){ toast('Name is required'); return; }
