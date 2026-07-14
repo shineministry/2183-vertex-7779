@@ -569,6 +569,7 @@ function renderChecklist(type){
             '</select></td>' +
             '<td class="xl-cell xl-cell-btn" style="white-space:normal;overflow:visible;">' + docHtml + addDocBtn + '</td>' +
             '<td class="xl-cell"><div class="xl-row-actions">' +
+            '<button class="xl-row-action" title="More actions" onclick="openRowMenu(event,\'' + escAttr(type) + '\',' + i + ')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/></svg></button>' +
             '<button class="xl-row-action del" title="Delete item" onclick="deleteItem(\'' + escAttr(type) + '\',' + i + ')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
             '</div></td>';
 
@@ -576,6 +577,7 @@ function renderChecklist(type){
             if (e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.classList.contains('xl-cell-edit')) return;
             selectRow(tr, i, item);
         });
+        // (openRowMenu, defined globally below, handles the tap-friendly "⋮" button)
         tr.addEventListener('contextmenu', function(e){
             e.preventDefault();
             ctxRowIndex = i;
@@ -833,6 +835,25 @@ function ctxDeleteRow(){
 }
 function hideCtxMenu(){
     document.getElementById('ctxMenu').classList.remove('show');
+}
+
+/* Mobile/desktop-friendly row menu opener — triggered by tapping the "⋮"
+   button, since phones never fire a 'contextmenu' event on tap. Positions
+   the menu near the button and clamps it inside the viewport so it isn't
+   cut off on small screens. */
+function openRowMenu(e, type, idx){
+    e.stopPropagation();
+    ctxRowIndex = idx;
+    ctxType = type;
+    var menu = document.getElementById('ctxMenu');
+    var btn = e.currentTarget.getBoundingClientRect();
+    menu.classList.add('show'); // show first so offsetWidth/Height are measurable
+    var mw = menu.offsetWidth || 160;
+    var mh = menu.offsetHeight || 140;
+    var left = Math.min(btn.left, window.innerWidth - mw - 8);
+    var top = Math.min(btn.bottom + 4, window.innerHeight - mh - 8);
+    menu.style.left = Math.max(8, left) + 'px';
+    menu.style.top = Math.max(8, top) + 'px';
 }
 document.addEventListener('click', hideCtxMenu);
 document.addEventListener('contextmenu', function(e){ if (!e.target.closest('#xl-tbody')) hideCtxMenu(); });

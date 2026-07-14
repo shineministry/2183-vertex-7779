@@ -98,6 +98,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 .fm-member-chip.off:hover{background:#e2e8f0;}
 .fm-card-actions{display:flex;gap:4px;position:absolute;top:10px;right:10px;opacity:0;transition:opacity .15s;}
 .fm-card:hover .fm-card-actions{opacity:1;}
+.fm-card-act[disabled]{opacity:.3;cursor:not-allowed;}
+@media (hover:none){ .fm-card-actions{opacity:1;} }
 .fm-card-act{width:26px;height:26px;border:1px solid #e2e8f0;border-radius:5px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;transition:all .12s;}
 .fm-card-act:hover{background:#f1f5f9;color:#1e293b;}
 .fm-card-act.del:hover{background:#fef2f2;color:#dc2626;border-color:#fecaca;}
@@ -655,6 +657,8 @@ function _renderCards(){
     return '<div class="fm-card" draggable="true" ondragstart="_fileDragStart(event,'+idx+')" ondragover="event.preventDefault();this.classList.add(\'drag-over\')" ondragleave="this.classList.remove(\'drag-over\')" ondrop="_fileDrop(event,'+idx+');this.classList.remove(\'drag-over\')">'
       + badgeHtml
       + '<div class="fm-card-actions">'
+      + '  <button class="fm-card-act" onclick="moveFileEntry('+idx+',-1)" title="Move up"'+(idx===0?' disabled':'')+'><i data-lucide="arrow-up" style="width:13px;height:13px;"></i></button>'
+      + '  <button class="fm-card-act" onclick="moveFileEntry('+idx+',1)" title="Move down"'+(idx===filtered.length-1?' disabled':'')+'><i data-lucide="arrow-down" style="width:13px;height:13px;"></i></button>'
       + '  <button class="fm-card-act" onclick="editFileEntry('+idx+')" title="Edit"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>'
       + '  <button class="fm-card-act" onclick="duplicateFileEntry('+idx+')" title="Duplicate"><i data-lucide="copy" style="width:13px;height:13px;"></i></button>'
       + '  <button class="fm-card-act del" onclick="deleteFileEntry('+idx+')" title="Delete"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>'
@@ -1218,6 +1222,20 @@ function toggleDark(){
 (function(){
   if (localStorage.getItem('filesManagerDark') === '1') document.body.classList.add('dark');
 })();
+
+/* ---- MOVE FILE UP/DOWN (mobile-friendly reorder, no drag needed) ---- */
+function moveFileEntry(idx, dir){
+  var items = _data[_activeCat];
+  if (!Array.isArray(items)) return;
+  var target = idx + dir;
+  if (target < 0 || target >= items.length) return;
+  var tmp = items[idx];
+  items[idx] = items[target];
+  items[target] = tmp;
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+}
 
 /* ---- DRAG & DROP FILES ---- */
 var _dragIdx = -1;
