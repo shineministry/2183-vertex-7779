@@ -364,12 +364,12 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
         </div>
       </div>
       <div>
-        <label>Upload & Encrypt (PDF → .enc)</label>
+        <label>Upload & Encrypt (Any File → .enc)</label>
         <div id="fmUploadArea" class="fm-upload-area" onclick="document.getElementById('fmFileInput').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleFileDrop(event)">
           <i data-lucide="upload-cloud" style="width:28px;height:28px;color:#94a3b8;"></i>
           <span>Drop PDF here or click to browse</span>
         </div>
-        <input type="file" id="fmFileInput" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx" style="display:none" onchange="handleFileSelect(event)">
+        <input type="file" id="fmFileInput" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.bmp,.heic,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.mp3,.mp4,.mov,.m4a,.json" style="display:none" onchange="handleFileSelect(event)">
         <div id="fmFileInfo" style="display:none;" class="fm-upload-info">
           <i data-lucide="file-check" style="width:14px;height:14px;color:#16a34a;"></i>
           <span id="fmFileInfoText"></span>
