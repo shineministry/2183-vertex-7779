@@ -442,12 +442,117 @@ function _getToken(){
       || '';
 }
 
+/* ================================================================
+   SESSION RESUME — persist work-in-progress immediately so a stale
+   token (401 after leaving the tab open for a while) never costs
+   unsaved edits or queued uploads. _data already lived in
+   localStorage; this adds the pending-upload blobs (via IndexedDB,
+   since they can be large binary data) and a small session-meta
+   record so a reload/relaunch can offer to pick up where you left
+   off instead of silently starting fresh.
+   ================================================================ */
+function _dbOpen(){
+  return new Promise(function(resolve, reject){
+    var req = indexedDB.open('filesManagerDB', 1);
+    req.onupgradeneeded = function(){
+      if (!req.result.objectStoreNames.contains('pendingUploads')){
+        req.result.createObjectStore('pendingUploads', { keyPath: 'uid' });
+      }
+    };
+    req.onsuccess = function(){ resolve(req.result); };
+    req.onerror = function(){ reject(req.error); };
+  });
+}
+
+async function _persistPendingUploads(){
+  try {
+    var db = await _dbOpen();
+    var tx = db.transaction('pendingUploads', 'readwrite');
+    var store = tx.objectStore('pendingUploads');
+    store.clear();
+    _pendingUploads.forEach(function(u){ store.put(u); });
+    await new Promise(function(res, rej){ tx.oncomplete = res; tx.onerror = function(){ rej(tx.error); }; });
+  } catch(e){ console.warn('[files.html] persist pending uploads failed:', e); }
+}
+
+async function _loadPendingUploadsFromDb(){
+  try {
+    var db = await _dbOpen();
+    var tx = db.transaction('pendingUploads', 'readonly');
+    var store = tx.objectStore('pendingUploads');
+    return await new Promise(function(res, rej){
+      var req = store.getAll();
+      req.onsuccess = function(){ res(req.result || []); };
+      req.onerror = function(){ rej(req.error); };
+    });
+  } catch(e){ console.warn('[files.html] load pending uploads failed:', e); return []; }
+}
+
+/* Called immediately after any state change (data edit, upload queued,
+   category switch) so the saved session is always current — no debounce,
+   no "save button" to forget to click. */
+function _saveSession(){
+  _saveToStorage();
+  _persistPendingUploads();
+  try {
+    localStorage.setItem('filesManagerSessionMeta', JSON.stringify({
+      activeCat: _activeCat,
+      pendingCount: _pendingUploads.length,
+      savedAt: Date.now()
+    }));
+  } catch(e){}
+}
+
+function _clearSessionMeta(){
+  try { localStorage.removeItem('filesManagerSessionMeta'); } catch(e){}
+}
+
+async function _restoreSessionFromDisk(){
+  _loadFromStorage();
+  _pendingUploads = await _loadPendingUploadsFromDb();
+  _uploadStatus = {};
+  _pendingUploads.forEach(function(u){ _uploadStatus[u.uid] = { state:'pending' }; });
+  var meta = {};
+  try { meta = JSON.parse(localStorage.getItem('filesManagerSessionMeta') || '{}'); } catch(e){}
+  _renderSidebar();
+  var cats = Object.keys(_data);
+  var restoreCat = meta.activeCat && _data[meta.activeCat] ? meta.activeCat : (cats.length ? cats[0] : '');
+  if (restoreCat) _selectCat(restoreCat);
+  _updateDeployBadge();
+  _updateJson();
+  _updateStats();
+}
+
 /* ---- INIT ---- */
 (async function(){
   _renderSidebar();
   _updateStats();
   if (typeof lucide !== 'undefined') lucide.createIcons();
   var onDomain = location.origin === 'https://72oe-v2sx.shine-ministry.com';
+
+  // If a previous visit left unsaved edits and/or queued (not-yet-deployed)
+  // uploads behind — e.g. the tab sat open overnight, the session token
+  // expired, and deploy failed with 401 — offer to resume exactly where
+  // things were left instead of silently discarding that work.
+  var resumed = false;
+  try {
+    var meta = JSON.parse(localStorage.getItem('filesManagerSessionMeta') || 'null');
+    if (meta && (meta.pendingCount > 0)){
+      var when = meta.savedAt ? new Date(meta.savedAt).toLocaleString() : 'earlier';
+      var doResume = confirm(
+        'Unsaved work found from ' + when + ' (' + meta.pendingCount + ' file(s) not yet deployed).\n\n' +
+        'Continue where you left off? Choose Cancel to discard it and load fresh from the vault.'
+      );
+      if (doResume){
+        await _restoreSessionFromDisk();
+        resumed = true;
+        toast('Resumed previous session — ' + meta.pendingCount + ' file(s) still queued for deploy');
+      } else {
+        _clearSessionMeta();
+        try { var db = await _dbOpen(); db.transaction('pendingUploads','readwrite').objectStore('pendingUploads').clear(); } catch(e){}
+      }
+    }
+  } catch(e){ console.warn('[files.html] resume check failed:', e); }
 
   // A per-tab sessionStorage token (and in-memory window.masterPassword) is
   // wiped on every reload/new tab, which made files.html show the login
@@ -463,10 +568,15 @@ function _getToken(){
   var token = _getToken();
   if (token && onDomain && window.masterPassword){
     document.getElementById('loginOverlay').classList.remove('show');
-    _autoLoad();
+    // If we just resumed local edits/queued uploads, don't let a fresh
+    // remote fetch clobber them — just deploy when ready. Otherwise load
+    // normally from R2.
+    if (!resumed) _autoLoad();
   } else if (onDomain){
     document.getElementById('loginOverlay').classList.add('show');
     setTimeout(function(){ document.getElementById('loginPass').focus(); }, 100);
+  } else if (resumed){
+    document.getElementById('statusRight').textContent = 'Resumed offline — log in to deploy';
   } else {
     goOffline();
   }
@@ -510,8 +620,18 @@ async function doLogin(){
     document.getElementById('loginOverlay').classList.remove('show');
     btn.textContent = 'Unlock';
     btn.disabled = false;
-    toast('Authenticated — loading files...');
-    await _autoLoad();
+    /* If there's a queued deploy waiting (e.g. this login was triggered by
+       a mid-deploy 401), keep those local edits/uploads intact instead of
+       pulling a fresh copy from R2 and clobbering them — just let the
+       person hit Deploy again. */
+    if (_pendingUploads.length){
+      toast('Authenticated — ' + _pendingUploads.length + ' file(s) still queued, click Deploy to finish');
+      _updateDeployBadge();
+      _renderCards();
+    } else {
+      toast('Authenticated — loading files...');
+      await _autoLoad();
+    }
   } catch(e){
     errEl.innerHTML = 'Connection failed. <a href="#" onclick="goOffline()" style="color:#1a73e8;font-weight:600;">Work Offline</a> with cached data.';
     errEl.style.display = 'block';
@@ -892,7 +1012,7 @@ function saveFileEntry(){
     toast('File added');
   }
 
-  _saveToStorage();
+  _saveSession(); /* immediate save — survives a stale-token 401 or a day-later refresh */
   _renderCards();
   _updateJson();
   _updateStats();
@@ -1171,6 +1291,7 @@ async function deployToBucket(){
     _pendingUploads = stillPending;
     _updateDeployBadge();
     _renderCards();
+    _saveSession(); /* persist immediately — a failed/expired token below must not lose queued work */
 
     /* Build the payload to send to R2: strip out any entry whose file upload
        just failed, so files.json on the server never references an object
@@ -1189,6 +1310,19 @@ async function deployToBucket(){
       headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
       body: JSON.stringify(payload, null, 2)
     });
+    if (res2.status === 401 || res2.status === 403){
+      /* Token went stale (e.g. tab left open for a day). Nothing is lost —
+         _data and _pendingUploads were already persisted above — but the
+         person needs to log back in and hit Deploy again. */
+      document.getElementById('statusRight').textContent = 'Session expired — please log in again';
+      toast('Session expired (401) — your edits are saved, log in again and re-deploy');
+      sessionStorage.removeItem('vaultSessionToken');
+      sessionStorage.removeItem('vaultSession');
+      if (results.length) _showUploadResults(results);
+      document.getElementById('loginOverlay').classList.add('show');
+      setTimeout(function(){ document.getElementById('loginPass').focus(); }, 100);
+      return;
+    }
     if (!res2.ok) throw new Error('files.json upload failed: HTTP '+res2.status);
 
     var okCount = results.filter(function(r){ return r.ok; }).length;
@@ -1196,9 +1330,14 @@ async function deployToBucket(){
     document.getElementById('statusRight').textContent = 'Deployed at '+new Date().toLocaleTimeString();
     toast(failCount ? (okCount+' uploaded, '+failCount+' failed — see details') : (results.length ? 'files.json deployed, all files uploaded!' : 'files.json deployed!'));
 
+    /* Fully deployed with nothing pending — clear the saved session so the
+       next launch doesn't ask to "resume" work that's already live. */
+    if (!_pendingUploads.length){ _clearSessionMeta(); _persistPendingUploads(); }
+    else _saveSession();
+
     if (results.length) _showUploadResults(results);
   } catch(e){
-    toast('Deploy failed: '+e.message);
+    toast('Deploy failed: '+e.message+' — your edits remain saved locally, safe to retry');
   }
 }
 
