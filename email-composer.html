@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Correspondence — Shineil Keith Mathias</title>
+<style>
+  :root{
+    --ink:#1c2b2e;
+    --paper:#f6f1e6;
+    --paper-2:#efe7d6;
+    --brass:#9c7a3c;
+    --brass-dark:#7a5e2c;
+    --line:#d8cdb0;
+    --green:#33544a;
+    --red:#8a3a2b;
+    --navy:#1a365d;
+    --navy-2:#2a4365;
+    --gold:#d69e2e;
+    font-size:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(156,122,60,0.14), transparent 42%),
+      radial-gradient(circle at 85% 0%, rgba(51,84,74,0.10), transparent 38%),
+      radial-gradient(circle at 50% 100%, rgba(154,58,43,0.06), transparent 45%),
+      repeating-linear-gradient(135deg, rgba(156,122,60,0.045) 0px, rgba(156,122,60,0.045) 1px, transparent 1px, transparent 26px),
+      linear-gradient(180deg, #f8f3e8 0%, var(--paper) 40%, var(--paper) 100%);
+    background-attachment: fixed;
+    color:var(--ink);
+    font-family: "Iowan Old Style","Palatino Linotype",Georgia,serif;
+    min-height:100vh;
+    padding:32px 16px 80px;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:
+      radial-gradient(circle, rgba(122,94,44,0.10) 1.4px, transparent 1.4px);
+    background-size:34px 34px;
+    opacity:0.55;
+  }
+  .sheet{
+    max-width:920px;
+    margin:0 auto;
+    background:var(--paper-2);
+    border:1px solid var(--line);
+    box-shadow:0 1px 0 rgba(0,0,0,0.04), 0 20px 50px -20px rgba(28,43,46,0.45), 0 0 0 1px rgba(156,122,60,0.08);
+    position:relative;
+    z-index:1;
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .sheet::before{
+    content:"";
+    position:absolute; inset:10px;
+    border:1px solid rgba(156,122,60,0.35);
+    pointer-events:none;
+  }
+  header.letterhead{
+    padding:40px 44px 30px;
+    border-bottom:3px solid var(--brass);
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:20px;
+    position:relative;
+    color:#f6f1e6;
+    background-color:var(--navy);
+    background-image:
+      linear-gradient(135deg, rgba(214,158,46,0.16) 0%, transparent 55%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 2px, transparent 2px, transparent 14px),
+      linear-gradient(120deg, var(--navy) 0%, var(--navy-2) 55%, #24425f 100%);
+    overflow:hidden;
+  }
+  header.letterhead::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image: radial-gradient(circle at 88% -10%, rgba(214,158,46,0.35), transparent 55%);
+    pointer-events:none;
+  }
+  header.letterhead::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:-1px; height:6px;
+    background:linear-gradient(90deg, var(--brass-dark), var(--gold), var(--brass-dark));
+  }
+  .seal{
+    width:60px;height:60px;border-radius:50%;
+    background:conic-gradient(from 220deg, var(--gold), var(--brass-dark), var(--gold));
+    display:flex;align-items:center;justify-content:center;
+    font-family: "Trajan Pro","Cinzel",Georgia,serif;
+    color:var(--navy);
+    font-size:21px; font-weight:bold; letter-spacing:1px;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.35), 0 3px 10px rgba(0,0,0,0.4);
+    flex-shrink:0;
+    position:relative; z-index:1;
+  }
+  .who{position:relative; z-index:1;}
+  .who h1{margin:0; font-size:1.65rem; letter-spacing:0.6px; font-weight:700; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.3);}
+  .who p{margin:6px 0 0; font-size:0.86rem; color:#f6ad55; letter-spacing:0.5px; font-style:italic;}
+  .who .contact-line{margin:8px 0 0; font-size:0.76rem; color:#cbd9ea; letter-spacing:0.3px; font-style:normal;}
+  .content{padding:30px 44px 10px;}
+
+  .tabs{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px;}
+  .tab{
+    border:1px solid var(--brass); background:transparent; color:var(--brass-dark);
+    padding:7px 14px; font-family:inherit; font-size:0.82rem; letter-spacing:0.3px;
+    cursor:pointer; border-radius:2px; transition: all .15s ease;
+  }
+  .tab:hover{background:rgba(156,122,60,0.12);}
+  .tab.active{background:var(--brass); color:var(--paper); font-weight:600;}
+
+  label{
+    display:block; font-size:0.75rem; text-transform:uppercase; letter-spacing:1.2px;
+    color:var(--brass-dark); margin:16px 0 6px;
+  }
+  input[type=text], input[type=email]{
+    width:100%; padding:10px 12px; font-family:inherit; font-size:0.95rem;
+    border:1px solid var(--line); background:#fffdf7; color:var(--ink); border-radius:2px;
+  }
+  input:focus{outline:2px solid var(--brass); outline-offset:1px;}
+
+  #subject{
+    font-size:1.15rem; font-weight:700; color:var(--navy);
+    background:linear-gradient(180deg,#fffdf7 0%, #fdf8ec 100%);
+    border:1px solid var(--brass); border-left:4px solid var(--gold);
+    padding:12px 16px; letter-spacing:0.2px;
+    box-shadow:0 2px 6px rgba(156,122,60,0.08);
+  }
+  #subject::placeholder{color:#b7a880; font-weight:400;}
+  #subject:focus{outline:2px solid var(--gold); outline-offset:1px;}
+
+  .field-wrap{position:relative;}
+  .history-panel{
+    position:absolute; top:100%; left:0; right:0; z-index:20;
+    background:#fffdf7; border:1px solid var(--brass); border-top:none;
+    max-height:220px; overflow-y:auto; border-radius:0 0 4px 4px;
+    box-shadow:0 8px 16px rgba(0,0,0,0.12);
+  }
+  .history-panel .hp-item{
+    padding:9px 12px; font-size:0.82rem; cursor:pointer; border-bottom:1px solid var(--line);
+  }
+  .history-panel .hp-item:hover{background:rgba(156,122,60,0.12);}
+  .history-panel .hp-item .hp-email{font-weight:600; color:var(--ink);}
+  .history-panel .hp-item .hp-meta{color:var(--brass-dark); font-size:0.75rem; margin-top:2px;}
+  .history-panel .hp-empty{padding:10px 12px; font-size:0.8rem; color:#8a7c5c; font-style:italic;}
+
+  /* Rich text toolbar */
+  .toolbar{
+    display:flex; flex-wrap:wrap; gap:4px; align-items:center;
+    background:#e9e0c9; border:1px solid var(--line); border-bottom:none;
+    padding:8px; border-radius:2px 2px 0 0;
+  }
+  .toolbar button{
+    font-family:inherit; border:1px solid transparent; background:transparent;
+    color:var(--ink); width:32px; height:30px; border-radius:3px; cursor:pointer;
+    font-size:0.95rem; display:flex; align-items:center; justify-content:center;
+  }
+  .toolbar button:hover{background:rgba(156,122,60,0.2);}
+  .toolbar button.active{background:var(--brass); color:#fff;}
+  .toolbar select, .toolbar input[type=color]{
+    font-family:inherit; font-size:0.8rem; border:1px solid var(--line); border-radius:3px;
+    background:#fffdf7; height:30px;
+  }
+  .toolbar input[type=color]{width:32px; padding:1px; cursor:pointer;}
+  .toolbar .sep{width:1px; height:22px; background:var(--line); margin:0 4px;}
+
+  #bodyEditable{
+    width:100%; min-height:280px; padding:16px; font-family:inherit; font-size:1rem;
+    line-height:1.6; border:1px solid var(--line); background:#fffdf7; color:var(--ink);
+    border-radius:0 0 2px 2px; overflow-y:auto;
+  }
+  #bodyEditable:focus{outline:2px solid var(--brass); outline-offset:-2px;}
+  #bodyEditable a{color:#2b6cb0;}
+
+  #bodyHtmlSource{
+    width:100%; min-height:280px; padding:16px; font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    font-size:0.85rem; line-height:1.55; border:1px solid var(--line); border-top:none; background:#1c2b2e; color:#dbe6e2;
+    border-radius:0 0 2px 2px; resize:vertical; tab-size:2;
+  }
+  #bodyHtmlSource:focus{outline:2px solid var(--brass); outline-offset:-2px;}
+
+  .mode-toggle{
+    margin-left:auto; display:flex; gap:2px; background:#e9e0c9; border:1px solid var(--line); border-radius:3px; padding:2px;
+  }
+  .mode-toggle button{
+    font-family:inherit; font-size:0.72rem; letter-spacing:0.3px; text-transform:uppercase;
+    border:none; background:transparent; color:var(--brass-dark); padding:5px 10px; border-radius:2px; cursor:pointer;
+  }
+  .mode-toggle button.active{background:var(--brass); color:#fff; font-weight:600;}
+
+  .sig-preview{
+    margin-top:22px; border-top:1px dashed var(--line); padding-top:18px;
+    font-size:0.92rem; color:var(--ink); line-height:1.55;
+  }
+  .sig-preview .name{font-weight:700; letter-spacing:0.3px;}
+  .sig-preview .role{color:var(--brass-dark); font-style:italic;}
+  .sig-preview .divider{color:var(--brass); margin:0 4px;}
+
+  /* Attachments */
+  .attach-zone{
+    margin-top:8px; border:1px dashed var(--brass); border-radius:4px;
+    padding:14px; background:rgba(255,253,247,0.6); text-align:center;
+    font-size:0.85rem; color:var(--brass-dark); cursor:pointer;
+  }
+  .attach-zone:hover{background:rgba(156,122,60,0.08);}
+  .attach-list{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+  .attach-chip{
+    display:flex; align-items:center; gap:8px; background:#fffdf7; border:1px solid var(--line);
+    padding:6px 10px; border-radius:14px; font-size:0.78rem;
+  }
+  .attach-chip .fname{max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .attach-chip .fsize{color:#8a7c5c;}
+  .attach-chip button{
+    border:none; background:transparent; color:var(--red); cursor:pointer; font-weight:bold; font-size:0.9rem;
+    line-height:1;
+  }
+
+  .actions{display:flex; flex-wrap:wrap; gap:10px; padding:22px 44px 40px; align-items:center;}
+  button.action{
+    font-family:inherit; font-size:0.9rem; letter-spacing:0.3px;
+    padding:12px 20px; border:none; border-radius:2px; cursor:pointer;
+    display:flex; align-items:center; gap:8px;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  button.action:hover{transform: translateY(-1px); box-shadow:0 4px 10px rgba(0,0,0,0.15);}
+  button.action:disabled{opacity:0.6; cursor:not-allowed; transform:none;}
+  .primary{background:var(--green); color:#fff;}
+  .secondary{background:transparent; color:var(--ink); border:1px solid var(--ink);}
+  .status{font-size:0.82rem; color:var(--green); align-self:center;}
+
+  .footer-note{text-align:center; font-size:0.75rem; color:var(--brass-dark); letter-spacing:0.4px; padding-bottom:26px;}
+
+  details.preview-toggle{margin:20px 44px 0; border-top:1px dashed var(--line); padding-top:14px;}
+  details.preview-toggle summary{cursor:pointer; font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; color:var(--brass-dark);}
+  #renderedPreviewFrame{width:100%; height:520px; border:1px solid var(--line); margin-top:14px; background:#fff; border-radius:4px;}
+
+  @media (max-width:600px){
+    header.letterhead{flex-direction:column; align-items:flex-start;}
+    .content, .actions{padding-left:22px; padding-right:22px;}
+    details.preview-toggle{margin-left:22px; margin-right:22px;}
+  }
+
+  /* ---- Styles used only inside the generated email template (mirrors email.html) ---- */
+  .tpl-email-card{max-width:750px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 25px rgba(26,54,93,0.08);border:1px solid #cbd5e0;}
+  .tpl-email-header{background-color:#1a365d;background-image:linear-gradient(135deg,#1a365d 0%,#2a4365 100%);color:#ffffff;padding:35px 40px;border-bottom:4px solid #d69e2e;}
+  .tpl-meta-table{width:100%;border-collapse:collapse;}
+  .tpl-meta-table td{padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;}
+  .tpl-meta-label{font-weight:600;color:#f6ad55;width:80px;white-space:nowrap;}
+  .tpl-subject-line{font-size:13.5pt;font-weight:bold;color:#ffffff;margin-top:5px;letter-spacing:0.3px;}
+  .tpl-email-body{padding:40px;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11pt;color:#2d3748;line-height:1.6;}
+  .tpl-signature{margin-top:30px;border-top:2px solid #edf2f7;padding-top:20px;}
+  .tpl-sig-name{font-weight:700;color:#1a365d;font-size:12pt;}
+</style>
+</head>
+<body>
+
+<div class="sheet">
+  <header class="letterhead">
+    <div class="who">
+      <h1>Shineil Keith Mathias</h1>
+      <p>Prospective Student · Privatgymnasium der Herz Jesu Missionare · Salzburg</p>
+      <p class="contact-line">shinumaths989@gmail.com &nbsp;·&nbsp; +91 86055 86173 &nbsp;·&nbsp; WhatsApp @shineil.mathias</p>
+    </div>
+    <div class="seal">SKM</div>
+  </header>
+
+  <div class="content">
+    <label style="margin-top:0;">Choose a starting point</label>
+    <div class="tabs" id="tabs">
+      <button class="tab" data-template="unsubscribe">Unsubscribe request</button>
+      <button class="tab" data-template="formal">Formal enquiry</button>
+      <button class="tab" data-template="followup">Follow-up</button>
+      <button class="tab" data-template="custom">Blank / custom</button>
+    </div>
+
+    <label for="to">To</label>
+    <div class="field-wrap">
+      <input type="text" id="to" placeholder="recipient@example.com" autocomplete="off">
+      <div class="history-panel" id="historyPanel" style="display:none;"></div>
+    </div>
+
+    <label for="subject">Subject</label>
+    <input type="text" id="subject" placeholder="Subject line">
+
+    <label for="bodyEditable">Message</label>
+    <div class="toolbar" id="toolbar">
+      <button type="button" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+      <button type="button" data-cmd="italic" title="Italic (Ctrl+I)"><i>I</i></button>
+      <button type="button" data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button>
+      <button type="button" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+      <div class="sep"></div>
+      <select id="fontSizeSel" title="Font size">
+        <option value="2">Small</option>
+        <option value="3" selected>Normal</option>
+        <option value="4">Medium</option>
+        <option value="5">Large</option>
+        <option value="6">X-Large</option>
+      </select>
+      <input type="color" id="fontColorPicker" title="Text color" value="#1c2b2e">
+      <input type="color" id="hiliteColorPicker" title="Highlight color" value="#fff3b0">
+      <div class="sep"></div>
+      <button type="button" data-cmd="justifyLeft" title="Align left">⯇</button>
+      <button type="button" data-cmd="justifyCenter" title="Align center">☰</button>
+      <button type="button" data-cmd="justifyRight" title="Align right">⯈</button>
+      <div class="sep"></div>
+      <button type="button" data-cmd="insertUnorderedList" title="Bullet list">•≡</button>
+      <button type="button" data-cmd="insertOrderedList" title="Numbered list">1≡</button>
+      <div class="sep"></div>
+      <button type="button" id="linkBtn" title="Insert link">🔗</button>
+      <button type="button" data-cmd="removeFormat" title="Clear formatting">Tx</button>
+      <div class="mode-toggle" id="modeToggle">
+        <button type="button" class="active" data-mode="rich">Rich text</button>
+        <button type="button" data-mode="code">HTML code</button>
+      </div>
+    </div>
+    <div id="bodyEditable" contenteditable="true"></div>
+    <textarea id="bodyHtmlSource" spellcheck="false" style="display:none;"></textarea>
+
+    <label for="sigSelect">Signature</label>
+    <select id="sigSelect" style="width:100%; padding:9px 12px; font-family:inherit; font-size:0.88rem; border:1px solid var(--line); background:#fffdf7; color:var(--ink); border-radius:2px;">
+      <option value="student" selected>Student — Privatgymnasium der Herz Jesu Missionare</option>
+      <option value="founder">Founder — Shine Ministry</option>
+      <option value="minimal">Minimal — name &amp; contact only</option>
+    </select>
+    <div class="sig-preview" id="sigPreview"></div>
+
+    <label>Attachments</label>
+    <div class="attach-zone" id="attachZone">Click to attach files, or drag &amp; drop here</div>
+    <input type="file" id="attachInput" multiple style="display:none;">
+    <div class="attach-list" id="attachList"></div>
+  </div>
+
+  <div class="actions">
+    <button class="action primary" id="sendBtn">Send now</button>
+    <button class="action secondary" id="copyBtn">Copy full email</button>
+    <button class="action secondary" id="mailBtn">Open in mail app</button>
+    <span class="status" id="statusMsg"></span>
+  </div>
+
+  <details class="preview-toggle">
+    <summary>Preview designed email as it will be sent</summary>
+    <iframe id="renderedPreviewFrame"></iframe>
+  </details>
+
+  <div class="footer-note">shinumaths989@gmail.com · +91 86055 86173 · WhatsApp @shineil.mathias</div>
+</div>
+
+<script>
+/* ---------------- Signature ---------------- */
+const AVATAR_URL = "https://72oe-v2sx.shine-ministry.com/Shineil-Mathias.png";
+
+const AVATAR_HTML = `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:56px;height:56px;border-radius:50%;background-color:#ffffff;border:2px solid #d69e2e;box-shadow:0 2px 6px rgba(26,54,93,0.18);">
+  <tr><td style="width:56px;height:56px;border-radius:50%;padding:2px;">
+    <img src="${AVATAR_URL}" width="52" height="52" alt="Shineil Keith Mathias" style="width:52px;height:52px;border-radius:50%;display:block;object-fit:cover;background-color:#ffffff;">
+  </td></tr>
+</table>`;
+
+function sigRow(icon, html){
+  return `<td style="font-size:10pt;color:#2d3748;padding:2px 0;"><span style="color:#d69e2e;">${icon}</span>&nbsp; ${html}</td>`;
+}
+
+const SIGNATURES = {
+  student: {
+    label: "Prospective Student, Privatgymnasium der Herz Jesu Missionare",
+    eyebrow: "PROSPECTIVE STUDENT",
+    org: "Privatgymnasium der Herz Jesu Missionare &middot; Salzburg, Austria",
+    text:
+`Shineil Keith Mathias
+Prospective Student, Privatgymnasium der Herz Jesu Missionare
+Salzburg, Austria - 5020
+Mobile: +91 86055 86173
+WhatsApp: @shineil.mathias
+E-Mail: shinumaths989@gmail.com`
+  },
+  founder: {
+    label: "Founder, Shine Ministry",
+    eyebrow: "FOUNDER, SHINE MINISTRY",
+    org: "Shine Ministry &middot; Salzburg, Austria",
+    text:
+`Shineil Keith Mathias
+Founder, Shine Ministry
+Salzburg, Austria - 5020
+Mobile: +91 86055 86173
+WhatsApp: @shineil.mathias
+E-Mail: shinumaths989@gmail.com`
+  },
+  minimal: {
+    label: "",
+    eyebrow: "",
+    org: "",
+    text:
+`Shineil Keith Mathias
+Mobile: +91 86055 86173
+WhatsApp: @shineil.mathias
+E-Mail: shinumaths989@gmail.com`
+  }
+};
+
+function buildSignatureHtml(key){
+  const s = SIGNATURES[key] || SIGNATURES.student;
+  return `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;background-color:#ffffff;">
+  <tr>
+    <td style="width:6px;background-color:#d69e2e;border-radius:3px;" width="6">&nbsp;</td>
+    <td style="width:14px;" width="14">&nbsp;</td>
+    <td style="width:56px;vertical-align:top;" width="56">${AVATAR_HTML}</td>
+    <td style="width:16px;" width="16">&nbsp;</td>
+    <td style="vertical-align:top;background-color:#ffffff;">
+      <div style="font-weight:700;color:#1a365d;font-size:13pt;letter-spacing:0.2px;">Shineil Keith Mathias</div>
+      ${s.eyebrow ? `<div style="color:#c05621;font-weight:600;font-size:9.5pt;margin-top:2px;letter-spacing:0.3px;">${s.eyebrow}</div>` : ''}
+      ${s.org ? `<div style="color:#4a5568;font-size:10pt;margin-top:1px;">${s.org}</div>` : ''}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:10px;">
+        <tr>
+          ${sigRow('&#9742;', '+91 86055 86173')}
+          <td style="font-size:10pt;color:#a0aec0;padding:0 10px;">|</td>
+          ${sigRow('&#128172;', 'WhatsApp @shineil.mathias')}
+        </tr>
+        <tr>
+          <td colspan="3" style="font-size:10pt;color:#2d3748;padding:4px 0 0;">
+            <span style="color:#d69e2e;">&#9993;</span>&nbsp; <a href="mailto:shinumaths989@gmail.com" style="color:#2b6cb0;text-decoration:none;font-weight:500;">shinumaths989@gmail.com</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>`;
+}
+
+let currentSignatureKey = 'student';
+
+function renderSigPreview(){
+  const s = SIGNATURES[currentSignatureKey] || SIGNATURES.student;
+  sigPreview.innerHTML =
+    `<span class="name">Shineil Keith Mathias</span><br>
+     ${s.label ? `<span class="role">${s.label}</span><br>` : ''}
+     Salzburg, Austria - 5020<span class="divider">·</span>+91 86055 86173<br>
+     WhatsApp @shineil.mathias<span class="divider">·</span>shinumaths989@gmail.com`;
+}
+
+const sigPreview = document.getElementById('sigPreview');
+const sigSelect = document.getElementById('sigSelect');
+renderSigPreview();
+sigSelect.addEventListener('change', () => {
+  currentSignatureKey = sigSelect.value;
+  renderSigPreview();
+  const details = document.querySelector('.preview-toggle');
+  if (details.open) refreshPreview();
+});
+
+/* ---------------- Templates ---------------- */
+const templates = {
+  unsubscribe: {
+    subject: "Unsubscribe Request",
+    body:
+`<p>To Whom It May Concern,</p>
+<p>I am writing to request that my email address, shinumaths989@gmail.com, be removed from your mailing list with immediate effect. I no longer wish to receive newsletters, promotional material, or other non-essential correspondence from your organisation.</p>
+<p>Please confirm once this has been actioned.</p>
+<p>Thank you for your attention to this matter.</p>
+<p>Kind regards,</p>`
+  },
+  formal: {
+    subject: "Enquiry Regarding [Subject]",
+    body:
+`<p>Dear Sir/Madam,</p>
+<p>I hope this email finds you well. My name is <b>Shineil Keith Mathias</b>, and I am writing to enquire about [insert topic here].</p>
+<p>[Add the details of your request here.]</p>
+<p>I would be grateful for your response at your earliest convenience, and I am happy to provide any further information that may be required.</p>
+<p>Thank you very much for your time and consideration.</p>
+<p>Yours sincerely,</p>`
+  },
+  followup: {
+    subject: "Following Up: [Original Subject]",
+    body:
+`<p>Dear [Name],</p>
+<p>I hope you are doing well. I am writing to follow up on my previous email regarding [insert topic], sent on [date], as I have not yet received a response.</p>
+<p>I understand you may be busy, and I would greatly appreciate an update whenever convenient for you.</p>
+<p>Thank you for your time, and I look forward to hearing from you.</p>
+<p>Best regards,</p>`
+  },
+  custom: { subject: "", body: "" }
+};
+
+const subjectEl = document.getElementById('subject');
+const bodyEl = document.getElementById('bodyEditable');
+const toEl = document.getElementById('to');
+const tabs = document.querySelectorAll('.tab');
+const statusMsg = document.getElementById('statusMsg');
+
+function loadTemplate(key){
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.template === key));
+  const tpl = templates[key];
+  subjectEl.value = tpl.subject;
+  bodyEl.innerHTML = tpl.body;
+  const src = document.getElementById('bodyHtmlSource');
+  if (src) src.value = tpl.body;
+  statusMsg.textContent = '';
+}
+
+function getBodyHtml(){
+  const src = document.getElementById('bodyHtmlSource');
+  const mode = src && src.style.display !== 'none' ? 'code' : 'rich';
+  return mode === 'code' ? src.value : bodyEl.innerHTML;
+}
+tabs.forEach(tab => tab.addEventListener('click', () => loadTemplate(tab.dataset.template)));
+loadTemplate('formal');
+
+/* ---------------- Rich text toolbar ---------------- */
+document.getElementById('toolbar').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-cmd]');
+  if (!btn) return;
+  e.preventDefault();
+  bodyEl.focus();
+  document.execCommand(btn.dataset.cmd, false, null);
+});
+document.getElementById('fontSizeSel').addEventListener('change', (e) => {
+  bodyEl.focus();
+  document.execCommand('fontSize', false, e.target.value);
+});
+document.getElementById('fontColorPicker').addEventListener('input', (e) => {
+  bodyEl.focus();
+  document.execCommand('foreColor', false, e.target.value);
+});
+document.getElementById('hiliteColorPicker').addEventListener('input', (e) => {
+  bodyEl.focus();
+  document.execCommand('hiliteColor', false, e.target.value);
+});
+document.getElementById('linkBtn').addEventListener('click', () => {
+  const url = prompt('Enter URL (include https://):');
+  if (url) { bodyEl.focus(); document.execCommand('createLink', false, url); }
+});
+// keep default browser shortcuts (Ctrl+B/I/U) working naturally inside contenteditable
+
+/* ---------------- Rich text / HTML code toggle ---------------- */
+const bodyHtmlSource = document.getElementById('bodyHtmlSource');
+const modeToggleBtns = document.querySelectorAll('#modeToggle button');
+let currentEditMode = 'rich';
+
+modeToggleBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const mode = btn.dataset.mode;
+    if (mode === currentEditMode) return;
+
+    if (mode === 'code') {
+      // switching FROM rich text TO code: populate textarea with current HTML
+      bodyHtmlSource.value = bodyEl.innerHTML.trim();
+      bodyEl.style.display = 'none';
+      bodyHtmlSource.style.display = 'block';
+    } else {
+      // switching FROM code TO rich text: render textarea HTML back into editor
+      bodyEl.innerHTML = bodyHtmlSource.value;
+      bodyHtmlSource.style.display = 'none';
+      bodyEl.style.display = 'block';
+    }
+    currentEditMode = mode;
+    modeToggleBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+
+    const details = document.querySelector('.preview-toggle');
+    if (details.open) refreshPreview();
+  });
+});
+
+bodyHtmlSource.addEventListener('input', () => {
+  const details = document.querySelector('.preview-toggle');
+  if (details.open) refreshPreview();
+});
+
+/* ---------------- Attachments ---------------- */
+let attachments = []; // {name, size, type, base64}
+const attachZone = document.getElementById('attachZone');
+const attachInput = document.getElementById('attachInput');
+const attachList = document.getElementById('attachList');
+
+attachZone.addEventListener('click', () => attachInput.click());
+attachZone.addEventListener('dragover', (e) => { e.preventDefault(); attachZone.style.background='rgba(156,122,60,0.15)'; });
+attachZone.addEventListener('dragleave', () => attachZone.style.background='');
+attachZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  attachZone.style.background='';
+  handleFiles(e.dataTransfer.files);
+});
+attachInput.addEventListener('change', () => handleFiles(attachInput.files));
+
+function handleFiles(fileList){
+  [...fileList].forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      attachments.push({
+        name: file.name,
+        size: file.size,
+        type: file.type || 'application/octet-stream',
+        base64: reader.result.split(',')[1]
+      });
+      renderAttachList();
+    };
+    reader.readAsDataURL(file);
+  });
+  attachInput.value = '';
+}
+
+function fmtSize(bytes){
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+function renderAttachList(){
+  attachList.innerHTML = attachments.map((a, i) => `
+    <div class="attach-chip">
+      <span class="fname" title="${a.name}">📎 ${a.name}</span>
+      <span class="fsize">${fmtSize(a.size)}</span>
+      <button type="button" data-idx="${i}" title="Remove">✕</button>
+    </div>`).join('');
+  attachList.querySelectorAll('button[data-idx]').forEach(b => {
+    b.addEventListener('click', () => {
+      attachments.splice(parseInt(b.dataset.idx), 1);
+      renderAttachList();
+    });
+  });
+}
+
+/* ---------------- Recipient history ---------------- */
+const HISTORY_KEY = 'ecRecipientHistoryV1';
+
+function loadHistory(){
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveHistoryEntry(email, subject){
+  const hist = loadHistory();
+  if (!hist[email]) hist[email] = [];
+  hist[email].unshift({ subject, date: new Date().toISOString() });
+  hist[email] = hist[email].slice(0, 20);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+}
+
+const historyPanel = document.getElementById('historyPanel');
+
+function renderHistoryPanel(){
+  const hist = loadHistory();
+  const query = toEl.value.trim().toLowerCase();
+  let emails = Object.keys(hist);
+  if (query) emails = emails.filter(e => e.toLowerCase().includes(query));
+  emails.sort((a,b) => new Date(hist[b][0].date) - new Date(hist[a][0].date));
+
+  if (!emails.length){
+    if (!query){ historyPanel.style.display = 'none'; return; }
+    historyPanel.innerHTML = `<div class="hp-empty">No previous correspondence found.</div>`;
+    historyPanel.style.display = 'block';
+    return;
+  }
+
+  historyPanel.innerHTML = emails.slice(0, 8).map(email => {
+    const entries = hist[email];
+    const last = entries[0];
+    const dateStr = new Date(last.date).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+    return `<div class="hp-item" data-email="${email}">
+      <div class="hp-email">${email}</div>
+      <div class="hp-meta">${entries.length} previous email${entries.length>1?'s':''} · last: "${last.subject || '(no subject)'}" on ${dateStr}</div>
+    </div>`;
+  }).join('');
+  historyPanel.style.display = 'block';
+
+  historyPanel.querySelectorAll('.hp-item').forEach(item => {
+    item.addEventListener('click', () => {
+      toEl.value = item.dataset.email;
+      historyPanel.style.display = 'none';
+    });
+  });
+}
+
+toEl.addEventListener('focus', renderHistoryPanel);
+toEl.addEventListener('input', renderHistoryPanel);
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.field-wrap')) historyPanel.style.display = 'none';
+});
+
+/* ---------------- Assemble designed HTML email ---------------- */
+function buildDesignedEmailHtml(){
+  const subject = subjectEl.value.trim() || '(no subject)';
+  const to = toEl.value.trim();
+  const bodyHtml = getBodyHtml();
+  const dateStr = new Date().toLocaleString(undefined, { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(subject)}</title>
+<style>
+  body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11pt;color:#2d3748;line-height:1.6;
+    background-color:#f0f4f8;
+    background-image:radial-gradient(#cbd5e0 1px, transparent 1px), radial-gradient(#cbd5e0 1px, #f0f4f8 1px);
+    background-size:24px 24px; background-position:0 0, 12px 12px; margin:0; padding:40px 20px;}
+  .email-card{max-width:750px;margin:0 auto;background-color:#ffffff;border-radius:16px;overflow:hidden;
+    box-shadow:0 10px 25px rgba(26,54,93,0.08);border:1px solid #cbd5e0;}
+  .email-header{background-color:#1a365d;background-image:linear-gradient(135deg,#1a365d 0%,#2a4365 100%);
+    color:#ffffff;padding:35px 40px;border-bottom:4px solid #d69e2e;}
+  .meta-table{width:100%;border-collapse:collapse;}
+  .meta-table td{padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;}
+  .meta-label{font-weight:600;color:#f6ad55;width:80px;white-space:nowrap;}
+  .subject-line{font-size:13.5pt;font-weight:bold;color:#ffffff;margin-top:5px;letter-spacing:0.3px;}
+  .subject-banner{margin-top:16px;background-color:rgba(255,255,255,0.08);border-left:3px solid #d69e2e;
+    border-radius:0 6px 6px 0;padding:10px 16px;}
+  .subject-eyebrow{font-size:8.5pt;color:#f6ad55;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
+  .email-body{padding:40px;background-color:#ffffff;}
+  .email-body p{margin:0 0 16px;text-align:justify;color:#2d3748;}
+  .email-body a{color:#2b6cb0;}
+  .signature-section{margin-top:30px;border-top:2px solid #edf2f7;padding-top:20px;}
+  .signature-name{font-weight:700;color:#1a365d;font-size:12pt;}
+  .attach-note{margin-top:24px;background:#f7fafc;border:1px solid #e2e8f0;border-left:4px solid #3182ce;
+    border-radius:8px;padding:16px 20px;font-size:10.5pt;color:#4a5568;}
+  .attach-note b{color:#1a365d;}
+</style>
+</head>
+<body>
+<div class="email-card">
+  <div class="email-header">
+    <table class="meta-table">
+      <tr><td class="meta-label">From:</td><td>Shineil Keith Mathias &lt;shinumaths989@gmail.com&gt;</td></tr>
+      <tr><td class="meta-label">To:</td><td>${escapeHtml(to)}</td></tr>
+      <tr><td class="meta-label">Date:</td><td>${dateStr}</td></tr>
+    </table>
+    <div class="subject-banner" style="margin-top:16px;background-color:rgba(255,255,255,0.08);border-left:3px solid #d69e2e;border-radius:0 6px 6px 0;padding:10px 16px;">
+      <div class="subject-eyebrow" style="font-size:8.5pt;color:#f6ad55;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;">Subject</div>
+      <div class="subject-line" style="font-size:13.5pt;font-weight:bold;color:#ffffff;margin-top:3px;letter-spacing:0.3px;">${escapeHtml(subject)}</div>
+    </div>
+  </div>
+  <div class="email-body">
+    ${bodyHtml}
+    ${attachments.length ? `<div class="attach-note"><b>Attachments (${attachments.length}):</b> ${attachments.map(a => escapeHtml(a.name)).join(', ')}</div>` : ''}
+    <div class="signature-section" style="margin-top:30px;border-top:2px solid #edf2f7;padding-top:20px;background-color:#ffffff;">${buildSignatureHtml(currentSignatureKey)}</div>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+/* Live preview */
+function refreshPreview(){
+  const frame = document.getElementById('renderedPreviewFrame');
+  frame.srcdoc = buildDesignedEmailHtml();
+}
+document.querySelector('.preview-toggle').addEventListener('toggle', function(){
+  if (this.open) refreshPreview();
+});
+[subjectEl, toEl, bodyEl].forEach(el => el.addEventListener('input', () => {
+  const details = document.querySelector('.preview-toggle');
+  if (details.open) refreshPreview();
+}));
+
+/* ---------------- Plain-text fallback (for copy / mailto) ---------------- */
+function plainTextBody(){
+  const tmp = document.createElement('div');
+  tmp.innerHTML = getBodyHtml().replace(/<\/(p|div|li|br)>/gi, '\n').replace(/<li>/gi, '• ');
+  const text = tmp.textContent || tmp.innerText || '';
+  return text.replace(/\n{3,}/g, '\n\n').trim();
+}
+function assembleEmailPlain(){
+  return `${plainTextBody()}\n\n${(SIGNATURES[currentSignatureKey] || SIGNATURES.student).text}`;
+}
+
+/* ---------------- Actions ---------------- */
+document.getElementById('copyBtn').addEventListener('click', () => {
+  navigator.clipboard.writeText(assembleEmailPlain()).then(() => {
+    statusMsg.style.color = '#33544a';
+    statusMsg.textContent = "Copied to clipboard ✓";
+    setTimeout(() => statusMsg.textContent = '', 2500);
+  }).catch(() => {
+    statusMsg.style.color = '#8a3a2b';
+    statusMsg.textContent = "Couldn't copy — select and copy manually.";
+  });
+});
+
+document.getElementById('mailBtn').addEventListener('click', () => {
+  const subject = encodeURIComponent(subjectEl.value);
+  const body = encodeURIComponent(assembleEmailPlain());
+  const to = toEl.value.trim();
+  window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+});
+
+const SEND_ENDPOINT = "https://email.shinumaths909.workers.dev/send-email";
+
+document.getElementById('sendBtn').addEventListener('click', async () => {
+  const to = toEl.value.trim();
+  const subject = subjectEl.value.trim();
+  const sendBtn = document.getElementById('sendBtn');
+
+  if (!to) {
+    statusMsg.style.color = '#8a3a2b';
+    statusMsg.textContent = "Please enter a recipient email.";
+    return;
+  }
+
+  const html = buildDesignedEmailHtml();
+  const text = assembleEmailPlain();
+
+  sendBtn.disabled = true;
+  sendBtn.textContent = "Sending…";
+  statusMsg.style.color = '#33544a';
+  statusMsg.textContent = '';
+
+  try {
+    const res = await fetch(SEND_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to,
+        subject,
+        body: text,        // plain-text fallback
+        html,               // designed HTML version — requires backend support, see note below
+        attachments: attachments.map(a => ({
+          filename: a.name,
+          type: a.type,
+          content: a.base64   // base64-encoded, no data: prefix
+        }))
+      })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      statusMsg.style.color = '#33544a';
+      statusMsg.textContent = "Sent ✓";
+      saveHistoryEntry(to, subject);
+    } else {
+      statusMsg.style.color = '#8a3a2b';
+      statusMsg.textContent = "Failed to send: " + (data.error || "unknown error");
+    }
+  } catch (err) {
+    statusMsg.style.color = '#8a3a2b';
+    statusMsg.textContent = "Network error — check the backend URL and try again.";
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.textContent = "Send now";
+  }
+});
+</script>
+
+</body>
+</html>
