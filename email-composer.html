@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/png" href="Gmail.png">
-  <title>Correspondence — Shineil Keith Mathias</title>
+  <link rel="icon" type="image/png" href="Gmail.png">
+<title>Correspondence — Shineil Keith Mathias</title>
 <style>
   :root{
     --ink:#1c2b2e;
@@ -680,11 +680,44 @@ document.addEventListener('click', (e) => {
 });
 
 /* ---------------- Assemble designed HTML email ---------------- */
+function inlineBodyContent(html){
+  // Force every <p> inside the pasted/typed body to carry inline styles too,
+  // since Gmail and most clients strip non-inline CSS from received mail.
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  tmp.querySelectorAll('p').forEach(p => {
+    const existing = p.getAttribute('style') || '';
+    p.setAttribute('style', `margin:0 0 16px;text-align:justify;color:#2d3748;${existing}`);
+  });
+  tmp.querySelectorAll('a').forEach(a => {
+    const existing = a.getAttribute('style') || '';
+    a.setAttribute('style', `color:#2b6cb0;${existing}`);
+  });
+  tmp.querySelectorAll('ul,ol').forEach(l => {
+    const existing = l.getAttribute('style') || '';
+    l.setAttribute('style', `margin:0 0 16px;padding-left:22px;color:#2d3748;${existing}`);
+  });
+  return tmp.innerHTML;
+}
+
 function buildDesignedEmailHtml(){
   const subject = subjectEl.value.trim() || '(no subject)';
   const to = toEl.value.trim();
-  const bodyHtml = getBodyHtml();
+  const bodyHtml = inlineBodyContent(getBodyHtml());
   const dateStr = new Date().toLocaleString(undefined, { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+  // NOTE: Gmail and most inboxes strip <style> blocks from received HTML mail,
+  // so this template uses table-based layout with fully inline styles only —
+  // no external/head <style> rules — to guarantee the design survives delivery.
+  const attachNote = attachments.length
+    ? `<tr><td style="padding:0;">
+         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;background-color:#f7fafc;border:1px solid #e2e8f0;border-left:4px solid #3182ce;border-radius:8px;">
+           <tr><td style="padding:16px 20px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:10.5pt;color:#4a5568;">
+             <b style="color:#1a365d;">Attachments (${attachments.length}):</b> ${attachments.map(a => escapeHtml(a.name)).join(', ')}
+           </td></tr>
+         </table>
+       </td></tr>`
+    : '';
 
   return `<!DOCTYPE html>
 <html>
@@ -692,51 +725,49 @@ function buildDesignedEmailHtml(){
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escapeHtml(subject)}</title>
-<style>
-  body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11pt;color:#2d3748;line-height:1.6;
-    background-color:#f0f4f8;
-    background-image:radial-gradient(#cbd5e0 1px, transparent 1px), radial-gradient(#cbd5e0 1px, #f0f4f8 1px);
-    background-size:24px 24px; background-position:0 0, 12px 12px; margin:0; padding:40px 20px;}
-  .email-card{max-width:750px;margin:0 auto;background-color:#ffffff;border-radius:16px;overflow:hidden;
-    box-shadow:0 10px 25px rgba(26,54,93,0.08);border:1px solid #cbd5e0;}
-  .email-header{background-color:#1a365d;background-image:linear-gradient(135deg,#1a365d 0%,#2a4365 100%);
-    color:#ffffff;padding:35px 40px;border-bottom:4px solid #d69e2e;}
-  .meta-table{width:100%;border-collapse:collapse;}
-  .meta-table td{padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;}
-  .meta-label{font-weight:600;color:#f6ad55;width:80px;white-space:nowrap;}
-  .subject-line{font-size:13.5pt;font-weight:bold;color:#ffffff;margin-top:5px;letter-spacing:0.3px;}
-  .subject-banner{margin-top:16px;background-color:rgba(255,255,255,0.08);border-left:3px solid #d69e2e;
-    border-radius:0 6px 6px 0;padding:10px 16px;}
-  .subject-eyebrow{font-size:8.5pt;color:#f6ad55;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
-  .email-body{padding:40px;background-color:#ffffff;}
-  .email-body p{margin:0 0 16px;text-align:justify;color:#2d3748;}
-  .email-body a{color:#2b6cb0;}
-  .signature-section{margin-top:30px;border-top:2px solid #edf2f7;padding-top:20px;}
-  .signature-name{font-weight:700;color:#1a365d;font-size:12pt;}
-  .attach-note{margin-top:24px;background:#f7fafc;border:1px solid #e2e8f0;border-left:4px solid #3182ce;
-    border-radius:8px;padding:16px 20px;font-size:10.5pt;color:#4a5568;}
-  .attach-note b{color:#1a365d;}
-</style>
 </head>
-<body>
-<div class="email-card">
-  <div class="email-header">
-    <table class="meta-table">
-      <tr><td class="meta-label">From:</td><td>Shineil Keith Mathias &lt;shinumaths989@gmail.com&gt;</td></tr>
-      <tr><td class="meta-label">To:</td><td>${escapeHtml(to)}</td></tr>
-      <tr><td class="meta-label">Date:</td><td>${dateStr}</td></tr>
-    </table>
-    <div class="subject-banner" style="margin-top:16px;background-color:rgba(255,255,255,0.08);border-left:3px solid #d69e2e;border-radius:0 6px 6px 0;padding:10px 16px;">
-      <div class="subject-eyebrow" style="font-size:8.5pt;color:#f6ad55;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;">Subject</div>
-      <div class="subject-line" style="font-size:13.5pt;font-weight:bold;color:#ffffff;margin-top:3px;letter-spacing:0.3px;">${escapeHtml(subject)}</div>
-    </div>
-  </div>
-  <div class="email-body">
-    ${bodyHtml}
-    ${attachments.length ? `<div class="attach-note"><b>Attachments (${attachments.length}):</b> ${attachments.map(a => escapeHtml(a.name)).join(', ')}</div>` : ''}
-    <div class="signature-section" style="margin-top:30px;border-top:2px solid #edf2f7;padding-top:20px;background-color:#ffffff;">${buildSignatureHtml(currentSignatureKey)}</div>
-  </div>
-</div>
+<body style="margin:0;padding:40px 20px;background-color:#f0f4f8;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f0f4f8;">
+<tr><td align="center">
+<table role="presentation" width="750" cellpadding="0" cellspacing="0" border="0" style="max-width:750px;width:100%;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #cbd5e0;">
+
+  <tr>
+    <td style="background-color:#1a365d;background-image:linear-gradient(135deg,#1a365d 0%,#2a4365 100%);color:#ffffff;padding:35px 40px;border-bottom:4px solid #d69e2e;border-radius:16px 16px 0 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;width:80px;white-space:nowrap;font-weight:600;color:#f6ad55;">From:</td>
+            <td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Shineil Keith Mathias &lt;shinumaths989@gmail.com&gt;</td></tr>
+        <tr><td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;width:80px;white-space:nowrap;font-weight:600;color:#f6ad55;">To:</td>
+            <td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">${escapeHtml(to)}</td></tr>
+        <tr><td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;width:80px;white-space:nowrap;font-weight:600;color:#f6ad55;">Date:</td>
+            <td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">${dateStr}</td></tr>
+      </table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;background-color:#22436b;border-left:3px solid #d69e2e;border-radius:0 6px 6px 0;">
+        <tr><td style="padding:10px 16px;">
+          <div style="font-size:8.5pt;color:#f6ad55;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Subject</div>
+          <div style="font-size:13.5pt;font-weight:bold;color:#ffffff;margin-top:3px;letter-spacing:0.3px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">${escapeHtml(subject)}</div>
+        </td></tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td style="padding:40px;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11pt;color:#2d3748;line-height:1.6;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;">
+        ${bodyHtml}
+      </td></tr>
+      ${attachNote}
+      <tr><td style="padding:0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:30px;border-top:2px solid #edf2f7;">
+          <tr><td style="padding-top:20px;">${buildSignatureHtml(currentSignatureKey)}</td></tr>
+        </table>
+      </td></tr>
+      </table>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
 </body>
 </html>`;
 }
