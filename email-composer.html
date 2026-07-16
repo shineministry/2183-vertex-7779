@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/png" href="Gmail.png">
 <title>Correspondence — Shineil Keith Mathias</title>
+<link rel="icon" type="image/png" href="Gmail.png">
 <style>
   :root{
     --ink:#1c2b2e;
@@ -286,6 +286,21 @@
     <label for="subject">Subject</label>
     <input type="text" id="subject" placeholder="Subject line">
 
+    <div style="display:flex; gap:16px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:220px;">
+        <label for="salutationSelect">Salutation</label>
+        <select id="salutationSelect" style="width:100%; padding:9px 12px; font-family:inherit; font-size:0.88rem; border:1px solid var(--line); background:#fffdf7; color:var(--ink); border-radius:2px;">
+          <option value="" selected>— None —</option>
+        </select>
+      </div>
+      <div style="flex:1; min-width:220px;">
+        <label for="closingSelect">Closing</label>
+        <select id="closingSelect" style="width:100%; padding:9px 12px; font-family:inherit; font-size:0.88rem; border:1px solid var(--line); background:#fffdf7; color:var(--ink); border-radius:2px;">
+          <option value="" selected>— None —</option>
+        </select>
+      </div>
+    </div>
+
     <label for="bodyEditable">Message</label>
     <div class="toolbar" id="toolbar">
       <button type="button" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
@@ -451,6 +466,84 @@ sigSelect.addEventListener('change', () => {
   const details = document.querySelector('.preview-toggle');
   if (details.open) refreshPreview();
 });
+
+/* ---------------- Salutation / Closing dropdowns ---------------- */
+const DEFAULT_SALUTATIONS = ["Dear Sir,", "Dear Ma'am,", "Dear Sir/Ma'am,", "Respected Sir,", "Respected Ma'am,", "Respected Sir/Ma'am,"];
+const DEFAULT_CLOSINGS = ["Yours faithfully,", "Yours sincerely,"];
+const CUSTOM_SALUTATIONS_KEY = 'ecCustomSalutationsV1';
+const CUSTOM_CLOSINGS_KEY = 'ecCustomClosingsV1';
+const CREATE_VALUE = '__create_new__';
+
+function loadCustomList(key){
+  try { const v = JSON.parse(localStorage.getItem(key)); return Array.isArray(v) ? v : []; }
+  catch { return []; }
+}
+function saveCustomList(key, list){
+  localStorage.setItem(key, JSON.stringify(list));
+}
+
+function populateDropdown(selectEl, defaults, customKey){
+  const custom = loadCustomList(customKey);
+  const prevValue = selectEl.value;
+  selectEl.innerHTML = '';
+  const noneOpt = document.createElement('option');
+  noneOpt.value = ''; noneOpt.textContent = '— None —';
+  selectEl.appendChild(noneOpt);
+  [...defaults, ...custom].forEach(text => {
+    const opt = document.createElement('option');
+    opt.value = text; opt.textContent = text;
+    selectEl.appendChild(opt);
+  });
+  const createOpt = document.createElement('option');
+  createOpt.value = CREATE_VALUE; createOpt.textContent = '+ Create new…';
+  selectEl.appendChild(createOpt);
+  if ([...defaults, ...custom].includes(prevValue)) selectEl.value = prevValue;
+}
+
+function insertBoldItalicText(text){
+  bodyEl.focus();
+  // Move cursor to end of editor so the phrase is appended cleanly
+  const range = document.createRange();
+  range.selectNodeContents(bodyEl);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  const html = `<p><b><i>${escapeHtml(text)}</i></b></p>`;
+  document.execCommand('insertHTML', false, html);
+  const details = document.querySelector('.preview-toggle');
+  if (details && details.open) refreshPreview();
+}
+
+function wireDropdown(selectEl, defaults, customKey){
+  populateDropdown(selectEl, defaults, customKey);
+  selectEl.addEventListener('change', () => {
+    const val = selectEl.value;
+    if (val === CREATE_VALUE) {
+      const custom = prompt('Enter new text (stored for future use):');
+      if (custom && custom.trim()) {
+        const trimmed = custom.trim();
+        const list = loadCustomList(customKey);
+        if (!list.includes(trimmed) && !defaults.includes(trimmed)) {
+          list.push(trimmed);
+          saveCustomList(customKey, list);
+        }
+        populateDropdown(selectEl, defaults, customKey);
+        selectEl.value = trimmed;
+        insertBoldItalicText(trimmed);
+      } else {
+        selectEl.value = '';
+      }
+      return;
+    }
+    if (val) insertBoldItalicText(val);
+  });
+}
+
+const salutationSelect = document.getElementById('salutationSelect');
+const closingSelect = document.getElementById('closingSelect');
+wireDropdown(salutationSelect, DEFAULT_SALUTATIONS, CUSTOM_SALUTATIONS_KEY);
+wireDropdown(closingSelect, DEFAULT_CLOSINGS, CUSTOM_CLOSINGS_KEY);
 
 /* ---------------- Templates ---------------- */
 const templates = {
@@ -729,10 +822,10 @@ function buildDesignedEmailHtml(){
 <body style="margin:0;padding:40px 20px;background-color:#f0f4f8;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f0f4f8;">
 <tr><td align="center">
-<table role="presentation" width="750" cellpadding="0" cellspacing="0" border="0" style="max-width:750px;width:100%;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #cbd5e0;">
+<table role="presentation" width="750" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="max-width:750px;width:100%;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #cbd5e0;">
 
   <tr>
-    <td style="background-color:#1a365d;background-image:linear-gradient(135deg,#1a365d 0%,#2a4365 100%);color:#ffffff;padding:35px 40px;border-bottom:4px solid #d69e2e;border-radius:16px 16px 0 0;">
+    <td bgcolor="#1a365d" style="background-color:#1a365d;color:#ffffff;padding:35px 40px;border-bottom:4px solid #d69e2e;border-radius:16px 16px 0 0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr><td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;width:80px;white-space:nowrap;font-weight:600;color:#f6ad55;">From:</td>
             <td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Shineil Keith Mathias &lt;shinumaths989@gmail.com&gt;</td></tr>
@@ -741,8 +834,8 @@ function buildDesignedEmailHtml(){
         <tr><td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;width:80px;white-space:nowrap;font-weight:600;color:#f6ad55;">Date:</td>
             <td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">${dateStr}</td></tr>
       </table>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;background-color:#22436b;border-left:3px solid #d69e2e;border-radius:0 6px 6px 0;">
-        <tr><td style="padding:10px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#22436b" style="margin-top:16px;background-color:#22436b;border-left:3px solid #d69e2e;border-radius:0 6px 6px 0;">
+        <tr><td bgcolor="#22436b" style="background-color:#22436b;padding:10px 16px;">
           <div style="font-size:8.5pt;color:#f6ad55;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Subject</div>
           <div style="font-size:13.5pt;font-weight:bold;color:#ffffff;margin-top:3px;letter-spacing:0.3px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">${escapeHtml(subject)}</div>
         </td></tr>
@@ -751,7 +844,7 @@ function buildDesignedEmailHtml(){
   </tr>
 
   <tr>
-    <td style="padding:40px;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11pt;color:#2d3748;line-height:1.6;">
+    <td bgcolor="#ffffff" style="padding:40px;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11pt;color:#2d3748;line-height:1.6;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;">
         ${bodyHtml}
       </td></tr>
