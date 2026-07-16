@@ -500,22 +500,13 @@ function populateDropdown(selectEl, defaults, customKey){
   if ([...defaults, ...custom].includes(prevValue)) selectEl.value = prevValue;
 }
 
-function insertBoldItalicText(text){
-  bodyEl.focus();
-  // Move cursor to end of editor so the phrase is appended cleanly
-  const range = document.createRange();
-  range.selectNodeContents(bodyEl);
-  range.collapse(false);
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-  const html = `<p><b><i>${escapeHtml(text)}</i></b></p>`;
-  document.execCommand('insertHTML', false, html);
-  const details = document.querySelector('.preview-toggle');
-  if (details && details.open) refreshPreview();
+function renderStoredValueIntoDropdown(selectEl, value){
+  if (value && [...selectEl.options].some(o => o.value === value)) {
+    selectEl.value = value;
+  }
 }
 
-function wireDropdown(selectEl, defaults, customKey){
+function wireDropdown(selectEl, defaults, customKey, onSelect){
   populateDropdown(selectEl, defaults, customKey);
   selectEl.addEventListener('change', () => {
     const val = selectEl.value;
@@ -530,20 +521,32 @@ function wireDropdown(selectEl, defaults, customKey){
         }
         populateDropdown(selectEl, defaults, customKey);
         selectEl.value = trimmed;
-        insertBoldItalicText(trimmed);
+        onSelect(trimmed);
       } else {
         selectEl.value = '';
+        onSelect('');
       }
       return;
     }
-    if (val) insertBoldItalicText(val);
+    onSelect(val);
   });
 }
 
+let currentSalutation = '';
+let currentClosing = '';
+
 const salutationSelect = document.getElementById('salutationSelect');
 const closingSelect = document.getElementById('closingSelect');
-wireDropdown(salutationSelect, DEFAULT_SALUTATIONS, CUSTOM_SALUTATIONS_KEY);
-wireDropdown(closingSelect, DEFAULT_CLOSINGS, CUSTOM_CLOSINGS_KEY);
+wireDropdown(salutationSelect, DEFAULT_SALUTATIONS, CUSTOM_SALUTATIONS_KEY, (val) => {
+  currentSalutation = val;
+  const details = document.querySelector('.preview-toggle');
+  if (details && details.open) refreshPreview();
+});
+wireDropdown(closingSelect, DEFAULT_CLOSINGS, CUSTOM_CLOSINGS_KEY, (val) => {
+  currentClosing = val;
+  const details = document.querySelector('.preview-toggle');
+  if (details && details.open) refreshPreview();
+});
 
 /* ---------------- Templates ---------------- */
 const templates = {
@@ -797,6 +800,12 @@ function buildDesignedEmailHtml(){
   const subject = subjectEl.value.trim() || '(no subject)';
   const to = toEl.value.trim();
   const bodyHtml = inlineBodyContent(getBodyHtml());
+  const salutationHtml = currentSalutation
+    ? `<p style="margin:0 0 16px;color:#2d3748;"><b><i>${escapeHtml(currentSalutation)}</i></b></p>`
+    : '';
+  const closingHtml = currentClosing
+    ? `<p style="margin:16px 0 0;color:#2d3748;"><b><i>${escapeHtml(currentClosing)}</i></b></p>`
+    : '';
   const dateStr = new Date().toLocaleString(undefined, { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 
   // NOTE: Gmail and most inboxes strip <style> blocks from received HTML mail,
@@ -846,7 +855,9 @@ function buildDesignedEmailHtml(){
   <tr>
     <td bgcolor="#ffffff" style="padding:40px;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11pt;color:#2d3748;line-height:1.6;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;">
+        ${salutationHtml}
         ${bodyHtml}
+        ${closingHtml}
       </td></tr>
       ${attachNote}
       <tr><td style="padding:0;">
@@ -892,7 +903,9 @@ function plainTextBody(){
   return text.replace(/\n{3,}/g, '\n\n').trim();
 }
 function assembleEmailPlain(){
-  return `${plainTextBody()}\n\n${(SIGNATURES[currentSignatureKey] || SIGNATURES.student).text}`;
+  const sal = currentSalutation ? `${currentSalutation}\n\n` : '';
+  const clo = currentClosing ? `\n\n${currentClosing}` : '';
+  return `${sal}${plainTextBody()}${clo}\n\n${(SIGNATURES[currentSignatureKey] || SIGNATURES.student).text}`;
 }
 
 /* ---------------- Actions ---------------- */
