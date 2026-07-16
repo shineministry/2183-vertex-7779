@@ -796,15 +796,34 @@ function inlineBodyContent(html){
   return tmp.innerHTML;
 }
 
+function mapLegacyFontSize(n){
+  // Matches the legacy <font size="n"> values execCommand('fontSize') inserts,
+  // scaled to the 11pt baseline used by the designed email body.
+  const map = { '1':'8pt', '2':'9pt', '3':'11pt', '4':'13pt', '5':'16pt', '6':'20pt', '7':'26pt' };
+  return map[String(n)] || '11pt';
+}
+
+function extractDominantFontSize(html){
+  // Picks up the font size actually used in the body content, whether set via
+  // the toolbar's legacy <font size="n"> tags or an explicit inline font-size.
+  const fontTagMatch = html.match(/<font[^>]*size=["']?(\d)["']?[^>]*>/i);
+  if (fontTagMatch) return mapLegacyFontSize(fontTagMatch[1]);
+  const styleMatch = html.match(/font-size:\s*([\d.]+(?:px|pt|em|rem|%))/i);
+  if (styleMatch) return styleMatch[1];
+  return '11pt';
+}
+
 function buildDesignedEmailHtml(){
   const subject = subjectEl.value.trim() || '(no subject)';
   const to = toEl.value.trim();
-  const bodyHtml = inlineBodyContent(getBodyHtml());
+  const rawBodyHtml = getBodyHtml();
+  const bodyFontSize = extractDominantFontSize(rawBodyHtml);
+  const bodyHtml = inlineBodyContent(rawBodyHtml);
   const salutationHtml = currentSalutation
-    ? `<p style="margin:0 0 16px;color:#2d3748;"><b><i>${escapeHtml(currentSalutation)}</i></b></p>`
+    ? `<p style="margin:0 0 16px;color:#2d3748;font-size:${bodyFontSize};"><b><i>${escapeHtml(currentSalutation)}</i></b></p>`
     : '';
   const closingHtml = currentClosing
-    ? `<p style="margin:16px 0 0;color:#2d3748;"><b><i>${escapeHtml(currentClosing)}</i></b></p>`
+    ? `<p style="margin:16px 0 0;color:#2d3748;font-size:${bodyFontSize};"><b><i>${escapeHtml(currentClosing)}</i></b></p>`
     : '';
   const dateStr = new Date().toLocaleString(undefined, { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 
