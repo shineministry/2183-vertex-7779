@@ -18,7 +18,7 @@
     --navy:#1a365d;
     --navy-2:#2a4365;
     --gold:#d69e2e;
-    font-size:16px;
+    font-size:12.5px;
   }
   *{box-sizing:border-box;}
   html{overflow-x:hidden;}
@@ -96,7 +96,7 @@
     display:flex;align-items:center;justify-content:center;
     font-family: "Trajan Pro","Cinzel",Georgia,serif;
     color:var(--navy);
-    font-size:21px; font-weight:bold; letter-spacing:1px;
+    font-size:18px; font-weight:bold; letter-spacing:1px;
     box-shadow: inset 0 0 0 2px rgba(255,255,255,0.35), 0 3px 10px rgba(0,0,0,0.4);
     flex-shrink:0;
     position:relative; z-index:1;
@@ -242,6 +242,7 @@
   #renderedPreviewFrame{width:100%; height:520px; border:1px solid var(--line); margin-top:14px; background:#fff; border-radius:4px;}
 
   @media (max-width:600px){
+    :root{font-size:11.5px;}
     header.letterhead{flex-direction:column; align-items:flex-start; padding:28px 22px 24px;}
     .content, .actions{padding-left:22px; padding-right:22px;}
     details.preview-toggle{margin-left:22px; margin-right:22px;}
@@ -253,7 +254,7 @@
     .tab{padding:6px 10px; font-size:0.76rem;}
     #subject{font-size:1rem; padding:10px 12px;}
     .attach-chip .fname{max-width:110px;}
-    .seal{width:48px; height:48px; font-size:17px;}
+    .seal{width:48px; height:48px; font-size:15px;}
     .who h1{font-size:1.3rem;}
   }
 
