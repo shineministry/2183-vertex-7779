@@ -735,28 +735,67 @@ tabs.forEach(tab => tab.addEventListener('click', () => loadTemplate(tab.dataset
 loadTemplate('formal');
 
 /* ---------------- Rich text toolbar ---------------- */
-document.getElementById('toolbar').addEventListener('click', (e) => {
+// Buttons stealing focus on mousedown collapses the selection in bodyEl
+// before our click handler runs, so execCommand ends up with nothing to
+// act on. We (1) stop buttons from taking focus at all, and (2) as a
+// belt-and-braces fix for controls that MUST take focus (select, color
+// inputs), we continuously track the last real selection inside bodyEl
+// and restore it right before running the command.
+let savedRange = null;
+function saveBodySelection(){
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0);
+    if (bodyEl.contains(range.commonAncestorContainer)) {
+      savedRange = range.cloneRange();
+    }
+  }
+}
+['mouseup','keyup','touchend'].forEach(evt => bodyEl.addEventListener(evt, saveBodySelection));
+document.addEventListener('selectionchange', () => {
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0 && bodyEl.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+    saveBodySelection();
+  }
+});
+function restoreBodySelection(){
+  bodyEl.focus();
+  if (savedRange) {
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+  }
+}
+
+const toolbarEl = document.getElementById('toolbar');
+// Prevent plain toolbar buttons from ever taking focus, so the selection
+// in bodyEl is never lost in the first place.
+toolbarEl.addEventListener('mousedown', (e) => {
+  if (e.target.closest('button')) e.preventDefault();
+});
+
+toolbarEl.addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-cmd]');
   if (!btn) return;
   e.preventDefault();
-  bodyEl.focus();
+  restoreBodySelection();
   document.execCommand(btn.dataset.cmd, false, null);
 });
 document.getElementById('fontSizeSel').addEventListener('change', (e) => {
-  bodyEl.focus();
+  restoreBodySelection();
   document.execCommand('fontSize', false, e.target.value);
 });
 document.getElementById('fontColorPicker').addEventListener('input', (e) => {
-  bodyEl.focus();
+  restoreBodySelection();
   document.execCommand('foreColor', false, e.target.value);
 });
 document.getElementById('hiliteColorPicker').addEventListener('input', (e) => {
-  bodyEl.focus();
+  restoreBodySelection();
   document.execCommand('hiliteColor', false, e.target.value);
 });
 document.getElementById('linkBtn').addEventListener('click', () => {
   const url = prompt('Enter URL (include https://):');
-  if (url) { bodyEl.focus(); document.execCommand('createLink', false, url); }
+  if (url) { restoreBodySelection(); document.execCommand('createLink', false, url); }
 });
 // keep default browser shortcuts (Ctrl+B/I/U) working naturally inside contenteditable
 
