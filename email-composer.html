@@ -262,12 +262,12 @@
   .tpl-email-card{max-width:750px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 25px rgba(26,54,93,0.08);border:1px solid #cbd5e0;}
   .tpl-email-header{background-color:#1a365d;background-image:linear-gradient(135deg,#1a365d 0%,#2a4365 100%);color:#ffffff;padding:35px 40px;border-bottom:4px solid #d69e2e;}
   .tpl-meta-table{width:100%;border-collapse:collapse;}
-  .tpl-meta-table td{padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;}
+  .tpl-meta-table td{padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:10pt;}
   .tpl-meta-label{font-weight:600;color:#f6ad55;width:80px;white-space:nowrap;}
-  .tpl-subject-line{font-size:13.5pt;font-weight:bold;color:#ffffff;margin-top:5px;letter-spacing:0.3px;}
-  .tpl-email-body{padding:40px;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11pt;color:#2d3748;line-height:1.6;}
+  .tpl-subject-line{font-size:12.5pt;font-weight:bold;color:#ffffff;margin-top:5px;letter-spacing:0.3px;}
+  .tpl-email-body{padding:40px;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:10pt;color:#2d3748;line-height:1.6;}
   .tpl-signature{margin-top:30px;border-top:2px solid #edf2f7;padding-top:20px;}
-  .tpl-sig-name{font-weight:700;color:#1a365d;font-size:12pt;}
+  .tpl-sig-name{font-weight:700;color:#1a365d;font-size:11pt;}
 </style>
 </head>
 <body>
@@ -386,7 +386,7 @@ const AVATAR_HTML = `
 </table>`;
 
 function sigRow(icon, html){
-  return `<td class="ec-sig-row" style="font-size:10pt;color:#2d3748;padding:2px 6px 2px 0;white-space:nowrap;"><span style="color:#d69e2e;">${icon}</span>&nbsp; ${html}</td>`;
+  return `<td class="ec-sig-row" style="font-size:9pt;color:#2d3748;padding:2px 6px 2px 0;white-space:nowrap;"><span style="color:#d69e2e;">${icon}</span>&nbsp; ${html}</td>`;
 }
 
 const SIGNATURES = {
@@ -469,7 +469,7 @@ function buildSignatureHtml(key){
   const s = getSignature(key);
   const websiteHtml = s.website ? `
         <tr>
-          <td colspan="3" class="ec-sig-row" style="font-size:10pt;color:#2d3748;padding:2px 0 0;word-break:break-word;">
+          <td colspan="3" class="ec-sig-row" style="font-size:9pt;color:#2d3748;padding:2px 0 0;word-break:break-word;">
             <span style="color:#d69e2e;">&#127760;</span>&nbsp; <a href="${s.website}" style="color:#2b6cb0;text-decoration:none;font-weight:500;">${s.website.replace(/^https?:\/\//,'')}</a>
           </td>
         </tr>` : '';
@@ -481,17 +481,17 @@ function buildSignatureHtml(key){
     <td class="ec-sig-avatar-cell" style="width:56px;vertical-align:top;" width="56">${AVATAR_HTML}</td>
     <td class="ec-sig-gap-16" style="width:16px;" width="16">&nbsp;</td>
     <td style="vertical-align:top;background-color:#ffffff;max-width:0;">
-      <div class="ec-sig-name" style="font-weight:700;color:#1a365d;font-size:13pt;letter-spacing:0.2px;word-break:break-word;">Shineil Keith Mathias</div>
-      ${s.eyebrow ? `<div style="color:#c05621;font-weight:600;font-size:9.5pt;margin-top:2px;letter-spacing:0.3px;">${s.eyebrow}</div>` : ''}
-      ${s.org ? `<div class="ec-sig-org" style="color:#4a5568;font-size:10pt;margin-top:1px;word-break:break-word;">${s.org}</div>` : ''}
+      <div class="ec-sig-name" style="font-weight:700;color:#1a365d;font-size:12pt;letter-spacing:0.2px;word-break:break-word;">Shineil Keith Mathias</div>
+      ${s.eyebrow ? `<div style="color:#c05621;font-weight:600;font-size:8.5pt;margin-top:2px;letter-spacing:0.3px;">${s.eyebrow}</div>` : ''}
+      ${s.org ? `<div class="ec-sig-org" style="color:#4a5568;font-size:9pt;margin-top:1px;word-break:break-word;">${s.org}</div>` : ''}
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:10px;width:100%;">
         <tr class="ec-sig-contact-row">
           ${sigRow('&#9742;', '+91 86055 86173')}
-          <td class="ec-sig-divider" style="font-size:10pt;color:#a0aec0;padding:0 6px;">|</td>
+          <td class="ec-sig-divider" style="font-size:9pt;color:#a0aec0;padding:0 6px;">|</td>
           ${sigRow('&#128172;', 'WhatsApp @shineil.mathias')}
         </tr>
         <tr>
-          <td colspan="3" class="ec-sig-row" style="font-size:10pt;color:#2d3748;padding:4px 0 0;word-break:break-word;">
+          <td colspan="3" class="ec-sig-row" style="font-size:9pt;color:#2d3748;padding:4px 0 0;word-break:break-word;">
             <span style="color:#d69e2e;">&#9993;</span>&nbsp; <a href="mailto:shinumaths989@gmail.com" style="color:#2b6cb0;text-decoration:none;font-weight:500;">shinumaths989@gmail.com</a>
           </td>
         </tr>${websiteHtml}
@@ -934,8 +934,8 @@ function inlineBodyContent(html){
 function mapLegacyFontSize(n){
   // Matches the legacy <font size="n"> values execCommand('fontSize') inserts,
   // scaled to the 11pt baseline used by the designed email body.
-  const map = { '1':'8pt', '2':'9pt', '3':'11pt', '4':'13pt', '5':'16pt', '6':'20pt', '7':'26pt' };
-  return map[String(n)] || '11pt';
+  const map = { '1':'7pt', '2':'8pt', '3':'10pt', '4':'12pt', '5':'15pt', '6':'19pt', '7':'25pt' };
+  return map[String(n)] || '10pt';
 }
 
 function extractDominantFontSize(html){
@@ -945,7 +945,7 @@ function extractDominantFontSize(html){
   if (fontTagMatch) return mapLegacyFontSize(fontTagMatch[1]);
   const styleMatch = html.match(/font-size:\s*([\d.]+(?:px|pt|em|rem|%))/i);
   if (styleMatch) return styleMatch[1];
-  return '11pt';
+  return '10pt';
 }
 
 function buildDesignedEmailHtml(){
@@ -968,7 +968,7 @@ function buildDesignedEmailHtml(){
   const attachNote = attachments.length
     ? `<tr><td style="padding:0;">
          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;background-color:#f7fafc;border:1px solid #e2e8f0;border-left:4px solid #3182ce;border-radius:8px;">
-           <tr><td style="padding:16px 20px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:10.5pt;color:#4a5568;">
+           <tr><td style="padding:16px 20px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:9.5pt;color:#4a5568;">
              <b style="color:#1a365d;">Attachments (${attachments.length}):</b> ${attachments.map(a => escapeHtml(a.name)).join(', ')}
            </td></tr>
          </table>
@@ -992,13 +992,13 @@ function buildDesignedEmailHtml(){
     .ec-card{border-radius:10px !important;}
     .ec-header-pad{padding:22px 20px !important;border-radius:10px 10px 0 0 !important;}
     .ec-body-pad{padding:24px 20px !important;}
-    .ec-meta-label{font-size:8.5pt !important;padding-bottom:1px !important;}
-    .ec-meta-value{font-size:9.5pt !important;padding-bottom:8px !important;word-break:break-word !important;}
-    .ec-subject-eyebrow{font-size:7.5pt !important;}
-    .ec-subject-line{font-size:10pt !important;}
-    .ec-sig-name{font-size:11pt !important;}
-    .ec-sig-org{font-size:8.5pt !important;}
-    .ec-sig-row{font-size:8.5pt !important;}
+    .ec-meta-label{font-size:7.5pt !important;padding-bottom:1px !important;}
+    .ec-meta-value{font-size:8.5pt !important;padding-bottom:8px !important;word-break:break-word !important;}
+    .ec-subject-eyebrow{font-size:6.5pt !important;}
+    .ec-subject-line{font-size:9pt !important;}
+    .ec-sig-name{font-size:10pt !important;}
+    .ec-sig-org{font-size:7.5pt !important;}
+    .ec-sig-row{font-size:7.5pt !important;}
     .ec-sig-avatar-cell{width:40px !important;}
     .ec-sig-avatar-img{width:40px !important;height:40px !important;border-radius:6px !important;-webkit-border-radius:6px !important;-moz-border-radius:6px !important;}
     .ec-sig-avatar-frame{width:40px !important;height:40px !important;border-radius:6px !important;-webkit-border-radius:6px !important;-moz-border-radius:6px !important;}
@@ -1017,24 +1017,24 @@ function buildDesignedEmailHtml(){
   <tr>
     <td bgcolor="#1a365d" class="ec-header-pad" style="background-color:#1a365d;color:#ffffff;padding:35px 40px;border-bottom:4px solid #d69e2e;border-radius:16px 16px 0 0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr><td class="ec-meta-label" style="padding:2px 0;vertical-align:top;font-size:9pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;color:#f6ad55;letter-spacing:0.5px;text-transform:uppercase;">From</td></tr>
-        <tr><td class="ec-meta-value" style="padding:0 0 10px;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">Shineil Keith Mathias &lt;shinumaths989@gmail.com&gt;</td></tr>
-        <tr><td class="ec-meta-label" style="padding:2px 0;vertical-align:top;font-size:9pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;color:#f6ad55;letter-spacing:0.5px;text-transform:uppercase;">To</td></tr>
-        <tr><td class="ec-meta-value" style="padding:0 0 10px;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">${escapeHtml(to)}</td></tr>
-        <tr><td class="ec-meta-label" style="padding:2px 0;vertical-align:top;font-size:9pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;color:#f6ad55;letter-spacing:0.5px;text-transform:uppercase;">Date</td></tr>
-        <tr><td class="ec-meta-value" style="padding:0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">${dateStr}</td></tr>
+        <tr><td class="ec-meta-label" style="padding:2px 0;vertical-align:top;font-size:8pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;color:#f6ad55;letter-spacing:0.5px;text-transform:uppercase;">From</td></tr>
+        <tr><td class="ec-meta-value" style="padding:0 0 10px;vertical-align:top;color:#e2e8f0;font-size:10pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">Shineil Keith Mathias &lt;shinumaths989@gmail.com&gt;</td></tr>
+        <tr><td class="ec-meta-label" style="padding:2px 0;vertical-align:top;font-size:8pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;color:#f6ad55;letter-spacing:0.5px;text-transform:uppercase;">To</td></tr>
+        <tr><td class="ec-meta-value" style="padding:0 0 10px;vertical-align:top;color:#e2e8f0;font-size:10pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">${escapeHtml(to)}</td></tr>
+        <tr><td class="ec-meta-label" style="padding:2px 0;vertical-align:top;font-size:8pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;color:#f6ad55;letter-spacing:0.5px;text-transform:uppercase;">Date</td></tr>
+        <tr><td class="ec-meta-value" style="padding:0;vertical-align:top;color:#e2e8f0;font-size:10pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">${dateStr}</td></tr>
       </table>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#22436b" style="margin-top:16px;background-color:#22436b;border-left:3px solid #d69e2e;border-radius:0 6px 6px 0;">
         <tr><td bgcolor="#22436b" style="background-color:#22436b;padding:10px 16px;">
-          <div class="ec-subject-eyebrow" style="font-size:8.5pt;color:#f6ad55;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Subject</div>
-          <div class="ec-subject-line" style="font-size:11.5pt;font-weight:bold;color:#ffffff;margin-top:3px;letter-spacing:0.3px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">${escapeHtml(subject)}</div>
+          <div class="ec-subject-eyebrow" style="font-size:7.5pt;color:#f6ad55;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Subject</div>
+          <div class="ec-subject-line" style="font-size:10.5pt;font-weight:bold;color:#ffffff;margin-top:3px;letter-spacing:0.3px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">${escapeHtml(subject)}</div>
         </td></tr>
       </table>
     </td>
   </tr>
 
   <tr>
-    <td bgcolor="#ffffff" class="ec-body-pad" style="padding:40px;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11pt;color:#2d3748;line-height:1.6;">
+    <td bgcolor="#ffffff" class="ec-body-pad" style="padding:40px;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:10pt;color:#2d3748;line-height:1.6;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;">
         ${salutationHtml}
         ${bodyHtml}
