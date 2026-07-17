@@ -911,7 +911,9 @@ function inlineBodyContent(html){
   tmp.innerHTML = html;
   tmp.querySelectorAll('p').forEach(p => {
     const existing = p.getAttribute('style') || '';
+    const existingClass = p.getAttribute('class') || '';
     p.setAttribute('style', `margin:0 0 16px;text-align:justify;color:#2d3748;${existing}`);
+    p.setAttribute('class', `${existingClass} ec-body-p`.trim());
   });
   tmp.querySelectorAll('a').forEach(a => {
     const existing = a.getAttribute('style') || '';
@@ -997,6 +999,7 @@ function buildDesignedEmailHtml(){
     .ec-sig-avatar-frame{width:40px !important;height:40px !important;border-radius:6px !important;-webkit-border-radius:6px !important;-moz-border-radius:6px !important;}
     .ec-sig-gap-14{width:8px !important;}
     .ec-sig-gap-16{width:10px !important;}
+    .ec-body-p{text-align:left !important;}
     .ec-sig-contact-row .ec-sig-row{display:block !important;width:100% !important;white-space:normal !important;padding:2px 0 !important;}
     .ec-sig-divider{display:none !important;}
   }
