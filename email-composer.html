@@ -21,8 +21,11 @@
     font-size:16px;
   }
   *{box-sizing:border-box;}
+  html{overflow-x:hidden;}
   body{
     margin:0;
+    overflow-x:hidden;
+    max-width:100vw;
     background:
       radial-gradient(circle at 15% 10%, rgba(156,122,60,0.14), transparent 42%),
       radial-gradient(circle at 85% 0%, rgba(51,84,74,0.10), transparent 38%),
@@ -98,11 +101,11 @@
     flex-shrink:0;
     position:relative; z-index:1;
   }
-  .who{position:relative; z-index:1;}
-  .who h1{margin:0; font-size:1.65rem; letter-spacing:0.6px; font-weight:700; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.3);}
-  .who p{margin:6px 0 0; font-size:0.86rem; color:#f6ad55; letter-spacing:0.5px; font-style:italic;}
-  .who .contact-line{margin:8px 0 0; font-size:0.76rem; color:#cbd9ea; letter-spacing:0.3px; font-style:normal;}
-  .content{padding:30px 44px 10px;}
+  .who{position:relative; z-index:1; min-width:0; max-width:100%;}
+  .who h1{margin:0; font-size:1.65rem; letter-spacing:0.6px; font-weight:700; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.3); overflow-wrap:break-word;}
+  .who p{margin:6px 0 0; font-size:0.86rem; color:#f6ad55; letter-spacing:0.5px; font-style:italic; overflow-wrap:break-word;}
+  .who .contact-line{margin:8px 0 0; font-size:0.76rem; color:#cbd9ea; letter-spacing:0.3px; font-style:normal; overflow-wrap:break-word;}
+  .content{padding:30px 44px 10px; min-width:0;}
 
   .tabs{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px;}
   .tab{
@@ -194,7 +197,7 @@
 
   .sig-preview{
     margin-top:22px; border-top:1px dashed var(--line); padding-top:18px;
-    font-size:0.92rem; color:var(--ink); line-height:1.55;
+    font-size:0.92rem; color:var(--ink); line-height:1.55; overflow-wrap:break-word;
   }
   .sig-preview .name{font-weight:700; letter-spacing:0.3px;}
   .sig-preview .role{color:var(--brass-dark); font-style:italic;}
@@ -239,9 +242,19 @@
   #renderedPreviewFrame{width:100%; height:520px; border:1px solid var(--line); margin-top:14px; background:#fff; border-radius:4px;}
 
   @media (max-width:600px){
-    header.letterhead{flex-direction:column; align-items:flex-start;}
+    header.letterhead{flex-direction:column; align-items:flex-start; padding:28px 22px 24px;}
     .content, .actions{padding-left:22px; padding-right:22px;}
     details.preview-toggle{margin-left:22px; margin-right:22px;}
+    .sal-clo-col{min-width:100%;}
+    .toolbar{padding:6px;}
+    .toolbar button{width:28px; height:28px; font-size:0.85rem;}
+    .toolbar select, .toolbar input[type=color]{height:28px; font-size:0.75rem;}
+    .toolbar select{max-width:84px;}
+    .tab{padding:6px 10px; font-size:0.76rem;}
+    #subject{font-size:1rem; padding:10px 12px;}
+    .attach-chip .fname{max-width:110px;}
+    .seal{width:48px; height:48px; font-size:17px;}
+    .who h1{font-size:1.3rem;}
   }
 
   /* ---- Styles used only inside the generated email template (mirrors email.html) ---- */
@@ -286,14 +299,14 @@
     <label for="subject">Subject</label>
     <input type="text" id="subject" placeholder="Subject line">
 
-    <div style="display:flex; gap:16px; flex-wrap:wrap;">
-      <div style="flex:1; min-width:220px;">
+    <div class="sal-clo-row" style="display:flex; gap:16px; flex-wrap:wrap;">
+      <div class="sal-clo-col" style="flex:1; min-width:220px;">
         <label for="salutationSelect">Salutation</label>
         <select id="salutationSelect" style="width:100%; padding:9px 12px; font-family:inherit; font-size:0.88rem; border:1px solid var(--line); background:#fffdf7; color:var(--ink); border-radius:2px;">
           <option value="" selected>— None —</option>
         </select>
       </div>
-      <div style="flex:1; min-width:220px;">
+      <div class="sal-clo-col" style="flex:1; min-width:220px;">
         <label for="closingSelect">Closing</label>
         <select id="closingSelect" style="width:100%; padding:9px 12px; font-family:inherit; font-size:0.88rem; border:1px solid var(--line); background:#fffdf7; color:var(--ink); border-radius:2px;">
           <option value="" selected>— None —</option>
@@ -336,11 +349,7 @@
     <textarea id="bodyHtmlSource" spellcheck="false" style="display:none;"></textarea>
 
     <label for="sigSelect">Signature</label>
-    <select id="sigSelect" style="width:100%; padding:9px 12px; font-family:inherit; font-size:0.88rem; border:1px solid var(--line); background:#fffdf7; color:var(--ink); border-radius:2px;">
-      <option value="student" selected>Student — Privatgymnasium der Herz Jesu Missionare</option>
-      <option value="founder">Founder — Shine Ministry</option>
-      <option value="minimal">Minimal — name &amp; contact only</option>
-    </select>
+    <select id="sigSelect" style="width:100%; padding:9px 12px; font-family:inherit; font-size:0.88rem; border:1px solid var(--line); background:#fffdf7; color:var(--ink); border-radius:2px;"></select>
     <div class="sig-preview" id="sigPreview"></div>
 
     <label>Attachments</label>
@@ -371,12 +380,12 @@ const AVATAR_URL = "https://72oe-v2sx.shine-ministry.com/Shineil-Mathias.png";
 const AVATAR_HTML = `
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:56px;height:56px;border-radius:50%;background-color:#ffffff;border:2px solid #d69e2e;box-shadow:0 2px 6px rgba(26,54,93,0.18);">
   <tr><td style="width:56px;height:56px;border-radius:50%;padding:2px;">
-    <img src="${AVATAR_URL}" width="52" height="52" alt="Shineil Keith Mathias" style="width:52px;height:52px;border-radius:50%;display:block;object-fit:cover;background-color:#ffffff;">
+    <img src="${AVATAR_URL}" width="52" height="52" alt="Shineil Keith Mathias" class="ec-sig-avatar-img" style="width:52px;height:52px;border-radius:50%;display:block;object-fit:cover;background-color:#ffffff;">
   </td></tr>
 </table>`;
 
 function sigRow(icon, html){
-  return `<td style="font-size:10pt;color:#2d3748;padding:2px 0;"><span style="color:#d69e2e;">${icon}</span>&nbsp; ${html}</td>`;
+  return `<td class="ec-sig-row" style="font-size:10pt;color:#2d3748;padding:2px 6px 2px 0;white-space:nowrap;"><span style="color:#d69e2e;">${icon}</span>&nbsp; ${html}</td>`;
 }
 
 const SIGNATURES = {
@@ -384,6 +393,9 @@ const SIGNATURES = {
     label: "Prospective Student, Privatgymnasium der Herz Jesu Missionare",
     eyebrow: "PROSPECTIVE STUDENT",
     org: "Privatgymnasium der Herz Jesu Missionare &middot; Salzburg, Austria",
+    address: "Salzburg, Austria - 5020",
+    website: "",
+    menuLabel: "Student — Privatgymnasium der Herz Jesu Missionare",
     text:
 `Shineil Keith Mathias
 Prospective Student, Privatgymnasium der Herz Jesu Missionare
@@ -396,6 +408,9 @@ E-Mail: shinumaths989@gmail.com`
     label: "Founder, Shine Ministry",
     eyebrow: "FOUNDER, SHINE MINISTRY",
     org: "Shine Ministry &middot; Salzburg, Austria",
+    address: "Salzburg, Austria - 5020",
+    website: "",
+    menuLabel: "Founder — Shine Ministry",
     text:
 `Shineil Keith Mathias
 Founder, Shine Ministry
@@ -404,10 +419,28 @@ Mobile: +91 86055 86173
 WhatsApp: @shineil.mathias
 E-Mail: shinumaths989@gmail.com`
   },
+  personal: {
+    label: "",
+    eyebrow: "",
+    org: "Dr.-Th.-Guglweg, Anif, Austria",
+    address: "Dr.-Th.-Guglweg, Anif, Austria",
+    website: "https://www.shine-ministry.com",
+    menuLabel: "Personal — Anif, Austria",
+    text:
+`Shineil Keith Mathias
+Dr.-Th.-Guglweg, Anif, Austria
+Mobile: +91 86055 86173
+WhatsApp: @shineil.mathias
+E-Mail: shinumaths989@gmail.com
+Website: https://www.shine-ministry.com`
+  },
   minimal: {
     label: "",
     eyebrow: "",
     org: "",
+    address: "",
+    website: "",
+    menuLabel: "Minimal — name & contact only",
     text:
 `Shineil Keith Mathias
 Mobile: +91 86055 86173
@@ -416,30 +449,51 @@ E-Mail: shinumaths989@gmail.com`
   }
 };
 
+/* ---- Custom (user-created) signatures, persisted in localStorage ---- */
+const CUSTOM_SIG_KEY = 'ecCustomSignaturesV1';
+function loadCustomSignatures(){
+  try { const v = JSON.parse(localStorage.getItem(CUSTOM_SIG_KEY)); return (v && typeof v === 'object') ? v : {}; }
+  catch { return {}; }
+}
+function saveCustomSignatures(map){
+  localStorage.setItem(CUSTOM_SIG_KEY, JSON.stringify(map));
+}
+let CUSTOM_SIGNATURES = loadCustomSignatures();
+
+function getSignature(key){
+  return SIGNATURES[key] || CUSTOM_SIGNATURES[key] || SIGNATURES.student;
+}
+
 function buildSignatureHtml(key){
-  const s = SIGNATURES[key] || SIGNATURES.student;
+  const s = getSignature(key);
+  const websiteHtml = s.website ? `
+        <tr>
+          <td colspan="3" class="ec-sig-row" style="font-size:10pt;color:#2d3748;padding:2px 0 0;word-break:break-word;">
+            <span style="color:#d69e2e;">&#127760;</span>&nbsp; <a href="${s.website}" style="color:#2b6cb0;text-decoration:none;font-weight:500;">${s.website.replace(/^https?:\/\//,'')}</a>
+          </td>
+        </tr>` : '';
   return `
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;background-color:#ffffff;">
   <tr>
     <td style="width:6px;background-color:#d69e2e;border-radius:3px;" width="6">&nbsp;</td>
-    <td style="width:14px;" width="14">&nbsp;</td>
-    <td style="width:56px;vertical-align:top;" width="56">${AVATAR_HTML}</td>
-    <td style="width:16px;" width="16">&nbsp;</td>
-    <td style="vertical-align:top;background-color:#ffffff;">
-      <div style="font-weight:700;color:#1a365d;font-size:13pt;letter-spacing:0.2px;">Shineil Keith Mathias</div>
+    <td class="ec-sig-gap-14" style="width:14px;" width="14">&nbsp;</td>
+    <td class="ec-sig-avatar-cell" style="width:56px;vertical-align:top;" width="56">${AVATAR_HTML}</td>
+    <td class="ec-sig-gap-16" style="width:16px;" width="16">&nbsp;</td>
+    <td style="vertical-align:top;background-color:#ffffff;max-width:0;">
+      <div class="ec-sig-name" style="font-weight:700;color:#1a365d;font-size:13pt;letter-spacing:0.2px;word-break:break-word;">Shineil Keith Mathias</div>
       ${s.eyebrow ? `<div style="color:#c05621;font-weight:600;font-size:9.5pt;margin-top:2px;letter-spacing:0.3px;">${s.eyebrow}</div>` : ''}
-      ${s.org ? `<div style="color:#4a5568;font-size:10pt;margin-top:1px;">${s.org}</div>` : ''}
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:10px;">
-        <tr>
+      ${s.org ? `<div class="ec-sig-org" style="color:#4a5568;font-size:10pt;margin-top:1px;word-break:break-word;">${s.org}</div>` : ''}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:10px;width:100%;">
+        <tr class="ec-sig-contact-row">
           ${sigRow('&#9742;', '+91 86055 86173')}
-          <td style="font-size:10pt;color:#a0aec0;padding:0 10px;">|</td>
+          <td class="ec-sig-divider" style="font-size:10pt;color:#a0aec0;padding:0 6px;">|</td>
           ${sigRow('&#128172;', 'WhatsApp @shineil.mathias')}
         </tr>
         <tr>
-          <td colspan="3" style="font-size:10pt;color:#2d3748;padding:4px 0 0;">
+          <td colspan="3" class="ec-sig-row" style="font-size:10pt;color:#2d3748;padding:4px 0 0;word-break:break-word;">
             <span style="color:#d69e2e;">&#9993;</span>&nbsp; <a href="mailto:shinumaths989@gmail.com" style="color:#2b6cb0;text-decoration:none;font-weight:500;">shinumaths989@gmail.com</a>
           </td>
-        </tr>
+        </tr>${websiteHtml}
       </table>
     </td>
   </tr>
@@ -447,20 +501,94 @@ function buildSignatureHtml(key){
 }
 
 let currentSignatureKey = 'student';
+const CREATE_SIG_VALUE = '__create_new_sig__';
+
+function populateSigSelect(){
+  sigSelect.innerHTML = '';
+  ['student', 'founder', 'personal', 'minimal'].forEach(key => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = SIGNATURES[key].menuLabel;
+    sigSelect.appendChild(opt);
+  });
+  Object.keys(CUSTOM_SIGNATURES).forEach(key => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = CUSTOM_SIGNATURES[key].menuLabel || 'Custom signature';
+    sigSelect.appendChild(opt);
+  });
+  const createOpt = document.createElement('option');
+  createOpt.value = CREATE_SIG_VALUE;
+  createOpt.textContent = '+ Create new…';
+  sigSelect.appendChild(createOpt);
+  if ([...sigSelect.options].some(o => o.value === currentSignatureKey)) {
+    sigSelect.value = currentSignatureKey;
+  }
+}
+
+function createCustomSignature(){
+  const roleLabel = prompt('Role / label line (optional, e.g. "Volunteer, Shine Ministry"):', '');
+  if (roleLabel === null) return null;
+  const eyebrow = prompt('Eyebrow tag shown in the email header (optional, e.g. "VOLUNTEER"):', roleLabel ? roleLabel.toUpperCase() : '');
+  if (eyebrow === null) return null;
+  const orgAddress = prompt('Organisation / address line (optional):', '');
+  if (orgAddress === null) return null;
+  const website = prompt('Website URL (optional, include https://):', '');
+  if (website === null) return null;
+  const menuLabel = prompt('Short name for this signature in the dropdown list:', roleLabel || 'Custom signature');
+  if (!menuLabel || !menuLabel.trim()) return null;
+
+  const key = 'custom_' + Date.now();
+  const text = [
+    'Shineil Keith Mathias',
+    roleLabel || '',
+    orgAddress || '',
+    'Mobile: +91 86055 86173',
+    'WhatsApp: @shineil.mathias',
+    'E-Mail: shinumaths989@gmail.com',
+    website ? `Website: ${website}` : ''
+  ].filter(Boolean).join('\n');
+
+  CUSTOM_SIGNATURES[key] = {
+    label: roleLabel || '',
+    eyebrow: eyebrow || '',
+    org: orgAddress || '',
+    address: orgAddress || '',
+    website: website || '',
+    menuLabel: menuLabel.trim(),
+    text
+  };
+  saveCustomSignatures(CUSTOM_SIGNATURES);
+  return key;
+}
 
 function renderSigPreview(){
-  const s = SIGNATURES[currentSignatureKey] || SIGNATURES.student;
+  const s = getSignature(currentSignatureKey);
   sigPreview.innerHTML =
     `<span class="name">Shineil Keith Mathias</span><br>
      ${s.label ? `<span class="role">${s.label}</span><br>` : ''}
-     Salzburg, Austria - 5020<span class="divider">·</span>+91 86055 86173<br>
-     WhatsApp @shineil.mathias<span class="divider">·</span>shinumaths989@gmail.com`;
+     ${s.address ? `${s.address}<span class="divider">·</span>` : ''}+91 86055 86173<br>
+     WhatsApp @shineil.mathias<span class="divider">·</span>shinumaths989@gmail.com
+     ${s.website ? `<br>${s.website}` : ''}`;
 }
 
 const sigPreview = document.getElementById('sigPreview');
 const sigSelect = document.getElementById('sigSelect');
+populateSigSelect();
 renderSigPreview();
 sigSelect.addEventListener('change', () => {
+  if (sigSelect.value === CREATE_SIG_VALUE) {
+    const createdKey = createCustomSignature();
+    populateSigSelect();
+    if (createdKey) {
+      currentSignatureKey = createdKey;
+    }
+    sigSelect.value = currentSignatureKey;
+    renderSigPreview();
+    const details = document.querySelector('.preview-toggle');
+    if (details.open) refreshPreview();
+    return;
+  }
   currentSignatureKey = sigSelect.value;
   renderSigPreview();
   const details = document.querySelector('.preview-toggle');
@@ -845,34 +973,60 @@ function buildDesignedEmailHtml(){
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <title>${escapeHtml(subject)}</title>
+<style>
+  body{margin:0;padding:0;}
+  table{border-collapse:collapse;}
+  img{border:0;outline:none;text-decoration:none;}
+  @media only screen and (max-width:600px){
+    .ec-outer-pad{padding:18px 8px !important;}
+    .ec-card{border-radius:10px !important;}
+    .ec-header-pad{padding:22px 20px !important;border-radius:10px 10px 0 0 !important;}
+    .ec-body-pad{padding:24px 20px !important;}
+    .ec-meta-label{font-size:8.5pt !important;padding-bottom:1px !important;}
+    .ec-meta-value{font-size:9.5pt !important;padding-bottom:8px !important;word-break:break-word !important;}
+    .ec-subject-eyebrow{font-size:7.5pt !important;}
+    .ec-subject-line{font-size:10pt !important;}
+    .ec-sig-name{font-size:11pt !important;}
+    .ec-sig-org{font-size:8.5pt !important;}
+    .ec-sig-row{font-size:8.5pt !important;}
+    .ec-sig-avatar-cell{width:40px !important;}
+    .ec-sig-avatar-img{width:40px !important;height:40px !important;}
+    .ec-sig-gap-14{width:8px !important;}
+    .ec-sig-gap-16{width:10px !important;}
+    .ec-sig-contact-row .ec-sig-row{display:block !important;width:100% !important;white-space:normal !important;padding:2px 0 !important;}
+    .ec-sig-divider{display:none !important;}
+  }
+</style>
 </head>
-<body style="margin:0;padding:40px 20px;background-color:#f0f4f8;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<body style="margin:0;padding:0;background-color:#f0f4f8;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f0f4f8;">
-<tr><td align="center">
-<table role="presentation" width="750" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="max-width:750px;width:100%;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #cbd5e0;">
+<tr><td align="center" class="ec-outer-pad" style="padding:40px 20px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" class="ec-card" style="max-width:750px;width:100%;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #cbd5e0;">
 
   <tr>
-    <td bgcolor="#1a365d" style="background-color:#1a365d;color:#ffffff;padding:35px 40px;border-bottom:4px solid #d69e2e;border-radius:16px 16px 0 0;">
+    <td bgcolor="#1a365d" class="ec-header-pad" style="background-color:#1a365d;color:#ffffff;padding:35px 40px;border-bottom:4px solid #d69e2e;border-radius:16px 16px 0 0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr><td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;width:80px;white-space:nowrap;font-weight:600;color:#f6ad55;">From:</td>
-            <td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Shineil Keith Mathias &lt;shinumaths989@gmail.com&gt;</td></tr>
-        <tr><td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;width:80px;white-space:nowrap;font-weight:600;color:#f6ad55;">To:</td>
-            <td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">${escapeHtml(to)}</td></tr>
-        <tr><td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;width:80px;white-space:nowrap;font-weight:600;color:#f6ad55;">Date:</td>
-            <td style="padding:5px 0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">${dateStr}</td></tr>
+        <tr><td class="ec-meta-label" style="padding:2px 0;vertical-align:top;font-size:9pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;color:#f6ad55;letter-spacing:0.5px;text-transform:uppercase;">From</td></tr>
+        <tr><td class="ec-meta-value" style="padding:0 0 10px;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">Shineil Keith Mathias &lt;shinumaths989@gmail.com&gt;</td></tr>
+        <tr><td class="ec-meta-label" style="padding:2px 0;vertical-align:top;font-size:9pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;color:#f6ad55;letter-spacing:0.5px;text-transform:uppercase;">To</td></tr>
+        <tr><td class="ec-meta-value" style="padding:0 0 10px;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">${escapeHtml(to)}</td></tr>
+        <tr><td class="ec-meta-label" style="padding:2px 0;vertical-align:top;font-size:9pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;color:#f6ad55;letter-spacing:0.5px;text-transform:uppercase;">Date</td></tr>
+        <tr><td class="ec-meta-value" style="padding:0;vertical-align:top;color:#e2e8f0;font-size:11pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">${dateStr}</td></tr>
       </table>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#22436b" style="margin-top:16px;background-color:#22436b;border-left:3px solid #d69e2e;border-radius:0 6px 6px 0;">
         <tr><td bgcolor="#22436b" style="background-color:#22436b;padding:10px 16px;">
-          <div style="font-size:8.5pt;color:#f6ad55;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Subject</div>
-          <div style="font-size:13.5pt;font-weight:bold;color:#ffffff;margin-top:3px;letter-spacing:0.3px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">${escapeHtml(subject)}</div>
+          <div class="ec-subject-eyebrow" style="font-size:8.5pt;color:#f6ad55;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Subject</div>
+          <div class="ec-subject-line" style="font-size:11.5pt;font-weight:bold;color:#ffffff;margin-top:3px;letter-spacing:0.3px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">${escapeHtml(subject)}</div>
         </td></tr>
       </table>
     </td>
   </tr>
 
   <tr>
-    <td bgcolor="#ffffff" style="padding:40px;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11pt;color:#2d3748;line-height:1.6;">
+    <td bgcolor="#ffffff" class="ec-body-pad" style="padding:40px;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11pt;color:#2d3748;line-height:1.6;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;">
         ${salutationHtml}
         ${bodyHtml}
@@ -924,7 +1078,7 @@ function plainTextBody(){
 function assembleEmailPlain(){
   const sal = currentSalutation ? `${currentSalutation}\n\n` : '';
   const clo = currentClosing ? `\n\n${currentClosing}` : '';
-  return `${sal}${plainTextBody()}${clo}\n\n${(SIGNATURES[currentSignatureKey] || SIGNATURES.student).text}`;
+  return `${sal}${plainTextBody()}${clo}\n\n${getSignature(currentSignatureKey).text}`;
 }
 
 /* ---------------- Actions ---------------- */
