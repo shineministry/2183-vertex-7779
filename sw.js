@@ -19,7 +19,7 @@
  *  network fetch — no stale authenticated shell is served.
  */
 
-const CACHE = "online-vault-v11";   // bump this string to force a full cache refresh
+const CACHE = "online-vault-v12";   // bump this string to force a full cache refresh
 
 const BACKEND_HOST = "backend.shinumaths989.workers.dev";
 
@@ -29,6 +29,7 @@ const PRECACHE_URLS = [
   "/index.html",
   "/auth.js",
   "/offline-auth.js",
+  "/offline-ai.js",
   "/features.js",
   "/session.js",
   "/startup.js",

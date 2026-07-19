@@ -1325,7 +1325,54 @@ async function sendAIMessage() {
   const sendBtn = document.getElementById('ai-send-btn');
   if (sendBtn) sendBtn.disabled = true;
 
+  // ── Helper: show answer with word-by-word animation ──
+  function _showAIReply(replyText, source) {
+    const msgs = document.getElementById('ai-messages');
+    const wrap = document.createElement('div');
+    wrap.className = 'ai-msg-ai-wrap';
+    const sourceTag = source === 'offline'
+      ? '<div style="font-size:10px;color:#94a3b8;margin-bottom:4px;font-weight:600;"><i data-lucide="wifi-off" style="width:10px;height:10px;vertical-align:middle;"></i> Offline AI</div>'
+      : '';
+    wrap.innerHTML = `<div class="ai-gem-avatar"><i data-lucide="sparkles" style="width:18px;height:18px;"></i></div><div class="ai-msg-ai">${sourceTag}<div id="ai-reply-target-${Date.now()}"></div></div>`;
+    msgs.appendChild(wrap);
+    if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [wrap] });
+    msgs.scrollTop = msgs.scrollHeight;
+
+    const replyTarget = wrap.querySelector('[id^="ai-reply-target-"]');
+    const rawReply = escHtml(replyText)
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n\n/g, '<br><br>')
+      .replace(/\n/g, '<br>');
+
+    const words = rawReply.split(/(\s+)/);
+    let wordIndex = 0;
+    function printWordByWord() {
+      if (wordIndex < words.length) {
+        const span = document.createElement("span");
+        span.innerHTML = words[wordIndex];
+        span.style.opacity = "0";
+        span.style.filter = "blur(3px)";
+        span.style.transition = "opacity 0.2s ease-out, filter 0.2s ease-out";
+        span.style.display = "inline-block";
+        span.style.whiteSpace = "pre-wrap";
+        replyTarget.appendChild(span);
+        requestAnimationFrame(() => {
+          span.style.opacity = "1";
+          span.style.filter = "blur(0px)";
+        });
+        wordIndex++;
+        msgs.scrollTop = msgs.scrollHeight;
+        setTimeout(printWordByWord, 25);
+      } else {
+        addSpeakButton(replyTarget);
+      }
+    }
+    printWordByWord();
+  }
+
   try {
+    // ── Step 1: Try online AI via backend ─────────────────────────────────
+    let onlineSucceeded = false;
     let token = sessionStorage.getItem('vaultSessionToken') ||
                   sessionStorage.getItem('vaultSession') || '';
 
@@ -1339,31 +1386,10 @@ async function sendAIMessage() {
       }
     }
 
-    // Still only an offline placeholder — AI chat needs a real backend
-    // session, so don't fire a request that's doomed to fail; say so plainly.
-    if (token.startsWith('offline-')) {
-      showAITyping(false);
-      appendAIBubble('AI Chat needs an online connection to reach the assistant. You appear to be in offline mode — please reconnect and log in again.');
-      return;
-    }
-
-    let res = await fetch('https://backend.shinumaths989.workers.dev/ai-search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ question })
-    });
-
-    // If server says unauthorized, try silent re-auth and retry once
-    if (res.status === 401 && typeof _silentReAuth === 'function') {
-      const fresh = await _silentReAuth();
-      if (fresh && !fresh.startsWith('offline-')) {
-        token = fresh;
-        sessionStorage.setItem('vaultSessionToken', fresh);
-        sessionStorage.setItem('vaultSession', fresh);
-        res = await fetch('https://backend.shinumaths989.workers.dev/ai-search', {
+    // Only attempt online if we have a real token
+    if (!token.startsWith('offline-')) {
+      try {
+        let res = await fetch('https://backend.shinumaths989.workers.dev/ai-search', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1371,79 +1397,62 @@ async function sendAIMessage() {
           },
           body: JSON.stringify({ question })
         });
+
+        // If server says unauthorized, try silent re-auth and retry once
+        if (res.status === 401 && typeof _silentReAuth === 'function') {
+          const fresh = await _silentReAuth();
+          if (fresh && !fresh.startsWith('offline-')) {
+            token = fresh;
+            sessionStorage.setItem('vaultSessionToken', fresh);
+            sessionStorage.setItem('vaultSession', fresh);
+            res = await fetch('https://backend.shinumaths989.workers.dev/ai-search', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ question })
+            });
+          }
+        }
+
+        const data = await res.json();
+        if (data.success && data.reply) {
+          showAITyping(false);
+          _showAIReply(data.reply, 'online');
+          onlineSucceeded = true;
+        }
+      } catch (onlineErr) {
+        console.warn('[AI Chat] Online request failed:', onlineErr.message);
       }
     }
 
-     const data = await res.json();
-
-    showAITyping(false);
-
-    if (data.success && data.reply) {
-      // Create the AI bubble and animate words into it
-      const msgs = document.getElementById('ai-messages');
-      const wrap = document.createElement('div');
-      wrap.className = 'ai-msg-ai-wrap';
-      wrap.innerHTML = `<div class="ai-gem-avatar"><i data-lucide="sparkles" style="width:18px;height:18px;"></i></div><div class="ai-msg-ai" id="ai-reply-target-${Date.now()}"></div>`;
-      msgs.appendChild(wrap);
-      if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [wrap] });
-      msgs.scrollTop = msgs.scrollHeight;
-
-      const replyTarget = wrap.querySelector('[id^="ai-reply-target-"]');
-
-      // Pre-process markdown so bold and line breaks render as HTML
-      // Sanitize: escape HTML first, then apply controlled markdown
-      const rawReply = escHtml(data.reply)
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // bold
-        .replace(/\n\n/g, '<br><br>')                       // paragraph breaks
-        .replace(/\n/g, '<br>');                            // single line breaks
-
-      // Split text into words while preserving whitespace
-      const words = rawReply.split(/(\s+)/);
-      let wordIndex = 0;
-
-      function printWordByWord() {
-        if (wordIndex < words.length) {
-          const span = document.createElement("span");
-          span.innerHTML = words[wordIndex]; // innerHTML so HTML tags render
-
-          // Hardware-accelerated fade-in per word
-          span.style.opacity = "0";
-          span.style.filter = "blur(3px)";
-          span.style.transition = "opacity 0.2s ease-out, filter 0.2s ease-out";
-          span.style.display = "inline-block";
-          span.style.whiteSpace = "pre-wrap";
-
-          replyTarget.appendChild(span);
-
-          requestAnimationFrame(() => {
-            span.style.opacity = "1";
-            span.style.filter = "blur(0px)";
-          });
-
-          wordIndex++;
-          msgs.scrollTop = msgs.scrollHeight;
-          setTimeout(printWordByWord, 25);
-        } else {
-          // Animation complete — add the Listen button
-          addSpeakButton(replyTarget);
+    // ── Step 2: If online failed, fall back to offline AI ──────────────────
+    if (!onlineSucceeded) {
+      if (window.OfflineAI) {
+        try {
+          const offlineResult = await window.OfflineAI.ask(question, { offline: true });
+          showAITyping(false);
+          if (offlineResult && offlineResult.success && offlineResult.answer) {
+            _showAIReply(offlineResult.answer, 'offline');
+          } else {
+            appendAIBubble('No answer could be generated from cached documents. Try rephrasing your question.');
+          }
+        } catch (offlineErr) {
+          console.error('[AI Chat] Offline AI error:', offlineErr);
+          showAITyping(false);
+          appendAIBubble('AI Chat is currently unavailable. The online service is unreachable and the offline AI model has not been loaded yet. Please connect to the internet and log in to download the AI model.');
         }
+      } else {
+        showAITyping(false);
+        appendAIBubble('AI Chat is currently unavailable. The online service is unreachable and the offline AI module is not loaded. Please check your connection and try again.');
       }
-
-      printWordByWord();
-
-    } else {
-      var errMsg = data.error || 'An error occurred.';
-      if (/unauthorized/i.test(errMsg)) {
-        errMsg = 'Your session has expired. Please log in again to use AI Chat.';
-      }
-      appendAIBubble(errMsg);
     }
 
   } catch (e) {
-
     console.error(e);
     showAITyping(false);
-    appendAIBubble('Unable to reach the AI service. Please check your connection and try again.');
+    appendAIBubble('An unexpected error occurred. Please try again.');
 
   } finally {
     _aiMessageInFlight = false;
@@ -1707,6 +1716,12 @@ if (!sessionStorage.getItem('vaultUser')) {
                         startSessionTimer();
                         startInactivityMonitor();
                         if (typeof listenForForceLogout === 'function') listenForForceLogout();
+                        // Init offline AI (auto-download model for offline path)
+                        if (window.OfflineAI) {
+                            window.OfflineAI.init({ downloadModel: true }).catch(function(e) {
+                                console.warn('[OfflineAI] Init failed:', e);
+                            });
+                        }
                         console.log('[OfflineAuth] Dashboard ready — offline mode active.');
                     };
 
@@ -1964,10 +1979,20 @@ function onCaptchaSuccess(){
     const vaultLoad = initVault().then(() => {
         vaultPostInit();
         runAIIndexingOnLogin();
+        if (window.OfflineAI) {
+            window.OfflineAI.init({ downloadModel: true }).catch(function(e) {
+                console.warn('[OfflineAI] Init failed:', e);
+            });
+        }
     }).catch(e => {
         console.error('initVault failed:', e);
         vaultPostInit();
         runAIIndexingOnLogin();
+        if (window.OfflineAI) {
+            window.OfflineAI.init({ downloadModel: true }).catch(function(e2) {
+                console.warn('[OfflineAI] Init failed:', e2);
+            });
+        }
     });
 
     setTimeout(() => {
