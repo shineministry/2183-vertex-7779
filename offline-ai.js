@@ -371,25 +371,12 @@ window.OfflineAI = (function () {
   async function _ensureTransformersLoaded() {
     if (window.Transformers && window.Transformers.pipeline) return;
 
-    return new Promise(function (resolve, reject) {
-      var script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1/dist/transformers.min.js';
-      script.crossOrigin = 'anonymous';
-      script.onload = function () {
-        // Transformers.js v3 exposes globals via window.Transformers
-        var tries = 0;
-        function check() {
-          if (window.Transformers && window.Transformers.pipeline) { resolve(); return; }
-          if (++tries > 10) { reject(new Error('Transformers.js loaded but pipeline API not found')); return; }
-          setTimeout(check, 300);
-        }
-        check();
-      };
-      script.onerror = function () {
-        reject(new Error('Failed to load Transformers.js from CDN'));
-      };
-      document.head.appendChild(script);
-    });
+    // Transformers.js v3 is ESM-only — use dynamic import() instead of script tag
+    var mod = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1');
+    if (!mod || !mod.pipeline) {
+      throw new Error('Transformers.js loaded but pipeline export not found');
+    }
+    window.Transformers = mod;
   }
 
   async function _restoreModelFromCache(cachedModel) {
