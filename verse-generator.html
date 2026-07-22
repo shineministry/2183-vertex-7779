@@ -363,6 +363,13 @@ function loadImage(src, crossOrigin=true){
   });
 }
 
+async function fetchImageAsBlobUrl(url){
+  const res = await fetch(url, {mode:'cors'});
+  if(!res.ok) throw new Error('bad response');
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
 document.getElementById('logoUpload').addEventListener('change', async (e)=>{
   const file = e.target.files[0];
   if(!file) return;
