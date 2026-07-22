@@ -742,6 +742,10 @@ function render(){
 
   drawVerseBlock(theme, els.verseStyle ? els.verseStyle.value : 'bold-caps');
 
+  const currentStyle = els.verseStyle ? els.verseStyle.value : 'bold-caps';
+  const isMinimalTemplate = currentStyle === 'icon-word' || currentStyle === 'blessed-list';
+
+  if(!isMinimalTemplate){
   // Side ribbon (day) — box sizes itself to the text so words never spill out
   const ribbonLabel = 'Have A Blessed ' + (els.day.value||'');
   const ribbonFont = "700 24px Manrope, sans-serif";
@@ -764,8 +768,10 @@ function render(){
   ctx.fillText(ribbonLabel, 0, 0);
   ctx.restore();
   ctx.textAlign = 'left';
+  }
 
   // Logo box top-right
+  if(!isMinimalTemplate){
   const logoSize = 120, logoX = W-logoSize-40, logoY = 30;
   ctx.save();
   roundRect(ctx, logoX, logoY, logoSize, logoSize, 14);
@@ -784,6 +790,7 @@ function render(){
     ctx.textAlign='left';
   }
   ctx.restore();
+  }
 
   const feastText = els.feastBanner ? els.feastBanner.value.trim() : '';
 
