@@ -180,6 +180,8 @@
               <option value="bold-caps">Bold caps + highlight stroke</option>
               <option value="editorial">Editorial serif + script accent</option>
               <option value="quote-italic">Italic quote, plain serif</option>
+              <option value="icon-word">Icon sprinkle + big script word (ref tag bottom-left)</option>
+              <option value="blessed-list">Quote mark + icon list (ref tag bottom, banner style)</option>
             </select>
           </div>
         </div>
@@ -291,7 +293,7 @@ function setStatus(msg, show=true){
 }
 
 function autoVerseStyle(dateStr){
-  const styles = ['bold-caps','editorial','quote-italic'];
+  const styles = ['bold-caps','editorial','quote-italic','icon-word','blessed-list'];
   if(!dateStr) return styles[0];
   const n = new Date(dateStr+'T00:00:00').getTime() / 86400000;
   return styles[Math.abs(Math.round(n)) % styles.length];
@@ -481,6 +483,9 @@ function drawVerseBlock(theme, style){
   ctx.textBaseline = 'alphabetic';
   let refY;
 
+  if(style === 'icon-word'){ drawIconWordStyle(theme, x0, maxWidth); return; }
+  if(style === 'blessed-list'){ drawBlessedListStyle(theme, x0, maxWidth); return; }
+
   if(style === 'editorial'){
     // Navy label pill behind the reference, like "MATTHEW 13:37"
     ctx.font = "800 28px Manrope, sans-serif";
@@ -608,6 +613,107 @@ function drawItalicQuote(lines, x0, startY, maxWidth, theme){
     });
     y += lineHeight;
   });
+}
+
+// Style modeled on the "sower" reference: small line-icon top-left, big mixed-weight
+// headline stacked mid-canvas (one word in a large script accent), reference shown as
+// a small colored tag UNDER the quote instead of a fixed banner above it.
+function drawIconWordStyle(theme, x0, maxWidth){
+  // simple hand-drawn sprinkle icon
+  ctx.save();
+  ctx.strokeStyle = theme.accentText; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x0+10,70); ctx.lineTo(x0+70,20); ctx.stroke();
+  for(let i=0;i<5;i++){
+    const dx = x0+40-i*10, dy = 90+i*14;
+    ctx.beginPath(); ctx.arc(dx,dy,3,0,Math.PI*2); ctx.stroke();
+  }
+  ctx.restore();
+
+  const lines = wrapQuoteLines(els.quote.value);
+  const startY = 210;
+  const lineHeight = 66;
+  let y = startY;
+  lines.forEach(parts=>{
+    let x = x0;
+    parts.forEach(seg=>{
+      ctx.font = seg.accent ? "italic 800 72px Fraunces, serif" : "700 40px Manrope, sans-serif";
+      ctx.fillStyle = seg.accent ? theme.accentText : '#1a1f38';
+      seg.t.split(' ').filter(Boolean).forEach(w=>{
+        const piece = w + ' ';
+        const pw = ctx.measureText(piece).width;
+        if(x + pw > x0+maxWidth){ x = x0; y += lineHeight; }
+        ctx.fillText(piece, x, y);
+        x += pw;
+      });
+    });
+    y += lineHeight;
+  });
+
+  // reference tag sits just below the quote, small pill, not a fixed top banner
+  const label = els.reference.value.toUpperCase();
+  ctx.font = "700 24px Manrope, sans-serif";
+  const pad = 18;
+  const tagW = ctx.measureText(label).width + pad*2, tagH = 42, tagY = y + 18;
+  roundRect(ctx, x0-4, tagY, tagW, tagH, 6);
+  ctx.fillStyle = theme.ribbonTo; ctx.fill();
+  ctx.fillStyle = '#f6f3ea'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, x0-4+pad, tagY+tagH/2);
+  ctx.textBaseline = 'alphabetic';
+}
+
+// Style modeled on the "blessed are your eyes/ears" reference: giant quote mark,
+// one bold hero word, then a short 2-line list with round icon bullets, reference
+// tag placed at the very bottom as a dark banner.
+function drawBlessedListStyle(theme, x0, maxWidth){
+  ctx.save();
+  ctx.font = "800 90px Georgia, serif";
+  ctx.fillStyle = theme.accentText;
+  ctx.fillText('\u201C', x0-6, 130);
+  ctx.restore();
+
+  const lines = wrapQuoteLines(els.quote.value);
+  let y = 210;
+  const lineHeight = 60;
+  const bulletLines = [];
+  lines.forEach(parts=>{
+    let x = x0;
+    parts.forEach((seg, idx)=>{
+      const isHero = seg.accent;
+      ctx.font = isHero ? "800 64px Fraunces, serif" : "700 34px Manrope, sans-serif";
+      ctx.fillStyle = isHero ? theme.ribbonFrom : '#1a1f38';
+      seg.t.split(' ').filter(Boolean).forEach(w=>{
+        const piece = w + ' ';
+        const pw = ctx.measureText(piece).width;
+        if(x + pw > x0+maxWidth){ x = x0; y += lineHeight; bulletLines.push(y-lineHeight); }
+        ctx.fillText(piece, x, y);
+        x += pw;
+      });
+    });
+    y += lineHeight;
+    bulletLines.push(y-lineHeight);
+  });
+
+  // small icon-bullet row beneath, echoing "eyes / ears" style callouts
+  const bulletY = y + 30;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x0+16, bulletY, 16, 0, Math.PI*2);
+  ctx.fillStyle = theme.ribbonFrom; ctx.fill();
+  ctx.font = "600 20px Manrope, sans-serif";
+  ctx.fillStyle = '#1a1f38'; ctx.textBaseline='middle';
+  ctx.fillText('Reflect · Believe · Live it', x0+44, bulletY);
+  ctx.textBaseline = 'alphabetic';
+  ctx.restore();
+
+  // reference as a dark banner tag beneath everything, not pinned to the top
+  const label = els.reference.value.toUpperCase();
+  ctx.font = "700 24px Manrope, sans-serif";
+  const pad = 18;
+  const tagW = ctx.measureText(label).width + pad*2, tagH = 42, tagY = bulletY + 34;
+  roundRect(ctx, x0-4, tagY, tagW, tagH, 6);
+  ctx.fillStyle = '#141c3a'; ctx.fill();
+  ctx.fillStyle = '#f6f3ea'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, x0-4+pad, tagY+tagH/2);
+  ctx.textBaseline = 'alphabetic';
 }
 
 function render(){
