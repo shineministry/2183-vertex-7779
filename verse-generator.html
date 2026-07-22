@@ -166,6 +166,29 @@
           </div>
         </div>
 
+        <div class="row2">
+          <div class="field">
+            <label>Layout style</label>
+            <select id="layoutStyle">
+              <option value="bottom-bar">Bottom bar (date + greeting together)</option>
+              <option value="top-banner">Top banner (greeting on top, date as pill)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Accent theme</label>
+            <select id="accentTheme">
+              <option value="gold">Gold / navy</option>
+              <option value="green">Gold / olive</option>
+              <option value="rose">Gold / maroon</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" id="feastField" style="display:none;">
+          <label>Feast / occasion banner (optional — leave blank to hide)</label>
+          <input type="text" id="feastBanner" placeholder="Happy Feast of St Mary Magdalene">
+        </div>
+
         <div class="field">
           <label>Background scene</label>
           <textarea id="scene" placeholder="a young man sitting on a rooftop at sunrise..."></textarea>
@@ -241,6 +264,9 @@ const els = {
   mood: document.getElementById('mood'),
   style: document.getElementById('style'),
   includeJesus: document.getElementById('includeJesus'),
+  layoutStyle: document.getElementById('layoutStyle'),
+  accentTheme: document.getElementById('accentTheme'),
+  feastBanner: document.getElementById('feastBanner'),
   datePicker: document.getElementById('datePicker'),
   dateChips: document.getElementById('dateChips'),
   promptPreview: document.getElementById('promptPreview'),
@@ -310,9 +336,14 @@ function selectEntry(v){
   els.scene.value = v.scene || '';
   els.mood.value = v.mood || '';
   els.includeJesus.checked = !!v.includeJesus;
+  els.layoutStyle.value = v.layout || 'bottom-bar';
+  els.accentTheme.value = v.accentTheme || 'gold';
+  els.feastBanner.value = v.feastBanner || '';
+  document.getElementById('feastField').style.display = els.layoutStyle.value === 'top-banner' ? 'block' : 'none';
   els._override = v.imagePromptOverride || null;
   highlightChip(v.date);
   updatePromptPreview();
+  render();
 }
 
 els.datePicker.addEventListener('change', ()=>{
@@ -418,8 +449,16 @@ function wrapQuoteLines(raw){
   });
 }
 
+const THEMES = {
+  gold:  {ribbonFrom:'#e8b64d', ribbonTo:'#c88a2e', ribbonText:'#241705', accentText:'#3f5fc4'},
+  green: {ribbonFrom:'#c9d18a', ribbonTo:'#7c8f3e', ribbonText:'#1c2408', accentText:'#3f6b3f'},
+  rose:  {ribbonFrom:'#e8b64d', ribbonTo:'#c88a2e', ribbonText:'#241705', accentText:'#7a2b2b'},
+};
+
 function render(){
   ctx.clearRect(0,0,W,H);
+  const theme = THEMES[els.accentTheme ? els.accentTheme.value : 'gold'] || THEMES.gold;
+  const isTopBanner = els.layoutStyle && els.layoutStyle.value === 'top-banner';
 
   // Background
   if(bgImg){
@@ -459,7 +498,7 @@ function render(){
     const lineHeight = 66;
     parts.forEach(seg=>{
       ctx.font = seg.accent ? "800 66px Manrope, sans-serif" : "800 50px Manrope, sans-serif";
-      ctx.fillStyle = seg.accent ? '#3f5fc4' : '#141b39';
+      ctx.fillStyle = seg.accent ? theme.accentText : '#141b39';
       const words = seg.t.split(' ').filter(Boolean);
       words.forEach((w,i)=>{
         const piece = w + ' ';
@@ -472,19 +511,26 @@ function render(){
     y += lineHeight;
   });
 
-  // Side ribbon (day)
-  const ribbonX = 20, ribbonY = H*0.42, ribbonH = 260, ribbonW = 64;
+  // Side ribbon (day) — box sizes itself to the text so words never spill out
+  const ribbonLabel = 'Have A Blessed ' + (els.day.value||'');
+  const ribbonFont = "700 24px Manrope, sans-serif";
+  ctx.font = ribbonFont;
+  const ribbonPad = 34; // padding at each end, along the text's running direction
+  const ribbonTextW = ctx.measureText(ribbonLabel).width;
+  const ribbonW = 64;
+  const ribbonH = Math.max(180, ribbonTextW + ribbonPad*2);
+  const ribbonX = 20, ribbonY = (H - ribbonH)/2; // vertically centered, stays on-canvas at any length
   ctx.save();
   const rg = ctx.createLinearGradient(ribbonX,ribbonY,ribbonX+ribbonW,ribbonY+ribbonH);
-  rg.addColorStop(0,'#e8b64d'); rg.addColorStop(1,'#c88a2e');
+  rg.addColorStop(0, theme.ribbonFrom); rg.addColorStop(1, theme.ribbonTo);
   roundRect(ctx, ribbonX, ribbonY, ribbonW, ribbonH, 18);
   ctx.fillStyle = rg; ctx.fill();
   ctx.translate(ribbonX+ribbonW/2, ribbonY+ribbonH/2);
   ctx.rotate(-Math.PI/2);
-  ctx.fillStyle = '#241705';
-  ctx.font = "700 24px Manrope, sans-serif";
+  ctx.fillStyle = theme.ribbonText;
+  ctx.font = ribbonFont;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('Have A Blessed ' + (els.day.value||''), 0, 0);
+  ctx.fillText(ribbonLabel, 0, 0);
   ctx.restore();
   ctx.textAlign = 'left';
 
@@ -508,24 +554,76 @@ function render(){
   }
   ctx.restore();
 
-  // Bottom glass bar
-  const barY = H-110, barH = 84, barX = 20, barW = W-40;
-  ctx.save();
-  roundRect(ctx, barX, barY, barW, barH, 20);
-  ctx.fillStyle = 'rgba(20,26,58,.72)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(232,182,77,.55)'; ctx.lineWidth = 2; ctx.stroke();
-  ctx.restore();
+  const feastText = els.feastBanner ? els.feastBanner.value.trim() : '';
 
-  ctx.fillStyle = '#f6f3ea';
-  ctx.font = "700 30px Manrope, sans-serif";
-  ctx.textBaseline='middle';
-  ctx.fillText(formatDate(els.datePicker.value), barX+28, barY+barH/2);
+  if(isTopBanner){
+    // Greeting pill, top-left
+    ctx.save();
+    ctx.font = "italic 700 26px Fraunces, serif";
+    const gPad = 26;
+    const gW = ctx.measureText(els.greeting.value).width + gPad*2;
+    const gX = 24, gY = 24, gH = 56;
+    roundRect(ctx, gX, gY, gW, gH, 16);
+    const gg = ctx.createLinearGradient(gX,gY,gX+gW,gY);
+    gg.addColorStop(0,'#5b3fc4'); gg.addColorStop(1,'#3f5fc4');
+    ctx.fillStyle = gg; ctx.fill();
+    ctx.strokeStyle = 'rgba(232,182,77,.7)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#f6f3ea';
+    ctx.textBaseline='middle';
+    ctx.fillText(els.greeting.value, gX+gPad, gY+gH/2);
+    ctx.restore();
 
-  ctx.font = "italic 500 27px Fraunces, serif";
-  ctx.textAlign='right';
-  ctx.fillText(els.greeting.value, barX+barW-28, barY+barH/2);
-  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    // Date pill, lower-left (over the scene)
+    ctx.save();
+    ctx.font = "700 26px Manrope, sans-serif";
+    const dPad = 24;
+    const dW = ctx.measureText(formatDate(els.datePicker.value)).width + dPad*2;
+    const dX = 24, dY = H-230, dH = 56;
+    roundRect(ctx, dX, dY, dW, dH, 16);
+    ctx.fillStyle = '#2a1f6e'; ctx.fill();
+    ctx.strokeStyle = 'rgba(232,182,77,.7)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#f6f3ea';
+    ctx.textBaseline='middle';
+    ctx.fillText(formatDate(els.datePicker.value), dX+dPad, dY+dH/2);
+    ctx.restore();
+
+    // Feast / occasion banner at the bottom, only if provided
+    if(feastText){
+      const fX = 20, fW = W-40, fH = 130, fY = H-fH-20;
+      ctx.save();
+      roundRect(ctx, fX, fY, fW, fH, 14);
+      ctx.fillStyle = '#f6f0dc'; ctx.fill();
+      ctx.strokeStyle = '#c88a2e'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = '#5a4420';
+      ctx.font = "700 20px Manrope, sans-serif";
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('HAPPY FEAST OF', fX+fW/2, fY+40);
+      ctx.fillStyle = '#7a2b2b';
+      ctx.font = "800 40px Fraunces, serif";
+      ctx.fillText(feastText.toUpperCase(), fX+fW/2, fY+86);
+      ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    }
+  } else {
+    // Bottom glass bar (default layout)
+    const barY = H-110, barH = 84, barX = 20, barW = W-40;
+    ctx.save();
+    roundRect(ctx, barX, barY, barW, barH, 20);
+    ctx.fillStyle = 'rgba(20,26,58,.72)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(232,182,77,.55)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle = '#f6f3ea';
+    ctx.font = "700 30px Manrope, sans-serif";
+    ctx.textBaseline='middle';
+    ctx.fillText(formatDate(els.datePicker.value), barX+28, barY+barH/2);
+
+    ctx.font = "italic 500 27px Fraunces, serif";
+    ctx.textAlign='right';
+    ctx.fillText(els.greeting.value, barX+barW-28, barY+barH/2);
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  }
 }
 
 function roundRect(ctx,x,y,w,h,r){
@@ -555,8 +653,14 @@ document.getElementById('downloadBtn').addEventListener('click', ()=>{
   link.click();
 });
 
-['reference','quote','day','greeting'].forEach(id=>{
+['reference','quote','day','greeting','feastBanner'].forEach(id=>{
   document.getElementById(id).addEventListener('input', render);
+});
+['layoutStyle','accentTheme'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', render);
+});
+els.layoutStyle.addEventListener('change', ()=>{
+  document.getElementById('feastField').style.display = els.layoutStyle.value === 'top-banner' ? 'block' : 'none';
 });
 els.datePicker.addEventListener('change', render);
 
