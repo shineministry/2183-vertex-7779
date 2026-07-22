@@ -175,6 +175,17 @@
             </select>
           </div>
           <div class="field">
+            <label>Verse style</label>
+            <select id="verseStyle">
+              <option value="bold-caps">Bold caps + highlight stroke</option>
+              <option value="editorial">Editorial serif + script accent</option>
+              <option value="quote-italic">Italic quote, plain serif</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
             <label>Accent theme</label>
             <select id="accentTheme">
               <option value="gold">Gold / navy</option>
@@ -182,6 +193,7 @@
               <option value="rose">Gold / maroon</option>
             </select>
           </div>
+          <div></div>
         </div>
 
         <div class="field" id="feastField" style="display:none;">
@@ -265,6 +277,7 @@ const els = {
   style: document.getElementById('style'),
   includeJesus: document.getElementById('includeJesus'),
   layoutStyle: document.getElementById('layoutStyle'),
+  verseStyle: document.getElementById('verseStyle'),
   accentTheme: document.getElementById('accentTheme'),
   feastBanner: document.getElementById('feastBanner'),
   datePicker: document.getElementById('datePicker'),
@@ -275,6 +288,13 @@ const els = {
 function setStatus(msg, show=true){
   statusOverlay.style.display = show ? 'flex' : 'none';
   statusOverlay.querySelector('div:last-child').textContent = msg;
+}
+
+function autoVerseStyle(dateStr){
+  const styles = ['bold-caps','editorial','quote-italic'];
+  if(!dateStr) return styles[0];
+  const n = new Date(dateStr+'T00:00:00').getTime() / 86400000;
+  return styles[Math.abs(Math.round(n)) % styles.length];
 }
 
 function applyVersesJson(json){
@@ -337,6 +357,7 @@ function selectEntry(v){
   els.mood.value = v.mood || '';
   els.includeJesus.checked = !!v.includeJesus;
   els.layoutStyle.value = v.layout || 'bottom-bar';
+  els.verseStyle.value = v.verseStyle || autoVerseStyle(v.date);
   els.accentTheme.value = v.accentTheme || 'gold';
   els.feastBanner.value = v.feastBanner || '';
   document.getElementById('feastField').style.display = els.layoutStyle.value === 'top-banner' ? 'block' : 'none';
@@ -455,6 +476,140 @@ const THEMES = {
   rose:  {ribbonFrom:'#e8b64d', ribbonTo:'#c88a2e', ribbonText:'#241705', accentText:'#7a2b2b'},
 };
 
+function drawVerseBlock(theme, style){
+  const x0 = 56, maxWidth = 640;
+  ctx.textBaseline = 'alphabetic';
+  let refY;
+
+  if(style === 'editorial'){
+    // Navy label pill behind the reference, like "MATTHEW 13:37"
+    ctx.font = "800 28px Manrope, sans-serif";
+    const label = els.reference.value.toUpperCase();
+    const pad = 20;
+    const boxW = ctx.measureText(label).width + pad*2, boxH = 50, boxY = 56;
+    roundRect(ctx, x0-6, boxY, boxW, boxH, 8);
+    ctx.fillStyle = '#141c3a'; ctx.fill();
+    ctx.fillStyle = '#f6f3ea'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, x0-6+pad, boxY+boxH/2);
+    ctx.textBaseline = 'alphabetic';
+    refY = boxY + boxH + 74;
+  } else if(style === 'quote-italic'){
+    ctx.font = "italic 600 34px Fraunces, serif";
+    ctx.fillStyle = '#131b3a';
+    ctx.fillText(els.reference.value.toUpperCase(), x0, 100);
+    const w = ctx.measureText(els.reference.value.toUpperCase()).width;
+    ctx.strokeStyle = theme.ribbonFrom; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x0,114); ctx.lineTo(x0+Math.min(w,220),114); ctx.stroke();
+    refY = 194;
+  } else { // bold-caps
+    ctx.font = "italic 600 32px Fraunces, serif";
+    ctx.fillStyle = '#f6f3ea';
+    ctx.fillText(els.reference.value.toUpperCase(), x0, 96);
+    const w = ctx.measureText(els.reference.value.toUpperCase()).width;
+    ctx.strokeStyle = theme.ribbonFrom; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x0,110); ctx.lineTo(x0+Math.min(w,220),110); ctx.stroke();
+    refY = 176;
+  }
+
+  const lines = wrapQuoteLines(els.quote.value);
+  if(style === 'editorial') drawEditorialQuote(lines, x0, refY, maxWidth, theme);
+  else if(style === 'quote-italic') drawItalicQuote(lines, x0, refY, maxWidth, theme);
+  else drawBoldCapsQuote(lines, x0, refY, maxWidth, theme);
+}
+
+// Bold uppercase sans, with a hand-drawn mustard highlight stroke behind **accent** phrases
+function drawBoldCapsQuote(lines, x0, startY, maxWidth, theme){
+  const lineHeight = 62;
+  const font = "800 46px Manrope, sans-serif";
+  let y = startY;
+  lines.forEach(parts=>{
+    let x = x0;
+    const rowWords = [];
+    parts.forEach(seg=>{
+      ctx.font = font;
+      seg.t.toUpperCase().split(' ').filter(Boolean).forEach(w=>{
+        const piece = w + ' ';
+        const pw = ctx.measureText(piece).width;
+        if(x + pw > x0+maxWidth){ x = x0; y += lineHeight; }
+        rowWords.push({text:piece, x, y, w:pw, accent:seg.accent});
+        x += pw;
+      });
+    });
+    let i = 0;
+    while(i < rowWords.length){
+      if(rowWords[i].accent){
+        let j = i;
+        while(j < rowWords.length && rowWords[j].accent && rowWords[j].y === rowWords[i].y) j++;
+        const first = rowWords[i], last = rowWords[j-1];
+        ctx.save();
+        ctx.strokeStyle = theme.ribbonFrom; ctx.lineWidth = 16;
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        roundRect(ctx, first.x-10, first.y-38, (last.x+last.w)-first.x+4, 52, 18);
+        ctx.stroke();
+        ctx.restore();
+        i = j;
+      } else i++;
+    }
+    rowWords.forEach(rw=>{
+      ctx.font = font;
+      ctx.fillStyle = rw.accent ? '#161c34' : '#f6f3ea';
+      ctx.fillText(rw.text, rw.x, rw.y);
+    });
+    y += lineHeight;
+  });
+}
+
+// Regular serif body copy with a large italic script accent word, like "Son of man"
+function drawEditorialQuote(lines, x0, startY, maxWidth, theme){
+  const lineHeight = 68;
+  let y = startY;
+  lines.forEach(parts=>{
+    let x = x0;
+    parts.forEach(seg=>{
+      ctx.font = seg.accent ? "italic 700 58px Fraunces, serif" : "600 42px Fraunces, serif";
+      ctx.fillStyle = seg.accent ? theme.accentText : '#131b3a';
+      seg.t.split(' ').filter(Boolean).forEach(w=>{
+        const piece = w + ' ';
+        const pw = ctx.measureText(piece).width;
+        if(x + pw > x0+maxWidth){ x = x0; y += lineHeight; }
+        ctx.fillText(piece, x, y);
+        x += pw;
+      });
+    });
+    y += lineHeight;
+  });
+}
+
+// Plain italic serif quote with bold colored + underlined accent words, like "Father" / "God"
+function drawItalicQuote(lines, x0, startY, maxWidth, theme){
+  const lineHeight = 60;
+  let y = startY;
+  lines.forEach(parts=>{
+    let x = x0;
+    const rowWords = [];
+    parts.forEach(seg=>{
+      ctx.font = seg.accent ? "800 46px Fraunces, serif" : "italic 500 42px Fraunces, serif";
+      seg.t.split(' ').filter(Boolean).forEach(w=>{
+        const piece = w + ' ';
+        const pw = ctx.measureText(piece).width;
+        if(x + pw > x0+maxWidth){ x = x0; y += lineHeight; }
+        rowWords.push({text:piece, x, y, w:pw, accent:seg.accent});
+        x += pw;
+      });
+    });
+    rowWords.forEach(rw=>{
+      ctx.font = rw.accent ? "800 46px Fraunces, serif" : "italic 500 42px Fraunces, serif";
+      ctx.fillStyle = rw.accent ? theme.accentText : '#1a1f38';
+      ctx.fillText(rw.text, rw.x, rw.y);
+      if(rw.accent){
+        ctx.strokeStyle = theme.ribbonFrom; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(rw.x, rw.y+8); ctx.lineTo(rw.x+rw.w-8, rw.y+8); ctx.stroke();
+      }
+    });
+    y += lineHeight;
+  });
+}
+
 function render(){
   ctx.clearRect(0,0,W,H);
   const theme = THEMES[els.accentTheme ? els.accentTheme.value : 'gold'] || THEMES.gold;
@@ -479,37 +634,7 @@ function render(){
   overlay.addColorStop(1,'rgba(8,12,28,.75)');
   ctx.fillStyle = overlay; ctx.fillRect(0,0,W,H);
 
-  // Reference
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = '#131b3a';
-  ctx.font = "italic 600 40px Fraunces, serif";
-  ctx.fillText(els.reference.value, 56, 96);
-  ctx.strokeStyle = '#3a4a8f'; ctx.lineWidth = 3;
-  const refWidth = ctx.measureText(els.reference.value).width;
-  ctx.beginPath(); ctx.moveTo(58,112); ctx.lineTo(58+Math.min(refWidth,220),112); ctx.stroke();
-
-  // Quote block
-  const lines = wrapQuoteLines(els.quote.value);
-  let y = 190;
-  const maxWidth = 640;
-  lines.forEach(parts=>{
-    // wrap each logical line across maxWidth using accent-aware measuring
-    let x = 56;
-    const lineHeight = 66;
-    parts.forEach(seg=>{
-      ctx.font = seg.accent ? "800 66px Manrope, sans-serif" : "800 50px Manrope, sans-serif";
-      ctx.fillStyle = seg.accent ? theme.accentText : '#141b39';
-      const words = seg.t.split(' ').filter(Boolean);
-      words.forEach((w,i)=>{
-        const piece = w + ' ';
-        const pw = ctx.measureText(piece).width;
-        if(x + pw > 56+maxWidth){ x = 56; y += lineHeight; }
-        ctx.fillText(piece, x, y);
-        x += pw;
-      });
-    });
-    y += lineHeight;
-  });
+  drawVerseBlock(theme, els.verseStyle ? els.verseStyle.value : 'bold-caps');
 
   // Side ribbon (day) — box sizes itself to the text so words never spill out
   const ribbonLabel = 'Have A Blessed ' + (els.day.value||'');
@@ -656,7 +781,7 @@ document.getElementById('downloadBtn').addEventListener('click', ()=>{
 ['reference','quote','day','greeting','feastBanner'].forEach(id=>{
   document.getElementById(id).addEventListener('input', render);
 });
-['layoutStyle','accentTheme'].forEach(id=>{
+['layoutStyle','verseStyle','accentTheme'].forEach(id=>{
   document.getElementById(id).addEventListener('change', render);
 });
 els.layoutStyle.addEventListener('change', ()=>{
