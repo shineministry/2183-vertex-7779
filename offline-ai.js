@@ -66,6 +66,7 @@ window.OfflineAI = (function () {
   let _downloading = false;
   let _downloadProgress = { downloaded: 0, total: 0 };
   let _allChunks = [];   // in-memory cache of all chunks for search
+  let _syncPromise = null;  // tracks the initial background sync so ask() can await it
 
   // ── IndexedDB Setup ───────────────────────────────────────────────────────
 
@@ -418,6 +419,53 @@ window.OfflineAI = (function () {
   }
 
   /**
+   * Fallback search: broader matching when strict search finds nothing.
+   * Uses substring matching and always returns best-available chunks.
+   */
+  function _searchChunksBestEffort(query, topK) {
+    topK = topK || CONFIG.TOP_K;
+    if (!_allChunks.length) return [];
+
+    var queryLower = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+    var queryTerms = queryLower.split(/\s+/).filter(function (w) { return w.length > 2; });
+    if (!queryTerms.length && queryLower.length > 2) {
+      queryTerms = [queryLower];
+    }
+    if (!queryTerms.length) {
+      // Absolute fallback: return the shortest (most focused) chunks
+      return _allChunks.slice().sort(function (a, b) { return a.text.length - b.text.length; }).slice(0, topK);
+    }
+
+    // Score with substring matching — any chunk containing a query substring gets a score
+    var scored = [];
+    for (var i = 0; i < _allChunks.length; i++) {
+      var chunk = _allChunks[i];
+      var textLower = chunk.text.toLowerCase();
+      var score = 0;
+      for (var j = 0; j < queryTerms.length; j++) {
+        if (textLower.indexOf(queryTerms[j]) !== -1) {
+          score += 1;
+        }
+      }
+      // Also check the full query as a phrase
+      if (queryLower.length > 3 && textLower.indexOf(queryLower) !== -1) {
+        score += 3;
+      }
+      if (score > 0) {
+        scored.push({ chunk: chunk, score: score });
+      }
+    }
+
+    if (scored.length === 0) {
+      // Truly nothing matches — return the first few chunks as the best we have
+      return _allChunks.slice(0, topK);
+    }
+
+    scored.sort(function (a, b) { return b.score - a.score; });
+    return scored.slice(0, topK).map(function (s) { return s.chunk; });
+  }
+
+  /**
    * Tokenize text into lowercase words, removing stopwords.
    */
   function _tokenize(text) {
@@ -574,6 +622,12 @@ window.OfflineAI = (function () {
     // Phase 9: Check internet
     var isOnline = navigator.onLine && !forceOffline;
 
+    // If an initial sync is still in progress, wait for it so chunks are available
+    if (_syncPromise) {
+      try { await _syncPromise; } catch (e) { /* sync failed, continue with whatever we have */ }
+      _syncPromise = null;
+    }
+
     if (isOnline) {
       // Phase 4: Try online AI first (via existing backend)
       try {
@@ -642,12 +696,37 @@ window.OfflineAI = (function () {
     var chunks = _searchChunks(question, CONFIG.TOP_K);
 
     if (chunks.length === 0) {
-      return {
-        answer: 'No relevant documents found in the offline cache. The vault documents may not have been synced yet, or your question doesn\'t match any stored content.',
-        source: 'offline',
-        success: true,
-        chunksUsed: 0
-      };
+      // If we're online and chunks are empty, try a sync before giving up
+      if (navigator.onLine && _allChunks.length === 0) {
+        var token = sessionStorage.getItem('vaultSessionToken') ||
+                    sessionStorage.getItem('vaultSession') || '';
+        if (token && !token.startsWith('offline-')) {
+          console.log('[OfflineAI] No chunks in cache, attempting sync before answering...');
+          try {
+            await syncChunks(token);
+            await _loadChunksToMemory();
+            chunks = _searchChunks(question, CONFIG.TOP_K);
+          } catch (e) {
+            console.warn('[OfflineAI] Emergency sync failed:', e);
+          }
+        }
+      }
+
+      // If still no results, try a broader search (lower threshold, best-available)
+      if (chunks.length === 0 && _allChunks.length > 0) {
+        chunks = _searchChunksBestEffort(question, CONFIG.TOP_K);
+      }
+
+      if (chunks.length === 0) {
+        return {
+          answer: _allChunks.length === 0
+            ? 'No documents have been synced to the offline cache yet. Please connect to the internet and log in to sync your vault documents for offline AI use.'
+            : 'No relevant documents found for your question. Try rephrasing or using different keywords.',
+          source: 'offline',
+          success: true,
+          chunksUsed: 0
+        };
+      }
     }
 
     // Phase 6: Generate answer from top chunks
@@ -710,9 +789,9 @@ window.OfflineAI = (function () {
             _setOfflineProgressText('Syncing AI document chunks...');
             _updateOfflineProgress(0, 1);
           }
-          syncChunks(token).then(function (result) {
+          _syncPromise = syncChunks(token).then(function (result) {
             console.log('[OfflineAI] Background chunk sync:', result);
-            _loadChunksToMemory().then(function() {
+            return _loadChunksToMemory().then(function() {
               if (modelCached) {
                 if (typeof _setOfflineProgressDone === 'function') {
                   _setOfflineProgressDone('Document chunks synced ✓');
@@ -723,6 +802,7 @@ window.OfflineAI = (function () {
                   _updateOfflineProgress(0, 1);
                 }
               }
+              return result;
             });
           }).catch(function (e) {
             console.warn('[OfflineAI] Background sync failed:', e);
