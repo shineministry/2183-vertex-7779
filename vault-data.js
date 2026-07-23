@@ -660,7 +660,34 @@ window.LITE_MODE
 ? files.slice(0,20)
 : files;
 
-visibleFiles.forEach(file=>{
+// ── Section grouping ──────────────────────────────────────────────────────
+// Group files by their `section` field. Files with no section render first,
+// then each named section renders a coloured header above its files.
+const _secMeta = (allFilesData && allFilesData['_meta']) ? allFilesData['_meta'] : {};
+const _secDefs = Array.isArray(_secMeta[category]) ? _secMeta[category] : [];
+const _secColorMap = {};
+_secDefs.forEach(s => { _secColorMap[s.name] = s.color || '#1a73e8'; });
+
+const _sectionGroups = {};
+const _unsectioned = [];
+visibleFiles.forEach(f => {
+    const s = (f.section || '').trim();
+    if (s) {
+        if (!_sectionGroups[s]) _sectionGroups[s] = [];
+        _sectionGroups[s].push(f);
+    } else {
+        _unsectioned.push(f);
+    }
+});
+
+// Build ordered list: unsectioned first, then each section by definition order
+const _orderedSections = _secDefs.map(s => s.name).filter(n => _sectionGroups[n]);
+// Also include any sections found in files but not in _meta (edge case)
+Object.keys(_sectionGroups).forEach(n => {
+    if (_orderedSections.indexOf(n) === -1) _orderedSections.push(n);
+});
+
+const _renderFileCard = (file) => {
 
         const card =
         document.createElement(
@@ -729,9 +756,8 @@ visibleFiles.forEach(file=>{
 
 // HOVER QUICK PREVIEW
         card.addEventListener('mouseenter', (e) => {
-            // Check to disable hover previews on phones, tablets, and mobile touch devices
             if (window.matchMedia("(max-width: 768px)").matches || ('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
-                return; // Stop right here, don't show the preview
+                return;
             }
             if(!window.LITE_MODE){
     startHoverPreview(file, e);
@@ -739,7 +765,6 @@ visibleFiles.forEach(file=>{
         });
 
         card.addEventListener('mousemove', (e) => {
-            // Check to disable position tracking on other devices
             if (window.matchMedia("(max-width: 768px)").matches || ('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
                 return;
             }
@@ -751,8 +776,23 @@ visibleFiles.forEach(file=>{
         });
 
         grid.appendChild(card);
+};
 
-    });
+// ── Render unsectioned files first ──
+_unsectioned.forEach(f => _renderFileCard(f));
+
+// ── Render each section with a coloured header ──
+_orderedSections.forEach(secName => {
+    const color = _secColorMap[secName] || '#1a73e8';
+    const hdr = document.createElement('div');
+    hdr.style.cssText = `grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;margin-top:12px;border-left:4px solid ${color};background:${color}11;`;
+    hdr.innerHTML = `
+        <div style="font-size:13px;font-weight:700;color:${color};flex:1;">${escHtml(secName)}</div>
+        <span style="font-size:10px;font-weight:700;color:#94a3b8;background:#fff;border:1px solid #e2e8f0;padding:1px 7px;border-radius:8px;">${_sectionGroups[secName].length}</span>
+    `;
+    grid.appendChild(hdr);
+    _sectionGroups[secName].forEach(f => _renderFileCard(f));
+});
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
