@@ -7,6 +7,7 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <meta name="theme-color" content="#1a73e8">
 <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="sha256.js"></script>
 <script src="offline-auth.js"></script>
 <style>
@@ -134,6 +135,43 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 .fm-json-body .js{color:#86efac;}
 .fm-json-body .jn{color:#fbbf24;}
 .fm-json-body .jb{color:#c084fc;}
+
+/* ====== SECTION HEADERS ====== */
+.fm-section{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:10px 14px;background:linear-gradient(135deg,#f0f7ff,#f8fafc);border:1px solid #dbeafe;border-radius:8px;margin-top:8px;cursor:pointer;user-select:none;}
+.fm-section:first-child{margin-top:0;}
+.fm-section:hover{background:linear-gradient(135deg,#e0efff,#f1f5f9);}
+.fm-section-icon{width:28px;height:28px;border-radius:6px;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .2s;}
+.fm-section-icon svg{width:14px;height:14px;color:#1a73e8;}
+.fm-section.collapsed .fm-section-icon{transform:rotate(-90deg);}
+.fm-section-name{font-size:13px;font-weight:700;color:#1e293b;flex:1;}
+.fm-section-count{font-size:10px;font-weight:700;color:#94a3b8;background:#fff;border:1px solid #e2e8f0;padding:1px 7px;border-radius:8px;}
+.fm-section-add{width:28px;height:28px;border:1px dashed #cbd5e1;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:none;color:#94a3b8;transition:all .15s;flex-shrink:0;}
+.fm-section-add:hover{border-color:#1a73e8;color:#1a73e8;background:#f0f7ff;}
+.fm-section-add svg{width:14px;height:14px;}
+.fm-section-del{width:28px;height:28px;border:none;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:none;color:#cbd5e1;transition:all .15s;flex-shrink:0;}
+.fm-section-del:hover{color:#dc2626;background:#fef2f2;}
+.fm-section-del svg{width:13px;height:13px;}
+.fm-section-items{grid-column:1/-1;display:contents;}
+body.dark .fm-section{background:linear-gradient(135deg,#1e2a3f,#1e293b);border-color:#2d3b52;}
+body.dark .fm-section:hover{background:linear-gradient(135deg,#243349,#253347);}
+body.dark .fm-section-icon{background:#1e3a5f;}
+body.dark .fm-section-icon svg{color:#60a5fa;}
+body.dark .fm-section-name{color:#e2e8f0;}
+body.dark .fm-section-count{background:#1e293b;border-color:#334155;color:#64748b;}
+body.dark .fm-section-add{border-color:#334155;color:#64748b;}
+body.dark .fm-section-add:hover{border-color:#60a5fa;color:#60a5fa;background:#1e3a5f;}
+body.dark .fm-section-del{color:#475569;}
+body.dark .fm-section-del:hover{color:#ef4444;background:#3b1111;}
+
+/* ====== SECTION ADD MODAL ====== */
+.fm-section-input{display:flex;gap:6px;align-items:center;}
+.fm-section-input input{flex:1;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font:inherit;font-size:12px;color:#1e293b;}
+.fm-section-input input:focus{outline:2px solid #1a73e8;outline-offset:-1px;border-color:#1a73e8;}
+.fm-section-suggestions{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.fm-section-sug{padding:4px 10px;border:1px solid #e2e8f0;border-radius:12px;font-size:11px;font-weight:600;color:#475569;cursor:pointer;background:#fff;transition:all .12s;}
+.fm-section-sug:hover{border-color:#1a73e8;color:#1a73e8;background:#f0f7ff;}
+body.dark .fm-section-sug{background:#1e293b;border-color:#334155;color:#94a3b8;}
+body.dark .fm-section-sug:hover{border-color:#60a5fa;color:#60a5fa;background:#1e3a5f;}
 
 /* ====== MODAL ====== */
 .fm-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999;}
@@ -374,6 +412,14 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
           <span id="fmFileInfoText"></span>
           <button onclick="clearFileUpload()" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;line-height:1;">&times;</button>
         </div>
+      </div>
+      <div>
+        <label>Section (group related files)</label>
+        <div class="fm-section-input">
+          <input type="text" id="fmSection" placeholder="e.g. Google, Apple, Samsung..." list="fmSectionList" autocomplete="off">
+        </div>
+        <datalist id="fmSectionList"></datalist>
+        <div class="fm-section-suggestions" id="fmSectionSugs"></div>
       </div>
       <div>
         <label>Date</label>
@@ -743,6 +789,32 @@ function _prefixForActiveCat(){
   return _isPhotosCategory(_activeCat) ? 'photos/' : 'docs/';
 }
 
+/* ---- SECTION HELPERS ---- */
+function _getSections(cat){
+  var items = Array.isArray(_data[cat]) ? _data[cat] : [];
+  var map = {};
+  items.forEach(function(it){
+    var s = (it.section || '').trim();
+    if (s) map[s] = (map[s] || 0) + 1;
+  });
+  return map;
+}
+
+function _getSectionNames(cat){
+  return Object.keys(_getSections(cat)).sort();
+}
+
+function _populateSectionSuggestions(){
+  var list = document.getElementById('fmSectionList');
+  var sugs = document.getElementById('fmSectionSugs');
+  if (!list || !sugs) return;
+  var names = _getSectionNames(_activeCat);
+  list.innerHTML = names.map(function(n){ return '<option value="'+_esc(n)+'">'; }).join('');
+  sugs.innerHTML = names.map(function(n){
+    return '<span class="fm-section-sug" onclick="document.getElementById(\'fmSection\').value=\''+_esc(n).replace(/'/g,"\\'")+'\'">'+_esc(n)+'</span>';
+  }).join('');
+}
+
 function _catIcon(c){
   var icons = {passport:'plane',visa:'plane',finance:'wallet',school:'graduation-cap',personal:'user',residence:'home',church:'cross',education:'book-open',identity:'contact',legal:'scale','financial':'credit-card',ministry:'bird',medical:'stethoscope',insurance:'shield',tax:'clipboard-list',property:'home',vehicle:'car',travel:'globe',work:'briefcase',bank:'landmark',documents:'file-text',certificates:'award',photos:'camera',home:'home',profile:'user'};
   var key = Object.keys(icons).find(function(k){ return c.toLowerCase().indexOf(k) !== -1; });
@@ -764,6 +836,8 @@ function _selectCat(cat){
 }
 
 /* ---- RENDER CARDS ---- */
+var _collapsedSections = {};
+
 function _renderCards(){
   var grid = document.getElementById('cardsGrid');
   var items = Array.isArray(_data[_activeCat]) ? _data[_activeCat] : [];
@@ -773,6 +847,7 @@ function _renderCards(){
     if (!q) return true;
     return (o.it.name||'').toLowerCase().indexOf(q)!==-1
         || (o.it.file||'').toLowerCase().indexOf(q)!==-1
+        || (o.it.section||'').toLowerCase().indexOf(q)!==-1
         || (o.it.member||'').toLowerCase().indexOf(q)!==-1
         || _activeCat.toLowerCase().indexOf(q)!==-1;
   });
@@ -783,7 +858,18 @@ function _renderCards(){
     return;
   }
 
-  var html = filtered.map(function(o){
+  /* Group by section */
+  var sectionOrder = [];
+  var sectionMap = {};
+  filtered.forEach(function(o){
+    var s = (o.it.section || '').trim() || '';
+    if (!sectionMap[s]){ sectionMap[s] = []; sectionOrder.push(s); }
+    sectionMap[s].push(o);
+  });
+
+  var hasSections = sectionOrder.length > 1 || (sectionOrder.length === 1 && sectionOrder[0] !== '');
+
+  function _renderCard(o){
     var it = o.it;
     var idx = o.idx;
     var members = Array.isArray(it.members) ? it.members : (it.member ? [it.member] : []);
@@ -825,7 +911,38 @@ function _renderCards(){
       + '</div>'
       + '<div class="fm-card-members">'+memberChips+'</div>'
       + '</div>';
-  }).join('');
+  }
+
+  var html = '';
+
+  if (hasSections){
+    /* Render each section with a header */
+    sectionOrder.forEach(function(sec){
+      var secKey = _activeCat + '::' + sec;
+      var collapsed = _collapsedSections[secKey];
+      var label = sec || 'General';
+      var count = sectionMap[sec].length;
+
+      html += '<div class="fm-section'+(collapsed?' collapsed':'')+'" onclick="_toggleSection(\''+_esc(sec).replace(/'/g,"\\'")+'\')" data-section="'+_esc(sec)+'">'
+        + '<div class="fm-section-icon"><i data-lucide="chevron-down" style="width:14px;height:14px;"></i></div>'
+        + '<div class="fm-section-name">'+_esc(label)+'</div>'
+        + '<span class="fm-section-count">'+count+'</span>'
+        + (sec ? '<button class="fm-section-del" onclick="event.stopPropagation();_renameSection(\''+_esc(sec).replace(/'/g,"\\'")+'\')" title="Rename section"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>' : '')
+        + '<button class="fm-section-del" onclick="event.stopPropagation();_deleteSection(\''+_esc(sec).replace(/'/g,"\\'")+'\')" title="Remove section tag from all files"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>'
+        + '</div>';
+
+      if (!collapsed){
+        sectionMap[sec].forEach(function(o){
+          html += _renderCard(o);
+        });
+      }
+    });
+  } else {
+    /* No sections — flat list */
+    filtered.forEach(function(o){
+      html += _renderCard(o);
+    });
+  }
 
   /* add-card button */
   html += '<div class="fm-add-card" onclick="addFileEntry()"><i data-lucide="plus" style="width:24px;height:24px;"></i><span>Add File</span></div>';
@@ -838,6 +955,41 @@ function _renderCards(){
 function filterCards(q){
   _searchQ = q;
   _renderCards();
+}
+
+/* ---- SECTION MANAGEMENT ---- */
+function _toggleSection(sec){
+  var key = _activeCat + '::' + sec;
+  _collapsedSections[key] = !_collapsedSections[key];
+  _renderCards();
+}
+
+function _renameSection(sec){
+  var newName = prompt('Rename section "'+sec+'" to:', sec);
+  if (!newName || !newName.trim() || newName.trim() === sec) return;
+  newName = newName.trim();
+  var items = _data[_activeCat];
+  if (!Array.isArray(items)) return;
+  items.forEach(function(it){
+    if ((it.section || '').trim() === sec) it.section = newName;
+  });
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+  toast('Section renamed to "'+newName+'"');
+}
+
+function _deleteSection(sec){
+  if (!confirm('Remove section "'+sec+'" from all files? Files will move to General.')) return;
+  var items = _data[_activeCat];
+  if (!Array.isArray(items)) return;
+  items.forEach(function(it){
+    if ((it.section || '').trim() === sec) delete it.section;
+  });
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+  toast('Section "'+sec+'" removed');
 }
 
 /* ---- ADD CATEGORY ---- */
@@ -913,7 +1065,9 @@ function addFileEntry(){
   document.getElementById('fmPrefix').value = _prefixForActiveCat();
   document.getElementById('fmPrefix').disabled = true;
   document.getElementById('fmFile').value = '';
+  document.getElementById('fmSection').value = '';
   document.getElementById('fmDate').value = new Date().toISOString().slice(0,10);
+  _populateSectionSuggestions();
   _resetMemberChips(['shineil','brother','father','mother']);
   document.getElementById('fileModal').classList.add('show');
 }
@@ -928,17 +1082,15 @@ function editFileEntry(idx){
   document.getElementById('fmName').value = it.name || '';
   var filePath = it.file || '';
   var fileName = filePath;
-  /* Strip any legacy stored prefix from the filename itself — the prefix is
-     no longer inferred from the stored path, it is always derived from the
-     category (see _prefixForActiveCat), so PHOTOS files always resolve to
-     /photos/ and everything else always resolves to /docs/. */
   ['photos/','docs/','file/'].forEach(function(p){
     if (filePath.indexOf(p) === 0){ fileName = filePath.slice(p.length); }
   });
   document.getElementById('fmPrefix').value = _prefixForActiveCat();
   document.getElementById('fmPrefix').disabled = true;
   document.getElementById('fmFile').value = fileName;
+  document.getElementById('fmSection').value = it.section || '';
   document.getElementById('fmDate').value = it.date || '';
+  _populateSectionSuggestions();
   var members = Array.isArray(it.members) ? it.members : (it.member ? [it.member] : ['shineil']);
   _resetMemberChips(members);
   document.getElementById('fileModal').classList.add('show');
@@ -973,12 +1125,9 @@ function deleteFileEntry(idx){
 /* ---- SAVE FILE ---- */
 function saveFileEntry(){
   var name = document.getElementById('fmName').value.trim();
-  /* Prefix is always derived from the active category (PHOTOS -> photos/,
-     everything else -> docs/), never read from the dropdown — this is what
-     keeps the bucket key and the file.category-based routing in the main
-     vault app permanently in sync, regardless of file type. */
   var prefix = _prefixForActiveCat();
   var fileName = document.getElementById('fmFile').value.trim();
+  var section = document.getElementById('fmSection').value.trim();
   var date = document.getElementById('fmDate').value;
   if (!name){ toast('Name is required'); return; }
   if (!fileName){ toast('File name is required'); return; }
@@ -987,6 +1136,7 @@ function saveFileEntry(){
   if (!members.length) members = ['shineil'];
 
   var entry = { name:name, file:fileName, members:members };
+  if (section) entry.section = section;
   if (date) entry.date = date;
 
   /* preserve stable id across edits so upload status can be tracked per-entry */
@@ -1029,6 +1179,8 @@ function closeFileModal(){
 /* ---- FILE UPLOAD & ENCRYPT ---- */
 var _pendingEncBlob = null;
 var _pendingOrigName = '';
+var _IMAGE_EXTS = /\.(jpg|jpeg|png|gif|webp|bmp|heic|heif|tiff|tif|svg)$/i;
+var _IMAGE_MIMES = /^image\//;
 
 function handleFileSelect(e){
   var file = e.target.files[0];
@@ -1047,10 +1199,13 @@ function handleFileDrop(e){
 
 async function processUploadFile(file){
   var name = file.name;
-  var encName = name.replace(/\.[^.]+$/, '') + '.enc';
-  document.getElementById('fmName').value = name.replace(/\.[^.]+$/, '');
+  var isImage = _IMAGE_EXTS.test(name) || _IMAGE_MIMES.test(file.type);
+  var baseName = name.replace(/\.[^.]+$/, '');
+  var pdfName = baseName + '.pdf';
+  var encName = baseName + '.enc';
+
+  document.getElementById('fmName').value = baseName;
   document.getElementById('fmFile').value = encName;
-  document.getElementById('fmFileInfoText').textContent = name + ' → ' + encName + ' (encrypting...)';
   document.getElementById('fmFileInfo').style.display = 'flex';
   document.getElementById('fmUploadArea').style.display = 'none';
   if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -1065,15 +1220,68 @@ async function processUploadFile(file){
   }
 
   try {
-    var arrayBuf = await file.arrayBuffer();
-    _pendingEncBlob = await encryptVaultFile(arrayBuf, pass);
-    _pendingOrigName = name;
+    var dataBuf;
+
+    if (isImage){
+      document.getElementById('fmFileInfoText').textContent = name + ' → ' + pdfName + ' (converting to PDF...)';
+      dataBuf = await _imageToPdf(file);
+      document.getElementById('fmFileInfoText').textContent = name + ' → ' + pdfName + ' → ' + encName + ' (encrypting...)';
+    } else {
+      dataBuf = await file.arrayBuffer();
+      document.getElementById('fmFileInfoText').textContent = name + ' → ' + encName + ' (encrypting...)';
+    }
+
+    _pendingEncBlob = await encryptVaultFile(dataBuf, pass);
+    _pendingOrigName = baseName + (isImage ? '.pdf' : name.replace(/.*\./, '.'));
     document.getElementById('fmFileInfoText').textContent = name + ' → ' + encName + ' (encrypted, ready to deploy)';
-    toast('File encrypted successfully');
+    toast(isImage ? 'Image converted to PDF and encrypted' : 'File encrypted successfully');
   } catch(e){
-    toast('Encryption failed: ' + e.message);
+    toast('Failed: ' + e.message);
     clearFileUpload();
   }
+}
+
+/**
+ * Convert an image file to a single-page PDF using pdf-lib.
+ * Returns an ArrayBuffer of the PDF.
+ */
+async function _imageToPdf(file){
+  var imgData = await file.arrayBuffer();
+  var pdfDoc = await PDFLib.PDFDocument.create();
+  var img;
+
+  var mimeLower = (file.type || '').toLowerCase();
+  var isJpeg = mimeLower.includes('jpeg') || mimeLower.includes('jpg');
+  var isPng  = mimeLower.includes('png');
+
+  if (isPng){
+    img = await pdfDoc.embedPng(new Uint8Array(imgData));
+  } else if (isJpeg){
+    img = await pdfDoc.embedJpg(new Uint8Array(imgData));
+  } else {
+    /* Canvas fallback for BMP, WebP, GIF, HEIC, TIFF, SVG, etc.
+       Draw the image onto an off-screen canvas, export as JPEG, then embed. */
+    var bitmap = await createImageBitmap(new Blob([imgData], { type: file.type || 'application/octet-stream' }));
+    var cvs = document.createElement('canvas');
+    cvs.width  = bitmap.width;
+    cvs.height = bitmap.height;
+    var ctx = cvs.getContext('2d');
+    ctx.drawImage(bitmap, 0, 0);
+    var jpegBlob = await new Promise(function(resolve){
+      cvs.toBlob(function(b){ resolve(b); }, 'image/jpeg', 0.92);
+    });
+    var jpegBuf = await jpegBlob.arrayBuffer();
+    img = await pdfDoc.embedJpg(new Uint8Array(jpegBuf));
+  }
+
+  var ptsW = img.width;
+  var ptsH = img.height;
+
+  var page = pdfDoc.addPage([ptsW, ptsH]);
+  page.drawImage(img, { x: 0, y: 0, width: ptsW, height: ptsH });
+
+  var pdfBytes = await pdfDoc.save();
+  return pdfBytes.buffer;
 }
 
 async function encryptVaultFile(data, password){
