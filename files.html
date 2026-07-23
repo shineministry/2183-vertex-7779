@@ -137,41 +137,27 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 .fm-json-body .jb{color:#c084fc;}
 
 /* ====== SECTION HEADERS ====== */
-.fm-section{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:10px 14px;background:linear-gradient(135deg,#f0f7ff,#f8fafc);border:1px solid #dbeafe;border-radius:8px;margin-top:8px;cursor:pointer;user-select:none;}
+.fm-section{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;margin-top:8px;user-select:none;border-left:4px solid transparent;}
 .fm-section:first-child{margin-top:0;}
-.fm-section:hover{background:linear-gradient(135deg,#e0efff,#f1f5f9);}
-.fm-section-icon{width:28px;height:28px;border-radius:6px;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .2s;}
-.fm-section-icon svg{width:14px;height:14px;color:#1a73e8;}
-.fm-section.collapsed .fm-section-icon{transform:rotate(-90deg);}
-.fm-section-name{font-size:13px;font-weight:700;color:#1e293b;flex:1;}
+.fm-section-name{font-size:13px;font-weight:700;flex:1;}
 .fm-section-count{font-size:10px;font-weight:700;color:#94a3b8;background:#fff;border:1px solid #e2e8f0;padding:1px 7px;border-radius:8px;}
-.fm-section-add{width:28px;height:28px;border:1px dashed #cbd5e1;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:none;color:#94a3b8;transition:all .15s;flex-shrink:0;}
-.fm-section-add:hover{border-color:#1a73e8;color:#1a73e8;background:#f0f7ff;}
-.fm-section-add svg{width:14px;height:14px;}
 .fm-section-del{width:28px;height:28px;border:none;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:none;color:#cbd5e1;transition:all .15s;flex-shrink:0;}
 .fm-section-del:hover{color:#dc2626;background:#fef2f2;}
 .fm-section-del svg{width:13px;height:13px;}
-.fm-section-items{grid-column:1/-1;display:contents;}
-body.dark .fm-section{background:linear-gradient(135deg,#1e2a3f,#1e293b);border-color:#2d3b52;}
-body.dark .fm-section:hover{background:linear-gradient(135deg,#243349,#253347);}
-body.dark .fm-section-icon{background:#1e3a5f;}
-body.dark .fm-section-icon svg{color:#60a5fa;}
+body.dark .fm-section{background:linear-gradient(135deg,#1e2a3f,#1e293b);}
 body.dark .fm-section-name{color:#e2e8f0;}
 body.dark .fm-section-count{background:#1e293b;border-color:#334155;color:#64748b;}
-body.dark .fm-section-add{border-color:#334155;color:#64748b;}
-body.dark .fm-section-add:hover{border-color:#60a5fa;color:#60a5fa;background:#1e3a5f;}
 body.dark .fm-section-del{color:#475569;}
 body.dark .fm-section-del:hover{color:#ef4444;background:#3b1111;}
 
-/* ====== SECTION ADD MODAL ====== */
-.fm-section-input{display:flex;gap:6px;align-items:center;}
-.fm-section-input input{flex:1;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font:inherit;font-size:12px;color:#1e293b;}
-.fm-section-input input:focus{outline:2px solid #1a73e8;outline-offset:-1px;border-color:#1a73e8;}
-.fm-section-suggestions{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
-.fm-section-sug{padding:4px 10px;border:1px solid #e2e8f0;border-radius:12px;font-size:11px;font-weight:600;color:#475569;cursor:pointer;background:#fff;transition:all .12s;}
-.fm-section-sug:hover{border-color:#1a73e8;color:#1a73e8;background:#f0f7ff;}
-body.dark .fm-section-sug{background:#1e293b;border-color:#334155;color:#94a3b8;}
-body.dark .fm-section-sug:hover{border-color:#60a5fa;color:#60a5fa;background:#1e3a5f;}
+/* ====== SECTION FILE PICKER (in section modal) ====== */
+.fm-sec-file{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;transition:background .1s;font-size:12px;color:#475569;}
+.fm-sec-file:hover{background:#f1f5f9;}
+.fm-sec-file input[type="checkbox"]{accent-color:#1a73e8;width:15px;height:15px;cursor:pointer;}
+.fm-sec-file-name{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fm-sec-file-path{font-size:10px;color:#94a3b8;font-family:'Cascadia Code','Fira Code',monospace;}
+body.dark .fm-sec-file{color:#94a3b8;}
+body.dark .fm-sec-file:hover{background:#334155;}
 
 /* ====== MODAL ====== */
 .fm-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999;}
@@ -328,6 +314,7 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
       <div class="fm-cat-header" id="catHeader" style="display:none;">
         <h2 id="catTitle">—</h2>
         <span class="fm-cat-badge" id="catBadge">0 files</span>
+        <button class="fm-tb-btn" onclick="openSectionModal()" title="Create section"><i data-lucide="layout-grid" style="width:13px;height:13px;"></i> + Section</button>
         <button class="fm-tb-btn" onclick="renameCategory()" title="Rename category"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>
         <button class="fm-tb-btn danger" onclick="deleteCategory()" title="Delete category"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
       </div>
@@ -414,12 +401,10 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
         </div>
       </div>
       <div>
-        <label>Section (group related files)</label>
-        <div class="fm-section-input">
-          <input type="text" id="fmSection" placeholder="e.g. Google, Apple, Samsung..." list="fmSectionList" autocomplete="off">
-        </div>
-        <datalist id="fmSectionList"></datalist>
-        <div class="fm-section-suggestions" id="fmSectionSugs"></div>
+        <label>Section</label>
+        <select id="fmSection">
+          <option value="">— No section —</option>
+        </select>
       </div>
       <div>
         <label>Date</label>
@@ -438,6 +423,41 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
     <div class="fm-modal-foot">
       <button class="fm-cancel" onclick="closeFileModal()">Cancel</button>
       <button class="fm-save" onclick="saveFileEntry()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SECTION MODAL -->
+<div class="fm-modal-overlay" id="sectionModal">
+  <div class="fm-modal" style="width:440px;">
+    <div class="fm-modal-head">
+      <h3 id="sectionModalTitle">Create Section</h3>
+      <button onclick="closeSectionModal()">&times;</button>
+    </div>
+    <div class="fm-modal-body">
+      <div>
+        <label>Section Name</label>
+        <input type="text" id="secName" placeholder="e.g. Google, Apple, Samsung...">
+      </div>
+      <div>
+        <label>Color</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="color" id="secColor" value="#1a73e8" style="width:40px;height:34px;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;padding:2px;">
+          <div id="secColorPresets" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+        </div>
+      </div>
+      <div>
+        <label>Select Files in This Category</label>
+        <div id="secFileList" style="max-height:200px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;padding:6px;"></div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button class="fm-tb-btn" onclick="secSelectAll()" style="font-size:11px;">Select All</button>
+          <button class="fm-tb-btn" onclick="secSelectNone()" style="font-size:11px;">Clear All</button>
+        </div>
+      </div>
+    </div>
+    <div class="fm-modal-foot">
+      <button class="fm-cancel" onclick="closeSectionModal()">Cancel</button>
+      <button class="fm-save" onclick="saveSection()">Save Section</button>
     </div>
   </div>
 </div>
@@ -789,30 +809,143 @@ function _prefixForActiveCat(){
   return _isPhotosCategory(_activeCat) ? 'photos/' : 'docs/';
 }
 
-/* ---- SECTION HELPERS ---- */
-function _getSections(cat){
-  var items = Array.isArray(_data[cat]) ? _data[cat] : [];
-  var map = {};
-  items.forEach(function(it){
-    var s = (it.section || '').trim();
-    if (s) map[s] = (map[s] || 0) + 1;
-  });
-  return map;
+/* ---- SECTION HELPERS (stored in _data["_meta"]) ---- */
+function _getMeta(){ return (_data && _data['_meta']) ? _data['_meta'] : {}; }
+function _getSectionsForCat(cat){ var m = _getMeta(); return Array.isArray(m[cat]) ? m[cat] : []; }
+function _setSectionForCat(cat, secs){ if (!_data['_meta']) _data['_meta'] = {}; _data['_meta'][cat] = secs; }
+function _getSectionColor(cat, secName){
+  var secs = _getSectionsForCat(cat);
+  for (var i = 0; i < secs.length; i++){ if (secs[i].name === secName) return secs[i].color || '#1a73e8'; }
+  return '#1a73e8';
 }
-
-function _getSectionNames(cat){
-  return Object.keys(_getSections(cat)).sort();
-}
-
-function _populateSectionSuggestions(){
-  var list = document.getElementById('fmSectionList');
-  var sugs = document.getElementById('fmSectionSugs');
-  if (!list || !sugs) return;
-  var names = _getSectionNames(_activeCat);
-  list.innerHTML = names.map(function(n){ return '<option value="'+_esc(n)+'">'; }).join('');
-  sugs.innerHTML = names.map(function(n){
-    return '<span class="fm-section-sug" onclick="document.getElementById(\'fmSection\').value=\''+_esc(n).replace(/'/g,"\\'")+'\'">'+_esc(n)+'</span>';
+function _populateSectionDropdown(){
+  var sel = document.getElementById('fmSection');
+  if (!sel) return;
+  var prev = sel.value;
+  var secs = _getSectionsForCat(_activeCat);
+  sel.innerHTML = '<option value="">— No section —</option>' + secs.map(function(s){
+    return '<option value="'+_esc(s.name)+'">'+_esc(s.name)+'</option>';
   }).join('');
+  if (prev) sel.value = prev;
+}
+
+/* ---- SECTION MODAL ---- */
+var _secColorPresets = ['#1a73e8','#dc2626','#059669','#d97706','#7c3aed','#db2777','#0891b2','#65a30d','#ea580c','#6366f1'];
+
+function openSectionModal(){
+  if (!_activeCat){ toast('Select a category first'); return; }
+  var items = Array.isArray(_data[_activeCat]) ? _data[_activeCat] : [];
+  if (!items.length){ toast('Add files to this category first'); return; }
+  document.getElementById('secName').value = '';
+  document.getElementById('secColor').value = '#1a73e8';
+  _renderSecColorPresets();
+  _renderSecFileList();
+  document.getElementById('sectionModal').classList.add('show');
+  setTimeout(function(){ document.getElementById('secName').focus(); }, 100);
+}
+
+function closeSectionModal(){
+  document.getElementById('sectionModal').classList.remove('show');
+}
+
+function _renderSecColorPresets(){
+  var el = document.getElementById('secColorPresets');
+  var current = document.getElementById('secColor').value;
+  el.innerHTML = _secColorPresets.map(function(c){
+    return '<span onclick="document.getElementById(\'secColor\').value=\''+c+'\'" style="width:22px;height:22px;border-radius:50%;background:'+c+';cursor:pointer;border:2px solid '+(c===current?'#1e293b':'transparent')+';display:inline-block;transition:border .1s;" onmouseenter="this.style.border=\'#1e293b\'" onmouseleave="this.style.border=\''+(c===current?'#1e293b':'transparent')+'\'"></span>';
+  }).join('');
+  document.getElementById('secColor').onchange = function(){ _renderSecColorPresets(); };
+}
+
+function _renderSecFileList(){
+  var el = document.getElementById('secFileList');
+  var items = Array.isArray(_data[_activeCat]) ? _data[_activeCat] : [];
+  el.innerHTML = items.map(function(it, i){
+    return '<label class="fm-sec-file">'
+      + '<input type="checkbox" data-idx="'+i+'" checked>'
+      + '<span class="fm-sec-file-name">'+_esc(it.name || 'Untitled')+'</span>'
+      + '<span class="fm-sec-file-path">'+_esc(it.file || '')+'</span>'
+      + '</label>';
+  }).join('');
+}
+
+function secSelectAll(){
+  document.querySelectorAll('#secFileList input[type="checkbox"]').forEach(function(cb){ cb.checked = true; });
+}
+function secSelectNone(){
+  document.querySelectorAll('#secFileList input[type="checkbox"]').forEach(function(cb){ cb.checked = false; });
+}
+
+function saveSection(){
+  var name = document.getElementById('secName').value.trim();
+  var color = document.getElementById('secColor').value;
+  if (!name){ toast('Section name is required'); return; }
+  var items = Array.isArray(_data[_activeCat]) ? _data[_activeCat] : [];
+  var selectedIdx = [];
+  document.querySelectorAll('#secFileList input[type="checkbox"]:checked').forEach(function(cb){
+    selectedIdx.push(parseInt(cb.dataset.idx));
+  });
+  if (!selectedIdx.length){ toast('Select at least one file'); return; }
+
+  /* Check for duplicate section name */
+  var existing = _getSectionsForCat(_activeCat);
+  var existingNames = existing.map(function(s){ return s.name.toLowerCase(); });
+  if (existingNames.indexOf(name.toLowerCase()) !== -1){
+    toast('Section "'+name+'" already exists');
+    return;
+  }
+
+  /* Assign selected files to this section */
+  selectedIdx.forEach(function(i){
+    if (items[i]) items[i].section = name;
+  });
+
+  /* Save section metadata */
+  existing.push({ name: name, color: color });
+  _setSectionForCat(_activeCat, existing);
+
+  _saveSession();
+  _renderCards();
+  _updateJson();
+  closeSectionModal();
+  toast('Section "'+name+'" created with '+selectedIdx.length+' file(s)');
+}
+
+function _deleteSection(sec){
+  if (!confirm('Delete section "'+sec+'" and remove files from it?')) return;
+  var items = _data[_activeCat];
+  if (Array.isArray(items)){
+    items.forEach(function(it){
+      if (it.section === sec) delete it.section;
+    });
+  }
+  var existing = _getSectionsForCat(_activeCat);
+  _setSectionForCat(_activeCat, existing.filter(function(s){ return s.name !== sec; }));
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+  toast('Section "'+sec+'" deleted');
+}
+
+function _renameSection(oldName){
+  var newName = prompt('Rename section "'+oldName+'" to:', oldName);
+  if (!newName || !newName.trim() || newName.trim() === oldName) return;
+  newName = newName.trim();
+  var items = _data[_activeCat];
+  if (Array.isArray(items)){
+    items.forEach(function(it){
+      if (it.section === oldName) it.section = newName;
+    });
+  }
+  var existing = _getSectionsForCat(_activeCat);
+  existing.forEach(function(s){
+    if (s.name === oldName) s.name = newName;
+  });
+  _setSectionForCat(_activeCat, existing);
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+  toast('Section renamed to "'+newName+'"');
 }
 
 function _catIcon(c){
@@ -836,8 +969,6 @@ function _selectCat(cat){
 }
 
 /* ---- RENDER CARDS ---- */
-var _collapsedSections = {};
-
 function _renderCards(){
   var grid = document.getElementById('cardsGrid');
   var items = Array.isArray(_data[_activeCat]) ? _data[_activeCat] : [];
@@ -916,37 +1047,28 @@ function _renderCards(){
   var html = '';
 
   if (hasSections){
-    /* Render each section with a header */
+    /* Render unsectioned files first */
+    if (sectionMap[''] && sectionMap[''].length){
+      sectionMap[''].forEach(function(o){ html += _renderCard(o); });
+    }
+    /* Then render each named section with colored header */
     sectionOrder.forEach(function(sec){
-      var secKey = _activeCat + '::' + sec;
-      var collapsed = _collapsedSections[secKey];
-      var label = sec || 'General';
+      if (!sec) return;
+      var color = _getSectionColor(_activeCat, sec);
       var count = sectionMap[sec].length;
-
-      html += '<div class="fm-section'+(collapsed?' collapsed':'')+'" onclick="_toggleSection(\''+_esc(sec).replace(/'/g,"\\'")+'\')" data-section="'+_esc(sec)+'">'
-        + '<div class="fm-section-icon"><i data-lucide="chevron-down" style="width:14px;height:14px;"></i></div>'
-        + '<div class="fm-section-name">'+_esc(label)+'</div>'
+      html += '<div class="fm-section" style="background:'+_esc(color)+'11;border-left-color:'+_esc(color)+';">'
+        + '<div class="fm-section-name" style="color:'+_esc(color)+';">'+_esc(sec)+'</div>'
         + '<span class="fm-section-count">'+count+'</span>'
-        + (sec ? '<button class="fm-section-del" onclick="event.stopPropagation();_renameSection(\''+_esc(sec).replace(/'/g,"\\'")+'\')" title="Rename section"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>' : '')
-        + '<button class="fm-section-del" onclick="event.stopPropagation();_deleteSection(\''+_esc(sec).replace(/'/g,"\\'")+'\')" title="Remove section tag from all files"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>'
+        + '<button class="fm-section-del" onclick="event.stopPropagation();_renameSection(\''+_esc(sec).replace(/'/g,"\\'")+'\')" title="Rename section"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>'
+        + '<button class="fm-section-del" onclick="event.stopPropagation();_deleteSection(\''+_esc(sec).replace(/'/g,"\\'")+'\')" title="Delete section"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>'
         + '</div>';
-
-      if (!collapsed){
-        sectionMap[sec].forEach(function(o){
-          html += _renderCard(o);
-        });
-      }
+      sectionMap[sec].forEach(function(o){ html += _renderCard(o); });
     });
   } else {
-    /* No sections — flat list */
-    filtered.forEach(function(o){
-      html += _renderCard(o);
-    });
+    filtered.forEach(function(o){ html += _renderCard(o); });
   }
 
-  /* add-card button */
   html += '<div class="fm-add-card" onclick="addFileEntry()"><i data-lucide="plus" style="width:24px;height:24px;"></i><span>Add File</span></div>';
-
   grid.innerHTML = html;
   if (typeof lucide !== 'undefined') lucide.createIcons();
 }
@@ -962,34 +1084,6 @@ function _toggleSection(sec){
   var key = _activeCat + '::' + sec;
   _collapsedSections[key] = !_collapsedSections[key];
   _renderCards();
-}
-
-function _renameSection(sec){
-  var newName = prompt('Rename section "'+sec+'" to:', sec);
-  if (!newName || !newName.trim() || newName.trim() === sec) return;
-  newName = newName.trim();
-  var items = _data[_activeCat];
-  if (!Array.isArray(items)) return;
-  items.forEach(function(it){
-    if ((it.section || '').trim() === sec) it.section = newName;
-  });
-  _saveToStorage();
-  _renderCards();
-  _updateJson();
-  toast('Section renamed to "'+newName+'"');
-}
-
-function _deleteSection(sec){
-  if (!confirm('Remove section "'+sec+'" from all files? Files will move to General.')) return;
-  var items = _data[_activeCat];
-  if (!Array.isArray(items)) return;
-  items.forEach(function(it){
-    if ((it.section || '').trim() === sec) delete it.section;
-  });
-  _saveToStorage();
-  _renderCards();
-  _updateJson();
-  toast('Section "'+sec+'" removed');
 }
 
 /* ---- ADD CATEGORY ---- */
@@ -1065,9 +1159,9 @@ function addFileEntry(){
   document.getElementById('fmPrefix').value = _prefixForActiveCat();
   document.getElementById('fmPrefix').disabled = true;
   document.getElementById('fmFile').value = '';
+  _populateSectionDropdown();
   document.getElementById('fmSection').value = '';
   document.getElementById('fmDate').value = new Date().toISOString().slice(0,10);
-  _populateSectionSuggestions();
   _resetMemberChips(['shineil','brother','father','mother']);
   document.getElementById('fileModal').classList.add('show');
 }
@@ -1088,9 +1182,9 @@ function editFileEntry(idx){
   document.getElementById('fmPrefix').value = _prefixForActiveCat();
   document.getElementById('fmPrefix').disabled = true;
   document.getElementById('fmFile').value = fileName;
+  _populateSectionDropdown();
   document.getElementById('fmSection').value = it.section || '';
   document.getElementById('fmDate').value = it.date || '';
-  _populateSectionSuggestions();
   var members = Array.isArray(it.members) ? it.members : (it.member ? [it.member] : ['shineil']);
   _resetMemberChips(members);
   document.getElementById('fileModal').classList.add('show');
@@ -1347,6 +1441,7 @@ function toggleFileMember(idx, member){
 function _stripInternalFields(data){
   var out = {};
   Object.keys(data).forEach(function(cat){
+    if (cat === '_meta'){ out[cat] = data[cat]; return; }
     out[cat] = (data[cat]||[]).map(function(it){ var c = Object.assign({}, it); delete c._uid; return c; });
   });
   return out;
@@ -1509,6 +1604,7 @@ async function deployToBucket(){
     results.forEach(function(r){ if (!r.ok) failedUids[r.uid] = true; });
     var payload = JSON.parse(JSON.stringify(_data));
     Object.keys(payload).forEach(function(cat){
+      if (cat === '_meta') return;
       payload[cat] = payload[cat].filter(function(it){ return !(it._uid && failedUids[it._uid]); })
         .map(function(it){ var c = Object.assign({}, it); delete c._uid; return c; });
     });
