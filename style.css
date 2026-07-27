@@ -3026,3 +3026,46 @@ body.dark .uptime-row-pct{color:#94a3b8;}
 body.dark .status-comp-row:hover{background:#1e293b;}
 body.dark .status-comp-name{color:#e2e8f0;}
 body.dark .status-comp-detail{color:#64748b;}
+
+/* ============================================================
+   MOBILE NAV TOP-UTILITY-BAR FIX
+   Prevents "Security Status / AES-256 badge / bell" row from
+   overflowing off-screen on narrow phones.
+   ============================================================ */
+@media screen and (max-width:600px){
+  .passport-top-utility{
+    flex-wrap:wrap !important;
+    row-gap:6px !important;
+    padding:8px 12px !important;
+  }
+  #passport-datetime{
+    font-size:11px !important;
+    flex:1 1 100% !important;
+    order:1;
+  }
+  .passport-top-utility > div[style*="margin-left:auto"]{
+    margin-left:0 !important;
+    flex:1 1 100% !important;
+    order:2;
+    justify-content:space-between !important;
+    gap:8px !important;
+  }
+  /* Collapse the verbose "Security Status: Protected" text to just the dot on very small screens */
+  .security-status-dot{
+    font-size:0 !important;
+    gap:0 !important;
+  }
+  .security-status-dot::before{
+    width:9px !important;
+    height:9px !important;
+  }
+  .e2e-badge{
+    font-size:10px !important;
+    padding:4px 8px !important;
+    white-space:nowrap !important;
+  }
+}
+
+@media screen and (max-width:360px){
+  .e2e-badge{ display:none !important; } /* hide badge text entirely on the smallest phones, keep the green dot + bell */
+}
