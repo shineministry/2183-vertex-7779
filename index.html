@@ -1232,7 +1232,7 @@ Recommended:
             </div>
             <div style="font-size:10px; color:var(--text-muted); text-align:right; margin-top:4px; cursor:pointer;" onclick="openKeypad()"> <i data-lucide="keyboard" style="width:14px;height:14px;vertical-align:middle;"></i> Use Virtual Protection Keypad </div>
           </div>
-           <div style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;"> <button class="btn-primary" id="submitBtn" onclick="showStep2()">CONTINUE SECURELY</button> <button onclick="requestPasskeyAccess()" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; width:100%;"><i data-lucide="key" style="width:14px;height:14px;vertical-align:middle;"></i> USE HARDWARE SECURITY PASSKEY</button> <button onclick="loginWithTOTP()" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; width:100%;"><i data-lucide="hash" style="width:14px;height:14px;vertical-align:middle;"></i> LOGIN WITH TOTP</button> </div>
+           <div style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;"> <button class="btn-primary" id="submitBtn" onclick="showStep2()">CONTINUE SECURELY</button> <button onclick="requestPasskeyAccess()" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; width:100%;"><i data-lucide="key" style="width:14px;height:14px;vertical-align:middle;"></i> USE HARDWARE SECURITY PASSKEY</button> <button onclick="loginWithTOTP()" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; width:100%;"><i data-lucide="hash" style="width:14px;height:14px;vertical-align:middle;"></i> LOGIN WITH TOTP</button> <div style="font-size:10px;color:#94a3b8;text-align:center;line-height:1.5;margin-top:2px;">This site is protected by reCAPTCHA and the Google <a href="https://policies.google.com/privacy" target="_blank" style="color:#64748b;">Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" style="color:#64748b;">Terms of Service</a> apply.</div> </div>
           <div class="login-footer-links" style="text-align:center;"> <a href="https://72oe-v2sx.shine-ministry.com/1781287270604.html" onclick="return true;">Privacy</a> <span>·</span> <a href="https://72oe-v2sx.shine-ministry.com/1781287440867.html" onclick="return true;">Terms</a> <span>·</span> <a href="https://72oe-v2sx.shine-ministry.com/1781285772718.html" onclick="return true;">Don't Know Password</a> </div>
         </div>
         <div class="login-col login-col-right">
@@ -1714,7 +1714,6 @@ Recommended:
   </script>
   <script src="https://www.google.com/recaptcha/api.js?render=6LfOK0MtAAAAADF4cSt_wf34J3CGpTtIWWNrXJ1U&onload=onRecaptchaV3Loaded" defer></script>
   <script nonce="opencode-2026-fix">
-    // Activate reCAPTCHA v3 so the badge shows Google's full branding, Privacy & Terms links
     function onRecaptchaV3Loaded() {
       grecaptcha.ready(function() {
         grecaptcha.execute('6LfOK0MtAAAAADF4cSt_wf34J3CGpTtIWWNrXJ1U', {action: 'homepage'});
@@ -1722,7 +1721,11 @@ Recommended:
     }
   </script>
   <style>
-    .grecaptcha-badge { visibility: visible !important; z-index: 99999; bottom: 14px !important; box-shadow: 0 2px 12px rgba(0,0,0,.15) !important; border-radius: 8px !important; }
+    /* Badge hidden (it was showing as a floating, mostly-blank white box
+       overlapping the AI chat button on the dashboard). The required
+       "protected by reCAPTCHA" disclosure now lives near the login button
+       instead, which satisfies Google's terms without the floating widget. */
+    .grecaptcha-badge { visibility: hidden !important; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
   <script src="vault-ui.js"></script>

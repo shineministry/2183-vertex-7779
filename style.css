@@ -2694,11 +2694,22 @@ button{
   .sidebar {
     width: 100% !important;
     height: auto !important;
-    max-height: 130px !important;
+    max-height: 190px !important;
     flex-direction: column !important;
-    padding: 12px !important;
+    padding: 10px 12px !important;
     background: linear-gradient(135deg, #0f172a, #1e293b) !important;
     box-shadow: 0 4px 16px rgba(0,0,0,.2) !important;
+  }
+
+  /* The dark "member select / moon / gear" row was eating almost all of the
+     sidebar's height budget, squeezing #cat-list down to a sliver so the
+     HOME / PROFILE / PHOTOS / CHECKLIST items got clipped/half-hidden. */
+  #sidebar-controls-wrap {
+    padding: 8px !important;
+    margin-bottom: 8px !important;
+  }
+  #member-select, #share-gear, #toggle-dark-mode {
+    height: 36px !important;
   }
 
   #cat-list {
@@ -3027,45 +3038,3 @@ body.dark .status-comp-row:hover{background:#1e293b;}
 body.dark .status-comp-name{color:#e2e8f0;}
 body.dark .status-comp-detail{color:#64748b;}
 
-/* ============================================================
-   MOBILE NAV TOP-UTILITY-BAR FIX
-   Prevents "Security Status / AES-256 badge / bell" row from
-   overflowing off-screen on narrow phones.
-   ============================================================ */
-@media screen and (max-width:600px){
-  .passport-top-utility{
-    flex-wrap:wrap !important;
-    row-gap:6px !important;
-    padding:8px 12px !important;
-  }
-  #passport-datetime{
-    font-size:11px !important;
-    flex:1 1 100% !important;
-    order:1;
-  }
-  .passport-top-utility > div[style*="margin-left:auto"]{
-    margin-left:0 !important;
-    flex:1 1 100% !important;
-    order:2;
-    justify-content:space-between !important;
-    gap:8px !important;
-  }
-  /* Collapse the verbose "Security Status: Protected" text to just the dot on very small screens */
-  .security-status-dot{
-    font-size:0 !important;
-    gap:0 !important;
-  }
-  .security-status-dot::before{
-    width:9px !important;
-    height:9px !important;
-  }
-  .e2e-badge{
-    font-size:10px !important;
-    padding:4px 8px !important;
-    white-space:nowrap !important;
-  }
-}
-
-@media screen and (max-width:360px){
-  .e2e-badge{ display:none !important; } /* hide badge text entirely on the smallest phones, keep the green dot + bell */
-}
