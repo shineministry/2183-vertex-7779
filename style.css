@@ -3696,10 +3696,45 @@ body.dark-mode #notifPanel [style*="color:#1d4ed8"] { color: #8ab4f8 !important;
   max-width: 100% !important;
   width: auto !important;
   box-sizing: border-box !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  overflow: hidden !important;
 }
 .drive-search-wrap input {
   min-width: 0 !important;
   flex: 1 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.drive-search-wrap button {
+  flex-shrink: 0 !important;
+  width: 28px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  margin-left: 0 !important;
+}
+body.dark-mode .drive-search-wrap {
+  background: #2d2e30 !important;
+  border-color: #5f6368 !important;
+}
+body.dark-mode .drive-search-wrap input {
+  color: #e8eaed !important;
+}
+body.dark-mode .drive-search-wrap input::placeholder {
+  color: #9aa0a6 !important;
+}
+body.dark-mode .drive-search-wrap .ds-icon,
+body.dark-mode .drive-search-wrap button {
+  color: #9aa0a6 !important;
+}
+body.dark-mode .drive-search-wrap:focus-within {
+  background: #35363a !important;
+  border-color: #8ab4f8 !important;
 }
 #page-files .drive-topbar button,
 #page-files .drive-chip-row {
