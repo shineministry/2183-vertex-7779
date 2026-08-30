@@ -3122,11 +3122,8 @@ body.dark .status-comp-detail{color:#64748b;}
   display:flex; align-items:center; gap:12px; flex-wrap:wrap;
   margin-bottom:14px;
 }
-.drive-search-wrap{
-  flex:1; min-width:220px; max-width:720px; display:flex; align-items:center; gap:10px;
-  background:#e9eef6; border-radius:24px; padding:0 6px 0 14px; height:44px;
-  transition:.2s; border:1px solid transparent;
-}
+/* old pill removed - replaced by simple 8px bar below */
+
 .drive-search-wrap:focus-within{ background:#fff; box-shadow:0 1px 6px rgba(60,64,67,.25); border-color:#dadce0; }
 .drive-search-wrap input{ flex:1; border:none; background:transparent; outline:none; font-size:15px; color:#202124; }
 .drive-search-wrap input::placeholder{ color:#5f6368; }
