@@ -731,16 +731,18 @@ const _driveViewMode = (localStorage.getItem('drive_view_mode') || 'grid');
         const ext2 = (file.file||file.name||'').split('.').pop().toLowerCase();
         const isImg = ['jpg','jpeg','png','gif','webp','bmp'].includes(ext2);
         const isPinned = pinnedDocs.some(p => p.file === file.file);
-        const thumbIcon = isImg ? '<i data-lucide="image" style="width:56px;height:56px;color:#34a853;"></i>' : '<i data-lucide="file-text" style="width:56px;height:56px;color:#1967d2;"></i>';
+        card.title = file.name;
+        card.setAttribute('aria-label', file.name);
 
         card.innerHTML = `
         <label class="bulk-check-label" onclick="event.stopPropagation();" style="position:absolute;top:8px;left:8px;z-index:2;display:none;align-items:center;gap:4px;background:rgba(255,255,255,.92);padding:2px 6px 2px 4px;border-radius:6px;font-size:11px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.18);">
           <input type="checkbox" class="bulk-check" data-file='${JSON.stringify({name:file.name,file:file.file,category:file.category||category}).replace(/'/g,"&#39;")}' onchange="updateBulkToolbar()" style="cursor:pointer;">
         </label>
         ${expiryBadge}
-        <div class="drive-card-thumb">
-          ${thumbIcon}
-          <div class="thumb-gradient"></div>
+        <div class="drive-card-thumb" style="background:#fff; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+          <canvas class="drive-thumb-canvas" style="width:100%; height:100%; object-fit:contain; display:none; background:#fff;"></canvas>
+          <div class="thumb-fallback" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:#f8f9fa;"><i data-lucide="${isImg ? 'image' : 'file-text'}" style="width:42px;height:42px;color:${isImg ? '#34a853' : '#1967d2'};"></i></div>
+          <div class="thumb-gradient" style="position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg, transparent 60%, rgba(60,64,67,.06));"></div>
           ${isPinned ? '<span style="position:absolute;top:8px;left:8px;color:#fbbc04;"><i data-lucide="star" style="width:16px;height:16px;fill:currentColor;"></i></span>' : ''}
         </div>
         <div class="drive-card-foot">
@@ -765,28 +767,27 @@ const _driveViewMode = (localStorage.getItem('drive_view_mode') || 'grid');
     );
 };
 
-// HOVER QUICK PREVIEW
-        card.addEventListener('mouseenter', (e) => {
-            if (window.matchMedia("(max-width: 768px)").matches || ('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
-                return;
-            }
-            if(!window.LITE_MODE){
-    startHoverPreview(file, e);
-            }
-        });
-
-        card.addEventListener('mousemove', (e) => {
-            if (window.matchMedia("(max-width: 768px)").matches || ('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
-                return;
-            }
-            positionTooltip(e);
-        });
-
-        card.addEventListener('mouseleave', () => {
-            hidePreviewTooltip();
-        });
-
         grid.appendChild(card);
+        // Load preview image in thumb (instead of static icon) - async
+        (function(){
+          const canvas = card.querySelector('.drive-thumb-canvas');
+          const fallback = card.querySelector('.thumb-fallback');
+          if(!canvas || !fallback) return;
+          const tryPreview = async () => {
+            try {
+              if(typeof getPreviewBitmap === 'function' && !window.LITE_MODE){
+                const bmp = await getPreviewBitmap(file);
+                if(bmp){
+                  canvas.width = bmp.width;
+                  canvas.height = bmp.height;
+                  const ctx = canvas.getContext('2d');
+                  if(ctx){ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(bmp,0,0); canvas.style.display='block'; fallback.style.display='none'; if(window.lucide) lucide.createIcons({node:card}); return; }
+                }
+              }
+            } catch(e){}
+          };
+          if('requestIdleCallback' in window) requestIdleCallback(tryPreview, {timeout:2000}); else setTimeout(tryPreview, 150);
+        })();
 };
 
 // -- Drive: apply saved view mode before rendering --
