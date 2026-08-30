@@ -3747,3 +3747,66 @@ body.dark-mode .drive-card-actions { background: #202124 !important; border-colo
 body.dark-mode .drive-action-btn { background: #3c4043 !important; border-color: #5f6368 !important; color: #e8eaed !important; }
 body.dark-mode .drive-action-btn:hover { background: #5f6368 !important; }
 body.dark-mode .drive-action-btn.pinned { background: #394457 !important; border-color: #8ab4f8 !important; color: #8ab4f8 !important; }
+
+
+/* Secure Share Link dark/light - fix light in dark */
+.share-modal-inner { background: #ffffff !important; }
+.share-form { background: #ffffff !important; }
+body.dark-mode .share-modal-inner {
+  background: #2d2e30 !important;
+}
+body.dark-mode .share-form {
+  background: #2d2e30 !important;
+}
+body.dark-mode .share-form label { color: #9aa0a6 !important; }
+body.dark-mode .share-form input,
+body.dark-mode .share-form select,
+body.dark-mode #share-expiry,
+body.dark-mode #share-password {
+  background: #35363a !important;
+  border-color: #5f6368 !important;
+  color: #e8eaed !important;
+}
+body.dark-mode .share-link-box {
+  background: #202124 !important;
+  border-color: #5f6368 !important;
+  color: #e8eaed !important;
+}
+body.dark-mode .share-modal-inner .modal-header {
+  background: #202124 !important;
+  border-color: #5f6368 !important;
+}
+body.dark-mode .share-modal-inner .modal-header strong { color: #e8eaed !important; }
+body:not(.dark-mode) .share-modal-inner { background: #ffffff !important; }
+body:not(.dark-mode) .share-form label { color: #475569 !important; }
+
+/* Welcome notification - ensure correct text colour both modes */
+#notifWelcomeBubble { color: #f8fafc !important; }
+body:not(.dark-mode) #notifWelcomeBubble,
+body:not(.dark-mode) #notifWelcomeBubble * {
+  color: #0f172a !important;
+}
+body:not(.dark-mode) #notifWelcomeBubble [style*="color:#94a3b8"],
+body:not(.dark-mode) #notifWelcomeBubble [style*="background:rgba"] {
+  color: #64748b !important;
+  background: #f1f5f9 !important;
+}
+body:not(.dark-mode) #notifWelcomeBubble #bubbleNotifPreview {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+body.dark-mode #notifWelcomeBubble,
+body.dark-mode #notifWelcomeBubble * {
+  color: #e8eaed !important;
+}
+body.dark-mode #notifWelcomeBubble [style*="color:#94a3b8"] {
+  color: #9aa0a6 !important;
+}
+body.dark-mode #notifWelcomeBubble #bubbleNotifPreview {
+  background: rgba(255,255,255,.1) !important;
+  color: #e8eaed !important;
+}
+body.dark-mode #notifWelcomeBubble strong,
+body.dark-mode #notifWelcomeBubble [style*="font-weight:800"] {
+  color: #ffffff !important;
+}
