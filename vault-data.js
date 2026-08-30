@@ -739,8 +739,8 @@ const _driveViewMode = (localStorage.getItem('drive_view_mode') || 'grid');
           <input type="checkbox" class="bulk-check" data-file='${JSON.stringify({name:file.name,file:file.file,category:file.category||category}).replace(/'/g,"&#39;")}' onchange="updateBulkToolbar()" style="cursor:pointer;">
         </label>
         ${expiryBadge}
-        <div class="drive-card-thumb" style="background:#fff; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center;">
-          <canvas class="drive-thumb-canvas" style="width:100%; height:100%; object-fit:contain; display:none; background:#fff;"></canvas>
+        <div class="drive-card-thumb" style="background:#f1f3f4; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:8px;">
+          <canvas class="drive-thumb-canvas" style="max-width:100%; max-height:100%; width:auto; height:auto; background:#fff; box-shadow:0 2px 8px rgba(60,64,67,.12); border:1px solid #e8eaed; border-radius:4px; display:none;"></canvas>
           <div class="thumb-fallback" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:#f8f9fa;"><i data-lucide="${isImg ? 'image' : 'file-text'}" style="width:42px;height:42px;color:${isImg ? '#34a853' : '#1967d2'};"></i></div>
           <div class="thumb-gradient" style="position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg, transparent 60%, rgba(60,64,67,.06));"></div>
           ${isPinned ? '<span style="position:absolute;top:8px;left:8px;color:#fbbc04;"><i data-lucide="star" style="width:16px;height:16px;fill:currentColor;"></i></span>' : ''}
