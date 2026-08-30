@@ -3205,6 +3205,119 @@ body.dark .status-comp-detail{color:#64748b;}
 
 
 
+
+/* ========== PROPER DARK MODE - Vault Drive Dark (Google Drive dark inspired) ========== */
+body.dark-mode {
+  --bg: #202124;
+  --card: #2d2e30;
+  --card-inner: #35363a;
+  --bg-dark: #202124;
+  --card-bg: #2d2e30;
+  --border: #5f6368;
+  --border-color: #5f6368;
+  --text: #e8eaed;
+  --text-main: #e8eaed;
+  --text-muted: #9aa0a6;
+  --muted: #9aa0a6;
+  --accent: #8ab4f8;
+  --accent2: #aecbfa;
+  --shadow: 0 10px 25px rgba(0,0,0,.4);
+}
+body.dark-mode html, body.dark-mode body,
+body.dark-mode #vault-dashboard,
+body.dark-mode .main-container,
+body.dark-mode .content-view {
+  background: #202124 !important;
+  color: #e8eaed !important;
+}
+body.dark-mode .passport-navbar {
+  background: #2d2e30 !important;
+  border-color: #5f6368 !important;
+  box-shadow: 0 1px 8px rgba(0,0,0,.5) !important;
+}
+body.dark-mode .passport-top-utility {
+  background: #2d2e30 !important;
+  border-color: #5f6368 !important;
+}
+body.dark-mode #passport-datetime,
+body.dark-mode .security-status-dot,
+body.dark-mode .brand-title {
+  color: #e8eaed !important;
+}
+body.dark-mode .btn-outline {
+  background: #3c4043 !important;
+  color: #e8eaed !important;
+  border-color: #5f6368 !important;
+}
+body.dark-mode .content-view {
+  background: #202124 !important;
+}
+/* Sidebar - already handled but ensure */
+body.dark-mode .sidebar {
+  background: #202124 !important;
+  border-color: #5f6368 !important;
+}
+body.dark-mode #cat-list li { color: #9aa0a6 !important; }
+body.dark-mode #cat-list li:hover { background: #3c4043 !important; color: #e8eaed !important; }
+body.dark-mode #cat-list li.active { background: #3c4043 !important; color: #8ab4f8 !important; }
+/* Timer */
+body.dark-mode .timer-box {
+  background: #3c4043 !important;
+  border-color: #5f6368 !important;
+}
+body.dark-mode .timer-text, body.dark-mode #session-timer { color: #fdd663 !important; }
+/* Cards - Home stats, profile, recent, categories - override inline white */
+body.dark-mode .file-card,
+body.dark-mode .drive-card,
+body.dark-mode .profile-box,
+body.dark-mode [style*="background:#fff"],
+body.dark-mode [style*="background: #fff"],
+body.dark-mode [style*="background:white"],
+body.dark-mode [style*="background: white"],
+body.dark-mode [style*="background:#ffffff"],
+body.dark-mode [style*="background: #ffffff"],
+body.dark-mode [style*="background:#f8fafc"],
+body.dark-mode [style*="background: #f8fafc"] {
+  background: #2d2e30 !important;
+  border-color: #5f6368 !important;
+  color: #e8eaed !important;
+}
+body.dark-mode .file-card:hover { border-color: #8ab4f8 !important; box-shadow: 0 4px 12px rgba(0,0,0,.5) !important; }
+body.dark-mode .drive-card-thumb { background: #202124 !important; border-color: #5f6368 !important; }
+body.dark-mode .drive-card-name { color: #e8eaed !important; }
+body.dark-mode .drive-card-meta { color: #9aa0a6 !important; }
+/* Home specific inline cards - use universal selector for inline style divs */
+body.dark-mode #page-home [style*="border:1px solid #e2e8f0"],
+body.dark-mode #page-profile [style*="border:1px solid"],
+body.dark-mode #page-files [style*="border:1px solid"] {
+  background: #2d2e30 !important;
+  border-color: #5f6368 !important;
+}
+body.dark-mode #page-home h2, body.dark-mode #page-profile h1, body.dark-mode #cat-title {
+  color: #e8eaed !important;
+}
+body.dark-mode .profile-box h3 { color: #8ab4f8 !important; }
+/* Inputs */
+body.dark-mode input, body.dark-mode textarea, body.dark-mode select {
+  background: #35363a !important;
+  color: #e8eaed !important;
+  border-color: #5f6368 !important;
+}
+body.dark-mode input::placeholder, body.dark-mode textarea::placeholder { color: #9aa0a6 !important; }
+/* Modals */
+body.dark-mode .modal-content, body.dark-mode .modal-content-small, body.dark-mode .adv-box {
+  background: #2d2e30 !important;
+  color: #e8eaed !important;
+}
+body.dark-mode .modal-header { background: #202124 !important; border-color: #5f6368 !important; }
+body.dark-mode .adv-menu { background: #202124 !important; border-color: #5f6368 !important; }
+body.dark-mode .adv-menu-item { color: #9aa0a6 !important; }
+body.dark-mode .adv-menu-item.active { background: #3c4043 !important; color: #8ab4f8 !important; }
+/* Scrollbar */
+body.dark-mode ::-webkit-scrollbar-thumb { background: #5f6368 !important; }
+/* E2E badge remains green but muted */
+body.dark-mode .e2e-badge { background: #202124 !important; border-color: #5f6368 !important; color: #81c995 !important; }
+
 /* Light mode overrides for sidebar controls (real light/dark) */
 body:not(.dark-mode) #sidebar-controls-wrap {
   background: #f8fafc !important;

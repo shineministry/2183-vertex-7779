@@ -1233,7 +1233,7 @@ Recommended:
             <div class="input-wrapper"> <input type="text" id="user-purpose" placeholder="Reason for data decrypt operations"> </div>
           </div>
           <div class="form-group"> <label for="vault-pass">Access Matrix Pin</label>
-            <div class="input-wrapper"> <input type="password" id="vault-pass" placeholder="Enter secure passphrase sequence" oninput="testPassStrength()"> <span class="password-toggle" onclick="togglePassView()" id="toggleEye"><i data-lucide="eye" style="width:18px;height:18px;"></i></span> </div>
+            <div class="input-wrapper"> <form onsubmit="return false;" autocomplete="off"><input type="password" id="vault-pass" autocomplete="current-password" placeholder="Enter secure passphrase sequence" oninput="testPassStrength()"></form> <span class="password-toggle" onclick="togglePassView()" id="toggleEye"><i data-lucide="eye" style="width:18px;height:18px;"></i></span> </div>
             <div class="strength-meter">
               <div class="strength-bar" id="meter1"></div>
               <div class="strength-bar" id="meter2"></div>
@@ -1981,7 +1981,7 @@ Recommended:
         <div class="share-form">
           <div> <label>Sharing: <span id="share-doc-name" style="color:var(--accent);"></span></label> </div>
           <div> <label>Link Expiry (hours)</label> <input type="number" id="share-expiry" value="24" min="1" max="720" style="margin-bottom:0;"> </div>
-          <div> <label>Link Password (optional)</label> <input type="password" id="share-password" placeholder="Leave blank for no password" style="margin-bottom:0;"> </div> <button class="btn-primary" onclick="generateShareLink()" style="margin-top:4px;">Generate Secure Link</button>
+          <div> <label>Link Password (optional)</label> <form onsubmit="return false;"><input type="password" id="share-password" autocomplete="new-password" placeholder="Leave blank for no password" style="margin-bottom:0;"></form> </div> <button class="btn-primary" onclick="generateShareLink()" style="margin-top:4px;">Generate Secure Link</button>
           <div id="share-link-result" style="display:none;">
             <label>Your Secure Link (read-only, expires automatically)</label>
             <div class="share-link-box" id="share-link-text"></div>
@@ -3398,7 +3398,7 @@ Recommended:
           <div class="pm-add-card">
             <h4><i data-lucide="plus-circle" style="width:14px;height:14px;vertical-align:middle;"></i> Add New Password</h4>
             <div class="pm-grid2"> <input class="pm-inp" type="text" id="pm-site" placeholder="Website / App Name"> <input class="pm-inp" type="text" id="pm-username" placeholder="Username / Email"> </div>
-            <div class="pm-pw-row"> <input class="pm-inp" type="password" id="pm-password" placeholder="Password" oninput="pmStrength(this.value)"> <button class="pm-icon-btn" onclick="togglePMPassword(this,'pm-password')" title="Show/Hide"><i data-lucide="eye" style="width:16px;height:16px;"></i></button> <button class="pm-gen-btn" onclick="generatePMPassword()"><i data-lucide="shuffle" style="width:14px;height:14px;vertical-align:middle;"></i> GENERATE</button> </div>
+            <div class="pm-pw-row"> <form onsubmit="return false;"><input class="pm-inp" type="password" id="pm-password" autocomplete="new-password" placeholder="Password" oninput="pmStrength(this.value)"></form> <button class="pm-icon-btn" onclick="togglePMPassword(this,'pm-password')" title="Show/Hide"><i data-lucide="eye" style="width:16px;height:16px;"></i></button> <button class="pm-gen-btn" onclick="generatePMPassword()"><i data-lucide="shuffle" style="width:14px;height:14px;vertical-align:middle;"></i> GENERATE</button> </div>
             <div class="pm-strength" id="pm-strength-bar"></div> <input class="pm-inp" type="text" id="pm-notes" placeholder="Notes (optional)" style="margin-top:10px;"> <select id="pm-member" class="pm-inp" style="margin-top:8px;">
               <option value="">--- For which member? ---</option>
               <option value="shineil">SHINEIL MATHIAS</option>

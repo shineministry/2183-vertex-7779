@@ -19,7 +19,7 @@
  *  network fetch â€” no stale authenticated shell is served.
  */
 
-const CACHE = "online-vault-v17";   // bump this string to force a full cache refresh
+const CACHE = "online-vault-v18";   // bump this string to force a full cache refresh
 
 const BACKEND_HOST = "backend.shinumaths989.workers.dev";
 
@@ -78,7 +78,7 @@ self.addEventListener("activate", function(event) {
         keys
           .filter(function(key) { return key !== CACHE; })
           .map(function(key) {
-            console.log("[SW] Removing old cache:", key);
+            // console.log("[SW] Removing old cache:", key);
             return caches.delete(key);
           })
       );
@@ -256,6 +256,7 @@ self.addEventListener("message", function(event) {
       break;
   }
 });
+
 
 
 
