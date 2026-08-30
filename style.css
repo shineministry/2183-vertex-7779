@@ -3367,3 +3367,84 @@ body.dark-mode .passport-navbar { background: #1e293b !important; border-color: 
 @media(display-mode: standalone){
   .vault-drive-bottom-nav{ padding-bottom: env(safe-area-inset-bottom); }
 }
+
+
+/* === Fix main words/icons in dark mode - white in dark, dark in light === */
+body.dark-mode #page-home * {
+  border-color: #5f6368 !important;
+}
+body.dark-mode #page-home h2,
+body.dark-mode #page-home h3,
+body.dark-mode #page-profile h1,
+body.dark-mode #page-profile h2,
+body.dark-mode #page-profile h3,
+body.dark-mode #page-files #cat-title,
+body.dark-mode #page-photos #cat-title {
+  color: #e8eaed !important;
+}
+body.dark-mode #page-home [style*="background:#fff"],
+body.dark-mode #page-home [style*="background: #fff"],
+body.dark-mode #page-home [style*="background:white"],
+body.dark-mode #page-home [style*="background: white"],
+body.dark-mode #page-home [style*="background:#ffffff"],
+body.dark-mode #page-profile [style*="background:white"],
+body.dark-mode #page-profile [style*="background:#fff"],
+body.dark-mode #page-files [style*="background:#f8fafc"],
+body.dark-mode #page-photos [style*="background:white"] {
+  background: #2d2e30 !important;
+  border-color: #5f6368 !important;
+}
+body.dark-mode #page-home [style*="color:#0f172a"],
+body.dark-mode #page-profile [style*="color:#0f172a"],
+body.dark-mode #page-files [style*="color:#0f172a"],
+body.dark-mode #page-home [style*="color: #0f172a"] {
+  color: #e8eaed !important;
+}
+body.dark-mode #page-home [style*="color:#64748b"],
+body.dark-mode #page-home [style*="color: #64748b"],
+body.dark-mode #page-home [style*="color:#475569"] {
+  color: #9aa0a6 !important;
+}
+body.dark-mode #page-home [style*="color:#1d4ed8"],
+body.dark-mode #page-home [style*="color:#2563eb"] {
+  color: #8ab4f8 !important;
+}
+body.dark-mode #page-home .file-card,
+body.dark-mode #page-home .profile-box,
+body.dark-mode #page-profile .profile-box {
+  background: #2d2e30 !important;
+  border-color: #5f6368 !important;
+  color: #e8eaed !important;
+}
+/* Icons in dark - make them lighter */
+body.dark-mode #page-home [data-lucide],
+body.dark-mode #page-home i[data-lucide],
+body.dark-mode #page-profile i[data-lucide] {
+  color: #e8eaed !important;
+  stroke: #e8eaed !important;
+}
+/* Ensure stat numbers are white */
+body.dark-mode #page-home [style*="font-size:22px"],
+body.dark-mode #page-home [style*="font-size:24px"] {
+  color: #e8eaed !important;
+}
+/* Categories overview rows - white rows should become dark */
+body.dark-mode #home-cat-overview > div,
+body.dark-mode #home-recent-list > div,
+body.dark-mode #home-member-list > div {
+  background: #2d2e30 !important;
+  border-color: #5f6368 !important;
+}
+body.dark-mode #home-cat-overview [style*="background:#f8fafc"],
+body.dark-mode #home-cat-overview [style*="background: #f8fafc"] {
+  background: #2d2e30 !important;
+}
+/* Recent file activity items */
+body.dark-mode #home-recent-list div[style*="background:#f8fafc"] {
+  background: #35363a !important;
+}
+/* Light mode - ensure dark text */
+body:not(.dark-mode) #page-home [style*="color:#e8eaed"],
+body:not(.dark-mode) #page-profile [style*="color:#e8eaed"] {
+  color: #0f172a !important;
+}
