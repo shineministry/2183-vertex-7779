@@ -241,7 +241,7 @@ Recommended:
   <script src="pdfjs-init.js"></script>
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
-      <title>Vault Drive â€” SHINEIL KEITH MATHIAS | ONLINE VAULT</title>
+      <title>Vault Drive - SHINEIL KEITH MATHIAS | ONLINE VAULT</title>
       <link rel="icon" type="image/png" href="favicon.png">
       <link rel="apple-touch-icon" href="favicon.png">
       <link rel="manifest" href="manifest.json">
@@ -1126,7 +1126,7 @@ Recommended:
           <button class="dd-btn primary" onclick="showLogin()"><i data-lucide="key" style="width:16px;height:16px;"></i> Login to Vault</button>
           <button class="dd-btn secondary" onclick="toggleLandDropdown()"><i data-lucide="x" style="width:16px;height:16px;"></i> Close</button>
         </div>
-        <div class="dd-footer"><i data-lucide="lock" style="width:14px;height:14px;vertical-align:middle;"></i> AES-256 Encrypted Â· Secure Document Vault</div>
+        <div class="dd-footer"><i data-lucide="lock" style="width:14px;height:14px;vertical-align:middle;"></i> AES-256 Encrypted - Secure Document Vault</div>
       </div>
     </div>
   </div>
@@ -1242,7 +1242,7 @@ Recommended:
             <div style="font-size:10px; color:var(--text-muted); text-align:right; margin-top:4px; cursor:pointer;" onclick="openKeypad()"> <i data-lucide="keyboard" style="width:14px;height:14px;vertical-align:middle;"></i> Use Virtual Protection Keypad </div>
           </div>
            <div style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;"> <button class="btn-primary" id="submitBtn" onclick="showStep2()">CONTINUE SECURELY</button> <button onclick="requestPasskeyAccess()" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; width:100%;"><i data-lucide="key" style="width:14px;height:14px;vertical-align:middle;"></i> USE HARDWARE SECURITY PASSKEY</button> <button onclick="loginWithTOTP()" style="border:1px solid var(--border-color); background:transparent; color:var(--text-main); padding:11px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; width:100%;"><i data-lucide="hash" style="width:14px;height:14px;vertical-align:middle;"></i> LOGIN WITH TOTP</button> </div>
-          <div class="login-footer-links" style="text-align:center;"> <a href="https://72oe-v2sx.shine-ministry.com/1781287270604.html" onclick="return true;">Privacy</a> <span>Â·</span> <a href="https://72oe-v2sx.shine-ministry.com/1781287440867.html" onclick="return true;">Terms</a> <span>Â·</span> <a href="https://72oe-v2sx.shine-ministry.com/1781285772718.html" onclick="return true;">Don't Know Password</a> </div>
+          <div class="login-footer-links" style="text-align:center;"> <a href="https://72oe-v2sx.shine-ministry.com/1781287270604.html" onclick="return true;">Privacy</a> <span>-</span> <a href="https://72oe-v2sx.shine-ministry.com/1781287440867.html" onclick="return true;">Terms</a> <span>-</span> <a href="https://72oe-v2sx.shine-ministry.com/1781285772718.html" onclick="return true;">Don't Know Password</a> </div>
         </div>
         <div class="login-col login-col-right">
           <div class="right-section-card">
@@ -1267,7 +1267,7 @@ Recommended:
 
     function openKeypad() {
       _keypadValue = document.getElementById('vault-pass').value;
-      document.getElementById('keypad-display').textContent = _keypadValue.replace(/./g, 'â—') || 'Enter PIN';
+      document.getElementById('keypad-display').textContent = _keypadValue.replace(/./g, 'â-') || 'Enter PIN';
       document.getElementById('virtual-keypad-overlay').style.display = 'flex';
     }
 
@@ -1285,7 +1285,7 @@ Recommended:
       } else {
         _keypadValue += key;
       }
-      document.getElementById('keypad-display').textContent = _keypadValue.replace(/./g, 'â—') || 'Enter PIN';
+      document.getElementById('keypad-display').textContent = _keypadValue.replace(/./g, 'â-') || 'Enter PIN';
     });
     const kpConfirm = document.getElementById('keypad-confirm'); if (kpConfirm) kpConfirm.addEventListener('click', function() {
       document.getElementById('vault-pass').value = _keypadValue;
@@ -1389,7 +1389,7 @@ Recommended:
       <div class="main-logo"><i data-lucide="key" style="width:48px;height:48px;"></i></div>
       <h2>Authenticator Verification</h2>
       <div class="subtitle"> Enter the 8-digit code from your<br> Authenticator App (Google / Authy) </div> <!-- 8 individual digit boxes split 4+4 -->
-      <div id="totp-boxes" style="display:flex;align-items:center;gap:6px;justify-content:center;margin:24px 0 8px;"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <span style="font-size:20px;color:#64748b;line-height:1;margin:0 2px;">Â·</span> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> </div> <!-- countdown ring -->
+      <div id="totp-boxes" style="display:flex;align-items:center;gap:6px;justify-content:center;margin:24px 0 8px;"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <span style="font-size:20px;color:#64748b;line-height:1;margin:0 2px;">-</span> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> </div> <!-- countdown ring -->
       <div style="text-align:center;margin-bottom:18px;"> <svg width="48" height="48" viewBox="0 0 48 48">
           <circle cx="24" cy="24" r="20" fill="none" stroke="#1e293b" stroke-width="4" />
           <circle id="totp-ring" cx="24" cy="24" r="20" fill="none" stroke="var(--accent,#6ee7f7)" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 24 24)" style="transition:stroke-dashoffset 1s linear;" />
@@ -1446,7 +1446,7 @@ Recommended:
           <ul id="cat-list"></ul>
         </div>
         <div style="margin-top:auto; padding:14px 8px 6px; border-top:1px solid rgba(255,255,255,.1);">
-          <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:#94a3b8;"><i data-lucide="hard-drive" style="width:14px;height:14px;"></i> Storage Â· Encrypted</div>
+          <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:#94a3b8;"><i data-lucide="hard-drive" style="width:14px;height:14px;"></i> Storage - Encrypted</div>
           <div style="height:6px; background:rgba(255,255,255,.12); border-radius:4px; margin-top:8px; overflow:hidden;"><div id="drive-storage-bar" style="height:100%; width:42%; background:linear-gradient(90deg,#4285f4,#34a853); border-radius:4px;"></div></div>
           <div id="drive-storage-text" style="font-size:11px; color:#64748b; margin-top:4px;">â€” files secured</div>
         </div>
@@ -1947,7 +1947,7 @@ Recommended:
           <div id="status-components" style="display:flex;flex-direction:column;gap:2px;"></div>
           <div id="uptimeTooltip" style="display:none;position:fixed;z-index:99999;background:#0f172a;color:#f8fafc;padding:8px 12px;border-radius:8px;font-size:11px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;max-width:230px;"></div>
           <!-- Version footer -->
-          <div style="margin-top:14px;padding:10px 12px;border-radius:10px;background:#f1f5f9;text-align:center;font-size:11px;color:#64748b;"> FORTRESS ONLINE VAULT Â· AES-256-GCM Â· Session: <span id="stat-mode-label">-</span> Â· <span id="stat-version-label">v202606</span> </div>
+          <div style="margin-top:14px;padding:10px 12px;border-radius:10px;background:#f1f5f9;text-align:center;font-size:11px;color:#64748b;"> FORTRESS ONLINE VAULT - AES-256-GCM - Session: <span id="stat-mode-label">-</span> - <span id="stat-version-label">v202606</span> </div>
         </div>
       </div>
     </div>
@@ -1996,7 +1996,7 @@ Recommended:
               <button class="card-btn card-btn-share" style="flex:1;padding:10px;" onclick="copyShareLink()"><i data-lucide="clipboard" style="width:14px;height:14px;vertical-align:middle;"></i> Copy Link</button>
               <button class="card-btn card-btn-pin" style="flex:1;padding:10px;" onclick="closeShareModal()">Done</button>
             </div>
-            <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center;"><i data-lucide="lock" style="width:12px;height:12px;vertical-align:middle;"></i> Read-only Â· AES-256 encrypted Â· Auto-expires Â· Powered by SKM</div>
+            <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center;"><i data-lucide="lock" style="width:12px;height:12px;vertical-align:middle;"></i> Read-only - AES-256 encrypted - Auto-expires - Powered by SKM</div>
           </div>
       </div>
     </div>
@@ -2007,7 +2007,7 @@ Recommended:
         <div class="adv-header">
           <div>
             <div class="adv-header h2" style="font-size:18px;font-weight:800;letter-spacing:.4px;"><i data-lucide="settings" style="width:18px;height:18px;vertical-align:middle;"></i> Advanced Vault Settings</div>
-            <div class="adv-header-meta">FORTRESS ONLINE VAULT Â· 40 configurable features</div>
+            <div class="adv-header-meta">FORTRESS ONLINE VAULT - 40 configurable features</div>
           </div> <button class="adv-close-btn" onclick="closeAdvSettings()"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
         </div>
         <div class="adv-body"> <!-- LEFT MENU -->
@@ -2456,8 +2456,8 @@ Recommended:
             <div class="adv-panel" id="panel-sys-logs">
               <div class="adv-panel-title"><i data-lucide="scroll-text" style="width:16px;height:16px;vertical-align:middle;"></i> System Logs Viewer</div>
               <div class="adv-panel-desc">View internal vault event logs for troubleshooting.</div>
-              <div class="adv-log-box" id="sysLogBox">[VAULT] Session initialized Â· AES-256 active<br>[AUTH] Password verified via backend hash<br>[SYNC] files.json fetched successfully<br>[RENDER] Dashboard loaded Â· 0 errors<br>[SESSION] Inactivity timer reset<br> </div>
-              <div style="margin-top:12px;display:flex;gap:10px;"> <button class="adv-action-btn adv-btn-blue" onclick="document.getElementById('sysLogBox').innerHTML+='[LOG] Manual refresh requested Â· '+new Date().toLocaleTimeString()+'<br>'"><i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;"></i> Refresh Logs</button> <button class="adv-action-btn adv-btn-red" onclick="document.getElementById('sysLogBox').innerHTML='[LOG] Logs cleared Â· '+new Date().toLocaleTimeString()+'<br>'"><i data-lucide="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i> Clear Logs</button> </div>
+              <div class="adv-log-box" id="sysLogBox">[VAULT] Session initialized - AES-256 active<br>[AUTH] Password verified via backend hash<br>[SYNC] files.json fetched successfully<br>[RENDER] Dashboard loaded - 0 errors<br>[SESSION] Inactivity timer reset<br> </div>
+              <div style="margin-top:12px;display:flex;gap:10px;"> <button class="adv-action-btn adv-btn-blue" onclick="document.getElementById('sysLogBox').innerHTML+='[LOG] Manual refresh requested - '+new Date().toLocaleTimeString()+'<br>'"><i data-lucide="refresh-cw" style="width:14px;height:14px;vertical-align:middle;"></i> Refresh Logs</button> <button class="adv-action-btn adv-btn-red" onclick="document.getElementById('sysLogBox').innerHTML='[LOG] Logs cleared - '+new Date().toLocaleTimeString()+'<br>'"><i data-lucide="trash-2" style="width:14px;height:14px;vertical-align:middle;"></i> Clear Logs</button> </div>
             </div> <!-- 22. VAULT HEALTH CHECKER -->
             <div class="adv-panel" id="panel-vault-health">
               <div class="adv-panel-title"><i data-lucide="heart-pulse" style="width:16px;height:16px;vertical-align:middle;"></i> Vault Health Checker</div>
@@ -2477,7 +2477,7 @@ Recommended:
               <div class="setting-row">
                 <div class="setting-row-left">
                   <div class="setting-row-label">Encryption Engine</div>
-                  <div class="setting-row-hint">AES-256 Â· SHA-256 Â· WebCrypto API</div>
+                  <div class="setting-row-hint">AES-256 - SHA-256 - WebCrypto API</div>
                 </div> <span style="font-size:12px;font-weight:700;color:#16a34a;"><i data-lucide="check" style="width:14px;height:14px;vertical-align:middle;"></i> Active</span>
               </div>
             </div> <!-- 23. JSON REPAIR TOOL -->
@@ -2512,7 +2512,7 @@ Recommended:
               <div class="setting-row">
                 <div class="setting-row-left">
                   <div class="setting-row-label">Key Derivation</div>
-                  <div class="setting-row-hint">PBKDF2 with 200,000 iterations Â· SHA-256</div>
+                  <div class="setting-row-hint">PBKDF2 with 200,000 iterations - SHA-256</div>
                 </div> <span style="font-size:12px;font-weight:700;color:#16a34a;"><i data-lucide="check" style="width:14px;height:14px;vertical-align:middle;"></i> Secure</span>
               </div>
             </div> <!-- 25. DOCUMENT INTEGRITY CHECK -->
@@ -2793,7 +2793,7 @@ Recommended:
           <div id="gem-orb" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4285f4,#9b5de5,#f72585);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;box-shadow:0 0 16px rgba(155,93,229,0.5);"><i data-lucide="sparkles" style="width:18px;height:18px;color:white;"></i></div>
           <div>
             <div style="color:white;font-weight:700;font-size:15px;letter-spacing:.3px;">Vault AI</div>
-            <div style="color:#6666aa;font-size:11px;">Powered by Gemini Â· Documents only</div>
+            <div style="color:#6666aa;font-size:11px;">Powered by Gemini - Documents only</div>
           </div> <button onclick="closeAIChat()" style="margin-left:auto;background:rgba(255,255,255,0.07);border:none;color:#aaa;font-size:20px;cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
         </div> <!-- Messages -->
         <div id="ai-messages" style="flex:1;overflow-y:auto;padding:22px 20px;display:flex;flex-direction:column;gap:18px;scroll-behavior:smooth;">
@@ -4909,7 +4909,7 @@ Recommended:
           const detail = bar.dataset.detail || '';
           const time = bar.dataset.time ? new Date(bar.dataset.time).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : '';
           return '<div style="font-weight:800;margin-bottom:3px;">' + bar.dataset.icon + ' ' + bar.dataset.comp + '</div>'
-            + '<div style="opacity:.85;margin-bottom:3px;">' + bar.dataset.date + (time ? ' Â· ' + time : '') + '</div>'
+            + '<div style="opacity:.85;margin-bottom:3px;">' + bar.dataset.date + (time ? ' - ' + time : '') + '</div>'
             + '<div>' + badge + ' ' + txt + '</div>'
             + (state !== 'operational' && detail ? '<div style="margin-top:4px;color:#fca5a5;">' + detail + '</div>' : '');
         }
@@ -5410,22 +5410,7 @@ Recommended:
   function openFilesManagerWindow(){
     const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
     const url = 'files.html?embed=1' + (token ? '&token='+encodeURIComponent(token) : '');
-    // Try popup window (fastest, true OS window)
-    const features = 'width=1120,height=720,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes';
-    let w=null;
-    try{ w = window.open(url, 'VaultFilesManager', features); }catch(e){}
-    if(w){
-      // Pass token via postMessage once popup loads
-      const sendToken = function(){
-        try{ w.postMessage({type:'VAULT_TOKEN', token: token}, '*'); }catch(e){}
-      };
-      w.addEventListener('load', sendToken);
-      setTimeout(sendToken, 500);
-      setTimeout(sendToken, 1500);
-      // If popup blocked (w is null or closed), fallback to modal
-      setTimeout(function(){ if(!w || w.closed){ openFilesModal(url); } }, 300);
-      return;
-    }
+    // HTML window view like access log modal - always modal, never new tab
     openFilesModal(url);
   }
   function openFilesModal(url){
@@ -5433,12 +5418,11 @@ Recommended:
     if(!modal){
       modal=document.createElement('div');
       modal.id='filesWindowModal';
-      modal.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px;';
-      modal.innerHTML='<div style="width:98%;max-width:1160px;height:90vh;background:#fff;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);">'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;background:#f8fafc;flex-shrink:0;">'
-        +'<span style="font-weight:700;font-size:13px;color:#0f172a;display:flex;align-items:center;gap:8px;"><i data-lucide="folder-open" style="width:16px;height:16px;"></i> Files Manager — Vault Studio</span>'
-        +'<div style="display:flex;gap:8px;"><button onclick="window.open(document.getElementById(\'filesWindowIframe\').src, \'_blank\')" style="border:1px solid #e2e8f0;background:#fff;color:#475569;padding:6px 12px;border-radius:8px;font-weight:600;cursor:pointer;font-size:12px;">Open in new window</button><button onclick="closeFilesModal()" style="border:none;background:#fee2e2;color:#dc2626;padding:6px 14px;border-radius:8px;font-weight:700;cursor:pointer;">✕ Close</button></div>'
-        +'</div><iframe id="filesWindowIframe" src="" style="flex:1;border:none;width:100%;background:#f8fafc;"></iframe></div>';
+      modal.className='modal';
+      modal.style.cssText='display:none;';
+      modal.innerHTML='<div class="modal-content" style="height:90%;">'
+        +'<div class="modal-header"><strong>FILES MANAGER</strong><button onclick="closeFilesModal()" style="border:none;background:var(--danger);color:white;padding:10px 16px;border-radius:10px;font-weight:bold;cursor:pointer;">CLOSE</button></div>'
+        +'<div style="flex:1;overflow:hidden;background:#f8fafc;"><iframe id="filesWindowIframe" src="" style="width:100%;height:100%;border:none;background:#f8fafc;"></iframe></div></div>'';
       document.body.appendChild(modal);
       modal.addEventListener('click', function(e){ if(e.target===modal) closeFilesModal(); });
       if(window.lucide) lucide.createIcons({node:modal});

@@ -1,7 +1,7 @@
 {
-  "name": "Vault Drive — Secure Document Vault",
+  "name": "Vault Drive - Secure Document Vault",
   "short_name": "Vault Drive",
-  "description": "Your private vault with Google Drive experience — encrypted, offline-ready, organized.",
+  "description": "Your private vault with Google Drive experience - encrypted, offline-ready, organized.",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#ffffff",
@@ -43,7 +43,7 @@
     {
       "name": "My Vault",
       "short_name": "My Vault",
-      "description": "Browse all files — like My Drive",
+      "description": "Browse all files - like My Drive",
       "url": "/?shortcut=myvault",
       "icons": [{ "src": "favicon.png", "sizes": "192x192", "type": "image/png" }]
     },
@@ -75,7 +75,7 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Vault Drive — browse like Google Drive"
+      "label": "Vault Drive - browse like Google Drive"
     }
   ],
   "file_handlers": [

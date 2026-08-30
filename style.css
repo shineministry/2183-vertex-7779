@@ -607,7 +607,7 @@ button{
     flex-wrap:nowrap;
 }
 
-/* MOBILE ICON BUTTONS — hidden by default */
+/* MOBILE ICON BUTTONS - hidden by default */
 .nav-auth-mobile{
     display:none;
     align-items:center;
@@ -787,7 +787,7 @@ button{
     padding: 25px 18px;
     overflow-y: auto;
     /* Without an explicit overflow-x, the browser silently promotes it to
-       "auto" too (per spec, whenever overflow-y isn't visible) — so the
+       "auto" too (per spec, whenever overflow-y isn't visible) - so the
        4px hover translateX() on #cat-list li items was enough to trigger
        a real, visible horizontal scrollbar on every hover. */
     overflow-x: hidden;
@@ -1266,7 +1266,7 @@ button{
     p, span, label, li { font-size: 13px; }
 }
 
-/* TABLET: 768px–1199px — keep vertical sidebar, desktop nav */
+/* TABLET: 768px–1199px - keep vertical sidebar, desktop nav */
 @media screen and (min-width: 768px) and (max-width: 1199px) {
     .sidebar {
         width: 200px !important;
@@ -2470,7 +2470,7 @@ button{
 }
 
 /* ============================================================
-   FORTRESS ONLINE VAULT — DARK SIDEBAR REDESIGN
+   FORTRESS ONLINE VAULT - DARK SIDEBAR REDESIGN
    Matches the target dashboard design exactly
    ============================================================ */
 
@@ -2574,7 +2574,7 @@ button{
   flex-direction: column !important;
 }
 
-/* Member select — dark themed */
+/* Member select - dark themed */
 #member-select {
   background: rgba(255,255,255,.08) !important;
   color: #e2e8f0 !important;
@@ -2590,7 +2590,7 @@ button{
   color: #e2e8f0 !important;
 }
 
-/* Settings gear button — dark */
+/* Settings gear button - dark */
 #share-gear {
   background: rgba(255,255,255,.08) !important;
   border: 1px solid rgba(255,255,255,.15) !important;
@@ -3003,7 +3003,7 @@ body.dark .vc-del-btn:hover{background:#5a2a2a;color:#f87171;}
 body.dark .vc-cell-edit{color:#e0e0e0;}
 body.dark .vc-cell-edit:focus{background:#3a3a3a;}
 
-/* ===== STATUS MODAL — Compact Uptime Grid ===== */
+/* ===== STATUS MODAL - Compact Uptime Grid ===== */
 .uptime-section-label{font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase;}
 .uptime-grid{display:flex;flex-direction:column;gap:0;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:12px;}
 .uptime-header{display:grid;grid-template-columns:160px 1fr 90px 60px;gap:0;padding:8px 12px;background:#f1f5f9;font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e2e8f0;}
@@ -3020,7 +3020,7 @@ body.dark .vc-cell-edit:focus{background:#3a3a3a;}
 .uptime-legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#64748b;font-weight:600;}
 .uptime-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 
-/* ===== STATUS MODAL — Component Rows ===== */
+/* ===== STATUS MODAL - Component Rows ===== */
 .status-comp-row{display:grid;grid-template-columns:22px 1fr 90px 1fr;gap:6px;align-items:center;padding:5px 10px;border-radius:8px;font-size:11.5px;transition:background .15s;}
 .status-comp-row:hover{background:#f8fafc;}
 .status-comp-icon{font-size:13px;text-align:center;}
