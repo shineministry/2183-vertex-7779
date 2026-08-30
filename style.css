@@ -3597,3 +3597,64 @@ body.dark-mode #mode-profile-wrap #mode-profile-name { color: #e8eaed !important
 body:not(.dark-mode) #mode-profile-wrap #mode-profile-mode { color: #64748b !important; }
 body.dark-mode #mode-profile-wrap #mode-profile-mode { color: #9aa0a6 !important; }
 body:not(.dark-mode) #mode-profile-wrap { background: transparent !important; }
+
+
+/* === Offline cache box + Notification button/box - dark/light === */
+#offline-toast {
+  background: linear-gradient(135deg,#eef2ff,#e0e7ff) !important;
+  border: 1px solid #c7d2fe !important;
+  color: #4338ca !important;
+}
+body.dark-mode #offline-toast {
+  background: #2d2e30 !important;
+  border-color: #5f6368 !important;
+  color: #e8eaed !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,.5) !important;
+}
+body.dark-mode #offline-toast #offline-toast-text { color: #e8eaed !important; }
+body.dark-mode #offline-toast #offline-toast-label { color: #9aa0a6 !important; }
+body.dark-mode #offline-toast div[style*="background:#c7d2fe"] { background: #5f6368 !important; }
+
+/* Notification bell button */
+#notifBellBtn {
+  background: rgba(37,99,235,.06) !important;
+  border-color: #e2e8f0 !important;
+  color: #1e40af !important;
+}
+body.dark-mode #notifBellBtn {
+  background: #3c4043 !important;
+  border-color: #5f6368 !important;
+  color: #e8eaed !important;
+}
+body.dark-mode #notifBellBtn #notifCount { border-color: #2d2e30 !important; }
+body.dark-mode #notifBellBtn #notifDot { border-color: #2d2e30 !important; }
+
+/* Notification panel and welcome bubble */
+#notifPanel {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+body.dark-mode #notifPanel {
+  background: #2d2e30 !important;
+  border-color: #5f6368 !important;
+  color: #e8eaed !important;
+}
+body.dark-mode #notifPanel [style*="color:#94a3b8"],
+body.dark-mode #notifPanel [style*="color: #94a3b8"] { color: #9aa0a6 !important; }
+body.dark-mode #notifPanel [style*="border-top:1px solid #f1f5f9"],
+body.dark-mode #notifPanel [style*="border-bottom:1px solid #f1f5f9"] {
+  border-color: #5f6368 !important;
+}
+#notifWelcomeBubble {
+  background: linear-gradient(135deg,#1e3a8a,#0f172a) !important;
+  border-color: rgba(255,255,255,.15) !important;
+}
+body:not(.dark-mode) #notifWelcomeBubble {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+body:not(.dark-mode) #notifWelcomeBubble [style*="color:#94a3b8"] { color: #64748b !important; }
+body:not(.dark-mode) #notifWelcomeBubble [style*="background:rgba(255,255,255,.1)"] { background: #f1f5f9 !important; }
+body.dark-mode #notifWelcomeBubble { color: #e8eaed !important; }
