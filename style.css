@@ -3691,22 +3691,41 @@ body.dark-mode #notifPanel [style*="color:#1d4ed8"] { color: #8ab4f8 !important;
   box-sizing: border-box !important;
 }
 .drive-search-wrap {
-  flex: 1 1 280px !important;
+  flex: 1 1 320px !important;
   min-width: 0 !important;
-  max-width: 100% !important;
-  width: auto !important;
-  box-sizing: border-box !important;
-  position: relative !important;
+  max-width: 720px !important;
+  background: #ffffff !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 8px !important;
+  height: 40px !important;
+  padding: 0 8px !important;
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
+  box-sizing: border-box !important;
   overflow: hidden !important;
 }
+.drive-search-wrap:focus-within {
+  border-color: #1a73e8 !important;
+  box-shadow: 0 0 0 2px rgba(26,115,232,.15) !important;
+  background: #ffffff !important;
+}
 .drive-search-wrap input {
-  min-width: 0 !important;
   flex: 1 !important;
+  min-width: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  font-size: 14px !important;
+  color: #202124 !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
+  box-shadow: none !important;
+}
+.drive-search-wrap .ds-icon {
+  color: #5f6368 !important;
+  display: flex !important;
+  flex-shrink: 0 !important;
 }
 .drive-search-wrap button {
   flex-shrink: 0 !important;
@@ -3716,11 +3735,19 @@ body.dark-mode #notifPanel [style*="color:#1d4ed8"] { color: #8ab4f8 !important;
   align-items: center !important;
   justify-content: center !important;
   border-radius: 50% !important;
-  margin-left: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  color: #5f6368 !important;
+  cursor: pointer !important;
 }
+.drive-search-wrap button:hover { background: #f1f3f4 !important; }
 body.dark-mode .drive-search-wrap {
-  background: #2d2e30 !important;
+  background: #202124 !important;
   border-color: #5f6368 !important;
+}
+body.dark-mode .drive-search-wrap:focus-within {
+  background: #2d2e30 !important;
+  border-color: #8ab4f8 !important;
 }
 body.dark-mode .drive-search-wrap input {
   color: #e8eaed !important;
@@ -3732,10 +3759,7 @@ body.dark-mode .drive-search-wrap .ds-icon,
 body.dark-mode .drive-search-wrap button {
   color: #9aa0a6 !important;
 }
-body.dark-mode .drive-search-wrap:focus-within {
-  background: #35363a !important;
-  border-color: #8ab4f8 !important;
-}
+body.dark-mode .drive-search-wrap button:hover { background: #3c4043 !important; }
 #page-files .drive-topbar button,
 #page-files .drive-chip-row {
   flex-shrink: 0 !important;
