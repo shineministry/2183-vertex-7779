@@ -55,7 +55,7 @@ try {
         }
 
     } catch (netErr) {
-        // Network failed — try cached file list from IndexedDB
+        // Network failed - try cached file list from IndexedDB
         if (typeof idbGetVaultMeta === 'function') {
             const cached = await idbGetVaultMeta();
             if (cached) {
@@ -91,7 +91,7 @@ list.innerHTML = `
 
     const mode = window.VAULT_MODE || sessionStorage.getItem("vaultMode") || "VIEWER";
 
-    // Backend already filters by mode — show ALL returned categories.
+    // Backend already filters by mode - show ALL returned categories.
     // The frontend should NOT re-filter here; trust the backend.
     const categories = Object.keys(data);
 
@@ -162,7 +162,7 @@ const profiles = {
 shineil:{
 image:"profile.png",
 name:"SHINEIL KEITH MATHIAS",
-role:"Founder of SHINE MINISTRY • Student • Public Speaker • Digital Creator",
+role:"Founder of SHINE MINISTRY - Student - Public Speaker - Digital Creator",
 
 personal:`
 <b>Full Name:</b> Shineil Keith Mathias<br>
@@ -178,31 +178,31 @@ contact:`
 
 education:`
 Don Bosco High School<br>
-2020–2026<br>
+2020-2026<br>
 Secondary Education
 `,
 
 skills:`
-• Public Speaking<br>
-• Leadership<br>
-• Mathematics<br>
-• Web Editing
+- Public Speaking<br>
+- Leadership<br>
+- Mathematics<br>
+- Web Editing
 `,
 
 languages:`
-English — Fluent<br>
-Hindi — Fluent<br>
-German — Basic
+English - Fluent<br>
+Hindi - Fluent<br>
+German - Basic
 `,
 
 achievements:`
-• Green House Captain<br>
-• Debate Awards<br>
-• Student Recognition
+- Green House Captain<br>
+- Debate Awards<br>
+- Student Recognition
 `,
 
 experience:`
-Founder — SHINE MINISTRY<br>
+Founder - SHINE MINISTRY<br>
 Digital Projects<br>
 Leadership Activities
 `,
@@ -241,7 +241,7 @@ brother:{
 
 image:"ProfileK.png",
 name:"KEVIN SHREESH MATHIAS",
-role:"Bartender • Hospitality",
+role:"Bartender - Hospitality",
 
 personal:`
 <b>Name:</b> Kevin Shreesh Mathias<br>
@@ -255,16 +255,16 @@ Add Email
 `,
 
 education:`
-Guardian School — SSC<br>
+Guardian School - SSC<br>
 IHM Mumbai<br>
 Flair Mania Bartending Academy
 `,
 
 skills:`
-• Bartending<br>
-• Customer Service<br>
-• POS<br>
-• Inventory
+- Bartending<br>
+- Customer Service<br>
+- POS<br>
+- Inventory
 `,
 
 languages:`
@@ -273,13 +273,13 @@ Hindi
 `,
 
 achievements:`
-Assistant Bartender — Bombay Cartel<br>
-Assistant Bartender — Janwani
+Assistant Bartender - Bombay Cartel<br>
+Assistant Bartender - Janwani
 `,
 
 experience:`
-2023–2025 Bombay Cartel<br>
-Present — Janwani
+2023-2025 Bombay Cartel<br>
+Present - Janwani
 `,
 
 projects:`
@@ -348,8 +348,8 @@ hobbies:`Add`
 
 };
 
-// ── Category summaries (item 2): short blurb shown above each category's
-// file grid so the user knows at a glance what the category contains. ──
+// -- Category summaries (item 2): short blurb shown above each category's
+// file grid so the user knows at a glance what the category contains. --
 const CAT_SUMMARIES = {
     'Visa':         'Visa applications, approvals, and travel authorization documents.',
     'Guardian':     'Guardian access records and authorizations for trusted contacts.',
@@ -397,7 +397,7 @@ function buildHomeDashboard(){
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#f8fafc;border:1px solid var(--border);margin-bottom:8px;">
                 <div style="overflow:hidden;">
                     <div style="font-weight:700;font-size:12.5px;color:var(--text-main, #0f172a);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><i data-lucide="file-text" style="width:14px;height:14px;vertical-align:middle;"></i> ${esc(r.name)}</div>
-                    <div style="font-size:10.5px;color:var(--muted);margin-top:2px;">${esc(r.category || '')} · ${esc(r.date || '')}</div>
+                    <div style="font-size:10.5px;color:var(--muted);margin-top:2px;">${esc(r.category || '')} - ${esc(r.date || '')}</div>
                 </div>
             </div>`).join('')
         : `<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">No files viewed yet</div>`;
@@ -423,7 +423,7 @@ function buildHomeDashboard(){
             <div style="font-size:30px;"><i data-lucide="shield" style="width:30px;height:30px;color:var(--success,#16a34a);"></i></div>
             <div>
                 <div style="font-size:11px;font-weight:800;letter-spacing:.5px;color:var(--muted);">SECURITY STATUS</div>
-                <div style="font-size:18px;font-weight:900;color:var(--success,#16a34a);">Protected · AES-256</div>
+                <div style="font-size:18px;font-weight:900;color:var(--success,#16a34a);">Protected - AES-256</div>
             </div>
         </div>
     </div>
@@ -625,10 +625,10 @@ border-radius:18px;">
 
 <h3>Timeline</h3>
 
-2010 — Born<br>
-2020 — Education<br>
-2024 — Projects<br>
-2025 — Present
+2010 - Born<br>
+2020 - Education<br>
+2024 - Projects<br>
+2025 - Present
 
 </div>
 
@@ -660,7 +660,7 @@ window.LITE_MODE
 ? files.slice(0,20)
 : files;
 
-// ── Section grouping ──────────────────────────────────────────────────────
+// -- Section grouping ------------------------------------------------------
 // Group files by their `section` field. Files with no section render first,
 // then each named section renders a coloured header above its files.
 const _secMeta = (allFilesData && allFilesData['_meta']) ? allFilesData['_meta'] : {};
@@ -710,7 +710,7 @@ const _driveViewMode = (localStorage.getItem('drive_view_mode') || 'grid');
           card.innerHTML = `
             <div class="drive-list-name"><span class="li-icon ${isImg?'img':''}"><i data-lucide="${isImg?'image':'file-text'}" style="width:14px;height:14px;"></i></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(file.name)}</span></div>
             <div class="drive-list-col hide-m">${escHtml(file.category||category)}</div>
-            <div class="drive-list-col hide-m">${escHtml(file.date||file.expiry||'—')}</div>
+            <div class="drive-list-col hide-m">${escHtml(file.date||file.expiry||'-')}</div>
             <button class="drive-more-btn" onclick="event.stopPropagation(); openDriveMenu(this, ${JSON.stringify(file).replace(/"/g,'&quot;')})" style="opacity:1;"><i data-lucide="more-vertical" style="width:16px;height:16px;"></i></button>
           `;
           card.onclick = ()=> openSecureFile((file.category === 'PHOTOS' ? "photos/" : "docs/") + file.file, file.name);
@@ -747,7 +747,7 @@ const _driveViewMode = (localStorage.getItem('drive_view_mode') || 'grid');
           <div class="doc-type-icon ${isImg?'img':''}"><i data-lucide="${isImg?'image':'file-text'}" style="width:16px;height:16px;"></i></div>
           <div style="flex:1;min-width:0;">
             <div class="drive-card-name" title="${escHtml(file.name)}">${escHtml(file.name)}</div>
-            <div class="drive-card-meta">${escHtml(file.category||category)} · ${escHtml(file.date||'')}</div>
+            <div class="drive-card-meta">${escHtml(file.category||category)} - ${escHtml(file.date||'')}</div>
           </div>
           <button class="drive-more-btn" onclick="event.stopPropagation(); openDriveMenu(this, ${JSON.stringify(file).replace(/"/g,'&quot;')})"><i data-lucide="more-vertical" style="width:16px;height:16px;"></i></button>
         </div>
@@ -789,14 +789,14 @@ const _driveViewMode = (localStorage.getItem('drive_view_mode') || 'grid');
         grid.appendChild(card);
 };
 
-// ── Drive: apply saved view mode before rendering ──
+// -- Drive: apply saved view mode before rendering --
     if(localStorage.getItem('drive_view_mode')==='list') grid.classList.add('drive-list');
     else grid.classList.remove('drive-list');
 
-    // ── Render unsectioned files first ──
+    // -- Render unsectioned files first --
 _unsectioned.forEach(f => _renderFileCard(f));
 
-// ── Render each section with a Drive-style header ──
+// -- Render each section with a Drive-style header --
 _orderedSections.forEach(secName => {
     const color = _secColorMap[secName] || '#1a73e8';
     const hdr = document.createElement('div');
@@ -816,7 +816,7 @@ _orderedSections.forEach(secName => {
     if(typeof window._driveAfterRender === 'function') window._driveAfterRender(category, visibleFiles.length);
 }
 
-// ── Drive 3-dot contextual menu (matches Google Drive) ──
+// -- Drive 3-dot contextual menu (matches Google Drive) --
 window.openDriveMenu = function(btn, file){
   let menu = document.getElementById('driveCtxMenu');
   if(!menu){
@@ -901,7 +901,7 @@ function renderPhotos() {
 
         // If this photo was already decrypted (by a previous visit to this
         // page, the lightbox, or the eager loading-screen preload), paint it
-        // instantly — no spinner, no re-fetch, no re-decrypt.
+        // instantly - no spinner, no re-fetch, no re-decrypt.
         const docKey = (file.file || '').replace(/^\/docs\/|^docs\//, '').replace(/^\/photos\/|^photos\//, '');
         const cached = window._photoDecryptedCache && window._photoDecryptedCache.get(docKey);
         if (cached) {
@@ -1144,7 +1144,7 @@ async function unifiedSearch(){
 
         card.innerHTML = `
         <div class="drive-card-thumb" style="height:120px;"><i data-lucide="file-text" style="width:42px;height:42px;color:#1967d2;"></i><div class="thumb-gradient"></div></div>
-        <div class="drive-card-foot"><div class="doc-type-icon"><i data-lucide="file-text" style="width:14px;height:14px;"></i></div><div style="flex:1;min-width:0;"><div class="drive-card-name">${escHtml(file.name)}</div><div class="drive-card-meta">${escHtml(file.category)} · ${escHtml(file.source)}</div></div><button class="drive-more-btn" onclick="event.stopPropagation(); openDriveMenu(this, ${JSON.stringify(file).replace(/"/g,'&quot;')})"><i data-lucide="more-vertical" style="width:16px;height:16px;"></i></button></div>
+        <div class="drive-card-foot"><div class="doc-type-icon"><i data-lucide="file-text" style="width:14px;height:14px;"></i></div><div style="flex:1;min-width:0;"><div class="drive-card-name">${escHtml(file.name)}</div><div class="drive-card-meta">${escHtml(file.category)} - ${escHtml(file.source)}</div></div><button class="drive-more-btn" onclick="event.stopPropagation(); openDriveMenu(this, ${JSON.stringify(file).replace(/"/g,'&quot;')})"><i data-lucide="more-vertical" style="width:16px;height:16px;"></i></button></div>
         <div style="display:none;">
 
         <div style="
@@ -1184,7 +1184,7 @@ async function unifiedSearch(){
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-// ── Mode → allowed member keys (mirrors backend MODE_MEMBERS in worker.js) ──
+// -- Mode -> allowed member keys (mirrors backend MODE_MEMBERS in worker.js) --
 // Frontend member keys map to backend member ids as: shineil, brother, father, mother
 const VAULT_MODE_ALLOWED_MEMBERS = {
     ADMIN:           ["shineil", "brother", "father", "mother"],
@@ -1208,7 +1208,7 @@ function isMemberAllowedForCurrentMode(memberKey) {
 
 // Called by the HOME page's "Family Members" shortcuts. Unlike the old
 // inline onclick handlers, this checks authorization before opening any
-// profile — closes the leak where a non-admin user could view another
+// profile - closes the leak where a non-admin user could view another
 // member's profile by clicking a HOME shortcut even with the dropdown hidden.
 function openMemberProfileGuarded(memberKey) {
     const _guardMode = getCurrentVaultMode();

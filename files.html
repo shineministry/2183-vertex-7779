@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Files Manager — Vault Studio</title>
+<title>Files Manager - Vault Studio</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <meta name="theme-color" content="#1a73e8">
 <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
@@ -270,7 +270,7 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
   <!-- TITLE BAR -->
   <div class="fm-titlebar">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
-    <div class="fm-titlebar-text">Files Manager — Vault Studio</div>
+    <div class="fm-titlebar-text">Files Manager - Vault Studio</div>
     <button class="fm-titlebar-btn" onclick="toggleDark()" title="Toggle dark mode"><i data-lucide="moon" style="width:16px;height:16px;"></i></button>
     <button class="fm-titlebar-btn" onclick="toggleJsonPanel()" title="Toggle JSON preview"><i data-lucide="code" style="width:16px;height:16px;"></i></button>
   </div>
@@ -312,7 +312,7 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
     <!-- MAIN -->
     <div class="fm-main">
       <div class="fm-cat-header" id="catHeader" style="display:none;">
-        <h2 id="catTitle">—</h2>
+        <h2 id="catTitle">-</h2>
         <span class="fm-cat-badge" id="catBadge">0 files</span>
         <button class="fm-tb-btn" onclick="openSectionModal()" title="Create section"><i data-lucide="layout-grid" style="width:13px;height:13px;"></i> + Section</button>
         <button class="fm-tb-btn" onclick="renameCategory()" title="Rename category"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>
@@ -388,7 +388,7 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
         </div>
       </div>
       <div>
-        <label>Upload & Encrypt (Any File → .enc)</label>
+        <label>Upload & Encrypt (Any File -> .enc)</label>
         <div id="fmUploadArea" class="fm-upload-area" onclick="document.getElementById('fmFileInput').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleFileDrop(event)">
           <i data-lucide="upload-cloud" style="width:28px;height:28px;color:#94a3b8;"></i>
           <span>Drop PDF here or click to browse</span>
@@ -403,7 +403,7 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
       <div>
         <label>Section</label>
         <select id="fmSection">
-          <option value="">— No section —</option>
+          <option value="">- No section -</option>
         </select>
       </div>
       <div>
@@ -462,11 +462,11 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
   </div>
 </div>
 
-<!-- LOGIN OVERLAY — 6-digit PIN (backend stored) -->
+<!-- LOGIN OVERLAY - 6-digit PIN (backend stored) -->
 <div class="fm-modal-overlay show" id="loginOverlay">
   <div class="fm-modal" style="width:380px;">
     <div class="fm-modal-head" style="background:linear-gradient(135deg,#1a73e8,#1557b0);">
-      <h3 style="color:#fff;">🔐 Vault Files Manager</h3>
+      <h3 style="color:#fff;">- Vault Files Manager</h3>
     </div>
     <div class="fm-modal-body" style="padding:24px 20px;">
       <div style="text-align:center;margin-bottom:16px;">
@@ -499,7 +499,7 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
 
 <script>
 /* ================================================================
-   FILES MANAGER — INNOVATIVE files.json EDITOR
+   FILES MANAGER - INNOVATIVE files.json EDITOR
    ================================================================ */
 
 var _data = {};
@@ -516,7 +516,7 @@ function _getToken(){
 }
 
 /* ================================================================
-   SESSION RESUME — persist work-in-progress immediately so a stale
+   SESSION RESUME - persist work-in-progress immediately so a stale
    token (401 after leaving the tab open for a while) never costs
    unsaved edits or queued uploads. _data already lived in
    localStorage; this adds the pending-upload blobs (via IndexedDB,
@@ -562,7 +562,7 @@ async function _loadPendingUploadsFromDb(){
 }
 
 /* Called immediately after any state change (data edit, upload queued,
-   category switch) so the saved session is always current — no debounce,
+   category switch) so the saved session is always current - no debounce,
    no "save button" to forget to click. */
 function _saveSession(){
   _saveToStorage();
@@ -604,8 +604,8 @@ async function _restoreSessionFromDisk(){
   var onDomain = location.origin === 'https://72oe-v2sx.shine-ministry.com';
 
   // If a previous visit left unsaved edits and/or queued (not-yet-deployed)
-  // uploads behind — e.g. the tab sat open overnight, the session token
-  // expired, and deploy failed with 401 — offer to resume exactly where
+  // uploads behind - e.g. the tab sat open overnight, the session token
+  // expired, and deploy failed with 401 - offer to resume exactly where
   // things were left instead of silently discarding that work.
   var resumed = false;
   try {
@@ -619,7 +619,7 @@ async function _restoreSessionFromDisk(){
       if (doResume){
         await _restoreSessionFromDisk();
         resumed = true;
-        toast('Resumed previous session — ' + meta.pendingCount + ' file(s) still queued for deploy');
+        toast('Resumed previous session - ' + meta.pendingCount + ' file(s) still queued for deploy');
       } else {
         _clearSessionMeta();
         try { var db = await _dbOpen(); db.transaction('pendingUploads','readwrite').objectStore('pendingUploads').clear(); } catch(e){}
@@ -639,7 +639,7 @@ async function _restoreSessionFromDisk(){
   }
 
   var token = _getToken();
-  // In embed/window mode, PIN gate is primary — token is optional (offline allowed)
+  // In embed/window mode, PIN gate is primary - token is optional (offline allowed)
   // Always show PIN UI when onDomain, even if token exists
   if (onDomain){
     document.getElementById('loginOverlay').classList.add('show');
@@ -650,7 +650,7 @@ async function _restoreSessionFromDisk(){
     document.getElementById('loginOverlay').classList.remove('show');
     _autoLoad();
   } else if (resumed){
-    document.getElementById('statusRight').textContent = 'Resumed offline — enter PIN to deploy';
+    document.getElementById('statusRight').textContent = 'Resumed offline - enter PIN to deploy';
     document.getElementById('loginOverlay').classList.add('show');
     if (typeof _fmInitPinUI === 'function') _fmInitPinUI();
   } else {
@@ -727,7 +727,7 @@ function _fmShowPinUI(mode){
     hint.style.display='none';
     changeBtn.style.display='block';
   } else if(mode==='set'){
-    subtitle.textContent='First time — set a 6-digit PIN for Files Manager';
+    subtitle.textContent='First time - set a 6-digit PIN for Files Manager';
     mainLabel.textContent='New PIN';
     confirmBlock.style.display='block';
     hint.style.display='block';
@@ -820,7 +820,7 @@ async function doPinLogin(){
     document.getElementById('loginOverlay').classList.remove('show');
     btn.textContent='Unlock'; btn.disabled=false;
     window._fmChangeStep=null;
-    if(_pendingUploads.length){ toast('PIN set — '+_pendingUploads.length+' file(s) queued, click Deploy'); _updateDeployBadge(); _renderCards(); } else { toast('PIN set — loading files...'); await _autoLoad(); }
+    if(_pendingUploads.length){ toast('PIN set - '+_pendingUploads.length+' file(s) queued, click Deploy'); _updateDeployBadge(); _renderCards(); } else { toast('PIN set - loading files...'); await _autoLoad(); }
     return;
   }
   if(_fmPinMode==='change' && window._fmChangeStep==='new'){
@@ -847,13 +847,13 @@ async function doPinLogin(){
   const serverHash=await _fmLoadPinFromServer();
   const stored=localStorage.getItem('fmPinHash_'+FM_PIN_KEY);
   if(!stored){ // no PIN set yet, treat as set
-    errEl.textContent='No PIN set — please set a new PIN.'; errEl.style.display='block'; _fmShowPinUI('set'); btn.textContent='Unlock'; btn.disabled=false; return;
+    errEl.textContent='No PIN set - please set a new PIN.'; errEl.style.display='block'; _fmShowPinUI('set'); btn.textContent='Unlock'; btn.disabled=false; return;
   }
   const hash=await _fmHashPin(pin);
   if(hash!==stored){ errEl.textContent='Incorrect PIN. Try again.'; errEl.style.display='block'; _fmShakeRow('pinRow'); btn.textContent='Unlock'; btn.disabled=false; return; }
   document.getElementById('loginOverlay').classList.remove('show');
   btn.textContent='Unlock'; btn.disabled=false;
-  if(_pendingUploads.length){ toast('Unlocked — '+_pendingUploads.length+' file(s) queued, click Deploy'); _updateDeployBadge(); _renderCards(); } else { toast('Unlocked — loading files...'); await _autoLoad(); }
+  if(_pendingUploads.length){ toast('Unlocked - '+_pendingUploads.length+' file(s) queued, click Deploy'); _updateDeployBadge(); _renderCards(); } else { toast('Unlocked - loading files...'); await _autoLoad(); }
 }
 // Keep old doLogin for offline fallback (hidden input)
 async function doLogin(){ return doPinLogin(); }
@@ -873,8 +873,8 @@ function goOffline(){
   document.getElementById('loginOverlay').classList.remove('show');
   var cats = Object.keys(_data);
   if (cats.length) _selectCat(cats[0]);
-  document.getElementById('statusRight').textContent = 'Offline mode — editing cached data only';
-  toast('Offline mode — changes saved locally only');
+  document.getElementById('statusRight').textContent = 'Offline mode - editing cached data only';
+  toast('Offline mode - changes saved locally only');
 }
 
 async function _autoLoad(){
@@ -883,7 +883,7 @@ async function _autoLoad(){
     _loadFromStorage();
     var cats = Object.keys(_data);
     if (cats.length) _selectCat(cats[0]);
-    document.getElementById('statusRight').textContent = 'No session — using cached data';
+    document.getElementById('statusRight').textContent = 'No session - using cached data';
     return;
   }
   document.getElementById('statusRight').textContent = 'Loading from R2...';
@@ -918,8 +918,8 @@ async function _autoLoad(){
     _loadFromStorage();
     var cats = Object.keys(_data);
     if (cats.length) _selectCat(cats[0]);
-    document.getElementById('statusRight').textContent = 'Offline — using cached data';
-    toast('Offline — loaded cached data');
+    document.getElementById('statusRight').textContent = 'Offline - using cached data';
+    toast('Offline - loaded cached data');
   }
 }
 
@@ -957,7 +957,7 @@ function _renderSidebar(){
 /* ---- PHOTOS category auto-routing ----
    The main vault app (features.js / vault-data.js) decides whether to fetch
    a file from /photos/ or /docs/ purely by checking file.category === 'PHOTOS'
-   (exact, case-sensitive) — category being whatever the object key in
+   (exact, case-sensitive) - category being whatever the object key in
    files.json is. If this category was ever created as "Photos" or "photos"
    instead of exactly "PHOTOS", every file in it silently fell back to /docs/,
    even though the Add/Edit File modal's prefix dropdown said "photos/".
@@ -985,7 +985,7 @@ function _populateSectionDropdown(){
   if (!sel) return;
   var prev = sel.value;
   var secs = _getSectionsForCat(_activeCat);
-  sel.innerHTML = '<option value="">— No section —</option>' + secs.map(function(s){
+  sel.innerHTML = '<option value="">- No section -</option>' + secs.map(function(s){
     return '<option value="'+_esc(s.name)+'">'+_esc(s.name)+'</option>';
   }).join('');
   if (prev) sel.value = prev;
@@ -1177,7 +1177,7 @@ function _renderCards(){
     var st = it._uid ? _uploadStatus[it._uid] : null;
     var badgeHtml = '';
     if (st && (st.state==='pending' || st.state==='failed')){
-      var badgeTitle = st.state==='pending' ? 'Not yet uploaded to R2 — click Deploy' : ('Upload failed: '+(st.detail||'unknown error'));
+      var badgeTitle = st.state==='pending' ? 'Not yet uploaded to R2 - click Deploy' : ('Upload failed: '+(st.detail||'unknown error'));
       badgeHtml = '<span class="fm-upload-badge '+st.state+'" title="'+_esc(badgeTitle)+'"></span>';
     } else if (st && st.state==='success'){
       badgeHtml = '<span class="fm-upload-badge success" title="Uploaded to R2"></span>';
@@ -1196,7 +1196,7 @@ function _renderCards(){
       + '  <div class="fm-card-icon"><i data-lucide="file-text" style="width:20px;height:20px;"></i></div>'
       + '  <div class="fm-card-info">'
       + '    <div class="fm-card-name" title="'+_esc(it.name||'')+'">'+_esc(it.name||'Untitled')+'</div>'
-      + '    <div class="fm-card-file" title="'+_esc(it.file||'')+'">'+_esc(it.file||'—')+'</div>'
+      + '    <div class="fm-card-file" title="'+_esc(it.file||'')+'">'+_esc(it.file||'-')+'</div>'
       + '  </div>'
       + '</div>'
       + '<div class="fm-card-meta">'
@@ -1418,7 +1418,7 @@ function saveFileEntry(){
     toast('File added');
   }
 
-  _saveSession(); /* immediate save — survives a stale-token 401 or a day-later refresh */
+  _saveSession(); /* immediate save - survives a stale-token 401 or a day-later refresh */
   _renderCards();
   _updateJson();
   _updateStats();
@@ -1468,7 +1468,7 @@ async function processUploadFile(file){
 
   var pass = window.masterPassword;
   if (!pass){
-    toast('Enter master password first — click Unlock');
+    toast('Enter master password first - click Unlock');
     clearFileUpload();
     document.getElementById('loginOverlay').classList.add('show');
     document.getElementById('loginPass').focus();
@@ -1479,17 +1479,17 @@ async function processUploadFile(file){
     var dataBuf;
 
     if (isImage){
-      document.getElementById('fmFileInfoText').textContent = name + ' → ' + pdfName + ' (converting to PDF...)';
+      document.getElementById('fmFileInfoText').textContent = name + ' -> ' + pdfName + ' (converting to PDF...)';
       dataBuf = await _imageToPdf(file);
-      document.getElementById('fmFileInfoText').textContent = name + ' → ' + pdfName + ' → ' + encName + ' (encrypting...)';
+      document.getElementById('fmFileInfoText').textContent = name + ' -> ' + pdfName + ' -> ' + encName + ' (encrypting...)';
     } else {
       dataBuf = await file.arrayBuffer();
-      document.getElementById('fmFileInfoText').textContent = name + ' → ' + encName + ' (encrypting...)';
+      document.getElementById('fmFileInfoText').textContent = name + ' -> ' + encName + ' (encrypting...)';
     }
 
     _pendingEncBlob = await encryptVaultFile(dataBuf, pass);
     _pendingOrigName = baseName + (isImage ? '.pdf' : name.replace(/.*\./, '.'));
-    document.getElementById('fmFileInfoText').textContent = name + ' → ' + encName + ' (encrypted, ready to deploy)';
+    document.getElementById('fmFileInfoText').textContent = name + ' -> ' + encName + ' (encrypted, ready to deploy)';
     toast(isImage ? 'Image converted to PDF and encrypted' : 'File encrypted successfully');
   } catch(e){
     toast('Failed: ' + e.message);
@@ -1654,7 +1654,7 @@ function handleImportFile(e){
 /* ---- BUCKET LOAD/DEPLOY ---- */
 async function loadFromBucket(){
   var token = _getToken();
-  if (!token){ toast('No active session — log in first'); return; }
+  if (!token){ toast('No active session - log in first'); return; }
   toast('Loading from bucket...');
   try {
     var res = await fetch(_apiBase + '/files.json?_t='+Date.now(), {
@@ -1698,7 +1698,7 @@ function _sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
    This is the fix for R2 uploads failing intermittently: a single fetch()
    with no retry meant any transient network blip, R2 5xx, or an
    auth token that expired partway through a long batch (uploads ran
-   sequentially with no refresh) permanently dropped that file — while the
+   sequentially with no refresh) permanently dropped that file - while the
    file's metadata entry still got written into files.json, leaving
    index.html pointing at an object that was never actually written to R2
    (which is what caused "failed to decrypt and open" on those files). */
@@ -1716,8 +1716,8 @@ async function _uploadOne(u, token){
       });
       if (res.ok) return { ok:true };
       if (res.status === 401 || res.status === 403){
-        /* token expired/invalid mid-batch — retrying won't help, surface immediately */
-        lastErr = 'HTTP '+res.status+' — session expired, please log in again';
+        /* token expired/invalid mid-batch - retrying won't help, surface immediately */
+        lastErr = 'HTTP '+res.status+' - session expired, please log in again';
         break;
       }
       lastErr = 'HTTP '+res.status;
@@ -1731,7 +1731,7 @@ async function _uploadOne(u, token){
 
 async function deployToBucket(){
   var token = _getToken();
-  if (!token){ toast('No active session — log in first'); return; }
+  if (!token){ toast('No active session - log in first'); return; }
   var uploadCount = _pendingUploads.length;
   var msg = uploadCount
     ? 'Upload '+uploadCount+' file(s) and deploy files.json to R2?'
@@ -1756,7 +1756,7 @@ async function deployToBucket(){
     _pendingUploads = stillPending;
     _updateDeployBadge();
     _renderCards();
-    _saveSession(); /* persist immediately — a failed/expired token below must not lose queued work */
+    _saveSession(); /* persist immediately - a failed/expired token below must not lose queued work */
 
     /* Build the payload to send to R2: strip out any entry whose file upload
        just failed, so files.json on the server never references an object
@@ -1777,11 +1777,11 @@ async function deployToBucket(){
       body: JSON.stringify(payload, null, 2)
     });
     if (res2.status === 401 || res2.status === 403){
-      /* Token went stale (e.g. tab left open for a day). Nothing is lost —
-         _data and _pendingUploads were already persisted above — but the
+      /* Token went stale (e.g. tab left open for a day). Nothing is lost -
+         _data and _pendingUploads were already persisted above - but the
          person needs to log back in and hit Deploy again. */
-      document.getElementById('statusRight').textContent = 'Session expired — please log in again';
-      toast('Session expired (401) — your edits are saved, log in again and re-deploy');
+      document.getElementById('statusRight').textContent = 'Session expired - please log in again';
+      toast('Session expired (401) - your edits are saved, log in again and re-deploy');
       sessionStorage.removeItem('vaultSessionToken');
       sessionStorage.removeItem('vaultSession');
       if (results.length) _showUploadResults(results);
@@ -1794,16 +1794,16 @@ async function deployToBucket(){
     var okCount = results.filter(function(r){ return r.ok; }).length;
     var failCount = results.length - okCount;
     document.getElementById('statusRight').textContent = 'Deployed at '+new Date().toLocaleTimeString();
-    toast(failCount ? (okCount+' uploaded, '+failCount+' failed — see details') : (results.length ? 'files.json deployed, all files uploaded!' : 'files.json deployed!'));
+    toast(failCount ? (okCount+' uploaded, '+failCount+' failed - see details') : (results.length ? 'files.json deployed, all files uploaded!' : 'files.json deployed!'));
 
-    /* Fully deployed with nothing pending — clear the saved session so the
+    /* Fully deployed with nothing pending - clear the saved session so the
        next launch doesn't ask to "resume" work that's already live. */
     if (!_pendingUploads.length){ _clearSessionMeta(); _persistPendingUploads(); }
     else _saveSession();
 
     if (results.length) _showUploadResults(results);
   } catch(e){
-    toast('Deploy failed: '+e.message+' — your edits remain saved locally, safe to retry');
+    toast('Deploy failed: '+e.message+' - your edits remain saved locally, safe to retry');
   }
 }
 
@@ -1819,7 +1819,7 @@ function _showUploadResults(results){
     var icon = r.ok
       ? '<i data-lucide="check-circle" style="width:16px;height:16px;"></i>'
       : '<i data-lucide="x-circle" style="width:16px;height:16px;"></i>';
-    var detail = r.ok ? r.path : (r.path + ' — ' + (r.error||'upload failed'));
+    var detail = r.ok ? r.path : (r.path + ' - ' + (r.error||'upload failed'));
     return '<div class="fm-upload-row '+(r.ok?'ok':'err')+'">'
       + '<span class="fm-ur-icon">'+icon+'</span>'
       + '<div class="fm-ur-info"><div class="fm-ur-name" title="'+_esc(r.name)+'">'+_esc(r.name)+'</div><div class="fm-ur-detail" title="'+_esc(detail)+'">'+_esc(detail)+'</div></div>'
