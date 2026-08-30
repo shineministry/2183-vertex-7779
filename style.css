@@ -3704,6 +3704,7 @@ body.dark-mode #notifPanel [style*="color:#1d4ed8"] { color: #8ab4f8 !important;
   gap: 8px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
+  box-shadow: none !important;
 }
 .drive-search-wrap:focus-within {
   border-color: #1a73e8 !important;
@@ -3742,7 +3743,7 @@ body.dark-mode #notifPanel [style*="color:#1d4ed8"] { color: #8ab4f8 !important;
 }
 .drive-search-wrap button:hover { background: #f1f3f4 !important; }
 body.dark-mode .drive-search-wrap {
-  background: #202124 !important;
+  background: #2d2e30 !important;
   border-color: #5f6368 !important;
 }
 body.dark-mode .drive-search-wrap:focus-within {
