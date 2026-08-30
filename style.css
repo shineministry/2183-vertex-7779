@@ -3480,3 +3480,120 @@ body.dark-mode .badge, body.dark-mode [style*="background:#"][style*="border-rad
 body, .sidebar, .content-view, .passport-navbar, .file-card, .profile-box, #page-home > div, #home-cat-overview > div {
   transition: background-color .35s ease, color .35s ease, border-color .35s ease, box-shadow .35s ease !important;
 }
+
+
+/* === ONE NAV BAR - only colour changes, use dark mode structure === */
+.sidebar {
+  width: 256px !important;
+  padding: 12px 12px 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+#sidebar-controls-wrap {
+  padding: 12px !important;
+  margin-bottom: 14px !important;
+  border-radius: 14px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+#sidebar-controls-wrap > div {
+  gap: 8px !important;
+}
+.drive-new-btn {
+  margin: 6px 6px 14px 2px !important;
+  padding: 12px 20px 12px 14px !important;
+  border-radius: 16px !important;
+  font-size: 14px !important;
+}
+#cat-list li {
+  padding: 11px 14px !important;
+  margin-bottom: 4px !important;
+  border-radius: 10px !important;
+  gap: 10px !important;
+}
+#sidebar-files-section {
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+/* Bottom storage/profile - always visible, same structure */
+.sidebar > div[style*="margin-top:auto"] {
+  margin-top: auto !important;
+  padding: 14px 8px 6px !important;
+  border-top: 1px solid rgba(255,255,255,.1) !important;
+  flex-shrink: 0 !important;
+}
+#mode-profile-wrap {
+  padding-top: 8px !important;
+  flex-shrink: 0 !important;
+}
+/* Colours - light vs dark */
+body:not(.dark-mode) .sidebar {
+  background: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: none !important;
+}
+body.dark-mode .sidebar {
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+  border-right: none !important;
+  box-shadow: 4px 0 20px rgba(0,0,0,.18) !important;
+}
+body:not(.dark-mode) #sidebar-controls-wrap {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+body.dark-mode #sidebar-controls-wrap {
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+}
+body:not(.dark-mode) #member-select,
+body:not(.dark-mode) #share-gear,
+body:not(.dark-mode) #toggle-dark-mode {
+  background: #ffffff !important;
+  color: #3c4043 !important;
+  border: 1px solid #dadce0 !important;
+}
+body.dark-mode #member-select,
+body.dark-mode #share-gear,
+body.dark-mode #toggle-dark-mode {
+  background: rgba(255,255,255,.08) !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+}
+body:not(.dark-mode) .drive-new-btn {
+  background: #ffffff !important;
+  border: 1px solid #dadce0 !important;
+  color: #1f1f1f !important;
+  box-shadow: 0 1px 3px rgba(60,64,67,.3) !important;
+}
+body.dark-mode .drive-new-btn {
+  background: #ffffff !important;
+  border: 1px solid #dadce0 !important;
+  color: #1f1f1f !important;
+}
+body:not(.dark-mode) #cat-list li { color: #5f6368 !important; }
+body.dark-mode #cat-list li { color: #9aa0a6 !important; }
+body:not(.dark-mode) #cat-list li.active { background: #c2e7ff !important; color: #001d35 !important; }
+body.dark-mode #cat-list li.active { background: #3c4043 !important; color: #8ab4f8 !important; }
+body:not(.dark-mode) .sidebar > div[style*="margin-top:auto"] {
+  border-top-color: #e2e8f0 !important;
+}
+body.dark-mode .sidebar > div[style*="margin-top:auto"] {
+  border-top-color: rgba(255,255,255,.1) !important;
+}
+
+
+body:not(.dark-mode) .sidebar > div[style*="margin-top:auto"] { color: #5f6368 !important; }
+body.dark-mode .sidebar > div[style*="margin-top:auto"] { color: #9aa0a6 !important; }
+body:not(.dark-mode) #mode-profile-wrap #mode-profile-name { color: #0f172a !important; }
+body.dark-mode #mode-profile-wrap #mode-profile-name { color: #e8eaed !important; }
+body:not(.dark-mode) #mode-profile-wrap #mode-profile-mode { color: #64748b !important; }
+body.dark-mode #mode-profile-wrap #mode-profile-mode { color: #9aa0a6 !important; }
+body:not(.dark-mode) #mode-profile-wrap { background: transparent !important; }
