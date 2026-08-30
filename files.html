@@ -462,27 +462,34 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
   </div>
 </div>
 
-<!-- LOGIN OVERLAY -->
+<!-- LOGIN OVERLAY — 6-digit PIN (backend stored) -->
 <div class="fm-modal-overlay show" id="loginOverlay">
-  <div class="fm-modal" style="width:360px;">
+  <div class="fm-modal" style="width:380px;">
     <div class="fm-modal-head" style="background:linear-gradient(135deg,#1a73e8,#1557b0);">
       <h3 style="color:#fff;">🔐 Vault Files Manager</h3>
     </div>
     <div class="fm-modal-body" style="padding:24px 20px;">
       <div style="text-align:center;margin-bottom:16px;">
         <div style="width:56px;height:56px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
-          <i data-lucide="lock" style="width:28px;height:28px;color:#1a73e8;"></i>
+          <i data-lucide="shield-check" style="width:28px;height:28px;color:#1a73e8;"></i>
         </div>
-        <p style="font-size:12px;color:#64748b;">Enter your master password to access the file manager</p>
+        <p id="pinSubtitle" style="font-size:12px;color:#64748b;">Enter your 6-digit PIN to access the file manager</p>
       </div>
-      <div>
-        <label>Master Password</label>
-        <input type="password" id="loginPass" placeholder="Enter master password" style="width:100%;text-align:center;font-size:15px;letter-spacing:2px;" onkeydown="if(event.key==='Enter')doLogin()">
+      <div id="pinMainBlock">
+        <label id="pinMainLabel">6-Digit PIN</label>
+        <div id="pinRow" style="display:flex;gap:8px;justify-content:center;margin:10px 0 8px;"></div>
       </div>
+      <div id="pinConfirmBlock" style="display:none;">
+        <label>Confirm PIN</label>
+        <div id="pinConfirmRow" style="display:flex;gap:8px;justify-content:center;margin:10px 0 8px;"></div>
+      </div>
+      <input type="password" id="loginPass" style="display:none;">
       <div id="loginError" style="color:#dc2626;font-size:12px;text-align:center;display:none;margin-top:4px;"></div>
+      <div id="pinHint" style="font-size:11px;color:#94a3b8;text-align:center;margin-top:6px;display:none;">First time? Set a new 6-digit PIN</div>
     </div>
-    <div class="fm-modal-foot" style="justify-content:center;">
-      <button class="fm-save" onclick="doLogin()" id="loginBtn" style="width:100%;padding:10px;">Unlock</button>
+    <div class="fm-modal-foot" style="justify-content:center;flex-direction:column;gap:8px;">
+      <button class="fm-save" onclick="doPinLogin()" id="loginBtn" style="width:100%;padding:10px;">Unlock</button>
+      <button id="pinChangeBtn" onclick="openPinChange()" style="display:none;background:none;border:none;color:#64748b;font-size:11px;cursor:pointer;">Change PIN</button>
     </div>
   </div>
 </div>
@@ -632,79 +639,234 @@ async function _restoreSessionFromDisk(){
   }
 
   var token = _getToken();
-  if (token && onDomain && window.masterPassword){
-    document.getElementById('loginOverlay').classList.remove('show');
-    // If we just resumed local edits/queued uploads, don't let a fresh
-    // remote fetch clobber them — just deploy when ready. Otherwise load
-    // normally from R2.
-    if (!resumed) _autoLoad();
-  } else if (onDomain){
+  // In embed/window mode, PIN gate is primary — token is optional (offline allowed)
+  // Always show PIN UI when onDomain, even if token exists
+  if (onDomain){
     document.getElementById('loginOverlay').classList.add('show');
-    setTimeout(function(){ document.getElementById('loginPass').focus(); }, 100);
+    // Initialize 6-digit PIN UI (backend stored)
+    if (typeof _fmInitPinUI === 'function') _fmInitPinUI();
+    else setTimeout(function(){ document.getElementById('loginPass')?.focus(); }, 100);
+  } else if (token && window.masterPassword && !resumed){
+    document.getElementById('loginOverlay').classList.remove('show');
+    _autoLoad();
   } else if (resumed){
-    document.getElementById('statusRight').textContent = 'Resumed offline — log in to deploy';
+    document.getElementById('statusRight').textContent = 'Resumed offline — enter PIN to deploy';
+    document.getElementById('loginOverlay').classList.add('show');
+    if (typeof _fmInitPinUI === 'function') _fmInitPinUI();
   } else {
     goOffline();
   }
 })();
 
-/* ---- LOGIN ---- */
-async function doLogin(){
-  var pass = document.getElementById('loginPass').value;
-  var errEl = document.getElementById('loginError');
-  var btn = document.getElementById('loginBtn');
-  if (!pass){ errEl.textContent = 'Password required'; errEl.style.display = 'block'; return; }
-  errEl.style.display = 'none';
-  btn.textContent = 'Authenticating...';
-  btn.disabled = true;
-  try {
-    var hash = await window.sha256(pass);
-    var res = await fetch(_apiBase + '/get-secret', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ hash: hash })
-    });
-    var text = await res.text();
-    var result;
-    try { result = JSON.parse(text); } catch(pe){
-      errEl.innerHTML = 'Cannot reach backend (CORS/firewall). <a href="#" onclick="goOffline()" style="color:#1a73e8;font-weight:600;">Work Offline</a> with cached data.';
-      errEl.style.display = 'block';
-      btn.textContent = 'Unlock';
-      btn.disabled = false;
-      return;
+/* ---- 6-DIGIT PIN (backend stored) ---- */
+const FM_PIN_KEY = 'files_manager';
+const FM_PIN_LEN = 6;
+let _fmPinMode = 'enter'; // 'enter' | 'set' | 'change'
+async function _fmHashPin(pin){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('fm-pin:'+FM_PIN_KEY+':'+pin));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function _fmSyncPinToServer(pinHash){
+  try{
+    const token=_getToken();
+    if(!token) return;
+    await fetch(_apiBase+'/save-pin-hash',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({memberKey:FM_PIN_KEY,pinHash})});
+  }catch(e){ console.warn('[FM-PIN] sync fail',e); }
+}
+async function _fmLoadPinFromServer(){
+  try{
+    const token=_getToken();
+    if(!token) return null;
+    const res=await fetch(_apiBase+'/get-pin-hashes',{headers:{'Authorization':'Bearer '+token}});
+    if(!res.ok) return null;
+    const data=await res.json();
+    if(data.success && data.hashes && data.hashes[FM_PIN_KEY]){
+      localStorage.setItem('fmPinHash_'+FM_PIN_KEY, data.hashes[FM_PIN_KEY]);
+      return data.hashes[FM_PIN_KEY];
     }
-    if (!result.success || !result.sessionToken){
-      errEl.textContent = result.error || 'Wrong password';
-      errEl.style.display = 'block';
-      btn.textContent = 'Unlock';
-      btn.disabled = false;
-      return;
-    }
-    sessionStorage.setItem('vaultSessionToken', result.sessionToken);
-    sessionStorage.setItem('vaultSession', result.sessionToken);
-    if (result.secret) window.masterPassword = result.secret;
-    document.getElementById('loginOverlay').classList.remove('show');
-    btn.textContent = 'Unlock';
-    btn.disabled = false;
-    /* If there's a queued deploy waiting (e.g. this login was triggered by
-       a mid-deploy 401), keep those local edits/uploads intact instead of
-       pulling a fresh copy from R2 and clobbering them — just let the
-       person hit Deploy again. */
-    if (_pendingUploads.length){
-      toast('Authenticated — ' + _pendingUploads.length + ' file(s) still queued, click Deploy to finish');
-      _updateDeployBadge();
-      _renderCards();
-    } else {
-      toast('Authenticated — loading files...');
-      await _autoLoad();
-    }
-  } catch(e){
-    errEl.innerHTML = 'Connection failed. <a href="#" onclick="goOffline()" style="color:#1a73e8;font-weight:600;">Work Offline</a> with cached data.';
-    errEl.style.display = 'block';
-    btn.textContent = 'Unlock';
-    btn.disabled = false;
+  }catch(e){ console.warn('[FM-PIN] load fail',e); }
+  return null;
+}
+function _fmBuildPinRow(containerId, count){
+  const row=document.getElementById(containerId);
+  if(!row) return;
+  row.innerHTML='';
+  for(let i=0;i<count;i++){
+    const inp=document.createElement('input');
+    inp.type='password'; inp.inputMode='numeric'; inp.maxLength=1; inp.autocomplete='off';
+    inp.style.cssText='width:42px;height:48px;border:1.5px solid #cbd5e1;border-radius:10px;text-align:center;font-size:18px;font-weight:700;background:#f8fafc;outline:none;';
+    inp.addEventListener('input',function(){ this.value=this.value.replace(/[^0-9]/g,''); if(this.value && this.nextElementSibling) this.nextElementSibling.focus(); if([...row.children].every(c=>c.value) && containerId==='pinRow' && _fmPinMode==='enter'){ /* auto submit */ } });
+    inp.addEventListener('keydown',function(e){ if(e.key==='Backspace' && !this.value && this.previousElementSibling) this.previousElementSibling.focus(); if(e.key==='Enter') doPinLogin(); });
+    inp.addEventListener('focus',function(){ this.select(); });
+    row.appendChild(inp);
   }
 }
+function _fmRowValue(containerId){
+  const row=document.getElementById(containerId);
+  if(!row) return '';
+  return [...row.children].map(c=>c.value).join('');
+}
+function _fmShakeRow(containerId){
+  const row=document.getElementById(containerId);
+  if(!row) return;
+  [...row.children].forEach(c=>{ c.style.borderColor='#ef4444'; c.value=''; });
+  setTimeout(()=>[...row.children].forEach(c=>c.style.borderColor='#cbd5e1'),400);
+  if(row.firstChild) row.firstChild.focus();
+}
+function _fmShowPinUI(mode){
+  _fmPinMode=mode;
+  const subtitle=document.getElementById('pinSubtitle');
+  const mainLabel=document.getElementById('pinMainLabel');
+  const confirmBlock=document.getElementById('pinConfirmBlock');
+  const hint=document.getElementById('pinHint');
+  const changeBtn=document.getElementById('pinChangeBtn');
+  if(mode==='enter'){
+    subtitle.textContent='Enter your 6-digit PIN to access the file manager';
+    mainLabel.textContent='6-Digit PIN';
+    confirmBlock.style.display='none';
+    hint.style.display='none';
+    changeBtn.style.display='block';
+  } else if(mode==='set'){
+    subtitle.textContent='First time — set a 6-digit PIN for Files Manager';
+    mainLabel.textContent='New PIN';
+    confirmBlock.style.display='block';
+    hint.style.display='block';
+    hint.textContent='Choose a 6-digit PIN you will remember';
+    changeBtn.style.display='none';
+  } else if(mode==='change'){
+    subtitle.textContent='Change your Files Manager PIN';
+    mainLabel.textContent='Old PIN';
+    confirmBlock.style.display='block';
+    hint.style.display='none';
+    changeBtn.style.display='none';
+  }
+  _fmBuildPinRow('pinRow', FM_PIN_LEN);
+  _fmBuildPinRow('pinConfirmRow', FM_PIN_LEN);
+  setTimeout(()=>{ const f=document.querySelector('#pinRow input'); if(f) f.focus(); },80);
+}
+async function _fmInitPinUI(){
+  // Accept token via ?token= or ?embed=1 postMessage from opener
+  try{
+    const params=new URLSearchParams(location.search);
+    const urlToken=params.get('token');
+    if(urlToken){ sessionStorage.setItem('vaultSessionToken', urlToken); sessionStorage.setItem('vaultSession', urlToken); }
+    if(params.get('embed')==='1'){
+      // try to get token from opener
+      if(!_getToken() && window.opener){
+        try{ const t=window.opener.sessionStorage.getItem('vaultSessionToken')||window.opener.sessionStorage.getItem('vaultSession'); if(t){ sessionStorage.setItem('vaultSessionToken',t); sessionStorage.setItem('vaultSession',t);} }catch(e){}
+      }
+      // also listen for postMessage token
+      window.addEventListener('message', function(e){
+        if(e.data && e.data.type==='VAULT_TOKEN' && e.data.token){ sessionStorage.setItem('vaultSessionToken', e.data.token); sessionStorage.setItem('vaultSession', e.data.token); _fmLoadPinFromServer(); }
+      });
+      // ask opener for token
+      if(window.opener) window.opener.postMessage({type:'REQUEST_VAULT_TOKEN'}, '*');
+    }
+  }catch(e){}
+  // sync from backend first
+  await _fmLoadPinFromServer();
+  const stored=localStorage.getItem('fmPinHash_'+FM_PIN_KEY);
+  if(stored){ _fmShowPinUI('enter'); }
+  else { _fmShowPinUI('set'); }
+  // If opener has token, sync again after short delay
+  setTimeout(()=>_fmLoadPinFromServer().then(h=>{ if(h && _fmPinMode==='set'){ _fmShowPinUI('enter'); } }), 800);
+}
+function openPinChange(){
+  const stored=localStorage.getItem('fmPinHash_'+FM_PIN_KEY);
+  if(!stored){ _fmShowPinUI('set'); return; }
+  // For change, we need old PIN entry: reuse main as old, confirm as new
+  _fmShowPinUI('change');
+  // Swap labels for change flow: pinRow = old, pinConfirmRow = new+confirm? Simplify: ask old in pinRow, new in confirm? Instead show 3 steps via prompt
+  // Simpler: show old in pinRow, and after old verified, swap to new entry
+  document.getElementById('pinMainLabel').textContent='Current PIN';
+  document.getElementById('pinConfirmBlock').style.display='none';
+  document.getElementById('pinSubtitle').textContent='Enter current PIN to change it';
+  // store change step
+  window._fmChangeStep='old';
+}
+async function doPinLogin(){
+  const errEl=document.getElementById('loginError');
+  const btn=document.getElementById('loginBtn');
+  errEl.style.display='none';
+  // Handle change flow
+  if(_fmPinMode==='change' && window._fmChangeStep==='old'){
+    const oldPin=_fmRowValue('pinRow');
+    if(oldPin.length!==FM_PIN_LEN){ errEl.textContent='Enter all 6 digits of current PIN.'; errEl.style.display='block'; _fmShakeRow('pinRow'); return; }
+    const oldHash=await _fmHashPin(oldPin);
+    const stored=localStorage.getItem('fmPinHash_'+FM_PIN_KEY);
+    if(oldHash!==stored){ errEl.textContent='Incorrect current PIN.'; errEl.style.display='block'; _fmShakeRow('pinRow'); return; }
+    // verified old, now ask for new
+    window._fmChangeStep='new';
+    document.getElementById('pinSubtitle').textContent='Enter new 6-digit PIN';
+    document.getElementById('pinMainLabel').textContent='New PIN';
+    document.getElementById('pinConfirmBlock').style.display='block';
+    document.querySelector('#pinConfirmBlock label').textContent='Confirm New PIN';
+    _fmBuildPinRow('pinRow', FM_PIN_LEN);
+    _fmBuildPinRow('pinConfirmRow', FM_PIN_LEN);
+    setTimeout(()=>document.querySelector('#pinRow input')?.focus(),80);
+    return;
+  }
+  // Handle set mode (first time)
+  if(_fmPinMode==='set'){
+    const pin=_fmRowValue('pinRow');
+    const confirm=_fmRowValue('pinConfirmRow');
+    if(pin.length!==FM_PIN_LEN){ errEl.textContent='Enter all 6 digits.'; errEl.style.display='block'; _fmShakeRow('pinRow'); return; }
+    if(confirm.length!==FM_PIN_LEN){ errEl.textContent='Confirm your PIN (6 digits).'; errEl.style.display='block'; _fmShakeRow('pinConfirmRow'); return; }
+    if(pin!==confirm){ errEl.textContent='PINs do not match.'; errEl.style.display='block'; _fmShakeRow('pinRow'); _fmShakeRow('pinConfirmRow'); return; }
+    btn.textContent='Saving...'; btn.disabled=true;
+    const hash=await _fmHashPin(pin);
+    localStorage.setItem('fmPinHash_'+FM_PIN_KEY, hash);
+    await _fmSyncPinToServer(hash);
+    document.getElementById('loginOverlay').classList.remove('show');
+    btn.textContent='Unlock'; btn.disabled=false;
+    window._fmChangeStep=null;
+    if(_pendingUploads.length){ toast('PIN set — '+_pendingUploads.length+' file(s) queued, click Deploy'); _updateDeployBadge(); _renderCards(); } else { toast('PIN set — loading files...'); await _autoLoad(); }
+    return;
+  }
+  if(_fmPinMode==='change' && window._fmChangeStep==='new'){
+    const newPin=_fmRowValue('pinRow');
+    const confirm=_fmRowValue('pinConfirmRow');
+    if(newPin.length!==FM_PIN_LEN){ errEl.textContent='Enter new 6-digit PIN.'; errEl.style.display='block'; _fmShakeRow('pinRow'); return; }
+    if(confirm.length!==FM_PIN_LEN){ errEl.textContent='Confirm new PIN.'; errEl.style.display='block'; _fmShakeRow('pinConfirmRow'); return; }
+    if(newPin!==confirm){ errEl.textContent='PINs do not match.'; errEl.style.display='block'; _fmShakeRow('pinRow'); _fmShakeRow('pinConfirmRow'); return; }
+    btn.textContent='Saving...'; btn.disabled=true;
+    const hash=await _fmHashPin(newPin);
+    localStorage.setItem('fmPinHash_'+FM_PIN_KEY, hash);
+    await _fmSyncPinToServer(hash);
+    document.getElementById('loginOverlay').classList.remove('show');
+    btn.textContent='Unlock'; btn.disabled=false;
+    window._fmChangeStep=null; _fmShowPinUI('enter');
+    toast('PIN changed');
+    return;
+  }
+  // Normal enter mode
+  const pin=_fmRowValue('pinRow');
+  if(pin.length!==FM_PIN_LEN){ errEl.textContent='Enter all 6 digits.'; errEl.style.display='block'; _fmShakeRow('pinRow'); return; }
+  errEl.style.display='none'; btn.textContent='Verifying...'; btn.disabled=true;
+  // Ensure latest from server
+  const serverHash=await _fmLoadPinFromServer();
+  const stored=localStorage.getItem('fmPinHash_'+FM_PIN_KEY);
+  if(!stored){ // no PIN set yet, treat as set
+    errEl.textContent='No PIN set — please set a new PIN.'; errEl.style.display='block'; _fmShowPinUI('set'); btn.textContent='Unlock'; btn.disabled=false; return;
+  }
+  const hash=await _fmHashPin(pin);
+  if(hash!==stored){ errEl.textContent='Incorrect PIN. Try again.'; errEl.style.display='block'; _fmShakeRow('pinRow'); btn.textContent='Unlock'; btn.disabled=false; return; }
+  document.getElementById('loginOverlay').classList.remove('show');
+  btn.textContent='Unlock'; btn.disabled=false;
+  if(_pendingUploads.length){ toast('Unlocked — '+_pendingUploads.length+' file(s) queued, click Deploy'); _updateDeployBadge(); _renderCards(); } else { toast('Unlocked — loading files...'); await _autoLoad(); }
+}
+// Keep old doLogin for offline fallback (hidden input)
+async function doLogin(){ return doPinLogin(); }
+// Auto-init PIN UI if overlay still shows and PIN row empty (INIT ran before this function existed)
+(function(){
+  try{
+    const overlay=document.getElementById('loginOverlay');
+    const pinRow=document.getElementById('pinRow');
+    if(overlay && overlay.classList.contains('show') && pinRow && !pinRow.children.length){
+      if(typeof _fmInitPinUI==='function') _fmInitPinUI();
+    }
+  }catch(e){}
+})();
 
 function goOffline(){
   _loadFromStorage();

@@ -3038,3 +3038,185 @@ body.dark .status-comp-row:hover{background:#1e293b;}
 body.dark .status-comp-name{color:#e2e8f0;}
 body.dark .status-comp-detail{color:#64748b;}
 
+/* ── Drive app chrome: window controls overlay + app-like scrollbar ── */
+@supports (-webkit-app-region: drag){
+  .passport-main-nav{ -webkit-app-region: drag; }
+  .passport-main-nav button, .passport-main-nav a{ -webkit-app-region: no-drag; }
+}
+@media (display-mode: standalone){
+  body{ background:#f8f9fa; }
+  #landing .land-header{ padding-top: calc(16px + env(titlebar-area-height, 0px)); }
+}
+
+
+/* ============================================================
+   GOOGLE DRIVE THEME â€” Makes vault feel like drive.google.com
+   Applied on top of vault shell; keeps vault logic intact
+   ============================================================ */
+
+/* --- Drive palette --- */
+:root{
+  --drive-bg:#f8f9fa;
+  --drive-card:#ffffff;
+  --drive-border:#dadce0;
+  --drive-text:#202124;
+  --drive-muted:#5f6368;
+  --drive-blue:#1a73e8;
+  --drive-hover:#f1f3f4;
+  --drive-pill:#e8f0fe;
+}
+
+/* Main layout: Drive uses light grey canvas */
+.main-container{ background:var(--drive-bg) !important; }
+.content-view{ background:var(--drive-bg) !important; padding:18px 24px 24px !important; }
+
+/* --- Sidebar: Drive style (white, rounded pills) --- */
+.sidebar{
+  width:256px !important;
+  background:#ffffff !important;
+  border-right:none !important;
+  box-shadow:none !important;
+  padding:12px 12px 16px !important;
+  border-radius:0 16px 16px 0;
+}
+.sidebar-fortress-brand{ border-bottom:1px solid #f1f3f4 !important; margin-bottom:12px !important; padding:10px 8px 14px !important; }
+.sidebar-fortress-brand .sb-icon{ background:linear-gradient(135deg,#4285f4,#34a853) !important; }
+#member-select, #share-gear{ background:#ffffff !important; color:#3c4043 !important; border:1px solid #dadce0 !important; box-shadow:0 1px 2px rgba(60,64,67,.12) !important; }
+#share-gear:hover, #member-select:hover{ background:#f8f9fa !important; }
+#cat-list{ padding:4px 0 !important; }
+#cat-list li{
+  color:#202124 !important;
+  font-weight:500 !important;
+  font-size:13.5px !important;
+  border-radius:0 20px 20px 0 !important;
+  margin:1px 0 1px -8px !important;
+  padding:8px 14px 8px 18px !important;
+  letter-spacing:.1px !important;
+}
+#cat-list li:hover{ background:#f1f3f4 !important; color:#202124 !important; transform:none !important; }
+#cat-list li.active{
+  background:#c2e7ff !important;
+  color:#001d35 !important;
+  font-weight:700 !important;
+  box-shadow:none !important;
+}
+#cat-list li.active i{ color:#001d35 !important; }
+
+/* New button â€” Drive primary action (pill) */
+.drive-new-btn{
+  display:flex; align-items:center; gap:12px;
+  background:#fff; border:1px solid #dadce0; border-radius:16px;
+  padding:12px 20px 12px 14px; font-size:14px; font-weight:600; color:#1f1f1f;
+  box-shadow:0 1px 3px rgba(60,64,67,.3), 0 4px 8px rgba(60,64,67,.15);
+  cursor:pointer; transition:.18s; margin:6px 6px 14px 2px;
+}
+.drive-new-btn:hover{ box-shadow:0 2px 6px rgba(60,64,67,.3), 0 6px 14px rgba(60,64,67,.18); background:#fff; transform:translateY(-1px); }
+.drive-new-btn i{ color:#3c4043; }
+
+/* Drive top bar inside content: search + controls */
+.drive-topbar{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.drive-search-wrap{
+  flex:1; min-width:220px; max-width:720px; display:flex; align-items:center; gap:10px;
+  background:#e9eef6; border-radius:24px; padding:0 6px 0 14px; height:44px;
+  transition:.2s; border:1px solid transparent;
+}
+.drive-search-wrap:focus-within{ background:#fff; box-shadow:0 1px 6px rgba(60,64,67,.25); border-color:#dadce0; }
+.drive-search-wrap input{ flex:1; border:none; background:transparent; outline:none; font-size:15px; color:#202124; }
+.drive-search-wrap input::placeholder{ color:#5f6368; }
+.drive-search-wrap .ds-icon{ color:#5f6368; display:flex; }
+.drive-chip-row{ display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+.drive-chip{ padding:7px 12px; border:1px solid #dadce0; border-radius:16px; background:#fff; font-size:12.5px; font-weight:500; color:#3c4043; cursor:pointer; white-space:nowrap; transition:.15s; }
+.drive-chip:hover{ background:#f1f3f4; }
+.drive-chip.active{ background:#e8f0fe; border-color:#8ab4f8; color:#1967d2; font-weight:600; }
+.drive-view-toggle{ display:flex; border:1px solid #dadce0; border-radius:20px; overflow:hidden; background:#fff; flex-shrink:0; }
+.drive-view-toggle button{ border:none; background:transparent; padding:7px 10px; cursor:pointer; color:#5f6368; display:flex; align-items:center; }
+.drive-view-toggle button.active{ background:#e8f0fe; color:#1967d2; }
+.drive-breadcrumb{ display:flex; align-items:center; gap:6px; font-size:13px; color:#5f6368; margin:6px 0 10px; flex-wrap:wrap; }
+.drive-breadcrumb .crumb{ padding:4px 8px; border-radius:16px; cursor:pointer; }
+.drive-breadcrumb .crumb:hover{ background:#f1f3f4; }
+.drive-breadcrumb .crumb.active{ background:#e8f0fe; color:#1967d2; font-weight:600; }
+
+/* Suggested section */
+.drive-section-title{ font-size:13px; font-weight:500; color:#5f6368; margin:18px 0 10px; letter-spacing:.2px; }
+.drive-divider{ height:1px; background:#e8eaed; margin:16px 0; }
+
+/* --- File grid: Drive cards --- */
+.file-grid{ grid-template-columns:repeat(auto-fill,minmax(240px,1fr)) !important; gap:14px !important; align-items:start !important; }
+.file-grid.drive-list{ grid-template-columns:1fr !important; gap:0 !important; background:#fff; border:1px solid #dadce0; border-radius:12px; overflow:hidden; }
+.file-card.drive-card{
+  background:#fff !important; border:1px solid #dadce0 !important; border-radius:12px !important; padding:0 !important; overflow:hidden !important;
+  display:flex !important; flex-direction:column !important; text-align:left !important; animation:none !important;
+  box-shadow:none !important;
+}
+.file-card.drive-card::before{ display:none !important; }
+.file-card.drive-card:hover{ border-color:#dadce0 !important; box-shadow:0 1px 3px rgba(60,64,67,.3), 0 4px 8px rgba(60,64,67,.15) !important; transform:none !important; }
+.drive-card-thumb{ height:148px; background:#f8f9fa; display:flex; align-items:center; justify-content:center; position:relative; border-bottom:1px solid #e8eaed; overflow:hidden; }
+.drive-card-thumb .thumb-icon{ font-size:56px; filter:drop-shadow(0 2px 6px rgba(60,64,67,.15)); }
+.drive-card-thumb .thumb-gradient{ position:absolute; inset:0; background:linear-gradient(180deg, transparent 60%, rgba(60,64,67,.06)); pointer-events:none; }
+.drive-card-foot{ display:flex; align-items:center; gap:10px; padding:10px 12px 10px 10px; min-height:48px; }
+.drive-card-foot .doc-type-icon{ width:34px; height:34px; border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px; background:#e8f0fe; color:#1967d2; }
+.drive-card-foot .doc-type-icon.img{ background:#e6f4ea; color:#0d652d; }
+.drive-card-foot .doc-type-icon.pdf{ background:#fce8e6; color:#c5221f; }
+.drive-card-name{ flex:1; min-width:0; font-size:13px; font-weight:500; color:#202124; line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.drive-card-meta{ font-size:11px; color:#5f6368; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.drive-more-btn{ width:28px; height:28px; border-radius:50%; border:none; background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#5f6368; flex-shrink:0; opacity:0; transition:.15s; }
+.file-card.drive-card:hover .drive-more-btn, .file-card.drive-card:focus-within .drive-more-btn{ opacity:1; }
+.drive-more-btn:hover{ background:#f1f3f4; }
+@media(hover:none){ .drive-more-btn{ opacity:1; } }
+/* List view row */
+.drive-list-row{ display:grid; grid-template-columns:1fr 140px 120px 40px; gap:12px; align-items:center; padding:8px 12px; border-bottom:1px solid #e8eaed; background:#fff; cursor:pointer; transition:.12s; }
+.drive-list-row:hover{ background:#f8f9fa; }
+.drive-list-row:last-child{ border-bottom:none; }
+.drive-list-name{ display:flex; align-items:center; gap:10px; min-width:0; font-size:13px; font-weight:500; color:#202124; }
+.drive-list-name .li-icon{ width:28px; height:28px; border-radius:4px; display:flex; align-items:center; justify-content:center; background:#e8f0fe; color:#1967d2; flex-shrink:0; }
+.drive-list-col{ font-size:12.5px; color:#5f6368; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Drive empty state */
+.drive-empty{ grid-column:1/-1; background:#fff; border:1px solid #dadce0; border-radius:12px; padding:40px 20px; text-align:center; color:#5f6368; }
+
+/* Pinned as Drive Starred strip */
+.pinned-section{ background:#fff !important; border:1px solid #dadce0 !important; border-radius:12px !important; box-shadow:none !important; }
+.pinned-chip{ border-radius:20px !important; border:1px solid #dadce0 !important; background:#f8f9fa !important; font-weight:500 !important; color:#202124 !important; }
+
+/* Timer as Drive info banner (subtle) */
+.timer-box{ background:#e8f0fe !important; border:1px solid #d2e3fc !important; border-radius:12px !important; color:#174ea6 !important; }
+
+/* Content title Drive style override */
+#cat-title{ text-transform:none !important; font-size:18px !important; font-weight:400 !important; color:#202124 !important; margin-bottom:6px !important; letter-spacing:0 !important; }
+
+/* Mobile keep drive cards 2-col */
+@media(max-width:767.98px){
+  .sidebar{ width:100% !important; border-radius:0 !important; max-height:none !important; padding:8px 10px 10px !important; }
+  .file-grid{ grid-template-columns:repeat(2,1fr) !important; gap:10px !important; }
+  .file-grid.drive-list{ grid-template-columns:1fr !important; }
+  .drive-card-thumb{ height:110px !important; }
+  .drive-list-row{ grid-template-columns:1fr 40px !important; }
+  .drive-list-row .hide-m{ display:none !important; }
+  .drive-topbar{ gap:8px !important; }
+  .drive-search-wrap{ height:40px !important; }
+}
+
+
+/* ── Vault Drive Mobile Bottom Nav (app feel like Google Drive) ── */
+.vault-drive-bottom-nav{
+  display:none; position:fixed; bottom:0; left:0; right:0; height:56px;
+  background:#fff; border-top:1px solid #dadce0; z-index:90;
+  grid-template-columns:1fr 1fr 1fr 1fr; align-items:center;
+  padding:0 8px calc(0px + env(safe-area-inset-bottom));
+}
+.vault-drive-bottom-nav button{
+  border:none; background:transparent; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  font-size:10px; font-weight:600; color:#5f6368; cursor:pointer; padding:6px 0;
+}
+.vault-drive-bottom-nav button.active{ color:#1a73e8; }
+.vault-drive-bottom-nav button i{ width:22px; height:22px; }
+@media(max-width:767.98px){
+  .vault-drive-bottom-nav{ display:grid; }
+  .content-view{ padding-bottom:72px !important; }
+}
+@media(display-mode: standalone){
+  .vault-drive-bottom-nav{ padding-bottom: env(safe-area-inset-bottom); }
+}

@@ -687,63 +687,74 @@ Object.keys(_sectionGroups).forEach(n => {
     if (_orderedSections.indexOf(n) === -1) _orderedSections.push(n);
 });
 
-const _renderFileCard = (file) => {
+const _driveViewMode = (localStorage.getItem('drive_view_mode') || 'grid');
+    function _isDriveList(){ return document.getElementById('file-grid')?.classList.contains('drive-list'); }
+    window.toggleDriveView = function(mode){
+      localStorage.setItem('drive_view_mode', mode);
+      const grid = document.getElementById('file-grid');
+      if(!grid) return;
+      grid.classList.toggle('drive-list', mode==='list');
+      document.querySelectorAll('.drive-view-toggle button').forEach(b=> b.classList.toggle('active', b.dataset.mode===mode));
+      // re-render current category to switch card structure
+      if(currentCategory && allFilesData[currentCategory]) renderFiles(allFilesData[currentCategory], currentCategory);
+    };
 
-        const card =
-        document.createElement(
-        'div');
+    const _renderFileCard = (file) => {
 
-        card.className =
-        'file-card';
+        const isList = _isDriveList();
+        const card = document.createElement('div');
+        if(isList){
+          card.className = 'drive-list-row';
+          const ext = (file.file||file.name||'').split('.').pop().toLowerCase();
+          const isImg = ['jpg','jpeg','png','gif','webp','bmp'].includes(ext);
+          card.innerHTML = `
+            <div class="drive-list-name"><span class="li-icon ${isImg?'img':''}"><i data-lucide="${isImg?'image':'file-text'}" style="width:14px;height:14px;"></i></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(file.name)}</span></div>
+            <div class="drive-list-col hide-m">${escHtml(file.category||category)}</div>
+            <div class="drive-list-col hide-m">${escHtml(file.date||file.expiry||'—')}</div>
+            <button class="drive-more-btn" onclick="event.stopPropagation(); openDriveMenu(this, ${JSON.stringify(file).replace(/"/g,'&quot;')})" style="opacity:1;"><i data-lucide="more-vertical" style="width:16px;height:16px;"></i></button>
+          `;
+          card.onclick = ()=> openSecureFile((file.category === 'PHOTOS' ? "photos/" : "docs/") + file.file, file.name);
+          grid.appendChild(card);
+          return;
+        }
+
+        card.className = 'file-card drive-card';
 
         // EXPIRY BADGE
         let expiryBadge = '';
         if(file.expiry){
-            const daysLeft = Math.ceil(
-                (new Date(file.expiry) - new Date()) / 86400000
-            );
-            if(daysLeft < 0){
-                expiryBadge = `<div class="expiry-badge expiry-danger"><i data-lucide="triangle-alert" style="width:12px;height:12px;"></i> Expired</div>`;
-            } else if(daysLeft <= 30){
-                expiryBadge = `<div class="expiry-badge expiry-warn"><i data-lucide="clock" style="width:12px;height:12px;"></i> Expires in ${daysLeft}d</div>`;
-            } else {
-                expiryBadge = `<div class="expiry-badge expiry-ok"><i data-lucide="check" style="width:12px;height:12px;"></i> Valid ${daysLeft}d</div>`;
-            }
+            const daysLeft = Math.ceil((new Date(file.expiry) - new Date()) / 86400000);
+            if(daysLeft < 0){ expiryBadge = `<span class="expiry-badge expiry-danger" style="position:absolute;top:8px;right:36px;"><i data-lucide="triangle-alert" style="width:12px;height:12px;"></i> Expired</span>`; }
+            else if(daysLeft <= 30){ expiryBadge = `<span class="expiry-badge expiry-warn" style="position:absolute;top:8px;right:36px;"><i data-lucide="clock" style="width:12px;height:12px;"></i> ${daysLeft}d</span>`; }
+            else { expiryBadge = `<span class="expiry-badge expiry-ok" style="position:absolute;top:8px;right:36px;"><i data-lucide="check" style="width:12px;height:12px;"></i> ${daysLeft}d</span>`; }
         }
-
+        const ext2 = (file.file||file.name||'').split('.').pop().toLowerCase();
+        const isImg = ['jpg','jpeg','png','gif','webp','bmp'].includes(ext2);
         const isPinned = pinnedDocs.some(p => p.file === file.file);
+        const thumbIcon = isImg ? '<i data-lucide="image" style="width:56px;height:56px;color:#34a853;"></i>' : '<i data-lucide="file-text" style="width:56px;height:56px;color:#1967d2;"></i>';
 
         card.innerHTML = `
-        <label class="bulk-check-label" onclick="event.stopPropagation();" style="position:absolute;top:8px;left:8px;z-index:2;display:none;align-items:center;gap:4px;background:rgba(255,255,255,.85);padding:2px 6px 2px 4px;border-radius:6px;font-size:11px;cursor:pointer;">
+        <label class="bulk-check-label" onclick="event.stopPropagation();" style="position:absolute;top:8px;left:8px;z-index:2;display:none;align-items:center;gap:4px;background:rgba(255,255,255,.92);padding:2px 6px 2px 4px;border-radius:6px;font-size:11px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.18);">
           <input type="checkbox" class="bulk-check" data-file='${JSON.stringify({name:file.name,file:file.file,category:file.category||category}).replace(/'/g,"&#39;")}' onchange="updateBulkToolbar()" style="cursor:pointer;">
         </label>
-        <div style="
-        font-size:48px;
-        margin-bottom:12px;">
-            <i data-lucide="file-text" style="width:48px;height:48px;color:var(--accent);"></i>
-        </div>
-
-        <div style="
-        font-weight:800;
-        line-height:1.5;">
-            ${escHtml(file.name)}
-        </div>
-
         ${expiryBadge}
-
-        <div class="card-actions">
-            <button class="card-btn card-btn-pin ${isPinned ? 'pinned' : ''}"
-                onclick="event.stopPropagation();togglePin(${JSON.stringify(file).replace(/"/g,'&quot;')},this)">
-                ${isPinned ? '<i data-lucide="star" style="width:14px;height:14px;vertical-align:middle;fill:currentColor;"></i> Pinned' : '<i data-lucide="star" style="width:14px;height:14px;vertical-align:middle;"></i> Pin'}
-            </button>
-            <button class="card-btn card-btn-share"
-                onclick="event.stopPropagation();openShareModal(${JSON.stringify(file).replace(/"/g,'&quot;')})">
-                <i data-lucide="link" style="width:14px;height:14px;vertical-align:middle;"></i> Share
-            </button>
-            <button class="card-btn card-btn-compare"
-                onclick="event.stopPropagation();addToCompare(${JSON.stringify(file).replace(/"/g,'&quot;')})">
-                <i data-lucide="scale" style="width:14px;height:14px;vertical-align:middle;"></i> Compare
-            </button>
+        <div class="drive-card-thumb">
+          ${thumbIcon}
+          <div class="thumb-gradient"></div>
+          ${isPinned ? '<span style="position:absolute;top:8px;left:8px;color:#fbbc04;"><i data-lucide="star" style="width:16px;height:16px;fill:currentColor;"></i></span>' : ''}
+        </div>
+        <div class="drive-card-foot">
+          <div class="doc-type-icon ${isImg?'img':''}"><i data-lucide="${isImg?'image':'file-text'}" style="width:16px;height:16px;"></i></div>
+          <div style="flex:1;min-width:0;">
+            <div class="drive-card-name" title="${escHtml(file.name)}">${escHtml(file.name)}</div>
+            <div class="drive-card-meta">${escHtml(file.category||category)} · ${escHtml(file.date||'')}</div>
+          </div>
+          <button class="drive-more-btn" onclick="event.stopPropagation(); openDriveMenu(this, ${JSON.stringify(file).replace(/"/g,'&quot;')})"><i data-lucide="more-vertical" style="width:16px;height:16px;"></i></button>
+        </div>
+        <div style="display:none;" class="drive-hover-actions">
+          <button class="card-btn card-btn-pin ${isPinned ? 'pinned' : ''}" onclick="event.stopPropagation();togglePin(${JSON.stringify(file).replace(/"/g,'&quot;')},this)">${isPinned ? '<i data-lucide="star" style="width:14px;height:14px;vertical-align:middle;fill:currentColor;"></i> Pinned' : '<i data-lucide="star" style="width:14px;height:14px;vertical-align:middle;"></i> Pin'}</button>
+          <button class="card-btn card-btn-share" onclick="event.stopPropagation();openShareModal(${JSON.stringify(file).replace(/"/g,'&quot;')})"><i data-lucide="link" style="width:14px;height:14px;vertical-align:middle;"></i> Share</button>
+          <button class="card-btn card-btn-compare" onclick="event.stopPropagation();addToCompare(${JSON.stringify(file).replace(/"/g,'&quot;')})"><i data-lucide="scale" style="width:14px;height:14px;vertical-align:middle;"></i> Compare</button>
         </div>
         `;
 
@@ -778,24 +789,63 @@ const _renderFileCard = (file) => {
         grid.appendChild(card);
 };
 
-// ── Render unsectioned files first ──
+// ── Drive: apply saved view mode before rendering ──
+    if(localStorage.getItem('drive_view_mode')==='list') grid.classList.add('drive-list');
+    else grid.classList.remove('drive-list');
+
+    // ── Render unsectioned files first ──
 _unsectioned.forEach(f => _renderFileCard(f));
 
-// ── Render each section with a coloured header ──
+// ── Render each section with a Drive-style header ──
 _orderedSections.forEach(secName => {
     const color = _secColorMap[secName] || '#1a73e8';
     const hdr = document.createElement('div');
-    hdr.style.cssText = `grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;margin-top:12px;border-left:4px solid ${color};background:${color}11;`;
+    const _r = parseInt(color.slice(1,3),16), _g = parseInt(color.slice(3,5),16), _b = parseInt(color.slice(5,7),16);
+    hdr.style.cssText = `grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;margin-top:14px;background:#fff;border:1px solid #dadce0;`;
     hdr.innerHTML = `
-        <div style="font-size:13px;font-weight:700;color:${color};flex:1;">${escHtml(secName)}</div>
-        <span style="font-size:10px;font-weight:700;color:#94a3b8;background:#fff;border:1px solid #e2e8f0;padding:1px 7px;border-radius:8px;">${_sectionGroups[secName].length}</span>
+        <span style="width:28px;height:28px;border-radius:8px;background:${color};display:flex;align-items:center;justify-content:center;color:#fff;"><i data-lucide="folder" style="width:14px;height:14px;"></i></span>
+        <div style="font-size:13px;font-weight:600;color:#202124;flex:1;">${escHtml(secName)}</div>
+        <span style="font-size:11px;font-weight:600;color:#5f6368;background:#f1f3f4;padding:3px 8px;border-radius:12px;">${_sectionGroups[secName].length} items</span>
     `;
     grid.appendChild(hdr);
     _sectionGroups[secName].forEach(f => _renderFileCard(f));
 });
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
+    // Drive: sync toolbar counts & chips after render
+    if(typeof window._driveAfterRender === 'function') window._driveAfterRender(category, visibleFiles.length);
 }
+
+// ── Drive 3-dot contextual menu (matches Google Drive) ──
+window.openDriveMenu = function(btn, file){
+  let menu = document.getElementById('driveCtxMenu');
+  if(!menu){
+    menu = document.createElement('div');
+    menu.id = 'driveCtxMenu';
+    menu.style.cssText = 'position:fixed;z-index:99999;background:#fff;border:1px solid #dadce0;border-radius:12px;box-shadow:0 4px 16px rgba(60,64,67,.25);padding:6px;min-width:190px;display:flex;flex-direction:column;gap:2px;';
+    document.body.appendChild(menu);
+    document.addEventListener('click', e=>{ if(!menu.contains(e.target) && !e.target.closest('.drive-more-btn')) menu.style.display='none'; });
+    window.addEventListener('scroll', ()=> menu.style.display='none', true);
+  }
+  const r = btn.getBoundingClientRect();
+  menu.innerHTML = `
+    <button onclick="openSecureFile('${(file.category==='PHOTOS'?'photos/':'docs/')+file.file}','${(file.name||'').replace(/'/g,"\\'")}');document.getElementById('driveCtxMenu').style.display='none'" style="display:flex;gap:10px;align-items:center;padding:9px 12px;border:none;background:transparent;text-align:left;cursor:pointer;border-radius:8px;font-size:13px;color:#202124;"><i data-lucide="eye" style="width:16px;height:16px;"></i> Preview</button>
+    <button onclick="openShareModal(${JSON.stringify(file).replace(/"/g,'&quot;')});document.getElementById('driveCtxMenu').style.display='none'" style="display:flex;gap:10px;align-items:center;padding:9px 12px;border:none;background:transparent;text-align:left;cursor:pointer;border-radius:8px;font-size:13px;color:#202124;"><i data-lucide="link" style="width:16px;height:16px;"></i> Share</button>
+    <button onclick="togglePin(${JSON.stringify(file).replace(/"/g,'&quot;')},this);document.getElementById('driveCtxMenu').style.display='none'" style="display:flex;gap:10px;align-items:center;padding:9px 12px;border:none;background:transparent;text-align:left;cursor:pointer;border-radius:8px;font-size:13px;color:#202124;"><i data-lucide="star" style="width:16px;height:16px;"></i> Star</button>
+    <button onclick="addToCompare(${JSON.stringify(file).replace(/"/g,'&quot;')});document.getElementById('driveCtxMenu').style.display='none'" style="display:flex;gap:10px;align-items:center;padding:9px 12px;border:none;background:transparent;text-align:left;cursor:pointer;border-radius:8px;font-size:13px;color:#202124;"><i data-lucide="scale" style="width:16px;height:16px;"></i> Compare</button>
+    <div style="height:1px;background:#e8eaed;margin:4px 0;"></div>
+    <button onclick="navigator.clipboard&&navigator.clipboard.writeText('${escHtml(file.file)}');toastNotify('File name copied','success');document.getElementById('driveCtxMenu').style.display='none'" style="display:flex;gap:10px;align-items:center;padding:9px 12px;border:none;background:transparent;text-align:left;cursor:pointer;border-radius:8px;font-size:13px;color:#5f6368;"><i data-lucide="info" style="width:16px;height:16px;"></i> Details</button>
+  `;
+  if(window.lucide) lucide.createIcons({node:menu});
+  // position: flip if near right edge
+  menu.style.display='flex';
+  let left = r.right - 190;
+  let top = r.bottom + 6;
+  if(left < 8) left = 8;
+  if(top + 180 > window.innerHeight) top = r.top - 180;
+  menu.style.left = left+'px';
+  menu.style.top = top+'px';
+};
 
 /* =========================
    PHOTOS GALLERY
@@ -1077,20 +1127,25 @@ async function unifiedSearch(){
     }
 
     results.forEach(file=>{
-
+        const isList = document.getElementById('file-grid')?.classList.contains('drive-list');
+        if(isList){
+          const card = document.createElement('div');
+          card.className = 'drive-list-row';
+          card.innerHTML = `<div class="drive-list-name"><span class="li-icon"><i data-lucide="file-text" style="width:14px;height:14px;"></i></span><span>${escHtml(file.name)}</span></div><div class="drive-list-col hide-m">${escHtml(file.category)}</div><div class="drive-list-col hide-m">${escHtml(file.source)}</div><button class="drive-more-btn" onclick="event.stopPropagation(); openDriveMenu(this, ${JSON.stringify(file).replace(/"/g,'&quot;')})" style="opacity:1;"><i data-lucide="more-vertical" style="width:16px;height:16px;"></i></button>`;
+          card.onclick = ()=> openSecureFile((file.category === 'PHOTOS' ? "photos/" : "docs/") + file.file, file.name);
+          grid.appendChild(card);
+          return;
+        }
         const card =
         document.createElement('div');
 
         card.className =
-        'file-card';
+        'file-card drive-card';
 
         card.innerHTML = `
-
-        <div style="
-        font-size:48px;
-        margin-bottom:12px;">
-            <i data-lucide="file-text" style="width:48px;height:48px;color:var(--accent);"></i>
-        </div>
+        <div class="drive-card-thumb" style="height:120px;"><i data-lucide="file-text" style="width:42px;height:42px;color:#1967d2;"></i><div class="thumb-gradient"></div></div>
+        <div class="drive-card-foot"><div class="doc-type-icon"><i data-lucide="file-text" style="width:14px;height:14px;"></i></div><div style="flex:1;min-width:0;"><div class="drive-card-name">${escHtml(file.name)}</div><div class="drive-card-meta">${escHtml(file.category)} · ${escHtml(file.source)}</div></div><button class="drive-more-btn" onclick="event.stopPropagation(); openDriveMenu(this, ${JSON.stringify(file).replace(/"/g,'&quot;')})"><i data-lucide="more-vertical" style="width:16px;height:16px;"></i></button></div>
+        <div style="display:none;">
 
         <div style="
         font-weight:800;
