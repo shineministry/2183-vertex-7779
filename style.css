@@ -3077,7 +3077,7 @@ body.dark .status-comp-detail{color:#64748b;}
 /* --- Sidebar: Drive style (white, rounded pills) --- */
 .sidebar{
   width:256px !important;
-  background:#ffffff !important;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
   border-right:none !important;
   box-shadow:none !important;
   padding:12px 12px 16px !important;
@@ -3330,9 +3330,7 @@ body:not(.dark-mode) #toggle-dark-mode {
   color: #3c4043 !important;
   border-color: #dadce0 !important;
 }
-body:not(.dark-mode) .sidebar {
-  background: #ffffff !important;
-}
+/* sidebar always dark - removed light override */
 body.dark-mode .sidebar {
   background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
 }
@@ -3447,4 +3445,49 @@ body.dark-mode #home-recent-list div[style*="background:#f8fafc"] {
 body:not(.dark-mode) #page-home [style*="color:#e8eaed"],
 body:not(.dark-mode) #page-profile [style*="color:#e8eaed"] {
   color: #0f172a !important;
+}
+
+
+/* Nav bar always dark design (both light and dark) */
+.sidebar, #sidebar-controls-wrap {
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+  border-color: rgba(255,255,255,.1) !important;
+}
+.sidebar #cat-list li { color: #9aa0a6 !important; }
+.sidebar #cat-list li.active { background: #3c4043 !important; color: #8ab4f8 !important; }
+#member-select, #share-gear, #toggle-dark-mode {
+  background: rgba(255,255,255,.08) !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(255,255,255,.15) !important;
+}
+
+
+/* Dark: force all words in main to white, light to dark */
+body.dark-mode #home-cat-overview,
+body.dark-mode #home-cat-overview *,
+body.dark-mode #home-recent-list,
+body.dark-mode #home-recent-list *,
+body.dark-mode #home-member-list,
+body.dark-mode #home-member-list *,
+body.dark-mode #page-home,
+body.dark-mode #page-home * {
+  color: #e8eaed !important;
+}
+body.dark-mode #home-cat-overview div,
+body.dark-mode #home-cat-overview span,
+body.dark-mode #home-cat-overview strong {
+  color: #e8eaed !important;
+}
+/* Specifically the row text PHOTOS, Guardian etc */
+body.dark-mode #home-cat-overview [style*="color:"],
+body.dark-mode #home-recent-list [style*="color:"] {
+  color: #e8eaed !important;
+}
+/* Ensure badges remain visible but not black text */
+body.dark-mode .badge, body.dark-mode [style*="background:#"][style*="border-radius"] {
+  color: #fff !important;
+}
+/* Smooth transition */
+body, .sidebar, .content-view, .passport-navbar, .file-card, .profile-box, #page-home > div, #home-cat-overview > div {
+  transition: background-color .35s ease, color .35s ease, border-color .35s ease, box-shadow .35s ease !important;
 }
