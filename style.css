@@ -3867,3 +3867,20 @@ body.dark-mode #notifWelcomeBubble strong,
 body.dark-mode #notifWelcomeBubble [style*="font-weight:800"] {
   color: #ffffff !important;
 }
+
+
+/* FINAL dark override for search - ensure dark is dark, light is white */
+html body.dark-mode .drive-search-wrap {
+  background: #2d2e30 !important;
+  background-color: #2d2e30 !important;
+  border-color: #5f6368 !important;
+}
+html body.dark-mode .drive-search-wrap input {
+  background: transparent !important;
+  color: #e8eaed !important;
+}
+html body:not(.dark-mode) .drive-search-wrap {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  border-color: #dadce0 !important;
+}
