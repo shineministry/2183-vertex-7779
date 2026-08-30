@@ -3658,3 +3658,57 @@ body:not(.dark-mode) #notifWelcomeBubble {
 body:not(.dark-mode) #notifWelcomeBubble [style*="color:#94a3b8"] { color: #64748b !important; }
 body:not(.dark-mode) #notifWelcomeBubble [style*="background:rgba(255,255,255,.1)"] { background: #f1f5f9 !important; }
 body.dark-mode #notifWelcomeBubble { color: #e8eaed !important; }
+
+
+/* Fix remaining black words in dark - Checklist, Logout, Notification */
+body.dark-mode #vc-prompt [style*="color:#1a1a1a"],
+body.dark-mode #vc-prompt [style*="color: #1a1a1a"],
+body.dark-mode #logModal [style*="color:#0f172a"],
+body.dark-mode #filesWindowModal [style*="color:#0f172a"],
+body.dark-mode #notifPanel [style*="color:#0f172a"],
+body.dark-mode [id*="logout"] [style*="color:#0f172a"],
+body.dark-mode [id*="logout"] [style*="color: #0f172a"] {
+  color: #e8eaed !important;
+}
+body.dark-mode #vc-prompt div[style*="font-weight:800"] { color: #e8eaed !important; }
+body.dark-mode #vc-prompt div[style*="color:#666"] { color: #9aa0a6 !important; }
+/* Logout modal title */
+body.dark-mode .modal-header strong,
+body.dark-mode #logModal strong,
+body.dark-mode #filesWindowModal strong { color: #e8eaed !important; }
+/* Notification Welcome To This Vault */
+body.dark-mode #notifWelcomeBubble [style*="font-weight:800"],
+body.dark-mode #bubbleNotifPreview,
+body.dark-mode #notifPanel .notif-item,
+body.dark-mode #notifPanel [style*="font-weight:800"] { color: #e8eaed !important; }
+body.dark-mode #notifPanel [style*="color:#1d4ed8"] { color: #8ab4f8 !important; }
+/* Fix search box overflow - 4th image */
+.drive-topbar {
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  align-items: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.drive-search-wrap {
+  flex: 1 1 280px !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+}
+.drive-search-wrap input {
+  min-width: 0 !important;
+  flex: 1 !important;
+}
+#page-files .drive-topbar button,
+#page-files .drive-chip-row {
+  flex-shrink: 0 !important;
+}
+.drive-chip-row {
+  flex-wrap: wrap !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+/* Ensure count text not triple hyphen */
+#drive-count { word-break: break-word !important; }

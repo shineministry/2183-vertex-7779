@@ -19,7 +19,7 @@
  *  network fetch â€” no stale authenticated shell is served.
  */
 
-const CACHE = "online-vault-v23";   // bump this string to force a full cache refresh
+const CACHE = "online-vault-v24";   // bump this string to force a full cache refresh
 
 const BACKEND_HOST = "backend.shinumaths989.workers.dev";
 
@@ -256,6 +256,7 @@ self.addEventListener("message", function(event) {
       break;
   }
 });
+
 
 
 

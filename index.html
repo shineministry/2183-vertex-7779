@@ -23,12 +23,12 @@ Recommended:
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta name="theme-color" content="#1a73e8">
   <script nonce="opencode-2026-fix">
-    // ------ TEMPORARY ON-SCREEN ERROR OVERLAY ------------------------------------------------------------------------------------------------------
+    // ---- TEMPORARY ON-SCREEN ERROR OVERLAY ----------------------------------------------------------------------------------------------------
     // Purpose: some devices (tablets, etc.) don't have easy DevTools access.
     // This catches any uncaught error or unhandled promise rejection and
     // shows it directly on the page, so the actual error text can be read
     // off the screen and reported back. Safe to remove later once the
-    // underlying bug(s) are confirmed fixed --- it does not affect normal
+    // underlying bug(s) are confirmed fixed - it does not affect normal
     // operation when there are no errors.
     (function () {
       let _errors = [];
@@ -99,9 +99,9 @@ Recommended:
     })();
   </script>
   <script nonce="opencode-2026-fix">
-    // ------ EARLY STUBS: guard button handlers until their JS file loads ------------
+    // ---- EARLY STUBS: guard button handlers until their JS file loads ----------
     // Prevents ReferenceError when a button is clicked before the JS that
-    // defines it has finished loading --- shows a loading hint instead.
+    // defines it has finished loading - shows a loading hint instead.
     (function() {
       var _q = [];
       var       _stubs = ['showStep2','requestPasskeyAccess','loginWithTOTP','goToDashboard','logoutTrust','showLogin','trustedGoToDashboard','selectVaultCategory','closeLogs','showStep1','showStep3','submitTOTP','openKeypad','closeKeypad','openPasswordManager','closePasswordManager','openAIChat','closeAIChat','initVault','renderPhotos','openSecureFile','getAllPhotos','isImageFile','openNotesModal','closeNotesModal','showNoteEditor','closeNoteEditor','saveCurrentNote','deleteNote','updateBulkToolbar','selectAllFiles','clearFileSelection','downloadSelectedAsZip','refreshVault','openLogs','startCompareMode','showPinned','openFeedbackModal','toggleBulkExport','exportVaultBackup','sendAIMessage','openEmergencyContact','safeShowLogoutOptions','openVaultModes','closeVaultModes','openStatusModal','toggleDarkMode','switchPage','toggleMobileMenu','toggleLandDropdown','toggleNotifications','markAllNotifsRead','revealToken','copyPMPassword','deletePMEntry','copyShareLink','generateShareLink','checkVaultHealth','runDupeScan','switchAdvPanel','closeAdvSettings','advJsonRepair','activateShareQR','closeShareModal','generatePMPassword','savePMEntry','openPMChangePin','renderPMListFiltered','openMemberProfileGuarded'];
@@ -257,7 +257,7 @@ Recommended:
         .step-card {
           width: 100%;
           max-width: 760px;
-          /* change this number --- default is likely 420px or similar */
+          /* change this number - default is likely 420px or similar */
         }
       </style>
       <style>
@@ -941,7 +941,7 @@ Recommended:
       </style>
       <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" crossorigin="anonymous"></script>
       <style>
-        /* ------ LANDING PAGE ------ */
+        /* ---- LANDING PAGE ---- */
         #landing {
           position: fixed; inset: 0; z-index: 9000;
           background: #f8fafc;
@@ -997,7 +997,7 @@ Recommended:
         .land-dropdown .dd-btn.secondary:hover { background:#e2e8f0; }
         .land-dropdown .dd-footer { margin-top:12px; padding-top:12px; border-top:1px solid #f1f5f9; font-size:11px; color:#94a3b8; text-align:center; line-height:1.6; }
 
-        /* ------ HERO ------ */
+        /* ---- HERO ---- */
         .land-hero {
           text-align: center; padding: 80px 24px 60px;
           position: relative; overflow: hidden;
@@ -1033,7 +1033,7 @@ Recommended:
         .land-hero .land-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(37,99,235,.4); }
         .land-hero .land-cta:active { transform: scale(.97); }
 
-        /* ------ FEATURES ------ */
+        /* ---- FEATURES ---- */
         .land-features { max-width: 1100px; margin: 0 auto; padding: 20px 24px 60px; }
         .land-features h2 {
           text-align: center; font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 900;
@@ -1051,7 +1051,7 @@ Recommended:
         .land-card .lc-title { font-weight: 800; font-size: 16px; color: #0f172a; margin-bottom: 6px; }
         .land-card .lc-desc { font-size: 13px; color: #64748b; line-height: 1.6; }
 
-        /* ------ SECURITY BANNER ------ */
+        /* ---- SECURITY BANNER ---- */
         .land-banner {
           max-width: 1100px; margin: 0 auto 40px; padding: 0 24px;
         }
@@ -1076,7 +1076,7 @@ Recommended:
         .land-card:nth-child(7) { animation-delay:.35s; }
         .land-card:nth-child(8) { animation-delay:.4s; }
 
-        /* ------ FLOATING ORBS ------ */
+        /* ---- FLOATING ORBS ---- */
         .land-orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
         .land-orb {
           position: absolute; border-radius: 50%; opacity: .12;
@@ -1102,7 +1102,7 @@ Recommended:
 
 <body>
 <script nonce="opencode-2026-fix">window.animateCloseModal=function(m,d){if(window.LITE_MODE){var el=document.getElementById(m);if(el){el.style.display='none';el.classList.remove('show','open')}return}d=d||250;var modal=document.getElementById(m);if(!modal)return;var cnt=modal.querySelector('.modal-content, .modal-content-small, .adv-box, .pm-modal-box');if(cnt)cnt.classList.add('modal-content-closing');modal.classList.add('modal-closing');setTimeout(function(){modal.style.display='none';modal.classList.remove('show','open','modal-closing');if(cnt)cnt.classList.remove('modal-content-closing')},d)};</script>
-<!-- ------ LANDING PAGE ------ -->
+<!-- ---- LANDING PAGE ---- -->
 <div id="landing">
   <div class="land-orbs"><div class="land-orb"></div><div class="land-orb"></div><div class="land-orb"></div></div>
   <div class="land-header" id="landHeader">
@@ -1133,7 +1133,7 @@ Recommended:
 
   <div class="land-hero">
     <h1>Your Fortress for<br>Secure Digital Documents</h1>
-    <p>The Online Vault is a fully encrypted document management platform --- store, view, share, and organize your most sensitive files with military-grade protection. No data leaves your control.</p>
+    <p>The Online Vault is a fully encrypted document management platform - store, view, share, and organize your most sensitive files with military-grade protection. No data leaves your control.</p>
     <button class="land-cta" onclick="trustedGoToDashboard()"><i data-lucide="key" style="width:18px;height:18px;"></i> Access Your Vault -></button>
   </div>
 
@@ -1143,7 +1143,7 @@ Recommended:
       <div class="land-card" style="animation-delay:.05s">
         <div class="lc-icon"><i data-lucide="lock" style="width:32px;height:32px;"></i></div>
         <div class="lc-title">AES-256 Encryption</div>
-        <div class="lc-desc">Every document is encrypted with AES-256-GCM before storage. Your password is hashed with PBKDF2 --- not even we can read your files.</div>
+        <div class="lc-desc">Every document is encrypted with AES-256-GCM before storage. Your password is hashed with PBKDF2 - not even we can read your files.</div>
       </div>
       <div class="land-card" style="animation-delay:.1s">
         <div class="lc-icon"><i data-lucide="folder-open" style="width:32px;height:32px;"></i></div>
@@ -1153,7 +1153,7 @@ Recommended:
       <div class="land-card" style="animation-delay:.15s">
         <div class="lc-icon"><i data-lucide="users" style="width:32px;height:32px;"></i></div>
         <div class="lc-title">Family Member Profiles</div>
-        <div class="lc-desc">Store documents for the whole family --- each member gets their own profile, file set, and password manager entries, all in one vault.</div>
+        <div class="lc-desc">Store documents for the whole family - each member gets their own profile, file set, and password manager entries, all in one vault.</div>
       </div>
       <div class="land-card" style="animation-delay:.2s">
         <div class="lc-icon"><i data-lucide="file-text" style="width:32px;height:32px;"></i></div>
@@ -1168,7 +1168,7 @@ Recommended:
       <div class="land-card" style="animation-delay:.3s">
         <div class="lc-icon"><i data-lucide="wifi-off" style="width:32px;height:32px;"></i></div>
         <div class="lc-title">Offline Access</div>
-        <div class="lc-desc">Documents are cached locally for offline viewing. Access your vault even without internet --- perfect for travel or low-connectivity areas.</div>
+        <div class="lc-desc">Documents are cached locally for offline viewing. Access your vault even without internet - perfect for travel or low-connectivity areas.</div>
       </div>
       <div class="land-card" style="animation-delay:.35s">
         <div class="lc-icon"><i data-lucide="key" style="width:32px;height:32px;"></i></div>
@@ -1186,7 +1186,7 @@ Recommended:
   <div class="land-banner">
     <div class="land-banner-inner">
       <h3><i data-lucide="shield" style="width:20px;height:20px;vertical-align:middle;"></i> Military-Grade Protection</h3>
-      <p>Your data is encrypted before it leaves your device. We use AES-256-GCM, PBKDF2 key derivation, and SHA-256 hashing --- the same standards used by banks and governments worldwide.</p>
+      <p>Your data is encrypted before it leaves your device. We use AES-256-GCM, PBKDF2 key derivation, and SHA-256 hashing - the same standards used by banks and governments worldwide.</p>
       <div class="land-badge-row">
         <span class="land-badge"><i data-lucide="lock" style="width:14px;height:14px;vertical-align:middle;"></i> AES-256-GCM</span>
         <span class="land-badge"><i data-lucide="shield" style="width:14px;height:14px;vertical-align:middle;"></i> PBKDF2 + SHA-256</span>
@@ -1196,10 +1196,10 @@ Recommended:
     </div>
   </div>
 </div>
-<!-- ------ END LANDING ------ -->
+<!-- ---- END LANDING ---- -->
 
 <!-- OFFLINE BANNER -->
-  <div id="offline-banner"><i data-lucide="zap" style="width:16px;height:16px;vertical-align:middle;"></i> You are offline --- Vault is running from cache (Cloudflare R2)</div><!-- HOVER PREVIEW TOOLTIP -->
+  <div id="offline-banner"><i data-lucide="zap" style="width:16px;height:16px;vertical-align:middle;"></i> You are offline - Vault is running from cache (Cloudflare R2)</div><!-- HOVER PREVIEW TOOLTIP -->
   <div class="preview-tooltip" id="previewTooltip"> <canvas id="previewCanvas"></canvas>
     <div class="preview-tooltip-label" id="previewLabel"></div>
   </div><!-- COMPARE PICKER BAR -->
@@ -1383,7 +1383,7 @@ Recommended:
       <div class="subtitle"> Your access request has been sent securely.<br><br> Waiting for administrator approval... </div>
       <button onclick="cancelPasskeyWait()" style="margin-top:16px;border:none;background:transparent;color:#64748b;font-size:13px;cursor:pointer;width:100%;">--- Back to Login</button>
     </div>
-  </div> <!-- =========================     STEP 4 --- TOTP========================= -->
+  </div> <!-- =========================     STEP 4 - TOTP========================= -->
   <div id="step-totp" class="overlay" style="display:none;">
     <div class="step-card">
       <div class="main-logo"><i data-lucide="key" style="width:48px;height:48px;"></i></div>
@@ -1440,7 +1440,7 @@ Recommended:
         <div id="sidebar-controls-wrap" style="        background:linear-gradient(135deg,#0f172a,#1e293b);        border-radius:14px;        padding:12px;        margin-bottom:14px;        border:1px solid rgba(255,255,255,.1);        box-sizing:border-box;        overflow:hidden;        ">
           <div style="        display:flex;        align-items:center;        gap:8px;        width:100%;        box-sizing:border-box;                  "> <select id="member-select" style="                flex:1;                min-width:0;                padding:12px;                border-radius:12px;                border:1px solid rgba(255,255,255,.18);                font-weight:700;                font-size:13px;                cursor:pointer;                background:rgba(255,255,255,.08);                color:#e2e8f0;                box-sizing:border-box;            "></select> <button id="toggle-dark-mode" onclick="toggleDarkMode()" style="                width:46px;                height:46px;                border:1px solid rgba(255,255,255,.18);                border-radius:12px;                background:rgba(255,255,255,.08);                cursor:pointer;                font-size:18px;                display:flex;                align-items:center;                justify-content:center;                flex-shrink:0;                color:#94a3b8;            " title="Toggle dark mode"><i data-lucide="moon" style="width:18px;height:18px;"></i></button> <button id="share-gear" style="                width:46px;                height:46px;                border:1px solid rgba(255,255,255,.18);                border-radius:12px;                background:rgba(255,255,255,.08);                cursor:pointer;                font-size:18px;                display:flex;                align-items:center;                justify-content:center;                flex-shrink:0;                color:#94a3b8;            "> <i data-lucide="settings" style="width:18px;height:18px;"></i> </button> </div>
         </div><!-- end dark sidebar controls wrapper -->
-        <button class="drive-new-btn" onclick="document.getElementById('unified-search')?.focus(); toastNotify('Tip: Search or pick a category --- like Google Drive','info')"><i data-lucide="plus" style="width:18px;height:18px;"></i> New</button>
+        <button class="drive-new-btn" onclick="document.getElementById('unified-search')?.focus(); toastNotify('Tip: Search or pick a category - like Google Drive','info')"><i data-lucide="plus" style="width:18px;height:18px;"></i> New</button>
         <div style="padding:0 8px 8px; font-size:11px; color:#94a3b8; font-weight:600; letter-spacing:.4px; text-transform:uppercase;">My Vault</div>
         <div id="sidebar-files-section">
           <ul id="cat-list"></ul>
@@ -1506,7 +1506,7 @@ Recommended:
               <div style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;border-bottom:1px solid #f1f5f9;padding-bottom:8px;"><i data-lucide="clipboard-list" style="width:14px;height:14px;vertical-align:middle;"></i> Recent File Activity</div>
               <div id="home-recent-list" style="display:flex;flex-direction:column;gap:8px;">
                 <div style="font-size:12px;color:#94a3b8;text-align:center;padding:20px 0;">Loading recent files---</div>
-              </div> <button onclick="switchPage('files')" style="margin-top:12px;width:100%;padding:8px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;font-size:11px;font-weight:700;cursor:pointer;color:#2563eb;">View All Files ---</button>
+              </div> <button onclick="switchPage('files')" style="margin-top:12px;width:100%;padding:8px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;font-size:11px;font-weight:700;cursor:pointer;color:#2563eb;">View All Files -</button>
             </div> <!-- CATEGORY OVERVIEW -->
             <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;">
               <div style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;border-bottom:1px solid #f1f5f9;padding-bottom:8px;"><i data-lucide="folder-open" style="width:14px;height:14px;vertical-align:middle;"></i> Categories Overview</div>
@@ -1545,7 +1545,7 @@ Recommended:
             <div style="font-size:28px;flex-shrink:0;"><i data-lucide="lightbulb" style="width:28px;height:28px;color:#fbbf24;"></i></div>
             <div>
               <div style="font-size:13px;font-weight:800;color:#f8fafc;margin-bottom:3px;">Vault Tip</div>
-              <div style="font-size:12px;color:#94a3b8;line-height:1.6;" id="home-tip-text">Use the Compare tool (<i data-lucide="scale" style="width:12px;height:12px;vertical-align:middle;"></i>) to view two documents side by side --- great for verifying document versions.</div>
+              <div style="font-size:12px;color:#94a3b8;line-height:1.6;" id="home-tip-text">Use the Compare tool (<i data-lucide="scale" style="width:12px;height:12px;vertical-align:middle;"></i>) to view two documents side by side - great for verifying document versions.</div>
             </div>
           </div>
         </div><!-- end #page-home --> <!-- ===================== FILES PAGE ===================== -->
@@ -1555,7 +1555,7 @@ Recommended:
           <h2 id="cat-title" style="margin-bottom:4px;">Vault Ready To Use</h2>
           <!-- Drive topbar: search + view toggle -->
           <div class="drive-topbar">
-            <div class="drive-search-wrap"><span class="ds-icon"><i data-lucide="search" style="width:18px;height:18px;"></i></span><input type="text" id="unified-search" placeholder="Search in Vault  ---  names, categories, types" oninput="unifiedSearch()" autocomplete="off"><button onclick="document.getElementById('unified-search').value='';unifiedSearch();" style="border:none;background:transparent;cursor:pointer;color:#5f6368;padding:6px;border-radius:50%;" title="Clear"><i data-lucide="x" style="width:16px;height:16px;"></i></button></div>
+            <div class="drive-search-wrap"><span class="ds-icon"><i data-lucide="search" style="width:18px;height:18px;"></i></span><input type="text" id="unified-search" placeholder="Search in Vault  -  names, categories, types" oninput="unifiedSearch()" autocomplete="off"><button onclick="document.getElementById('unified-search').value='';unifiedSearch();" style="border:none;background:transparent;cursor:pointer;color:#5f6368;padding:6px;border-radius:50%;" title="Clear"><i data-lucide="x" style="width:16px;height:16px;"></i></button></div>
             <div class="drive-view-toggle" title="Switch view"><button data-mode="grid" class="active" onclick="toggleDriveView('grid')"><i data-lucide="layout-grid" style="width:16px;height:16px;"></i></button><button data-mode="list" onclick="toggleDriveView('list')"><i data-lucide="list" style="width:16px;height:16px;"></i></button></div>
             <button onclick="toggleBulkExport()" style="padding:7px 14px;border-radius:20px;border:1px solid #dadce0;background:#fff;font-size:12.5px;font-weight:500;cursor:pointer;color:#3c4043;white-space:nowrap;display:flex;align-items:center;gap:6px;"><i data-lucide="package" style="width:14px;height:14px;"></i> Bulk export</button>
           </div>
@@ -1582,7 +1582,7 @@ Recommended:
           </div>
           <div id="file-grid" class="file-grid"></div>
         </div><!-- end #page-files --> <!-- ===================== PROFILE PAGE ===================== -->
-        <div id="page-profile" class="page-container" style="display:none;"> <!-- Dynamic profile from Index 18 --- updates on dropdown change -->
+        <div id="page-profile" class="page-container" style="display:none;"> <!-- Dynamic profile from Index 18 - updates on dropdown change -->
           <div id="profile-card" style="                background:transparent;                color:inherit;                border-radius:16px;                padding:24px;                width:100%;                max-width:none;                margin-bottom:20px;                ">
             <div id="profile-avatar" style="                    width:72px;height:72px;border-radius:50%;                    background:rgba(255,255,255,.1);                    display:flex;align-items:center;justify-content:center;                    font-size:30px;font-weight:800;margin-bottom:14px;                    "><i data-lucide="user" style="width:30px;height:30px;"></i></div>
             <div id="profile-name" style="font-size:20px;font-weight:800;"></div>
@@ -1647,7 +1647,7 @@ Recommended:
           </div>
         </div><!-- end #page-checklist -->
         <div style="text-align:center;padding:18px 20px;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;background:#f8fafc;line-height:1.6;margin-top:auto;flex-shrink:0;">
-          Made by Shineil Keith Mathias, founder of Shine Ministry --- India. &copy; 2026.
+          Made by Shineil Keith Mathias, founder of Shine Ministry - India. &copy; 2026.
         </div>
       </main>
     </div>
@@ -1658,7 +1658,7 @@ Recommended:
       <div id="pdf-viewer-layout"> <!-- LEFT SIDEBAR -->
         <div id="pdf-sidebar"></div> <!-- RIGHT PDF AREA -->
         <div id="pdf-render-container">
-          <div id="watermark" class="watermark">AUTHORIZED ACCESS --- SHINEIL KEITH MATHIAS</div>
+          <div id="watermark" class="watermark">AUTHORIZED ACCESS - SHINEIL KEITH MATHIAS</div>
         </div>
       </div>
     </div>
@@ -1712,7 +1712,7 @@ Recommended:
   <script src="viewer.js?v=20260715-fastopen1"></script>
   <script src="features.js?v=20260628-photosfix1"></script>
   <script nonce="opencode-2026-fix">
-    // ------ Stale shell-script guard ------------------------------------------------------------------------------------------------------------------------------
+    // ---- Stale shell-script guard ----------------------------------------------------------------------------------------------------------------------------
     // If the service worker (or browser HTTP cache) ever serves an old
     // cached copy of vault-data.js / viewer.js / features.js that predates
     // a function these pages depend on, those functions silently don't
@@ -1734,10 +1734,10 @@ Recommended:
           }
           setTimeout(() => location.reload(true), 300);
         } else {
-          console.error('[Integrity] Already attempted one reload this session --- not looping further. Please hard-refresh manually (Ctrl+Shift+R).');
+          console.error('[Integrity] Already attempted one reload this session - not looping further. Please hard-refresh manually (Ctrl+Shift+R).');
         }
       } else {
-        // Healthy load --- clear the guard flag so a future genuine staleness
+        // Healthy load - clear the guard flag so a future genuine staleness
         // can trigger a fresh auto-recovery again later.
         sessionStorage.removeItem('_staleShellReloaded');
       }
@@ -1758,13 +1758,13 @@ Recommended:
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
   <script src="vault-ui.js"></script>
   <script nonce="opencode-2026-fix">
-  // ------ Vault Drive PWA --- app feel like Google Drive ------
+  // ---- Vault Drive PWA - app feel like Google Drive ----
   (function(){
-    // Register/update handling - Drive shows ---Update--- toast; we do minimal
+    // Register/update handling - Drive shows -Update--- toast; we do minimal
     if('serviceWorker' in navigator){
       navigator.serviceWorker.addEventListener('controllerchange', function(){ if(!window._driveReloaded){ window._driveReloaded=true; location.reload(); }});
     }
-    // Shortcuts: ?shortcut=myvault|recent|starred|search --- behave like Drive app shortcuts
+    // Shortcuts: ?shortcut=myvault|recent|starred|search - behave like Drive app shortcuts
     var sp = new URLSearchParams(location.search);
     var sc = sp.get('shortcut');
     if(sc){
@@ -1789,22 +1789,22 @@ Recommended:
         for(const p of params.files){ if(p && p.name) console.log('[Vault Drive] file handler:', p.name); }
       }); }catch(e){}
     }
-    // Install prompt mimic Drive --- store deferred prompt
+    // Install prompt mimic Drive - store deferred prompt
     window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); window._vaultInstallPrompt=e; console.log('[Vault Drive] installable'); });
   })();
   </script>
   <script nonce="opencode-2026-fix">
-  // ------ Google Drive helpers ------
+  // ---- Google Drive helpers ----
   (function(){
     window._driveAfterRender = function(category, count){
       var crumb = document.getElementById('driveCrumbCat');
       if(crumb) crumb.textContent = category || 'All files';
       var cnt = document.getElementById('drive-count');
-      if(cnt) cnt.textContent = count + ' items  ---  ' + (category||'Vault');
+      if(cnt) cnt.textContent = count + ' items - ' + (category||'Vault');
       // storage
       try{
         var total = 0; if(window.allFilesData) Object.values(window.allFilesData).forEach(function(a){ if(Array.isArray(a)) total+=a.length; });
-        var st = document.getElementById('drive-storage-text'); if(st) st.textContent = total + ' files secured  ---  AES-256';
+        var st = document.getElementById('drive-storage-text'); if(st) st.textContent = total + ' files secured  -  AES-256';
         var bar = document.getElementById('drive-storage-bar'); if(bar) bar.style.width = Math.min(95, 12 + total*2) + '%';
       }catch(e){}
       // view toggle state
@@ -1818,7 +1818,7 @@ Recommended:
       if(kind==='') { document.getElementById('unified-search').value=''; unifiedSearch(); return; }
       if(kind==='pinned'){
         var pinned = (typeof pinnedDocs!=='undefined'? pinnedDocs: JSON.parse(localStorage.getItem('vaultPinned')||'[]'));
-        if(!pinned.length){ toastNotify('No starred files yet --- star a file first','info'); return; }
+        if(!pinned.length){ toastNotify('No starred files yet - star a file first','info'); return; }
         renderSearchResults(pinned.map(function(p){ return Object.assign({}, p, {source:'Starred'}); }));
         document.getElementById('cat-title').textContent = 'Starred';
         document.getElementById('drive-count').textContent = pinned.length + ' starred';
@@ -1832,9 +1832,42 @@ Recommended:
         document.getElementById('drive-count').textContent = rec.length + ' recent';
         return;
       }
-      if(kind==='pdf' || kind==='image'){
-        document.getElementById('unified-search').value = kind==='image' ? 'jpg' : 'pdf';
-        unifiedSearch();
+      if(kind==='pdf'){
+        let results = [];
+        Object.keys(allFilesData).forEach(cat=>{
+          const arr = allFilesData[cat] || [];
+          if(Array.isArray(arr)) arr.forEach(f=>{
+            const isImg = typeof isImageFile==='function' ? isImageFile(f) : /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test((f.file||f.name||''));
+            if(!isImg) results.push(Object.assign({}, f, {category:cat, source:'PDF'}));
+          });
+        });
+        renderSearchResults(results);
+        const titleEl=document.getElementById('cat-title');
+        if(titleEl) titleEl.textContent='PDFs ('+results.length+')';
+        const cntEl=document.getElementById('drive-count');
+        if(cntEl) cntEl.textContent=results.length+' items - PDFs';
+        return;
+      }
+      if(kind==='image'){
+        let results = [];
+        try{
+          const photos = typeof getAllPhotos==='function' ? getAllPhotos() : [];
+          results = photos.map(f=> Object.assign({}, f, {source:'Image'}));
+        }catch(e){
+          Object.keys(allFilesData).forEach(cat=>{
+            const arr=allFilesData[cat]||[];
+            if(Array.isArray(arr)) arr.forEach(f=>{
+              if(typeof isImageFile==='function' ? isImageFile(f) : /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test((f.file||f.name||''))){
+                results.push(Object.assign({}, f, {category:cat, source:'Image'}));
+              }
+            });
+          });
+        }
+        renderSearchResults(results);
+        const titleEl=document.getElementById('cat-title');
+        if(titleEl) titleEl.textContent='Images ('+results.length+')';
+        const cntEl=document.getElementById('drive-count');
+        if(cntEl) cntEl.textContent=results.length+' items - Images';
         return;
       }
     };
@@ -1942,7 +1975,7 @@ Recommended:
           <!-- 90-Day Uptime History (Statuspage-style) -->
           <div id="uptime-section" style="margin-bottom:18px;"></div>
           <div id="uptime-day-detail" style="display:none;margin:-4px 0 16px;padding:10px 14px;border-radius:10px;background:#0f172a;color:#f8fafc;font-size:12px;line-height:1.6;"></div>
-          <!-- Components --- Live Status -->
+          <!-- Components - Live Status -->
           <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin:8px 0 6px;text-transform:uppercase;">Live Component Status</div>
           <div id="status-components" style="display:flex;flex-direction:column;gap:2px;"></div>
           <div id="uptimeTooltip" style="display:none;position:fixed;z-index:99999;background:#0f172a;color:#f8fafc;padding:8px 12px;border-radius:8px;font-size:11px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;max-width:230px;"></div>
@@ -2706,7 +2739,7 @@ Recommended:
               <div class="setting-row">
                 <div class="setting-row-left">
                   <div class="setting-row-label">Experimental Features</div>
-                  <div class="setting-row-hint"><i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> May cause unexpected behavior --- use at your own risk</div>
+                  <div class="setting-row-hint"><i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> May cause unexpected behavior - use at your own risk</div>
                 </div> <label class="adv-toggle"><input type="checkbox" id="experimentalToggle"><span class="adv-toggle-track"></span></label>
               </div>
               <div class="setting-row">
@@ -2740,7 +2773,7 @@ Recommended:
             </div> <!-- 40. PANIC LOCK BUTTON -->
             <div class="adv-panel" id="panel-panic-lock">
               <div class="adv-panel-title"><i data-lucide="circle-dot" style="width:16px;height:16px;vertical-align:middle;"></i> Panic Lock Button</div>
-              <div class="adv-panel-desc">Instantly lock and wipe the current session with one press --- for emergency situations.</div>
+              <div class="adv-panel-desc">Instantly lock and wipe the current session with one press - for emergency situations.</div>
               <div class="setting-row">
                 <div class="setting-row-left">
                   <div class="setting-row-label">Show Panic Lock in Navbar</div>
@@ -2780,7 +2813,7 @@ Recommended:
             </div>
             <div class="adv-panel" id="panel-about-vault">
               <div class="adv-panel-title"> <i data-lucide="info" style="width:14px;height:14px;vertical-align:middle;"></i> About Fortress Online Vault </div>
-              <div class="adv-panel-desc"> Fortress Online Vault is a secure encrypted document management platform designed for protected storage, controlled sharing, encrypted PDF viewing, identity organization, and secure family document management. <br><br> Features include: <br><br> --- AES-256 encrypted storage<br> --- Secure PDF streaming<br> --- Offline access support<br> --- Shareable secure links<br> --- Multi-member organization<br> --- Device adaptive rendering<br> --- Session security controls<br> --- Advanced vault personalization <br><br> Powered by <b>Shineil Keith Mathias</b> Secure Systems. </div>
+              <div class="adv-panel-desc"> Fortress Online Vault is a secure encrypted document management platform designed for protected storage, controlled sharing, encrypted PDF viewing, identity organization, and secure family document management. <br><br> Features include: <br><br> - AES-256 encrypted storage<br> - Secure PDF streaming<br> - Offline access support<br> - Shareable secure links<br> - Multi-member organization<br> - Device adaptive rendering<br> - Session security controls<br> - Advanced vault personalization <br><br> Powered by <b>Shineil Keith Mathias</b> Secure Systems. </div>
             </div>
           </div><!-- end adv-content -->
         </div><!-- end adv-body -->
@@ -3400,7 +3433,7 @@ Recommended:
             <div class="pm-grid2"> <input class="pm-inp" type="text" id="pm-site" placeholder="Website / App Name"> <input class="pm-inp" type="text" id="pm-username" placeholder="Username / Email"> </div>
             <div class="pm-pw-row"> <form onsubmit="return false;"><input class="pm-inp" type="password" id="pm-password" autocomplete="new-password" placeholder="Password" oninput="pmStrength(this.value)"></form> <button class="pm-icon-btn" onclick="togglePMPassword(this,'pm-password')" title="Show/Hide"><i data-lucide="eye" style="width:16px;height:16px;"></i></button> <button class="pm-gen-btn" onclick="generatePMPassword()"><i data-lucide="shuffle" style="width:14px;height:14px;vertical-align:middle;"></i> GENERATE</button> </div>
             <div class="pm-strength" id="pm-strength-bar"></div> <input class="pm-inp" type="text" id="pm-notes" placeholder="Notes (optional)" style="margin-top:10px;"> <select id="pm-member" class="pm-inp" style="margin-top:8px;">
-              <option value="">--- For which member? ---</option>
+              <option value="">--- For which member? -</option>
               <option value="shineil">SHINEIL MATHIAS</option>
               <option value="brother">KEVIN MATHIAS</option>
               <option value="father">STEPHEN MATHIAS</option>
@@ -3505,7 +3538,7 @@ Recommended:
       }
 
       .vm-card.active::after {
-        /* CSS content: can only render literal text, never HTML/icon tags ---
+        /* CSS content: can only render literal text, never HTML/icon tags -
            the previous value printed the raw <i data-lucide="check">...
            markup on screen instead of an icon. A plain checkmark glyph
            renders correctly everywhere with no JS/icon-library dependency. */
@@ -3637,7 +3670,7 @@ Recommended:
                      : (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');
         const allowed = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null)
                         || ['shineil', 'brother', 'father', 'mother'];
-        // Refresh PIN hashes from server in the background --- don't block
+        // Refresh PIN hashes from server in the background - don't block
         // the UI on the network call; localStorage already has cached hashes.
         loadPinHashesFromServer().catch(()=>{});
         if (allowed.length > 1) {
@@ -3692,7 +3725,7 @@ Recommended:
           const data = await res.json();
           if (data.success && data.hashes) {
             // The server (Firestore) is the single source of truth across
-            // devices --- always overwrite the local cache with whatever the
+            // devices - always overwrite the local cache with whatever the
             // server has, rather than only filling it in when empty. The
             // old "only if not already stored" logic meant a PIN changed on
             // one device would never reach any device that had already
@@ -3806,7 +3839,7 @@ Recommended:
         window._pmPinContext = { mode: 'set', member: memberKey };
         document.getElementById('pm-pin-modal-title').textContent = 'SET YOUR PIN';
         document.getElementById('pm-pin-subtitle').textContent =
-          'First time here --- set a 4-digit PIN to protect ' + (PM_MEMBER_LABELS[memberKey] || memberKey) + "'s saved passwords.";
+          'First time here - set a 4-digit PIN to protect ' + (PM_MEMBER_LABELS[memberKey] || memberKey) + "'s saved passwords.";
         document.getElementById('pm-pin-old-row').style.display = 'none';
         document.getElementById('pm-pin-main-label').style.display = 'block';
         document.getElementById('pm-pin-main-label').textContent = 'NEW PIN';
@@ -3869,7 +3902,7 @@ Recommended:
 
         try {
           if (typeof crypto === 'undefined' || !crypto.subtle) {
-            errEl.innerHTML = '<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> Secure context required (HTTPS) --- PIN check unavailable.';
+            errEl.innerHTML = '<i data-lucide="alert-triangle" style="width:14px;height:14px;vertical-align:middle;"></i> Secure context required (HTTPS) - PIN check unavailable.';
             lucideIcons(errEl);
             return;
           }
@@ -3890,7 +3923,7 @@ Recommended:
             const confirm = _pmRowValue('confirm');
             if (pin.length !== 4) { errEl.textContent = 'Enter all 4 digits of your new PIN.'; _pmShakeRow('main'); return; }
             if (confirm.length !== 4) { errEl.textContent = 'Now re-type the same PIN below to confirm it.'; _pmShakeRow('confirm'); return; }
-            if (pin !== confirm) { errEl.textContent = 'PINs do not match --- try again.'; _pmShakeRow('main'); _pmShakeRow('confirm'); return; }
+            if (pin !== confirm) { errEl.textContent = 'PINs do not match - try again.'; _pmShakeRow('main'); _pmShakeRow('confirm'); return; }
             const hash = await _pmHashPin(pin, ctx.member);
             localStorage.setItem('pmPinHash_' + ctx.member, hash);
             syncPinHashToServer(ctx.member, hash);
@@ -3909,7 +3942,7 @@ Recommended:
             if (oldHash !== stored) { errEl.textContent = 'Current PIN is incorrect.'; _pmShakeRow('old'); return; }
             if (newPin.length !== 4) { errEl.textContent = 'Enter a new 4-digit PIN.'; _pmShakeRow('main'); return; }
             if (confirm.length !== 4) { errEl.textContent = 'Re-type the new PIN below to confirm it.'; _pmShakeRow('confirm'); return; }
-            if (newPin !== confirm) { errEl.textContent = 'New PINs do not match --- try again.'; _pmShakeRow('main'); _pmShakeRow('confirm'); return; }
+            if (newPin !== confirm) { errEl.textContent = 'New PINs do not match - try again.'; _pmShakeRow('main'); _pmShakeRow('confirm'); return; }
             const newHash = await _pmHashPin(newPin, ctx.member);
             localStorage.setItem('pmPinHash_' + ctx.member, newHash);
             syncPinHashToServer(ctx.member, newHash);
@@ -3933,12 +3966,12 @@ Recommended:
       if (countNum) countNum.textContent = entries.length + ' saved'; /* Build member filter tabs for multi-member modes */const memberFilter = document.getElementById('pm-member-filter');const memberLabels = { shineil:'SHINEIL', brother:'KEVIN', father:'STEPHEN', mother:'KANCHAN' };if (allowedMembers.length > 1) {if (!memberFilter) {const hdr = document.querySelector('.pm-entries-header');if (hdr) {const wrap = document.createElement('div');wrap.id = 'pm-member-filter';wrap.style.cssText = 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;';hdr.after(wrap);}}if (memberFilter) {memberFilter.innerHTML = allowedMembers.map(m => `<button class="pm-member-tab" data-member="${m}" style="padding:4px 10px;border:1px solid #cbd5e1;border-radius:8px;background:transparent;cursor:pointer;font-size:11px;font-weight:600;color:#475569;transition:.15s;">${memberLabels[m] || m}</button>`).join('');memberFilter.querySelectorAll('.pm-member-tab').forEach(btn => {btn.onclick = () => {memberFilter.querySelectorAll('.pm-member-tab').forEach(b => {b.style.background = 'transparent';b.style.color = '#475569';});btn.style.background = '#2563eb';btn.style.color = '#fff';const memberKey = btn.dataset.member;renderPMListFiltered(memberKey);};});}} else if (memberFilter) {memberFilter.remove();}window._pmAllowedMembers = allowedMembers;container.innerHTML = '';if (!entries || entries.length === 0) {container.innerHTML = '<div class="pm-empty"><i data-lucide="lock" style="width:16px;height:16px;vertical-align:middle;"></i> No saved passwords yet.<br><span style="font-size:12px;color:#cbd5e1;">Add your first one above.</span></div>';if(window.lucide)lucide.createIcons({node:container});return;}const siteIcons = {'google':'globe','gmail':'mail','github':'github','facebook':'user','twitter':'twitter','instagram':'camera','amazon':'package','netflix':'film','spotify':'music','apple':'apple','microsoft':'monitor','linkedin':'briefcase','youtube':'play','whatsapp':'message-circle','bank':'landmark','paypal':'credit-card'};function getSiteIcon(site) {const s = (site||'').toLowerCase();for(const k of Object.keys(siteIcons)) {if(s.includes(k)) return '<i data-lucide="'+siteIcons[k]+'" style="width:16px;height:16px;vertical-align:middle;"></i>';}return '<i data-lucide="key" style="width:16px;height:16px;vertical-align:middle;"></i>';}entries.forEach(entry => {const card = document.createElement('div');card.className = 'pm-entry-card';const icon = getSiteIcon(entry.site);const pwMasked = '------------------------------';const memberLabel = memberLabels[entry.member] || entry.member || '';card.innerHTML = `        <div class="pm-entry-top">          <div class="pm-entry-favicon">${icon}</div>          <div class="pm-entry-info">            <div class="pm-entry-site">${escapeHTML(entry.site)}</div>            <div class="pm-entry-user">${escapeHTML(entry.username || 'No username')}</div>          </div>          <div class="pm-entry-actions">            <button class="pm-act-btn" onclick="copyPMPassword('${entry.id}')" title="Copy password"><i data-lucide="clipboard" style="width:16px;height:16px;vertical-align:middle;"></i> Copy</button>            <button class="pm-act-btn pm-act-del" onclick="deletePMEntry('${entry.id}')" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;"></i></button>          </div>        </div>        <div class="pm-pw-reveal-row">          <span id="pw-dots-${entry.id}" class="pw-dots">${pwMasked}</span>          <span id="pw-actual-${entry.id}" class="pw-actual">${escapeHTML(entry.password || '')}</span>          <button id="pw-reveal-btn-${entry.id}" class="pm-reveal-btn" onclick="toggleEntryReveal('${entry.id}')"><i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;"></i> Show</button>        </div>        ${entry.notes ? `<div class="pm-notes-row"><i data-lucide="file-text" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(entry.notes)}</div>` : ''}        <div class="pm-notes-row" style="color:#6366f1;font-weight:600;"><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(memberLabel)}</div>      `;      container.appendChild(card);});if(window.lucide)lucide.createIcons({node:container});} catch(err) {console.error(err);container.innerHTML = '<div class="pm-empty" style="color:#ef4444;"><i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Error loading passwords.</div>';if(window.lucide)lucide.createIcons({node:container});}}function renderPMListFiltered(memberKey) {const container = document.getElementById('pm-entries-container');const countNum = document.getElementById('pm-count-num');if (!container) return;loadPMEntries().catch(() => []).then(allEntries => {const allowed = window._pmAllowedMembers || ['shineil','brother','father','mother'];const pmSearch2 = document.getElementById('pm-search');const query = ((pmSearch2 ? pmSearch2.value : '') || '').toLowerCase();const filtered = allEntries.filter(e => {if (!e.member) return true;if (memberKey && e.member !== memberKey) return false;return allowed.includes(e.member);});const entries = query ? filtered.filter(e => (e.site||'').toLowerCase().includes(query) || (e.username||'').toLowerCase().includes(query)) : filtered;if (countNum) countNum.textContent = entries.length + ' saved';container.innerHTML = '';if (!entries || entries.length === 0) {container.innerHTML = '<div class="pm-empty"><i data-lucide="lock" style="width:16px;height:16px;vertical-align:middle;"></i> No passwords for this member.</div>';if(window.lucide)lucide.createIcons({node:container});return;}const memberLabels = { shineil:'SHINEIL MATHIAS', brother:'KEVIN MATHIAS', father:'STEPHEN MATHIAS', mother:'KANCHAN MATHIAS' };const siteIcons = {'google':'globe','gmail':'mail','github':'github','facebook':'user','twitter':'twitter','instagram':'camera','amazon':'package','netflix':'film','spotify':'music','apple':'apple','microsoft':'monitor','linkedin':'briefcase','youtube':'play','whatsapp':'message-circle','bank':'landmark','paypal':'credit-card'};function getSiteIcon(site) {const s = (site||'').toLowerCase();for(const k of Object.keys(siteIcons)) {if(s.includes(k)) return '<i data-lucide="'+siteIcons[k]+'" style="width:16px;height:16px;vertical-align:middle;"></i>';}return '<i data-lucide="key" style="width:16px;height:16px;vertical-align:middle;"></i>';}entries.forEach(entry => {const card = document.createElement('div');card.className = 'pm-entry-card';const icon = getSiteIcon(entry.site);const pwMasked = '------------------------------';const memberLabel = memberLabels[entry.member] || entry.member || '';card.innerHTML = `        <div class="pm-entry-top">          <div class="pm-entry-favicon">${icon}</div>          <div class="pm-entry-info">            <div class="pm-entry-site">${escapeHTML(entry.site)}</div>            <div class="pm-entry-user">${escapeHTML(entry.username || 'No username')}</div>          </div>          <div class="pm-entry-actions">            <button class="pm-act-btn" onclick="copyPMPassword('${entry.id}')" title="Copy password"><i data-lucide="clipboard" style="width:16px;height:16px;vertical-align:middle;"></i> Copy</button>            <button class="pm-act-btn pm-act-del" onclick="deletePMEntry('${entry.id}')" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;"></i></button>          </div>        </div>        <div class="pm-pw-reveal-row">          <span id="pw-dots-${entry.id}" class="pw-dots">${pwMasked}</span>          <span id="pw-actual-${entry.id}" class="pw-actual">${escapeHTML(entry.password || '')}</span>          <button id="pw-reveal-btn-${entry.id}" class="pm-reveal-btn" onclick="toggleEntryReveal('${entry.id}')"><i data-lucide="eye" style="width:16px;height:16px;vertical-align:middle;"></i> Show</button>        </div>        ${entry.notes ? `<div class="pm-notes-row"><i data-lucide="file-text" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(entry.notes)}</div>` : ''}        <div class="pm-notes-row" style="color:#6366f1;font-weight:600;"><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle;"></i> ${escapeHTML(memberLabel)}</div>      `;container.appendChild(card);});});if(window.lucide)lucide.createIcons({node:container});}const VAULT_MODES = [  { id:'online',    icon:'<i data-lucide="globe" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Online Mode',           desc:'Access your vault anytime, anywhere with internet.' },  { id:'offline',   icon:'<i data-lucide="download" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Offline Vault Mode',    desc:'Access encrypted local copies without internet.' },  { id:'share',     icon:'<i data-lucide="link" style="width:14px;height:14px;vertical-align:middle;"></i>', name:'Secure Share Mode',     desc:'Share documents securely with full control and tracking.' },  { id:'emergency', icon:'<i data-lucide="alert-triangle" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Emergency Recovery',    desc:'Secure backup access during account recovery.' },  { id:'guardian',  icon:'<i data-lucide="users" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Guardian Access Mode',  desc:'Allow trusted guardians to access specific documents.' },  { id:'verify',    icon:'<i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Verification Mode',     desc:'Generate QR-secured verification for official submissions.' },  { id:'readonly',  icon:'<i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i>', name:'Read-Only Mode',        desc:'Allow view-only access without download or modification.' },  { id:'timelock',  icon:'<i data-lucide="clock" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Time-Lock Mode',        desc:'Restrict access to documents until a specific date.' },  { id:'legal',     icon:'<i data-lucide="landmark" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Legal Archive Mode',    desc:'Long-term preservation for apostille and legal documents.' },  { id:'ministry',  icon:'<i data-lucide="book-open" style="width:16px;height:16px;vertical-align:middle;"></i>', name:'Private Ministry Mode', desc:'Secure storage for ministry, pastoral, and church records.' },];let activeVaultMode = 'online';function openVaultModes() {  document.getElementById('vaultModesModal').classList.add('open');  renderVaultModes();}function closeVaultModes() {  document.getElementById('vaultModesModal').classList.remove('open');}document.getElementById('vaultModesModal').addEventListener('click', function(e){  if(e.target === this) closeVaultModes();});function renderVaultModes() {  const grid = document.getElementById('vm-modes-grid');  if (!grid) return;  grid.innerHTML = '';  VAULT_MODES.forEach(m => {    const card = document.createElement('div');    card.className = 'vm-card' + (m.id === activeVaultMode ? ' active' : '');    card.innerHTML = `<div class="vm-card-icon">${m.icon}</div><div class="vm-card-name">${m.name}</div><div class="vm-card-desc">${m.desc}</div>`;    card.onclick = () => setVaultMode(m.id);    grid.appendChild(card);  });if(window.lucide)lucide.createIcons({node:grid});}function setVaultMode(id) {  activeVaultMode = id;  const m = VAULT_MODES.find(x => x.id === id);  if (m) {    document.getElementById('vm-active-name').textContent = m.name;    document.getElementById('vm-active-desc').textContent = m.desc;    document.querySelector('.vm-active-badge span:first-child').innerHTML = m.icon;if(window.lucide)lucide.createIcons({node:document.querySelector('.vm-active-badge')});  }  renderVaultModes();  /* Show brief toast */  const toast = document.createElement('div');  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:99999;';  toast.textContent = `--- ${(m ? m.name : "") || 'Mode'} activated`;  document.body.appendChild(toast);  setTimeout(() => toast.remove(), 2200);}
     </script>
     <script nonce="opencode-2026-fix">
-      // MODES button is now a real HTML button in the navbar --- no injection needed.
+      // MODES button is now a real HTML button in the navbar - no injection needed.
     </script>
     <script nonce="opencode-2026-fix">
       /* ============================================================   HOME / PROFILE / FILES PAGE SWITCHER   ============================================================ */
       let _currentPage = null;
-      const VAULT_TIPS = ['Use the Compare tool (<i data-lucide="scale" style="width:14px;height:14px;vertical-align:middle;"></i>) to view two documents side by side --- great for verifying document versions.', 'Pin your most-used documents with <i data-lucide="star" style="width:16px;height:16px;vertical-align:middle;"></i> for instant access from the Home page.', 'Switch between family members using the dropdown in the left sidebar.', 'Use Password Manager (<i data-lucide="key" style="width:16px;height:16px;vertical-align:middle;"></i>) to store and retrieve secure credentials.', 'Enable Offline Vault Mode in Advanced Settings to access files without internet.', 'Use the Search bar in Files to quickly locate any document across all categories.', 'Access Logs (<i data-lucide="clipboard-list" style="width:16px;height:16px;vertical-align:middle;"></i>) let you see who accessed the vault and when.', 'Vault Modes (<i data-lucide="zap" style="width:16px;height:16px;vertical-align:middle;"></i>) give you different access configurations --- try Secure Share Mode for sharing.', ];
+      const VAULT_TIPS = ['Use the Compare tool (<i data-lucide="scale" style="width:14px;height:14px;vertical-align:middle;"></i>) to view two documents side by side - great for verifying document versions.', 'Pin your most-used documents with <i data-lucide="star" style="width:16px;height:16px;vertical-align:middle;"></i> for instant access from the Home page.', 'Switch between family members using the dropdown in the left sidebar.', 'Use Password Manager (<i data-lucide="key" style="width:16px;height:16px;vertical-align:middle;"></i>) to store and retrieve secure credentials.', 'Enable Offline Vault Mode in Advanced Settings to access files without internet.', 'Use the Search bar in Files to quickly locate any document across all categories.', 'Access Logs (<i data-lucide="clipboard-list" style="width:16px;height:16px;vertical-align:middle;"></i>) let you see who accessed the vault and when.', 'Vault Modes (<i data-lucide="zap" style="width:16px;height:16px;vertical-align:middle;"></i>) give you different access configurations - try Secure Share Mode for sharing.', ];
 
       function switchPage(page) {
         if (_currentPage === page) return;
@@ -4022,7 +4055,7 @@ Recommended:
           if (window.lucide) lucide.createIcons({ node: tipEl });
         }
 
-        // Stats --- read from vault data if available
+        // Stats - read from vault data if available
         setTimeout(function() {
           try {
             // Total files count
@@ -4201,7 +4234,7 @@ Recommended:
         };
       })();
 
-      /* On dashboard load --- default to HOME page */
+      /* On dashboard load - default to HOME page */
       document.addEventListener('DOMContentLoaded', function() {
         // Wait for vault-ui.js to render categories then show home
         setTimeout(function() { switchPage('home'); }, 600);
@@ -4266,7 +4299,7 @@ Recommended:
         }
 
         /* ================================================================
-           VAULT CHECKLIST --- Excel spreadsheet engine
+           VAULT CHECKLIST - Excel spreadsheet engine
            ================================================================ */
         const _vcDataKey  = 'checklistDeployedData';
         const _vcStatusKey = 'checklistStatuses';
@@ -4282,7 +4315,7 @@ Recommended:
         function _vcLoad(s,k,d){ try { return JSON.parse(localStorage.getItem(k)||JSON.stringify(d)); } catch(e){ return d; } }
         function _vcSave(s,k){ try { localStorage.setItem(k,JSON.stringify(s)); } catch(e){} }
 
-        /* ---- INIT: populate dropdown ---- */
+        /* -- INIT: populate dropdown -- */
         function initVaultChecklist(){
           var data = _vcLoad(null,_vcDataKey,null);
           var sel  = document.getElementById('vc-select');
@@ -4304,7 +4337,7 @@ Recommended:
         }
         window.initVaultChecklist = initVaultChecklist;
 
-        /* ---- RENDER spreadsheet for a type ---- */
+        /* -- RENDER spreadsheet for a type -- */
         function vcRender(type){
           _vcCurType = type;
           _vcFilter = '';
@@ -4367,7 +4400,7 @@ Recommended:
           if (_vcEl && typeof lucide !== 'undefined') lucide.createIcons({ node: _vcEl });
         }
 
-        /* ---- BUILD table header ---- */
+        /* -- BUILD table header -- */
         function _vcBuildHead(){
           var thead = document.getElementById('vc-thead');
           if (!thead) return;
@@ -4386,7 +4419,7 @@ Recommended:
           return s;
         }
 
-        /* ---- BUILD table body ---- */
+        /* -- BUILD table body -- */
         function _vcBuildBody(){
           var tbody = document.getElementById('vc-tbody');
           if (!tbody) return;
@@ -4448,7 +4481,7 @@ Recommended:
           return h;
         }
 
-        /* ---- READ-ONLY: row selection / highlight (informational only) ---- */
+        /* -- READ-ONLY: row selection / highlight (informational only) -- */
         function _vcHighlightRow(ri){
           var tbody = document.getElementById('vc-tbody');
           if (!tbody) return;
@@ -4456,7 +4489,7 @@ Recommended:
             tr.classList.toggle('vc-sel', parseInt(tr.dataset.ri,10) === ri);
           });
         }
-        /* ---- SORT ---- */
+        /* -- SORT -- */
         function vcSortBy(val){
           if (!val || !_vcRows.length) return;
           var parts = val.split('-');
@@ -4486,7 +4519,7 @@ Recommended:
           vcSortBy(nv);
         }
 
-        /* ---- SEARCH / FILTER ---- */
+        /* -- SEARCH / FILTER -- */
         function vcFilterRows(q){
           _vcFilter = (q||'').toLowerCase();
           _vcBuildBody();
@@ -4506,7 +4539,7 @@ Recommended:
           },[]);
         }
 
-        /* ---- SELECT ALL / COPY ---- */
+        /* -- SELECT ALL / COPY -- */
         function vcSelectAll(){
           var tbody = document.getElementById('vc-tbody');
           if (!tbody) return;
@@ -4526,7 +4559,7 @@ Recommended:
           }
         }
 
-        /* ---- CLICK ROW HEAD (view-only) ---- */
+        /* -- CLICK ROW HEAD (view-only) -- */
         function vcClickRow(ri){
           _vcSelRow = ri;
           _vcHighlightRow(ri);
@@ -4538,7 +4571,7 @@ Recommended:
           if (disp && r) disp.textContent = r.name || '';
         }
 
-        /* ---- OPEN PDF (view-only) ---- */
+        /* -- OPEN PDF (view-only) -- */
         function vcOpenPDF(ri, di){
           var r = _vcRows[ri];
           if (!r || typeof openSecureFile !== 'function') return;
@@ -4549,7 +4582,7 @@ Recommended:
           openSecureFile(p, r.name);
         }
 
-        /* ---- SET STATUS (dropdown) ---- */
+        /* -- SET STATUS (dropdown) -- */
         function vcSetStatus(ri, val){
           var r = _vcRows[ri];
           if (!r) return;
@@ -4565,7 +4598,7 @@ Recommended:
           if (_vcEl && typeof lucide !== 'undefined') lucide.createIcons({ node: _vcEl });
         }
 
-        /* ---- STATUS BAR ---- */
+        /* -- STATUS BAR -- */
         function _vcUpdateSB(){
           var tot = document.getElementById('vc-sb-total');
           var sel = document.getElementById('vc-sb-sel');
@@ -4573,7 +4606,7 @@ Recommended:
           if (sel) sel.textContent = _vcSelRow >= 0 ? 'Selected: Row ' + (_vcSelRow+1) : '';
         }
 
-        /* ---- TOAST ---- */
+        /* -- TOAST -- */
         function _vcToast(msg){
           var t = document.createElement('div');
           t.style.cssText = 'position:fixed;bottom:40px;right:16px;background:#217346;color:#fff;padding:10px 18px;border-radius:6px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;';
@@ -4583,7 +4616,7 @@ Recommended:
           setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){ t.remove(); },300); }, 2000);
         }
 
-        /* ---- ESCAPE HTML ---- */
+        /* -- ESCAPE HTML -- */
         function _vcEsc(s){
           var d = document.createElement('div');
           d.textContent = String(s || '');
@@ -4738,8 +4771,8 @@ Recommended:
         window._filterFilesForMember = filterFilesForMember;
         window.selectVaultCategory = selectVaultCategory;
 
-        // ------ Refresh Vault (preserves current page/category/member) ------
-        // ------ Landing page auth helpers ------
+        // ---- Refresh Vault (preserves current page/category/member) ----
+        // ---- Landing page auth helpers ----
         window.toggleLandDropdown = function() {
           const d = document.getElementById('landDropdown');
           d.classList.toggle('open');
@@ -4774,7 +4807,7 @@ Recommended:
         document.getElementById('feedbackModal').addEventListener('click', function(e) {
           if (e.target === this) closeFeedbackModal();
         });
-        // ------ Status component definitions (28 total) ------
+        // ---- Status component definitions (28 total) ----
         const STATUS_COMPONENTS = [
           { id:'auth', icon:'<i data-lucide="lock" style="width:14px;height:14px;vertical-align:middle;"></i>', label:'Authentication', check:async()=>{let o=!!window.masterPassword||!!sessionStorage.getItem('vaultSession');return{state:o?'operational':'major',labelText:o?'Verified':'Not authenticated',detail:o?'Master password and session present':'Login required'}}},
           { id:'backend', icon:'<i data-lucide="radio" style="width:14px;height:14px;vertical-align:middle;"></i>', label:'Backend', check:async()=>{let r=await _checkBackend();return{state:r.ok?'operational':'major',labelText:r.ok?'Online ('+r.status+')':'Offline',detail:r.ok?'Worker reachable':r.error||'No connection'}}},
@@ -4804,9 +4837,9 @@ Recommended:
           { id:'preview', icon:'<i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i>', label:'Quick Preview', check:async()=>{let o=typeof startHoverPreview==='function'&&typeof getPreviewBitmap==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Preview module loaded':'Not loaded'}}},
           { id:'decrypt', icon:'<i data-lucide="unlock" style="width:14px;height:14px;vertical-align:middle;"></i>', label:'Decryption', check:async()=>{let o=typeof decryptBuffer==='function';return{state:o?'operational':'major',labelText:o?'Ready':'Missing',detail:o?'Decrypt function available':'Crypto module not loaded'}}},
           { id:'mobile', icon:'<i data-lucide="smartphone" style="width:14px;height:14px;vertical-align:middle;"></i>', label:'Mobile Responsiveness', check:async()=>{let o=typeof toggleMobileMenu==='function';return{state:o?'operational':'degraded',labelText:o?'Adaptive':'Fixed',detail:o?'Responsive layout active':'Mobile menu not loaded'}}},
-          { id:'frontend', icon:'<i data-lucide="puzzle" style="width:14px;height:14px;vertical-align:middle;"></i>', label:'Frontend Integrity', check:async()=>{try{var f=await fetch('https://backend.shinumaths989.workers.dev/frontend-errors-today',{headers:{'Authorization':'Bearer '+(sessionStorage.getItem('vaultSessionToken')||sessionStorage.getItem('vaultSession')||'')}});if(!f.ok)return{state:'degraded',labelText:'Unreachable',detail:'Cannot check frontend error count'};var d=await f.json();var cnt=d.count||0;if(cnt===0)return{state:'operational',labelText:'Clean ('+cnt+')',detail:'No frontend errors reported today'};if(cnt<5)return{state:'degraded',labelText:cnt+' errors',detail:cnt+' frontend error(s) reported across devices today'};return{state:'major',labelText:cnt+' errors',detail:cnt+' frontend error(s) --- check HTML/CSS/JS files'};}catch(e){return{state:'degraded',labelText:'Check failed',detail:e.message}}}},
+          { id:'frontend', icon:'<i data-lucide="puzzle" style="width:14px;height:14px;vertical-align:middle;"></i>', label:'Frontend Integrity', check:async()=>{try{var f=await fetch('https://backend.shinumaths989.workers.dev/frontend-errors-today',{headers:{'Authorization':'Bearer '+(sessionStorage.getItem('vaultSessionToken')||sessionStorage.getItem('vaultSession')||'')}});if(!f.ok)return{state:'degraded',labelText:'Unreachable',detail:'Cannot check frontend error count'};var d=await f.json();var cnt=d.count||0;if(cnt===0)return{state:'operational',labelText:'Clean ('+cnt+')',detail:'No frontend errors reported today'};if(cnt<5)return{state:'degraded',labelText:cnt+' errors',detail:cnt+' frontend error(s) reported across devices today'};return{state:'major',labelText:cnt+' errors',detail:cnt+' frontend error(s) - check HTML/CSS/JS files'};}catch(e){return{state:'degraded',labelText:'Check failed',detail:e.message}}}},
         ];
-        // ------ 90-Day Uptime History --- track ALL components ------
+        // ---- 90-Day Uptime History - track ALL components ----
         const UPTIME_TRACKED_IDS = STATUS_COMPONENTS.map(function(c){return c.id;});
         const UPTIME_DAYS = 90;
         function _uptimeHistKey(){ return 'vaultUptimeHistoryV1'; }
@@ -4880,7 +4913,7 @@ Recommended:
           var hist = globalHist || _recordUptimeToday(results);
           var container = document.getElementById('uptime-section');
           if (!container) return;
-          var label = globalHist ? 'Global System Uptime --- Last ' + UPTIME_DAYS + ' Days (all devices)' : 'System Uptime --- Last ' + UPTIME_DAYS + ' Days (this device)';
+          var label = globalHist ? 'Global System Uptime - Last ' + UPTIME_DAYS + ' Days (all devices)' : 'System Uptime - Last ' + UPTIME_DAYS + ' Days (this device)';
           var html = '<div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase;">' + label + '</div>';
           UPTIME_TRACKED_IDS.forEach(id => {
             var comp = STATUS_COMPONENTS.find(function(c){return c.id===id;});
@@ -5019,7 +5052,7 @@ Recommended:
           _reportStatusGlobally(results);
           // Fetch global history from Firestore
           var globalHist = await _fetchGlobalHistory();
-          // Update 90-day uptime bars --- uses global (Firestore) data when available
+          // Update 90-day uptime bars - uses global (Firestore) data when available
           try { renderUptimeSection(results, globalHist); } catch(e) { console.warn('uptime render failed', e); }
           // Update overall banner
           var banner = document.getElementById('overall-status-banner');
@@ -5036,8 +5069,8 @@ Recommended:
             banner.innerHTML = m.e + ' <span>' + m.t + '</span>';
             if (window.lucide) lucide.createIcons({node:banner});
           }
-          // Build component rows (local device status only --- global is shown in the uptime bars above)
-          var html = '<div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin:16px 0 8px;text-transform:uppercase;"><i data-lucide="map-pin" style="width:14px;height:14px;vertical-align:middle;"></i> Components --- This Device</div>';
+          // Build component rows (local device status only - global is shown in the uptime bars above)
+          var html = '<div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin:16px 0 8px;text-transform:uppercase;"><i data-lucide="map-pin" style="width:14px;height:14px;vertical-align:middle;"></i> Components - This Device</div>';
           html += '<div style="font-size:12px;color:#94a3b8;margin-bottom:10px;">Real-time status from your current device.</div>';
           html += results.map(function(r){ return _renderStatusComp(r); }).join('');
           container.innerHTML = html;
@@ -5057,7 +5090,7 @@ Recommended:
             const t = setTimeout(() => c.abort(), 5000);
             // NOTE: the root "/" route on the worker returns a decorative HTML
             // page with no Access-Control-Allow-Origin header, so a
-            // cross-origin fetch() to it gets blocked by CORS and throws ---
+            // cross-origin fetch() to it gets blocked by CORS and throws -
             // even when the backend is fully healthy. /get-secret always
             // returns proper CORS headers (used for real login), so probing
             // it with a deliberately-invalid hash is a much more accurate
@@ -5149,9 +5182,9 @@ Recommended:
 
             // If we couldn't recover a decryption secret, don't render a
             // vault that will fail on every file open with "Session not
-            // unlocked." Force a real login instead --- same as a hard refresh
+            // unlocked." Force a real login instead - same as a hard refresh
             // with no trust cookie would do. NOTE: we intentionally do NOT
-            // delete vaultTrustInfo here --- the failure may be transient
+            // delete vaultTrustInfo here - the failure may be transient
             // (e.g. masterPassword not populated yet on a prior pass), and
             // logging in fresh will re-save a corrected trust record anyway.
             if (!_trustRestored && !window.masterPassword) {
@@ -5343,7 +5376,7 @@ Recommended:
   </div>
 
   <script nonce="opencode-2026-fix">
-    // ------ PIN FOOTER TO BOTTOM OF RIGHT-SIDE CONTENT AREA ------------------------------------------------------
+    // ---- PIN FOOTER TO BOTTOM OF RIGHT-SIDE CONTENT AREA ----------------------------------------------------
     // Measures actual available height below the content-view's top edge
     // and enforces it as a min-height, so the footer (margin-top:auto)
     // always sits at the bottom of the visible content panel instead of
@@ -5381,7 +5414,7 @@ Recommended:
   </div>
   <script nonce="opencode-2026-fix">
     // Show the AI FAB only once the vault dashboard is actually visible
-    // (i.e. logged in) --- never on the landing/homepage.
+    // (i.e. logged in) - never on the landing/homepage.
     (function () {
       var fab = document.getElementById('ai-fab');
       var dash = document.getElementById('vault-dashboard');
