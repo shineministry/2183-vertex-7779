@@ -751,10 +751,10 @@ const _driveViewMode = (localStorage.getItem('drive_view_mode') || 'grid');
           </div>
           <button class="drive-more-btn" onclick="event.stopPropagation(); openDriveMenu(this, ${JSON.stringify(file).replace(/"/g,'&quot;')})"><i data-lucide="more-vertical" style="width:16px;height:16px;"></i></button>
         </div>
-        <div style="display:none;" class="drive-hover-actions">
-          <button class="card-btn card-btn-pin ${isPinned ? 'pinned' : ''}" onclick="event.stopPropagation();togglePin(${JSON.stringify(file).replace(/"/g,'&quot;')},this)">${isPinned ? '<i data-lucide="star" style="width:14px;height:14px;vertical-align:middle;fill:currentColor;"></i> Pinned' : '<i data-lucide="star" style="width:14px;height:14px;vertical-align:middle;"></i> Pin'}</button>
-          <button class="card-btn card-btn-share" onclick="event.stopPropagation();openShareModal(${JSON.stringify(file).replace(/"/g,'&quot;')})"><i data-lucide="link" style="width:14px;height:14px;vertical-align:middle;"></i> Share</button>
-          <button class="card-btn card-btn-compare" onclick="event.stopPropagation();addToCompare(${JSON.stringify(file).replace(/"/g,'&quot;')})"><i data-lucide="scale" style="width:14px;height:14px;vertical-align:middle;"></i> Compare</button>
+        <div class="drive-card-actions" style="display:flex; gap:6px; padding:8px 10px; border-top:1px solid #e8eaed; background:#f8fafc; justify-content:center; border-radius:0 0 12px 12px;">
+          <button class="drive-action-btn ${isPinned ? 'pinned' : ''}" onclick="event.stopPropagation();togglePin(${JSON.stringify(file).replace(/"/g,'&quot;')},this)" title="Star"><i data-lucide="star" style="width:13px;height:13px;vertical-align:middle;${isPinned ? 'fill:currentColor;' : ''}"></i> Star</button>
+          <button class="drive-action-btn" onclick="event.stopPropagation();openShareModal(${JSON.stringify(file).replace(/"/g,'&quot;')})" title="Share"><i data-lucide="link" style="width:13px;height:13px;vertical-align:middle;"></i> Share</button>
+          <button class="drive-action-btn" onclick="event.stopPropagation();addToCompare(${JSON.stringify(file).replace(/"/g,'&quot;')})" title="Compare"><i data-lucide="scale" style="width:13px;height:13px;vertical-align:middle;"></i> Compare</button>
         </div>
         `;
 

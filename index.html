@@ -1561,8 +1561,8 @@ Recommended:
           </div>
           <div class="drive-chip-row" id="driveChips">
             <button class="drive-chip active" data-filter="" onclick="driveFilter('')"><i data-lucide="layers" style="width:12px;height:12px;vertical-align:middle;"></i> All</button>
-            <button class="drive-chip" data-filter="pdf" onclick="driveFilter('pdf')">PDFs</button>
-            <button class="drive-chip" data-filter="image" onclick="driveFilter('image')">Images</button>
+            <button class="drive-chip" data-filter="expiring" onclick="driveFilter('expiring')"><i data-lucide="alert-triangle" style="width:12px;height:12px;vertical-align:middle;"></i> Expiring</button>
+            <button class="drive-chip" data-filter="offline" onclick="driveFilter('offline')"><i data-lucide="wifi-off" style="width:12px;height:12px;vertical-align:middle;"></i> Offline</button>
             <button class="drive-chip" data-filter="pinned" onclick="driveFilter('pinned')"><i data-lucide="star" style="width:12px;height:12px;vertical-align:middle;"></i> Starred</button>
             <button class="drive-chip" data-filter="recent" onclick="driveFilter('recent')"><i data-lucide="clock" style="width:12px;height:12px;vertical-align:middle;"></i> Recent</button>
           </div>
@@ -1832,42 +1832,45 @@ Recommended:
         document.getElementById('drive-count').textContent = rec.length + ' recent';
         return;
       }
-      if(kind==='pdf'){
+      if(kind==='expiring'){
         let results = [];
         Object.keys(allFilesData).forEach(cat=>{
           const arr = allFilesData[cat] || [];
           if(Array.isArray(arr)) arr.forEach(f=>{
-            const isImg = typeof isImageFile==='function' ? isImageFile(f) : /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test((f.file||f.name||''));
-            if(!isImg) results.push(Object.assign({}, f, {category:cat, source:'PDF'}));
+            if(f.expiry){
+              const days = Math.ceil((new Date(f.expiry) - new Date())/86400000);
+              if(days>=0 && days<=30) results.push(Object.assign({}, f, {category:cat, source:'Expiring in '+days+'d'}));
+            }
           });
         });
         renderSearchResults(results);
         const titleEl=document.getElementById('cat-title');
-        if(titleEl) titleEl.textContent='PDFs ('+results.length+')';
+        if(titleEl) titleEl.textContent='Expiring Soon ('+results.length+')';
         const cntEl=document.getElementById('drive-count');
-        if(cntEl) cntEl.textContent=results.length+' items - PDFs';
+        if(cntEl) cntEl.textContent=results.length+' items - Expiring';
+        if(!results.length) toastNotify('No documents expiring within 30 days','info');
         return;
       }
-      if(kind==='image'){
+      if(kind==='offline'){
+        // Show files available offline (cached in IndexedDB) - for now show all as example, or filter by recent
         let results = [];
         try{
-          const photos = typeof getAllPhotos==='function' ? getAllPhotos() : [];
-          results = photos.map(f=> Object.assign({}, f, {source:'Image'}));
-        }catch(e){
+          const cached = localStorage.getItem('recentFiles');
+          if(cached){ results = JSON.parse(cached).map(f=> Object.assign({}, f, {source:'Offline'})); }
+        }catch(e){}
+        if(!results.length){
+          // fallback: show all files as offline-ready
           Object.keys(allFilesData).forEach(cat=>{
             const arr=allFilesData[cat]||[];
-            if(Array.isArray(arr)) arr.forEach(f=>{
-              if(typeof isImageFile==='function' ? isImageFile(f) : /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test((f.file||f.name||''))){
-                results.push(Object.assign({}, f, {category:cat, source:'Image'}));
-              }
-            });
+            if(Array.isArray(arr)) arr.forEach(f=> results.push(Object.assign({}, f, {category:cat, source:'Offline'})));
           });
+          results = results.slice(0, 20);
         }
         renderSearchResults(results);
         const titleEl=document.getElementById('cat-title');
-        if(titleEl) titleEl.textContent='Images ('+results.length+')';
+        if(titleEl) titleEl.textContent='Offline Ready ('+results.length+')';
         const cntEl=document.getElementById('drive-count');
-        if(cntEl) cntEl.textContent=results.length+' items - Images';
+        if(cntEl) cntEl.textContent=results.length+' items - Offline';
         return;
       }
     };
