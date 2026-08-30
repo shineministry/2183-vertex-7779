@@ -523,6 +523,7 @@ button{
    PASSPORT NAVBAR
 ========================= */
 
+body.dark-mode .passport-navbar { background: #1e293b !important; border-bottom-color: #334155 !important; }
 .passport-navbar {
     width: 100%;
     background: white;
@@ -2475,6 +2476,7 @@ button{
    ============================================================ */
 
 /* -- 1. NAVBAR: white, clean, Fortress branded -- */
+body.dark-mode .passport-navbar { background: #1e293b !important; border-bottom-color: #334155 !important; }
 .passport-navbar {
   background: #ffffff !important;
   border-bottom: 1px solid #e2e8f0 !important;
@@ -2559,9 +2561,11 @@ button{
   overflow: hidden;
   background: #f1f5f9;
 }
+body.dark-mode .content-view { background: #0f172a !important; }
+body.dark-mode .main-container { background: #0f172a !important; }
 
 /* -- 3. DARK NAVY SIDEBAR -- */
-.sidebar {
+body.dark-mode .sidebar {
   width: 240px !important;
   background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
   border-right: none !important;
@@ -2575,7 +2579,7 @@ button{
 }
 
 /* Member select - dark themed */
-#member-select {
+body.dark-mode #member-select {
   background: rgba(255,255,255,.08) !important;
   color: #e2e8f0 !important;
   border: 1px solid rgba(255,255,255,.15) !important;
@@ -2585,13 +2589,13 @@ button{
   padding: 10px 12px !important;
 }
 
-#member-select option {
+body.dark-mode #member-select option {
   background: #1e293b !important;
   color: #e2e8f0 !important;
 }
 
 /* Settings gear button - dark */
-#share-gear {
+body.dark-mode #share-gear {
   background: rgba(255,255,255,.08) !important;
   border: 1px solid rgba(255,255,255,.15) !important;
   color: #94a3b8 !important;
@@ -2691,7 +2695,7 @@ button{
 /* -- 5. MOBILE: sidebar becomes horizontal scrollable pill bar -- */
 /* AFTER */
 @media (max-width: 767.98px) {
-  .sidebar {
+  body.dark-mode .sidebar {
     width: 100% !important;
     height: auto !important;
     max-height: 190px !important;
@@ -3199,6 +3203,36 @@ body.dark .status-comp-detail{color:#64748b;}
   .drive-search-wrap{ height:40px !important; }
 }
 
+
+
+/* Light mode overrides for sidebar controls (real light/dark) */
+body:not(.dark-mode) #sidebar-controls-wrap {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+body:not(.dark-mode) #member-select,
+body:not(.dark-mode) #share-gear,
+body:not(.dark-mode) #toggle-dark-mode {
+  background: #ffffff !important;
+  color: #3c4043 !important;
+  border-color: #dadce0 !important;
+}
+body:not(.dark-mode) .sidebar {
+  background: #ffffff !important;
+}
+body.dark-mode .sidebar {
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+}
+body.dark-mode .content-view { background: #0f172a !important; }
+body.dark-mode .main-container { background: #0f172a !important; }
+body.dark-mode .file-card.drive-card,
+body.dark-mode .fm-card,
+body.dark-mode .drive-card,
+body.dark-mode .pinned-section { background: #1e293b !important; border-color: #334155 !important; color: #e2e8f0 !important; }
+body.dark-mode .drive-card-thumb { background: #0f172a !important; border-color: #334155 !important; }
+body.dark-mode .drive-card-name { color: #e2e8f0 !important; }
+body.dark-mode .drive-card-meta { color: #94a3b8 !important; }
+body.dark-mode .passport-navbar { background: #1e293b !important; border-color: #334155 !important; }
 
 /* -- Vault Drive Mobile Bottom Nav (app feel like Google Drive) -- */
 .vault-drive-bottom-nav{
