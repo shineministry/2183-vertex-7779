@@ -420,75 +420,28 @@ displayName){
         const encryptedData =
         buffer.slice(ivEnd);
 
-        // HASH PASSWORD
-        // Use global sha256Bytes if available; otherwise inline fallback
+        // HASH PASSWORD — try primary masterPassword, then fallback PIN-hash for files that were encrypted while files.html was in PIN-fallback mode (the 3 recently failing files)
         const _sha256BytesFn = (typeof sha256Bytes === 'function')
             ? sha256Bytes
             : async (text) => new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
-
-        const passwordHash =
-        await _sha256BytesFn(
-            window.masterPassword
-        );
-
-        // IMPORT HASH
-
-        const keyMaterial =
-        await crypto.subtle.importKey(
-            "raw",
-            passwordHash,
-            "PBKDF2",
-            false,
-            ["deriveKey"]
-        );
-
-        // DERIVE AES KEY
-
-        const key =
-        await crypto.subtle.deriveKey(
-            {
-                name:"PBKDF2",
-
-                salt:new Uint8Array(
-                    salt
-                ),
-
-                iterations:
-                settings.iterations,
-
-                hash:
-                settings.hash
-
-            },
-
-            keyMaterial,
-
-            {
-                name:"AES-GCM",
-                length:256
-            },
-
-            false,
-
-            ["decrypt"]
-        );
-
-        // DECRYPT
-
-        const decrypted =
-        await crypto.subtle.decrypt(
-            {
-                name:"AES-GCM",
-
-                iv:new Uint8Array(
-                    iv
-                )
-            },
-
-            key,
-
-            encryptedData
-        );
+        let decrypted = null;
+        let _lastDecryptErr = null;
+        const _rawCands = [window.masterPassword, localStorage.getItem('fmPinHash_files_manager'), 'fm-pin-fallback', 'fm-pin-fallback-default'].filter(function(v){ return v && String(v).length; });
+        const _seen = new Set();
+        const _cands = _rawCands.filter(function(p){ if(_seen.has(p)) return false; _seen.add(p); return true; });
+        // Always try at least masterPassword (even if empty) so error is clear
+        if (!_cands.length) _cands.push(window.masterPassword || '');
+        for (const _cand of _cands){
+          try{
+            const _ph = await _sha256BytesFn(_cand);
+            const _km = await crypto.subtle.importKey("raw", _ph, "PBKDF2", false, ["deriveKey"]);
+            const _key = await crypto.subtle.deriveKey({name:"PBKDF2", salt:new Uint8Array(salt), iterations: settings.iterations, hash: settings.hash}, _km, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+            decrypted = await crypto.subtle.decrypt({name:"AES-GCM", iv:new Uint8Array(iv)}, _key, encryptedData);
+            if (_cand !== window.masterPassword) console.warn('[Viewer] Decrypted with fallback PIN key for', displayName);
+            break;
+          }catch(e){ _lastDecryptErr = e; }
+        }
+        if (!decrypted) throw _lastDecryptErr || new Error('decrypt failed');
 
 // Save a copy before pdfjsLib detaches the ArrayBuffer
 currentDecryptedPdf = decrypted.slice(0);

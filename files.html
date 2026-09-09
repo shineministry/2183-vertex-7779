@@ -1469,17 +1469,29 @@ async function processUploadFile(file){
   document.getElementById('fmUploadArea').style.display = 'none';
   if (typeof lucide !== 'undefined') lucide.createIcons();
 
-  var pass = window.masterPassword || sessionStorage.getItem('vaultSessionToken') || '';
-  // If PIN already verified in this tab, don't ask again — use PIN-derived fallback so the file still gets queued.
-  // The second PIN prompt is what was blocking "Done" from actually adding the file (it cleared the pending blob).
+  var pass = window.masterPassword || '';
+  // Try to restore masterPassword from trusted device if available (files.html is often opened standalone)
+  if (!pass && typeof restoreTrustSession === 'function' && typeof _isTrustDevice === 'function' && _isTrustDevice()){
+    try { await restoreTrustSession(); pass = window.masterPassword || ''; } catch {}
+  }
   if (!pass){
-    var pinVerified = sessionStorage.getItem('fmPinVerified') === '1' || localStorage.getItem('fmPinHash_'+FM_PIN_KEY);
+    var pinVerified = sessionStorage.getItem('fmPinVerified') === '1';
     if (pinVerified){
-      console.warn('[FM] masterPassword missing but PIN verified — using PIN-derived fallback key');
-      pass = localStorage.getItem('fmPinHash_'+FM_PIN_KEY) || 'fm-pin-fallback';
+      // PIN was already verified this session — don't show 6-digit PIN again (it cleared the pending blob and caused "did not add").
+      // Instead, ask for the actual vault master password once, or block with a clear message.
+      var entered = prompt('Vault master password needed to encrypt this file.\n\nEnter your vault password (the same you use to log into the main vault), or Cancel to keep the file queued and log in via main vault first:');
+      if (entered && entered.trim()){
+        pass = entered.trim();
+        window.masterPassword = pass; // cache for this tab so next upload doesn't prompt
+      } else {
+        toast('File kept selected — log in via main vault then re-select it to encrypt');
+        document.getElementById('fmFileInfo').style.display = 'none';
+        document.getElementById('fmUploadArea').style.display = 'flex';
+        // Don't clear pending — keep name/file so Save can still queue metadata (will prompt again on deploy)
+        return;
+      }
     } else {
-      toast('Session not unlocked — enter PIN once to enable uploads');
-      // Don't clear the selected file, just keep the modal open so Save can still queue it
+      toast('Session not unlocked — enter PIN once, then vault password if asked');
       return;
     }
   }
