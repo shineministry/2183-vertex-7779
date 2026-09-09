@@ -280,6 +280,7 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
     <div class="fm-tb-group">
       <button class="fm-tb-btn primary" onclick="loadFromBucket()" title="Load from R2 bucket"><i data-lucide="download" style="width:13px;height:13px;"></i> Load</button>
       <button class="fm-tb-btn success" id="deployBtn" onclick="deployToBucket()" title="Save to R2 bucket"><i data-lucide="upload" style="width:13px;height:13px;"></i> Deploy</button>
+      <button class="fm-tb-btn" onclick="runRecovery()" title="Scan and fix files encrypted with wrong key (the 3 failing files)" style="background:#fef3c7;border-color:#f59e0b;color:#92400e;"><i data-lucide="wrench" style="width:13px;height:13px;"></i> Recover</button>
     </div>
     <div class="fm-tb-sep"></div>
     <div class="fm-tb-group">
@@ -357,6 +358,25 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
     <div class="fm-modal-foot">
       <button class="fm-cancel" onclick="closeUploadResultsModal()">Close</button>
       <button class="fm-save" id="urRetryAllBtn" onclick="retryFailedUploads()" style="display:none;">Retry Failed</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECOVERY MODAL -->
+<div class="fm-modal-overlay" id="recoveryModal">
+  <div class="fm-modal wide">
+    <div class="fm-modal-head">
+      <h3>Recover Corrupted Files</h3>
+      <button onclick="closeRecoveryModal()">&times;</button>
+    </div>
+    <div class="fm-modal-body">
+      <div id="recSummary" style="font-size:12px;color:#64748b;margin-bottom:10px;">Scans every file in R2, tries to decrypt with the correct vault password, and re-encrypts any that were saved with the old PIN-hash fallback key.</div>
+      <div id="recProgress" style="font-size:12px;font-weight:600;color:#1a73e8;margin-bottom:8px;display:none;"></div>
+      <div id="recList" style="display:flex;flex-direction:column;gap:6px;max-height:40vh;overflow-y:auto;"></div>
+    </div>
+    <div class="fm-modal-foot">
+      <button class="fm-cancel" onclick="closeRecoveryModal()">Close</button>
+      <button class="fm-save" id="recFixBtn" onclick="fixRecoveredFiles()" style="display:none;background:#f59e0b;border-color:#d97706;">Fix & Re-deploy</button>
     </div>
   </div>
 </div>
@@ -1861,6 +1881,127 @@ function retryFailedUploads(){
   closeUploadResultsModal();
   if (!_pendingUploads.length){ toast('Nothing to retry'); return; }
   deployToBucket();
+}
+
+/* ---- RECOVERY: find files that were encrypted with wrong PIN-hash key and re-encrypt with correct masterPassword ---- */
+function closeRecoveryModal(){ document.getElementById('recoveryModal').classList.remove('show'); }
+var _recToFix = []; // [{cat, idx, path, name, decrypted: ArrayBuffer}]
+async function _tryDecryptWithCandidates(buffer, candidates){
+  var enc = new TextEncoder();
+  for (var c = 0; c < candidates.length; c++){
+    var pw = candidates[c];
+    if (!pw) continue;
+    try{
+      var pwHash = new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(pw)));
+      var saltLen = new Uint32Array(buffer.slice(0,4))[0];
+      if (saltLen === 0 || saltLen > buffer.byteLength - 32) throw new Error('bad header');
+      var settings = JSON.parse(new TextDecoder().decode(buffer.slice(4,4+saltLen)));
+      var salt = buffer.slice(4+saltLen, 4+saltLen+16);
+      var iv = buffer.slice(4+saltLen+16, 4+saltLen+16+12);
+      var data = buffer.slice(4+saltLen+16+12);
+      var km = await crypto.subtle.importKey('raw', pwHash, 'PBKDF2', false, ['deriveKey']);
+      var key = await crypto.subtle.deriveKey({name:'PBKDF2', salt:new Uint8Array(salt), iterations: settings.iterations, hash: settings.hash}, km, {name:'AES-GCM', length:256}, false, ['decrypt']);
+      var dec = await crypto.subtle.decrypt({name:'AES-GCM', iv:new Uint8Array(iv)}, key, data);
+      return { ok:true, decrypted: dec, pw: pw };
+    }catch(e){ /* try next candidate */ }
+  }
+  return { ok:false };
+}
+async function runRecovery(){
+  var token = _getToken();
+  var masterPass = window.masterPassword || '';
+  // Try restore from trusted device if vault not directly unlocked in this tab
+  if (!masterPass && typeof restoreTrustSession === 'function' && typeof _isTrustDevice === 'function' && _isTrustDevice()){
+    try{ await restoreTrustSession(); masterPass = window.masterPassword || ''; }catch{}
+  }
+  if (!masterPass){
+    var entered = prompt('Enter your vault master password (the same you use to log into the main vault) to scan for corrupted files:');
+    if (!entered || !entered.trim()){ toast('Recovery cancelled — vault password needed'); return; }
+    masterPass = entered.trim();
+    window.masterPassword = masterPass;
+  }
+  if (!token){ toast('No session token — log in via main vault or enter PIN first'); return; }
+  document.getElementById('recoveryModal').classList.add('show');
+  document.getElementById('recProgress').style.display = 'block';
+  document.getElementById('recProgress').textContent = 'Scanning 0/...';
+  document.getElementById('recList').innerHTML = '<div style="text-align:center;padding:20px;color:#64748b;"><i data-lucide="loader" style="width:20px;height:20px;"></i> Scanning files...</div>';
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  _recToFix = [];
+  var pinHash = localStorage.getItem('fmPinHash_'+FM_PIN_KEY) || '';
+  var fallbacks = [pinHash, 'fm-pin-fallback', 'fm-pin-fallback-default'].filter(Boolean);
+  var allFiles = [];
+  Object.keys(_data).forEach(function(cat){
+    if (cat === '_meta') return;
+    (_data[cat]||[]).forEach(function(it, idx){ allFiles.push({cat:cat, idx:idx, it:it}); });
+  });
+  var total = allFiles.length;
+  var checked = 0, needFix = 0, okCount = 0, errCount = 0;
+  for (var f = 0; f < allFiles.length; f++){
+    var entry = allFiles[f];
+    var cleanPath = (entry.it.file||'').replace(/^(docs\/|file\/|photos\/)/,'');
+    var isPhoto = _isPhotosCategory(entry.cat);
+    var fetchPath = (isPhoto ? 'photos/' : 'docs/') + cleanPath;
+    checked++;
+    document.getElementById('recProgress').textContent = 'Scanning '+checked+'/'+total+' — '+entry.it.name;
+    try{
+      var r = await fetch(_apiBase + '/' + fetchPath, { headers:{'Authorization':'Bearer '+token}, cache:'no-store' });
+      if (!r.ok){ errCount++; continue; }
+      var buf = await r.arrayBuffer();
+      // try master first
+      var primary = await _tryDecryptWithCandidates(buf, [masterPass]);
+      if (primary.ok){ okCount++; continue; }
+      // try fallback PIN hash
+      var fb = await _tryDecryptWithCandidates(buf, fallbacks);
+      if (fb.ok){
+        needFix++;
+        _recToFix.push({cat: entry.cat, idx: entry.idx, path: cleanPath, name: entry.it.name, decrypted: fb.decrypted, fetchPath: fetchPath});
+      } else {
+        // neither worked — could be 404 or truly corrupted
+        errCount++;
+      }
+    }catch(e){ errCount++; }
+  }
+  document.getElementById('recProgress').textContent = 'Scan complete — '+okCount+' OK, '+needFix+' need fix, '+errCount+' unreadable';
+  if (!needFix){
+    document.getElementById('recList').innerHTML = '<div style="text-align:center;padding:20px;color:#16a34a;font-weight:600;"><i data-lucide="check-circle" style="width:20px;height:20px;vertical-align:middle;"></i> No corrupted files found — all files decrypt with the correct vault password.</div>';
+    document.getElementById('recFixBtn').style.display = 'none';
+  } else {
+    document.getElementById('recList').innerHTML = _recToFix.map(function(x){
+      return '<div class="fm-upload-row err"><span class="fm-ur-icon"><i data-lucide="alert-triangle" style="width:16px;height:16px;"></i></span><div class="fm-ur-info"><div class="fm-ur-name">'+_esc(x.name)+'</div><div class="fm-ur-detail">'+_esc(x.cat)+' — '+_esc(x.path)+' — will be re-encrypted with correct password</div></div></div>';
+    }).join('');
+    document.getElementById('recFixBtn').style.display = 'inline-block';
+    document.getElementById('recFixBtn').textContent = 'Fix '+needFix+' file(s) & Re-deploy';
+  }
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+async function fixRecoveredFiles(){
+  if (!_recToFix.length){ toast('Nothing to fix'); return; }
+  var masterPass = window.masterPassword || '';
+  if (!masterPass){ toast('Vault password missing — cannot re-encrypt'); return; }
+  document.getElementById('recFixBtn').disabled = true;
+  document.getElementById('recFixBtn').textContent = 'Fixing...';
+  var fixed = 0;
+  for (var i = 0; i < _recToFix.length; i++){
+    var x = _recToFix[i];
+    try{
+      var encBlob = await encryptVaultFile(x.decrypted, masterPass);
+      var uploadPath = x.fetchPath;
+      // queue for upload with same uid so status badges update
+      var it = _data[x.cat] && _data[x.cat][x.idx];
+      var uid = (it && it._uid) ? it._uid : ('u_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
+      if (it) it._uid = uid;
+      _pendingUploads.push({ uid: uid, path: uploadPath.replace(/^(docs\/|photos\/)/,''), blob: encBlob, origName: x.name, cat: x.cat, size: encBlob.size, attempts:0 });
+      _uploadStatus[uid] = { state:'pending' };
+      fixed++;
+    }catch(e){ console.warn('[Recovery] re-encrypt failed for', x.name, e); }
+  }
+  _updateDeployBadge();
+  _renderCards();
+  _saveSession();
+  closeRecoveryModal();
+  toast('Queued '+fixed+' file(s) with correct encryption — click Deploy to upload');
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  document.getElementById('recFixBtn').disabled = false;
 }
 
 /* ---- JSON PANEL ---- */
