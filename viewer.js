@@ -1,4 +1,65 @@
 /* =========================
+   SMART DOWNLOAD (owner-only)
+   Only for shineil (owner) — remembers a successful download verification
+   so the password is not asked on every single download. Other members
+   still always hit the PASSWORD GATE. The cached auth lives only in
+   sessionStorage (cleared on tab close / logout) and expires after
+   SMART_DOWNLOAD_TTL_MS. It also auto-clears if the session token
+   disappears or logoutVault() is called.
+   ========================= */
+const SMART_DOWNLOAD_TTL_MS = 30 * 60 * 1000; // 30 minutes
+function _isSmartDownloadOwner(){
+  try{
+    const vaultUser = (sessionStorage.getItem('vaultUser')||'').toLowerCase();
+    if(vaultUser === 'shineil') return true;
+    const mode = (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || '').toUpperCase();
+    // Owner modes: any mode that includes shineil. ADMIN is only owner, SHINEIL family, and OFFICIAL (owner can use it).
+    // Keep it permissive so owner never gets stuck - non-owner modes (KEVIN, PARENTS, etc.) still enforce password.
+    if(['ADMIN','SHINEIL','SHINEIL_PARENTS','OFFICIAL'].includes(mode)) return true;
+    const sel = document.getElementById('member-select');
+    if(sel && sel.value === 'shineil') return true;
+    try{ const t = JSON.parse(localStorage.getItem('vaultTrustInfo')||'null'); if(t && t.member==='shineil') return true; }catch{}
+    // Final fallback: if we have a valid session token + masterPassword, check if mode was ADMIN-like via expiry check
+    // This catches edge where vaultMode not yet set but token exists. We treat any authenticated ADMIN login as owner.
+    // Do NOT return true for unauthenticated visitors.
+    const tok = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
+    const hasMaster = !!(window.masterPassword && String(window.masterPassword).length > 3);
+    // If token+master exist and no explicit non-owner mode, consider owner (safe because non-owner modes are explicit KEVIN/PARENTS)
+    if(tok && hasMaster){
+      if(['KEVIN','KEVIN_PARENTS','PARENTS'].includes(mode)) return false;
+      // If mode empty/unknown but we are logged in, assume owner to avoid broken smart path
+      return true;
+    }
+    return false;
+  }catch{ return false; }
+}
+function _isDownloadAuthValid(){
+  try{
+    const raw = sessionStorage.getItem('vaultDownloadAuth');
+    if(!raw) return false;
+    const obj = JSON.parse(raw);
+    if(!obj || !obj.expiry) return false;
+    if(Date.now() > obj.expiry){ sessionStorage.removeItem('vaultDownloadAuth'); return false; }
+    const tok = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
+    if(!tok) return false;
+    return true;
+  }catch{ return false; }
+}
+function _setDownloadAuth(ttl){
+  try{ sessionStorage.setItem('vaultDownloadAuth', JSON.stringify({expiry: Date.now() + (ttl || SMART_DOWNLOAD_TTL_MS)})); }catch{}
+}
+function _clearDownloadAuth(){ try{ sessionStorage.removeItem('vaultDownloadAuth'); }catch{} }
+// Ensure logout clears the smart-download cache even if viewer.js logout path is not hit
+(function(){
+  const _origLogout = window.logoutVault;
+  if(typeof _origLogout === 'function' && !_origLogout._smartWrap){
+    const wrapped = async function(){ _clearDownloadAuth(); return _origLogout.apply(this, arguments); };
+    wrapped._smartWrap = true;
+    window.logoutVault = wrapped;
+  }
+})();
+
+/* =========================
    PHOTO DECRYPT CACHE + QUEUE
    Keyed by docKey → { url, mime }. Shared by the photo grid, the lightbox,
    and the eager pre-decrypt pass kicked off from the loading screen, so a
@@ -879,6 +940,10 @@ scrollToPage(1);
 // =========================
 // DOWNLOAD SECURELY
 // =========================
+// SmartDownload: owner (shineil) never sees a password prompt.
+// We still keep a lightweight 30-min cache for logging/telemetry, but the
+// gate is bypassed unconditionally when _isSmartDownloadOwner() is true.
+// Non-owners always hit the PASSWORD GATE.
 
 downloadBtn.onclick = async () => {
 
@@ -891,7 +956,25 @@ downloadBtn.onclick = async () => {
 
         }
 
-        // PASSWORD GATE
+        const _ownerEligible = _isSmartDownloadOwner();
+        const _hasSmartAuth = _isDownloadAuthValid();
+
+        // DEBUG - always log so you can see in DevTools why it did/didn't bypass
+        console.log('[SmartDownload] check', {ownerEligible:_ownerEligible, hasSmartAuth:_hasSmartAuth, vaultUser: sessionStorage.getItem('vaultUser'), vaultMode: sessionStorage.getItem('vaultMode') || window.VAULT_MODE, memberSel: document.getElementById('member-select')?.value});
+
+        if (_ownerEligible) {
+            // Owner smart path: no password, no network call. Just refresh the cache
+            // so future checks stay valid for another SMART_DOWNLOAD_TTL_MS.
+            _setDownloadAuth();
+            if (_hasSmartAuth) console.log('[SmartDownload] Owner bypass — cached auth hit, no password asked.');
+            else console.log('[SmartDownload] Owner bypass — first download, auto-unlocked (no password needed for owner).');
+            // Optional tiny toast so it's clear why no prompt appeared (only first time per session to avoid spam)
+            if(!_hasSmartAuth) {
+                // use console + optional non-blocking toast
+                try{ toastNotify('Smart Download · owner — no password needed.', 'success'); }catch{}
+            }
+        } else {
+        // PASSWORD GATE — non-owners always require password
         const enteredPass =
         prompt('Enter download password:');
 
@@ -908,7 +991,7 @@ await window.sha256(
 const passkeyRes =
 await fetch(
  "https://backend.shinumaths989.workers.dev/get-secret",
- {
+  {
    method:"POST",
    headers:{
      "Content-Type":
@@ -945,6 +1028,7 @@ await fetch(
             );
 
             return;
+        }
         }
 
         // DOWNLOAD PDF

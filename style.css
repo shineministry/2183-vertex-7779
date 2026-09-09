@@ -3884,3 +3884,41 @@ html body:not(.dark-mode) .drive-search-wrap {
   background-color: #ffffff !important;
   border-color: #dadce0 !important;
 }
+
+
+/* Search bar visible and single-layer, ensure not clipped */
+.drive-topbar {
+  position: relative !important;
+  z-index: 2 !important;
+  margin: 12px 0 12px 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  overflow: visible !important;
+  flex-wrap: wrap !important;
+}
+.drive-search-wrap {
+  position: relative !important;
+  z-index: 3 !important;
+  overflow: visible !important;
+  flex: 1 1 320px !important;
+  min-width: 0 !important;
+  max-width: 720px !important;
+}
+#page-files .drive-topbar,
+#page-files .drive-search-wrap {
+  overflow: visible !important;
+}
+.content-view {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+
+html body.dark-mode #page-files .drive-search-wrap {
+  background: #2d2e30 !important;
+  background-color: #2d2e30 !important;
+  border-color: #5f6368 !important;
+}
+html body.dark-mode #page-files .drive-search-wrap input {
+  color: #e8eaed !important;
+}
