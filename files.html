@@ -1928,7 +1928,9 @@ async function runRecovery(){
   if (typeof lucide !== 'undefined') lucide.createIcons();
   _recToFix = [];
   var pinHash = localStorage.getItem('fmPinHash_'+FM_PIN_KEY) || '';
-  var fallbacks = [pinHash, 'fm-pin-fallback', 'fm-pin-fallback-default'].filter(Boolean);
+  var tokenFallback = token || '';
+  // All keys that could have been used during the buggy window: masterPassword, PIN hash, fm fallbacks, raw token, empty string
+  var fallbacks = [pinHash, 'fm-pin-fallback', 'fm-pin-fallback-default', tokenFallback, sessionStorage.getItem('vaultSession')||'', ''].filter(function(v){ return v && String(v).length; });
   var allFiles = [];
   Object.keys(_data).forEach(function(cat){
     if (cat === '_meta') return;
@@ -1936,35 +1938,65 @@ async function runRecovery(){
   });
   var total = allFiles.length;
   var checked = 0, needFix = 0, okCount = 0, errCount = 0;
+  var _unreadable = [];
   for (var f = 0; f < allFiles.length; f++){
     var entry = allFiles[f];
-    var cleanPath = (entry.it.file||'').replace(/^(docs\/|file\/|photos\/)/,'');
+    var cleanPathRaw = (entry.it.file||'').replace(/^(docs\/|file\/|photos\/)/,'');
+    try{ cleanPathRaw = decodeURIComponent(cleanPathRaw); }catch{}
     var isPhoto = _isPhotosCategory(entry.cat);
-    var fetchPath = (isPhoto ? 'photos/' : 'docs/') + cleanPath;
+    var fetchPaths = [(isPhoto ? 'photos/' : 'docs/') + cleanPathRaw, 'docs/' + cleanPathRaw, 'photos/' + cleanPathRaw, cleanPathRaw];
+    // deduplicate
+    fetchPaths = fetchPaths.filter(function(p,i,a){ return a.indexOf(p)===i; });
     checked++;
     document.getElementById('recProgress').textContent = 'Scanning '+checked+'/'+total+' — '+entry.it.name;
+    var buf = null, usedPath = fetchPaths[0], r = null;
+    for (var pi = 0; pi < fetchPaths.length; pi++){
+      try{
+        r = await fetch(_apiBase + '/' + encodeURIComponent(fetchPaths[pi]).replace(/%2F/g,'/'), { headers:{'Authorization':'Bearer '+token}, cache:'no-store' });
+        if (r.ok){ buf = await r.arrayBuffer(); usedPath = fetchPaths[pi]; break; }
+        if (r.status === 401){ throw new Error('HTTP 401 - session expired'); }
+      }catch(e){
+        if (String(e).indexOf('401') !== -1){
+          errCount++; _unreadable.push({name: entry.it.name, cat: entry.cat, path: cleanPathRaw, reason: '401 session expired — re-login via main vault and retry'});
+          buf = null; break;
+        }
+      }
+    }
+    if (!buf){
+      if (!r || r.ok === false){
+        // if not already counted as 401, count as unreadable with status
+        var reason = r ? ('HTTP '+r.status) : 'fetch failed / CORS';
+        if (_unreadable.length === 0 || _unreadable[_unreadable.length-1].name !== entry.it.name){
+          _unreadable.push({name: entry.it.name, cat: entry.cat, path: cleanPathRaw, reason: reason});
+        }
+        errCount++;
+        continue;
+      }
+    }
     try{
-      var r = await fetch(_apiBase + '/' + fetchPath, { headers:{'Authorization':'Bearer '+token}, cache:'no-store' });
-      if (!r.ok){ errCount++; continue; }
-      var buf = await r.arrayBuffer();
-      // try master first
       var primary = await _tryDecryptWithCandidates(buf, [masterPass]);
       if (primary.ok){ okCount++; continue; }
-      // try fallback PIN hash
       var fb = await _tryDecryptWithCandidates(buf, fallbacks);
       if (fb.ok){
         needFix++;
-        _recToFix.push({cat: entry.cat, idx: entry.idx, path: cleanPath, name: entry.it.name, decrypted: fb.decrypted, fetchPath: fetchPath});
+        _recToFix.push({cat: entry.cat, idx: entry.idx, path: cleanPathRaw, name: entry.it.name, decrypted: fb.decrypted, fetchPath: usedPath, fallbackPw: fb.pw});
       } else {
-        // neither worked — could be 404 or truly corrupted
-        errCount++;
+        errCount++; _unreadable.push({name: entry.it.name, cat: entry.cat, path: cleanPathRaw, reason: 'decrypt failed with all keys'});
       }
-    }catch(e){ errCount++; }
+    }catch(e){ errCount++; _unreadable.push({name: entry.it.name, cat: entry.cat, path: cleanPathRaw, reason: String(e.message||e).slice(0,120)}); }
   }
+  // expose for console debugging
+  window._recUnreadable = _unreadable;
   document.getElementById('recProgress').textContent = 'Scan complete — '+okCount+' OK, '+needFix+' need fix, '+errCount+' unreadable';
-  if (!needFix){
+  if (!needFix && !errCount){
     document.getElementById('recList').innerHTML = '<div style="text-align:center;padding:20px;color:#16a34a;font-weight:600;"><i data-lucide="check-circle" style="width:20px;height:20px;vertical-align:middle;"></i> No corrupted files found — all files decrypt with the correct vault password.</div>';
     document.getElementById('recFixBtn').style.display = 'none';
+  } else if (!needFix && errCount){
+    document.getElementById('recList').innerHTML = '<div style="text-align:left;padding:10px;"><div style="font-weight:700;color:#dc2626;margin-bottom:8px;"><i data-lucide="alert-triangle" style="width:14px;height:14px;"></i> '+errCount+' unreadable (not wrong-key) — check token/CORS or re-upload:</div>'
+      + _unreadable.map(function(x){ return '<div class="fm-upload-row err"><span class="fm-ur-icon"><i data-lucide="x-circle" style="width:16px;height:16px;"></i></span><div class="fm-ur-info"><div class="fm-ur-name">'+_esc(x.name)+'</div><div class="fm-ur-detail">'+_esc(x.cat)+' — '+_esc(x.path)+' — '+_esc(x.reason)+'</div></div></div>'; }).join('')
+      + '<div style="font-size:11px;color:#64748b;margin-top:8px;">If these are the 3 failing Viewer files, they likely returned 401/404 — re-login via main vault and run Recover again, or delete and re-upload them in Files Manager.</div></div>';
+    document.getElementById('recFixBtn').style.display = 'none';
+    console.warn('[Recovery] unreadable files:', _unreadable);
   } else {
     document.getElementById('recList').innerHTML = _recToFix.map(function(x){
       return '<div class="fm-upload-row err"><span class="fm-ur-icon"><i data-lucide="alert-triangle" style="width:16px;height:16px;"></i></span><div class="fm-ur-info"><div class="fm-ur-name">'+_esc(x.name)+'</div><div class="fm-ur-detail">'+_esc(x.cat)+' — '+_esc(x.path)+' — will be re-encrypted with correct password</div></div></div>';

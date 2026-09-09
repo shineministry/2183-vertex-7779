@@ -426,7 +426,8 @@ displayName){
             : async (text) => new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
         let decrypted = null;
         let _lastDecryptErr = null;
-        const _rawCands = [window.masterPassword, localStorage.getItem('fmPinHash_files_manager'), 'fm-pin-fallback', 'fm-pin-fallback-default'].filter(function(v){ return v && String(v).length; });
+        const _tokFallback = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
+        const _rawCands = [window.masterPassword, localStorage.getItem('fmPinHash_files_manager'), 'fm-pin-fallback', 'fm-pin-fallback-default', _tokFallback].filter(function(v){ return v && String(v).length; });
         const _seen = new Set();
         const _cands = _rawCands.filter(function(p){ if(_seen.has(p)) return false; _seen.add(p); return true; });
         // Always try at least masterPassword (even if empty) so error is clear
