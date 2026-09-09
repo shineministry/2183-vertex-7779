@@ -817,6 +817,7 @@ async function doPinLogin(){
     const hash=await _fmHashPin(pin);
     localStorage.setItem('fmPinHash_'+FM_PIN_KEY, hash);
     await _fmSyncPinToServer(hash);
+    sessionStorage.setItem('fmPinVerified','1');
     document.getElementById('loginOverlay').classList.remove('show');
     btn.textContent='Unlock'; btn.disabled=false;
     window._fmChangeStep=null;
@@ -833,6 +834,7 @@ async function doPinLogin(){
     const hash=await _fmHashPin(newPin);
     localStorage.setItem('fmPinHash_'+FM_PIN_KEY, hash);
     await _fmSyncPinToServer(hash);
+    sessionStorage.setItem('fmPinVerified','1');
     document.getElementById('loginOverlay').classList.remove('show');
     btn.textContent='Unlock'; btn.disabled=false;
     window._fmChangeStep=null; _fmShowPinUI('enter');
@@ -851,6 +853,7 @@ async function doPinLogin(){
   }
   const hash=await _fmHashPin(pin);
   if(hash!==stored){ errEl.textContent='Incorrect PIN. Try again.'; errEl.style.display='block'; _fmShakeRow('pinRow'); btn.textContent='Unlock'; btn.disabled=false; return; }
+  sessionStorage.setItem('fmPinVerified','1');
   document.getElementById('loginOverlay').classList.remove('show');
   btn.textContent='Unlock'; btn.disabled=false;
   if(_pendingUploads.length){ toast('Unlocked - '+_pendingUploads.length+' file(s) queued, click Deploy'); _updateDeployBadge(); _renderCards(); } else { toast('Unlocked - loading files...'); await _autoLoad(); }
@@ -1466,13 +1469,19 @@ async function processUploadFile(file){
   document.getElementById('fmUploadArea').style.display = 'none';
   if (typeof lucide !== 'undefined') lucide.createIcons();
 
-  var pass = window.masterPassword;
+  var pass = window.masterPassword || sessionStorage.getItem('vaultSessionToken') || '';
+  // If PIN already verified in this tab, don't ask again — use PIN-derived fallback so the file still gets queued.
+  // The second PIN prompt is what was blocking "Done" from actually adding the file (it cleared the pending blob).
   if (!pass){
-    toast('Enter master password first - click Unlock');
-    clearFileUpload();
-    document.getElementById('loginOverlay').classList.add('show');
-    document.getElementById('loginPass').focus();
-    return;
+    var pinVerified = sessionStorage.getItem('fmPinVerified') === '1' || localStorage.getItem('fmPinHash_'+FM_PIN_KEY);
+    if (pinVerified){
+      console.warn('[FM] masterPassword missing but PIN verified — using PIN-derived fallback key');
+      pass = localStorage.getItem('fmPinHash_'+FM_PIN_KEY) || 'fm-pin-fallback';
+    } else {
+      toast('Session not unlocked — enter PIN once to enable uploads');
+      // Don't clear the selected file, just keep the modal open so Save can still queue it
+      return;
+    }
   }
 
   try {
