@@ -39,13 +39,18 @@
 
 const ALLOWED_ORIGINS = new Set([
   "https://72oe-v2sx.shine-ministry.com",
+  "https://shineministry.github.io",
+  "https://72oe-vtsx.shineministry.github.io",
+  "https://2183-vertex-7779.shine-ministry.com",
   "https://shinevoicetv.github.io",
 
   // Sound Mixer Controller origins
   "http://localhost:8000",
   "http://127.0.0.1:8000",
   "http://localhost:3000",
-  "http://127.0.0.1:3000"
+  "http://127.0.0.1:3000",
+  "http://localhost:5500",
+  "http://127.0.0.1:5500"
 ]);
 
 // ─── R2 Sound Mixer API ──────────────────────────────────────────────
@@ -2900,11 +2905,11 @@ if (method === "POST" || method === "PUT") {
           url.pathname.startsWith("/photos/")
         )
       ) {
-        const cleanPath = url.pathname
+        let cleanPath = url.pathname
           .replace(/^\/docs\//, "")
           .replace(/^\/file\//, "")
           .replace(/^\/photos\//, "");
-
+        try { cleanPath = decodeURIComponent(cleanPath); } catch {}
         return Controllers.handleGetDoc(request, env, corsOrigin, cleanPath);
       }
 
