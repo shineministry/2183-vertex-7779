@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Correspondence — Shineil Keith Mathias</title>
+<title>Shine Mail Composer — Correspondence by Shineil Keith Mathias | Shine Ministry</title>
 <link rel="icon" type="image/png" href="Gmail.png">
+<meta name="description" content="Shine Mail Composer by Shine Ministry — compose styled HTML correspondence and send via Gmail API (gmail.send). No inbox access.">
+<link rel="canonical" href="https://72oe-v2sx.shine-ministry.com/email-composer.html">
 <style>
   :root{
     --ink:#1c2b2e;
@@ -275,12 +277,15 @@
 <div class="sheet">
   <header class="letterhead">
     <div class="who">
-      <h1>Shineil Keith Mathias</h1>
-      <p>Prospective Student · Privatgymnasium der Herz Jesu Missionare · Salzburg</p>
+      <h1>Shine Mail Composer</h1>
+      <p>by Shine Ministry · Shineil Keith Mathias — Prospective Student · Privatgymnasium der Herz Jesu Missionare · Salzburg</p>
       <p class="contact-line">shinumaths989@gmail.com &nbsp;·&nbsp; +91 86055 86173 &nbsp;·&nbsp; WhatsApp @shineil.mathias</p>
     </div>
     <div class="seal">SKM</div>
   </header>
+  <div style="background:#fffdf7;border-bottom:1px solid var(--line);padding:14px 44px;font-size:.85rem;color:#4a5568;line-height:1.6;">
+    <strong style="color:var(--navy);">Shine Mail Composer</strong> is a correspondence tool by <strong>Shine Ministry</strong> that composes styled HTML emails and sends them via your Gmail account using the Gmail API (<code>gmail.send</code> only — no inbox read). This page is public and does not require login. Learn how your data is handled: <a href="privacy.html" style="color:#2b6cb0;">Privacy Policy</a> · <a href="terms.html" style="color:#2b6cb0;">Terms of Service</a> · <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener" style="color:#2b6cb0;">Revoke access</a>
+  </div>
 
   <div class="content">
     <label style="margin-top:0;">Choose a starting point</label>
@@ -371,7 +376,7 @@
     <iframe id="renderedPreviewFrame"></iframe>
   </details>
 
-  <div class="footer-note">shinumaths989@gmail.com · +91 86055 86173 · WhatsApp @shineil.mathias</div>
+  <div class="footer-note">Shine Mail Composer · <a href="privacy.html" style="color:var(--brass-dark);">Privacy Policy</a> · <a href="terms.html" style="color:var(--brass-dark);">Terms</a> · shinumaths989@gmail.com · +91 86055 86173 · WhatsApp @shineil.mathias</div>
 </div>
 
 <script>
@@ -1184,19 +1189,28 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
         }))
       })
     });
-    const data = await res.json();
+    let data = {};
+    try { data = await res.json(); } catch { data = { error: await res.text().catch(() => "unknown error") }; }
 
     if (res.ok && data.success) {
       statusMsg.style.color = '#33544a';
       statusMsg.textContent = "Sent ✓";
       saveHistoryEntry(to, subject);
     } else {
+      const rawError = data.error || data.message || "unknown error";
+      const rawStr = String(rawError);
       statusMsg.style.color = '#8a3a2b';
-      statusMsg.textContent = "Failed to send: " + (data.error || "unknown error");
+      // invalid_grant = Gmail OAuth refresh token expired/revoked — surface actionable guidance instead of raw JSON
+      if (rawStr.includes('invalid_grant') || rawStr.includes('Failed to refresh access token')) {
+        console.error('[email-composer] Gmail OAuth refresh failed:', rawStr);
+        statusMsg.textContent = "Email worker's Gmail token expired (invalid_grant). Fix: regenerate the OAuth refresh token for https://email.shinumaths909.workers.dev and update its Cloudflare secrets (CLIENT_ID / CLIENT_SECRET / REFRESH_TOKEN), then redeploy. If the app is in Google Cloud 'Testing' mode, publish it to 'In production' to avoid 7-day expiry. See console for raw error.";
+      } else {
+        statusMsg.textContent = "Failed to send: " + rawStr;
+      }
     }
   } catch (err) {
     statusMsg.style.color = '#8a3a2b';
-    statusMsg.textContent = "Network error — check the backend URL and try again.";
+    statusMsg.textContent = "Network error — check the backend URL and try again. (" + (err && err.message ? err.message : String(err)) + ")";
   } finally {
     sendBtn.disabled = false;
     sendBtn.textContent = "Send now";
