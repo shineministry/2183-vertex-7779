@@ -1179,10 +1179,15 @@ function buildDesignedEmailHtml(){
       const activeBg = idx===0 ? '#1a365d' : '#e2e8f0';
       const activeColor = idx===0 ? '#ffffff' : '#4a5568';
       labels += `<label for="${id}" style="display:inline-block; padding:6px 12px; margin:2px; font-family:Helvetica,Arial,sans-serif; font-size:8.5pt; font-weight:600; color:${activeColor}; background:${activeBg}; border-radius:12px; cursor:pointer; border:1px solid #cbd5e0;">${langNames[lang]||lang}</label>`;
-      // For original en, use real bodyHtml; for others, create a local-AI translated copy (client-side will replace, but pre-fill with original + note)
+      // For original en, use real bodyHtml; for others, local dictionary translation (offline AI)
       let content = bodyHtml;
       if (lang !== 'en') {
-        content = `<p style="margin:0 0 8px; font-size:8pt; color:#718096; font-style:italic;">&#127760; ${langNative[lang]||lang} — translated locally on device (offline AI). If this section shows English, open “View in Browser” and select ${langNames[lang]} for full translation.</p>` + bodyHtml;
+        let translated = localTranslateHtml(bodyHtml, lang);
+        if (translated !== bodyHtml) {
+          content = `<p style="margin:0 0 8px; font-size:8pt; color:#718096; font-style:italic;">&#127760; ${langNative[lang]||lang} — offline AI translation</p>` + translated;
+        } else {
+          content = `<p style="margin:0 0 8px; font-size:8pt; color:#718096; font-style:italic;">&#127760; ${langNative[lang]||lang} — offline AI (no dictionary match, showing original)</p>` + bodyHtml;
+        }
         content = htmlToAsciiSafe(content);
       }
       // Gmail strips <style>, so no inline display:none — fallback shows all languages stacked (usable). Clients with <style> hide via CSS and radio shows selected.
@@ -1335,6 +1340,59 @@ function htmlToAsciiSafe(html){
   // Convert any remaining non-ASCII text outside tags to numeric entities.
   // Tags/attributes are ASCII, so a global replace is safe and keeps HTML ASCII-only.
   return html.replace(/[^\x00-\x7F]/g, c => `&#${c.charCodeAt(0)};`);
+}
+const LOCAL_TRANSLATIONS = {
+  de: [
+    ["Dear Sir/Madam,", "Sehr geehrte Damen und Herren,"],
+    ["I hope this email finds you well.", "Ich hoffe, es geht Ihnen gut."],
+    ["My name is", "Mein Name ist"],
+    ["and I am writing to enquire about", "und ich schreibe, um anzufragen bezüglich"],
+    ["[insert topic here]", "[Thema hier einfügen]"],
+    ["[Add the details of your request here.]", "[Fügen Sie hier die Details Ihrer Anfrage ein.]"],
+    ["I would be grateful for your response at your earliest convenience, and I am happy to provide any further information that may be required.", "Ich wäre Ihnen für eine baldige Rückmeldung sehr dankbar und stelle gerne weitere Informationen zur Verfügung."],
+    ["Thank you very much for your time and consideration.", "Vielen Dank für Ihre Zeit und Ihre Berücksichtigung."],
+    ["Yours sincerely,", "Mit freundlichen Grüßen,"],
+    ["Enquiry Regarding [Subject]", "Anfrage bezüglich [Betreff]"],
+    ["Following Up: [Original Subject]", "Nachfassung: [Originaler Betreff]"],
+    ["Unsubscribe Request", "Abmeldeanfrage"]
+  ],
+  fr: [
+    ["Dear Sir/Madam,", "Madame, Monsieur,"],
+    ["I hope this email finds you well.", "J'espère que vous allez bien."],
+    ["My name is", "Je m'appelle"],
+    ["and I am writing to enquire about", "et je vous écris pour me renseigner concernant"],
+    ["Thank you very much for your time and consideration.", "Merci beaucoup pour votre temps et votre considération."],
+    ["Yours sincerely,", "Veuillez agréer, Madame, Monsieur, l'expression de mes salutations distinguées,"]
+  ],
+  hi: [
+    ["Dear Sir/Madam,", "प्रिय महोदय/महोदया,"],
+    ["I hope this email finds you well.", "आशा है आप कुशल होंगे।"],
+    ["My name is", "मेरा नाम"],
+    ["Thank you very much for your time and consideration.", "आपके समय और विचार के लिए बहुत धन्यवाद।"],
+    ["Yours sincerely,", "भवदीय,"]
+  ],
+  es: [
+    ["Dear Sir/Madam,", "Estimados señores,"],
+    ["I hope this email finds you well.", "Espero que se encuentre bien."],
+    ["My name is", "Mi nombre es"],
+    ["Thank you very much for your time and consideration.", "Muchas gracias por su tiempo y consideración."],
+    ["Yours sincerely,", "Atentamente,"]
+  ],
+  it: [
+    ["Dear Sir/Madam,", "Gentili Signore e Signori,"],
+    ["I hope this email finds you well.", "Spero che stiate bene."],
+    ["My name is", "Mi chiamo"],
+    ["Thank you very much for your time and consideration.", "Grazie mille per il vostro tempo e la vostra considerazione."],
+    ["Yours sincerely,", "Cordiali saluti,"]
+  ]
+};
+function localTranslateHtml(html, lang){
+  if (!lang || lang==='en' || !LOCAL_TRANSLATIONS[lang]) return html;
+  let out = html;
+  LOCAL_TRANSLATIONS[lang].forEach(([en, tr]) => {
+    out = out.split(en).join(tr);
+  });
+  return out;
 }
 function encodeSubjectHeader(str){
   if (/^[\x00-\x7F]*$/.test(str)) return str;
