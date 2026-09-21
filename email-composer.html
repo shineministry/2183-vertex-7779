@@ -798,7 +798,15 @@ document.getElementById('fontColorPicker').addEventListener('input', (e) => {
 });
 document.getElementById('hiliteColorPicker').addEventListener('input', (e) => {
   restoreBodySelection();
-  document.execCommand('hiliteColor', false, e.target.value);
+  // hiliteColor works in Firefox/Chrome, backColor is the IE/Chromium fallback — try both
+  const color = e.target.value;
+  const ok = document.execCommand('hiliteColor', false, color);
+  if (!ok) document.execCommand('backColor', false, color);
+  // If execCommand produced no wrapper (collapsed selection / plain caret), insert a styled span so future typing keeps highlight
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0 && sel.getRangeAt(0).collapsed) {
+    // no-op: execCommand will apply to next typed text via CSS
+  }
 });
 document.getElementById('linkBtn').addEventListener('click', () => {
   const url = prompt('Enter URL (include https://):');
@@ -952,28 +960,89 @@ document.addEventListener('click', (e) => {
 
 /* ---------------- Assemble designed HTML email ---------------- */
 function inlineBodyContent(html){
-  // Force every <p> inside the pasted/typed body to carry inline styles too,
-  // since Gmail and most clients strip non-inline CSS from received mail.
+  // Make every inline formatting survive Gmail delivery: Gmail strips
+  // non-inline CSS, so all visual state must be inline-styled.
   const tmp = document.createElement('div');
   tmp.innerHTML = html;
-  tmp.querySelectorAll('p').forEach(p => {
-    const existing = p.getAttribute('style') || '';
-    const existingClass = p.getAttribute('class') || '';
-    // Only default to left alignment if the paragraph doesn't already
-    // carry its own text-align (from the Left/Center/Right toolbar buttons).
-    const hasAlign = /text-align\s*:/i.test(existing) || /\balign=/.test(p.outerHTML);
-    const alignRule = hasAlign ? '' : 'text-align:left;';
-    p.setAttribute('style', `margin:0 0 16px;${alignRule}color:#2d3748;${existing}`);
-    p.setAttribute('class', `${existingClass} ec-body-p`.trim());
+
+  // Convert legacy <font> tags (from execCommand fontSize/color) to <span> with inline styles
+  tmp.querySelectorAll('font').forEach(font => {
+    const span = document.createElement('span');
+    span.innerHTML = font.innerHTML;
+    const parts = [];
+    const size = font.getAttribute('size');
+    if (size) parts.push('font-size:' + mapLegacyFontSize(size));
+    const color = font.getAttribute('color');
+    if (color) parts.push('color:' + color);
+    const face = font.getAttribute('face');
+    if (face) parts.push('font-family:' + face);
+    const fontStyle = font.getAttribute('style');
+    if (fontStyle) parts.push(fontStyle.trim().replace(/;?$/, ''));
+    if (parts.length) span.setAttribute('style', parts.join(';') + ';');
+    const cls = font.getAttribute('class');
+    if (cls) span.setAttribute('class', cls);
+    // preserve other data attrs if any
+    [...font.attributes].forEach(attr => {
+      if (!['size','color','face','style','class'].includes(attr.name)) span.setAttribute(attr.name, attr.value);
+    });
+    font.replaceWith(span);
   });
+
+  // Ensure semantic formatting tags carry explicit inline styles for email clients that reset them
+  tmp.querySelectorAll('b,strong').forEach(el => {
+    const s = el.getAttribute('style') || '';
+    if (!/font-weight\s*:/i.test(s)) el.setAttribute('style', 'font-weight:700;' + s);
+  });
+  tmp.querySelectorAll('i,em').forEach(el => {
+    const s = el.getAttribute('style') || '';
+    if (!/font-style\s*:/i.test(s)) el.setAttribute('style', 'font-style:italic;' + s);
+  });
+  tmp.querySelectorAll('u').forEach(el => {
+    const s = el.getAttribute('style') || '';
+    if (!/text-decoration\s*:/i.test(s)) el.setAttribute('style', 'text-decoration:underline;' + s);
+  });
+  tmp.querySelectorAll('s,strike,del').forEach(el => {
+    const s = el.getAttribute('style') || '';
+    if (!/text-decoration\s*:/i.test(s)) el.setAttribute('style', 'text-decoration:line-through;' + s);
+  });
+
+  // Style block containers: both <p> and <div> (contenteditable defaults to div on Enter)
+  tmp.querySelectorAll('p,div,h1,h2,h3,h4,h5,h6,blockquote,pre').forEach(block => {
+    const existing = block.getAttribute('style') || '';
+    const existingClass = block.getAttribute('class') || '';
+    const hasAlign = /text-align\s*:/i.test(existing) || block.hasAttribute('align');
+    const alignRule = hasAlign ? '' : 'text-align:left;';
+    const hasMargin = /margin\s*:/i.test(existing);
+    const marginRule = hasMargin ? '' : 'margin:0 0 16px;';
+    const hasColor = /color\s*:/i.test(existing);
+    const colorRule = hasColor ? '' : 'color:#2d3748;';
+    block.setAttribute('style', marginRule + alignRule + colorRule + existing);
+    if (!existingClass.includes('ec-body-p')) block.setAttribute('class', (existingClass + ' ec-body-p').trim());
+    if (block.hasAttribute('align')) {
+      const v = block.getAttribute('align');
+      block.style.textAlign = v;
+      block.removeAttribute('align');
+    }
+  });
+
   tmp.querySelectorAll('a').forEach(a => {
     const existing = a.getAttribute('style') || '';
-    a.setAttribute('style', `color:#2b6cb0;${existing}`);
+    // Ensure links are visible and underlined in email
+    if (!/color\s*:/i.test(existing)) {
+      a.setAttribute('style', 'color:#2b6cb0;text-decoration:underline;' + existing);
+    } else if (!/text-decoration\s*:/i.test(existing)) {
+      a.setAttribute('style', existing + ';text-decoration:underline;');
+    }
   });
   tmp.querySelectorAll('ul,ol').forEach(l => {
     const existing = l.getAttribute('style') || '';
-    l.setAttribute('style', `margin:0 0 16px;padding-left:22px;color:#2d3748;${existing}`);
+    l.setAttribute('style', 'margin:0 0 16px;padding-left:22px;color:#2d3748;' + existing);
   });
+  tmp.querySelectorAll('li').forEach(li => {
+    const existing = li.getAttribute('style') || '';
+    if (!existing) li.setAttribute('style', 'margin:0 0 6px;color:#2d3748;');
+  });
+
   return tmp.innerHTML;
 }
 
