@@ -335,9 +335,9 @@
     <label for="enclosuresInput">Enclosures / Notes (optional)</label>
     <input type="text" id="enclosuresInput" placeholder="e.g. Encl. (11): Birth cert., Passport copy..." style="width:100%; padding:9px 12px; font-family:inherit; font-size:0.88rem; border:1px solid var(--line); background:#fffdf7; color:var(--ink); border-radius:2px;">
     <label style="display:flex; align-items:center; gap:8px; margin-top:14px; font-size:0.82rem; text-transform:none; letter-spacing:0; cursor:pointer;">
-      <input type="checkbox" id="enableTranslate" style="width:16px; height:16px; accent-color:var(--brass);"> Enable local AI translation bar for recipient (let them select language to translate)
+      <input type="checkbox" id="enableTranslate" checked style="width:16px; height:16px; accent-color:var(--brass);"> Enable local AI translation bar for recipient (let them select language to translate)
     </label>
-    <div id="translateOptions" style="display:none; margin-top:8px; padding:10px 12px; background:#f7fafc; border:1px solid var(--line); border-radius:4px;">
+    <div id="translateOptions" style="display:block; margin-top:8px; padding:10px 12px; background:#f7fafc; border:1px solid var(--line); border-radius:4px;">
       <div style="font-size:0.78rem; color:var(--brass-dark); margin-bottom:6px;">Offer translations in (original is English):</div>
       <div style="display:flex; flex-wrap:wrap; gap:10px; font-size:0.82rem;">
         <label style="display:flex; gap:4px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0; margin:0;"><input type="checkbox" value="de" checked> Deutsch</label>
@@ -1182,27 +1182,24 @@ function buildDesignedEmailHtml(){
       // For original en, use real bodyHtml; for others, create a local-AI translated copy (client-side will replace, but pre-fill with original + note)
       let content = bodyHtml;
       if (lang !== 'en') {
-        // Placeholder that local AI will replace on View in Browser; for email CSS version we show a note + original
-        content = `<p style="margin:0 0 8px; font-size:8pt; color:#718096; font-style:italic;">&#127760; ${langNative[lang]||lang} — translated locally on device (offline AI). If not translated, open “View in Browser” and select ${langNames[lang]}.</p>` + bodyHtml;
+        content = `<p style="margin:0 0 8px; font-size:8pt; color:#718096; font-style:italic;">&#127760; ${langNative[lang]||lang} — translated locally on device (offline AI). If this section shows English, open “View in Browser” and select ${langNames[lang]} for full translation.</p>` + bodyHtml;
         content = htmlToAsciiSafe(content);
       }
-      const display = idx===0 ? 'block' : 'none';
-      sections += `<div class="ec-lang ec-lang-${lang}" data-lang="${lang}" style="display:${display};">${content}</div>`;
+      // Gmail strips <style>, so no inline display:none — fallback shows all languages stacked (usable). Clients with <style> hide via CSS and radio shows selected.
+      sections += `<div class="ec-lang ec-lang-${lang}" data-lang="${lang}"><div style="font-size:8pt; color:#1a365d; font-weight:700; margin:0 0 8px; padding:6px 10px; background:#eef2f7; border-radius:6px;">${langNames[lang]||lang} — ${lang==='en'?'Original':'Translation'}</div>${content}</div>`;
     });
-    // CSS to switch via radio :checked (works in Apple Mail, iOS Mail, etc.; Gmail strips but fallback shows English)
-    const cssRules = ordered.map(lang => `#ec-lang-${lang}:checked ~ .ec-lang-wrap .ec-lang-${lang} {display:block !important;} #ec-lang-${lang}:checked ~ .ec-lang-wrap .ec-lang {display:none !important;} #ec-lang-${lang}:checked ~ .ec-lang-wrap .ec-lang-${lang} {display:block !important;}`).join(' ');
-    // Wrap radios+labels+sections in a table for email safety
+    // Wrap radios+labels+sections — Gmail-safe: radios hidden, labels visible, sections all visible if <style> stripped (fallback), interactive where <style> kept
     translateBarHtml = `
       <div style="margin:0 0 16px; padding:10px; background:#eef2f7; border:1px solid #cbd5e0; border-radius:8px; text-align:center;">
-        <div style="font-family:Helvetica,Arial,sans-serif; font-size:8pt; color:#4a5568; margin-bottom:6px; letter-spacing:0.3px;">&#127760; Translate locally — select language (offline AI, no data leaves device)</div>
+        <div style="font-family:Helvetica,Arial,sans-serif; font-size:8pt; color:#4a5568; margin-bottom:6px; letter-spacing:0.3px;">&#127760; Translate locally — tap language (offline AI, no data leaves device). In Gmail all versions are shown below — scroll to yours. In Apple Mail/Preview, tap to switch.</div>
         <div>${labels}</div>
       </div>
       <style>
         .ec-lang {display:none;}
         .ec-lang-en {display:block;}
-        ${ordered.map(lang => `#ec-lang-${lang}:checked ~ .ec-lang-wrap .ec-lang-${lang} {display:block !important;}`).join(' ')}
         ${ordered.map(lang => `#ec-lang-${lang}:checked ~ .ec-lang-wrap .ec-lang {display:none !important;}`).join(' ')}
         ${ordered.map(lang => `#ec-lang-${lang}:checked ~ .ec-lang-wrap .ec-lang-${lang} {display:block !important;}`).join(' ')}
+        /* Gmail strips this <style>, so fallback is all languages visible stacked — still usable */
       </style>
     `;
     // We need radios as siblings of the wrap for ~ to work — so structure: radios, bar, wrap
