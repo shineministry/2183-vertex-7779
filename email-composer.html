@@ -1453,21 +1453,19 @@ async function googleTranslateText(text, targetLang){
   return text;
 }
 async function googleTranslateHtml(html, targetLang){
-  // Try dictionary first — instant
-  const dict = localTranslateHtml(html, targetLang);
-  if(dict !== html) return dict;
-  // Fallback to Google Translate per text node (preserves <b>/<i>/<u> etc.)
+  // Apply local dictionary first for instant known phrases, then Google for remaining English
+  let dictHtml = localTranslateHtml(html, targetLang);
   const tmp = document.createElement('div');
-  tmp.innerHTML = html;
+  tmp.innerHTML = dictHtml;
   const walker = document.createTreeWalker(tmp, NodeFilter.SHOW_TEXT, null);
   const nodes = [];
   let n;
-  while(n = walker.nextNode()){ if(n.nodeValue.trim()) nodes.push(n); }
+  while(n = walker.nextNode()){ if(n.nodeValue.trim() && /[a-zA-Z]/.test(n.nodeValue)) nodes.push(n); }
   for(const node of nodes){
     const orig = node.nodeValue;
     try{
       const tr = await googleTranslateText(orig, targetLang);
-      node.nodeValue = tr;
+      if(tr && tr !== orig) node.nodeValue = tr;
     }catch(e){}
   }
   return tmp.innerHTML;
