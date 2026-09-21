@@ -1068,12 +1068,13 @@ function buildDesignedEmailHtml(){
   const to = toEl.value.trim();
   const rawBodyHtml = getBodyHtml();
   const bodyFontSize = extractDominantFontSize(rawBodyHtml);
-  const bodyHtml = inlineBodyContent(rawBodyHtml);
+  let bodyHtml = inlineBodyContent(rawBodyHtml);
+  bodyHtml = htmlToAsciiSafe(bodyHtml);
   const salutationHtml = currentSalutation
-    ? `<p style="margin:0 0 16px;color:#2d3748;font-size:${bodyFontSize};"><b><i>${escapeHtml(currentSalutation)}</i></b></p>`
+    ? `<p style="margin:0 0 16px;color:#2d3748;font-size:${bodyFontSize};"><b><i>${escapeHtmlWithEntities(currentSalutation)}</i></b></p>`
     : '';
   const closingHtml = currentClosing
-    ? `<p style="margin:16px 0 0;color:#2d3748;font-size:${bodyFontSize};"><b><i>${escapeHtml(currentClosing)}</i></b></p>`
+    ? `<p style="margin:16px 0 0;color:#2d3748;font-size:${bodyFontSize};"><b><i>${escapeHtmlWithEntities(currentClosing)}</i></b></p>`
     : '';
   const dateStr = new Date().toLocaleString(undefined, { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 
@@ -1084,20 +1085,20 @@ function buildDesignedEmailHtml(){
     ? `<tr><td style="padding:0;">
          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;background-color:#f7fafc;border:1px solid #e2e8f0;border-left:4px solid #3182ce;border-radius:8px;">
            <tr><td style="padding:16px 20px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:9.5pt;color:#4a5568;">
-             <b style="color:#1a365d;">Attachments (${attachments.length}):</b> ${attachments.map(a => escapeHtml(a.name)).join(', ')}
+             <b style="color:#1a365d;">Attachments (${attachments.length}):</b> ${attachments.map(a => escapeHtmlWithEntities(a.name)).join(', ')}
            </td></tr>
          </table>
        </td></tr>`
     : '';
 
-  return `<!DOCTYPE html>
+  let fullHtml = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
-<title>${escapeHtml(subject)}</title>
+<title>${escapeHtmlWithEntities(subject)}</title>
 <style>
   body{margin:0;padding:0;}
   table{border-collapse:collapse;}
@@ -1135,14 +1136,14 @@ function buildDesignedEmailHtml(){
         <tr><td class="ec-meta-label" style="padding:2px 0;vertical-align:top;font-size:8pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;color:#f6ad55;letter-spacing:0.5px;text-transform:uppercase;">From</td></tr>
         <tr><td class="ec-meta-value" style="padding:0 0 10px;vertical-align:top;color:#e2e8f0;font-size:10pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">Shineil Keith Mathias &lt;shinumaths989@gmail.com&gt;</td></tr>
         <tr><td class="ec-meta-label" style="padding:2px 0;vertical-align:top;font-size:8pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;color:#f6ad55;letter-spacing:0.5px;text-transform:uppercase;">To</td></tr>
-        <tr><td class="ec-meta-value" style="padding:0 0 10px;vertical-align:top;color:#e2e8f0;font-size:10pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">${escapeHtml(to)}</td></tr>
+        <tr><td class="ec-meta-value" style="padding:0 0 10px;vertical-align:top;color:#e2e8f0;font-size:10pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">${escapeHtmlWithEntities(to)}</td></tr>
         <tr><td class="ec-meta-label" style="padding:2px 0;vertical-align:top;font-size:8pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;color:#f6ad55;letter-spacing:0.5px;text-transform:uppercase;">Date</td></tr>
         <tr><td class="ec-meta-value" style="padding:0;vertical-align:top;color:#e2e8f0;font-size:10pt;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">${dateStr}</td></tr>
       </table>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#22436b" style="margin-top:16px;background-color:#22436b;border-left:3px solid #d69e2e;border-radius:0 6px 6px 0;">
         <tr><td bgcolor="#22436b" style="background-color:#22436b;padding:10px 16px;">
           <div class="ec-subject-eyebrow" style="font-size:7.5pt;color:#f6ad55;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Subject</div>
-          <div class="ec-subject-line" style="font-size:10.5pt;font-weight:bold;color:#ffffff;margin-top:3px;letter-spacing:0.3px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">${escapeHtml(subject)}</div>
+          <div class="ec-subject-line" style="font-size:10.5pt;font-weight:bold;color:#ffffff;margin-top:3px;letter-spacing:0.3px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;word-break:break-word;">${escapeHtmlWithEntities(subject)}</div>
         </td></tr>
       </table>
     </td>
@@ -1170,12 +1171,35 @@ function buildDesignedEmailHtml(){
 </table>
 </body>
 </html>`;
+  return htmlToAsciiSafe(fullHtml);
 }
 
 function escapeHtml(str){
   const d = document.createElement('div');
   d.textContent = str;
   return d.innerHTML;
+}
+function escapeHtmlWithEntities(str){
+  // escapeHtml + numeric entities for any non-ASCII (German umlauts etc.)
+  // so the resulting HTML is pure ASCII and survives naive btoa / double-UTF8 bugs in the mail worker
+  const escaped = escapeHtml(str);
+  return escaped.replace(/[^\x00-\x7F]/g, c => `&#${c.charCodeAt(0)};`);
+}
+function htmlToAsciiSafe(html){
+  // Convert any remaining non-ASCII text outside tags to numeric entities.
+  // Tags/attributes are ASCII, so a global replace is safe and keeps HTML ASCII-only.
+  return html.replace(/[^\x00-\x7F]/g, c => `&#${c.charCodeAt(0)};`);
+}
+function encodeSubjectHeader(str){
+  if (/^[\x00-\x7F]*$/.test(str)) return str;
+  try {
+    const bytes = new TextEncoder().encode(str);
+    let binary = '';
+    bytes.forEach(b => binary += String.fromCharCode(b));
+    return `=?UTF-8?B?${btoa(binary)}?=`;
+  } catch {
+    return `=?UTF-8?B?${btoa(unescape(encodeURIComponent(str)))}?=`;
+  }
 }
 
 /* Live preview */
@@ -1238,6 +1262,7 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
 
   const html = buildDesignedEmailHtml();
   const text = assembleEmailPlain();
+  const subjectHeader = encodeSubjectHeader(subject);
 
   sendBtn.disabled = true;
   sendBtn.textContent = "Sending…";
@@ -1247,12 +1272,12 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
   try {
     const res = await fetch(SEND_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({
         to,
-        subject,
+        subject: subjectHeader,
         body: text,        // plain-text fallback
-        html,               // designed HTML version — requires backend support, see note below
+        html,               // ASCII-safe HTML (non-ASCII as &#...;) — survives naive btoa in worker
         attachments: attachments.map(a => ({
           filename: a.name,
           type: a.type,
