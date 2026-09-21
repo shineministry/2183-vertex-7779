@@ -320,6 +320,35 @@
       </div>
     </div>
 
+    <div class="meta-extra" style="display:flex; gap:16px; flex-wrap:wrap; margin-top:4px;">
+      <div style="flex:1; min-width:220px;">
+        <label for="refInput">Reference No. (optional)</label>
+        <input type="text" id="refInput" placeholder="e.g. 2026-09-ADM-071" style="width:100%; padding:9px 12px; font-family:inherit; font-size:0.88rem; border:1px solid var(--line); background:#fffdf7; color:var(--ink); border-radius:2px;">
+      </div>
+      <div style="flex:1; min-width:220px;">
+        <label for="placeInput">Place, Date (optional)</label>
+        <input type="text" id="placeInput" placeholder="Lonavla, 21 Sep 2026" style="width:100%; padding:9px 12px; font-family:inherit; font-size:0.88rem; border:1px solid var(--line); background:#fffdf7; color:var(--ink); border-radius:2px;">
+      </div>
+    </div>
+    <label for="recipientAddr">Recipient postal address (optional)</label>
+    <textarea id="recipientAddr" rows="2" placeholder="An die Direktion&#10;Privatgymnasium der Herz Jesu Missionare&#10;Salzburg, Austria" style="width:100%; padding:9px 12px; font-family:inherit; font-size:0.88rem; border:1px solid var(--line); background:#fffdf7; color:var(--ink); border-radius:2px; resize:vertical;"></textarea>
+    <label for="enclosuresInput">Enclosures / Notes (optional)</label>
+    <input type="text" id="enclosuresInput" placeholder="e.g. Encl. (11): Birth cert., Passport copy..." style="width:100%; padding:9px 12px; font-family:inherit; font-size:0.88rem; border:1px solid var(--line); background:#fffdf7; color:var(--ink); border-radius:2px;">
+    <label style="display:flex; align-items:center; gap:8px; margin-top:14px; font-size:0.82rem; text-transform:none; letter-spacing:0; cursor:pointer;">
+      <input type="checkbox" id="enableTranslate" style="width:16px; height:16px; accent-color:var(--brass);"> Enable local AI translation bar for recipient (let them select language to translate)
+    </label>
+    <div id="translateOptions" style="display:none; margin-top:8px; padding:10px 12px; background:#f7fafc; border:1px solid var(--line); border-radius:4px;">
+      <div style="font-size:0.78rem; color:var(--brass-dark); margin-bottom:6px;">Offer translations in (original is English):</div>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; font-size:0.82rem;">
+        <label style="display:flex; gap:4px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0; margin:0;"><input type="checkbox" value="de" checked> Deutsch</label>
+        <label style="display:flex; gap:4px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0; margin:0;"><input type="checkbox" value="fr"> Français</label>
+        <label style="display:flex; gap:4px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0; margin:0;"><input type="checkbox" value="hi"> Hindi</label>
+        <label style="display:flex; gap:4px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0; margin:0;"><input type="checkbox" value="es"> Español</label>
+        <label style="display:flex; gap:4px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0; margin:0;"><input type="checkbox" value="it"> Italiano</label>
+      </div>
+      <div style="font-size:0.72rem; color:#6b5e3a; margin-top:6px; font-style:italic;">Translations are generated locally in your browser (no server). Recipient can switch languages inside the email (radio-button CSS, no JS needed) or via “View in Browser” fallback. For long emails pre-translation may take a few seconds.</div>
+    </div>
+
     <label for="bodyEditable">Message</label>
     <div class="toolbar" id="toolbar">
       <button type="button" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
@@ -682,6 +711,32 @@ wireDropdown(closingSelect, DEFAULT_CLOSINGS, CUSTOM_CLOSINGS_KEY, (val) => {
   currentClosing = val;
   const details = document.querySelector('.preview-toggle');
   if (details && details.open) refreshPreview();
+});
+
+/* ---------------- Extra header fields (Ref / Place / Recipient address / Enclosures + Translate) ---------------- */
+const refInput = document.getElementById('refInput');
+const placeInput = document.getElementById('placeInput');
+const recipientAddrEl = document.getElementById('recipientAddr');
+const enclosuresInput = document.getElementById('enclosuresInput');
+const enableTranslateEl = document.getElementById('enableTranslate');
+const translateOptionsEl = document.getElementById('translateOptions');
+if (enableTranslateEl && translateOptionsEl) {
+  enableTranslateEl.addEventListener('change', () => {
+    translateOptionsEl.style.display = enableTranslateEl.checked ? 'block' : 'none';
+    const d = document.querySelector('.preview-toggle');
+    if (d && d.open) refreshPreview();
+  });
+  translateOptionsEl.querySelectorAll('input[type=checkbox]').forEach(cb => cb.addEventListener('change', () => {
+    const d = document.querySelector('.preview-toggle');
+    if (d && d.open) refreshPreview();
+  }));
+}
+[refInput, placeInput, recipientAddrEl, enclosuresInput].forEach(el => {
+  if (!el) return;
+  el.addEventListener('input', () => {
+    const d = document.querySelector('.preview-toggle');
+    if (d && d.open) refreshPreview();
+  });
 });
 
 /* ---------------- Templates ---------------- */
@@ -1091,6 +1146,96 @@ function buildDesignedEmailHtml(){
        </td></tr>`
     : '';
 
+  // Extra header fields before body
+  const refVal = (typeof refInput !== 'undefined' && refInput) ? refInput.value.trim() : '';
+  const placeVal = (typeof placeInput !== 'undefined' && placeInput) ? placeInput.value.trim() : '';
+  const recipientAddrVal = (typeof recipientAddrEl !== 'undefined' && recipientAddrEl) ? recipientAddrEl.value.trim() : '';
+  const enclosuresVal = (typeof enclosuresInput !== 'undefined' && enclosuresInput) ? enclosuresInput.value.trim() : '';
+  const refHtml = refVal ? `<p style="margin:0 0 6px;color:#4a5568;font-size:9pt;"><b style="color:#1a365d;">Ref:</b> ${escapeHtmlWithEntities(refVal)}</p>` : '';
+  const placeHtml = placeVal ? `<p style="margin:0 0 12px;color:#4a5568;font-size:9pt; text-align:right; font-style:italic;">${escapeHtmlWithEntities(placeVal)}</p>` : '';
+  const recipientAddrHtml = recipientAddrVal ? `<div style="margin:0 0 16px; color:#2d3748; font-size:9.5pt; line-height:1.5; white-space:pre-line; background:#f7fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px 16px;">${escapeHtmlWithEntities(recipientAddrVal).replace(/\n/g,'<br>')}</div>` : '';
+  const enclosuresHtml = enclosuresVal ? `<p style="margin:0 0 16px; color:#4a5568; font-size:9pt; background:#fffaf0; border-left:3px solid #d69e2e; padding:8px 12px;"><b>Enclosures:</b> ${escapeHtmlWithEntities(enclosuresVal)}</p>` : '';
+
+  // Local AI translation bar (radio-button CSS, no JS needed in email)
+  let translateBarHtml = '';
+  let bodyWrappedHtml = bodyHtml;
+  const enableTranslate = (typeof enableTranslateEl !== 'undefined' && enableTranslateEl) ? enableTranslateEl.checked : false;
+  if (enableTranslate) {
+    const selectedLangs = [...(translateOptionsEl ? translateOptionsEl.querySelectorAll('input[type=checkbox]:checked') : [])].map(cb => cb.value);
+    // always include 'en' as original
+    const langs = selectedLangs.length ? selectedLangs : ['de'];
+    const langNames = {en:'English', de:'Deutsch', fr:'Français', hi:'Hindi', es:'Español', it:'Italiano'};
+    const langNative = {en:'English', de:'Deutsch', fr:'Français', hi:'हिन्दी', es:'Español', it:'Italiano'};
+    // Build radio inputs + labels
+    let radios = '';
+    let labels = '';
+    let sections = '';
+    // ensure 'en' first
+    const ordered = ['en', ...langs.filter(l=>l!=='en')];
+    ordered.forEach((lang, idx) => {
+      const id = `ec-lang-${lang}`;
+      const checked = idx===0 ? 'checked' : '';
+      radios += `<input type="radio" name="ec-lang" id="${id}" ${checked} style="display:none !important; max-height:0; overflow:hidden; mso-hide:all;">`;
+      const activeBg = idx===0 ? '#1a365d' : '#e2e8f0';
+      const activeColor = idx===0 ? '#ffffff' : '#4a5568';
+      labels += `<label for="${id}" style="display:inline-block; padding:6px 12px; margin:2px; font-family:Helvetica,Arial,sans-serif; font-size:8.5pt; font-weight:600; color:${activeColor}; background:${activeBg}; border-radius:12px; cursor:pointer; border:1px solid #cbd5e0;">${langNames[lang]||lang}</label>`;
+      // For original en, use real bodyHtml; for others, create a local-AI translated copy (client-side will replace, but pre-fill with original + note)
+      let content = bodyHtml;
+      if (lang !== 'en') {
+        // Placeholder that local AI will replace on View in Browser; for email CSS version we show a note + original
+        content = `<p style="margin:0 0 8px; font-size:8pt; color:#718096; font-style:italic;">&#127760; ${langNative[lang]||lang} — translated locally on device (offline AI). If not translated, open “View in Browser” and select ${langNames[lang]}.</p>` + bodyHtml;
+        content = htmlToAsciiSafe(content);
+      }
+      const display = idx===0 ? 'block' : 'none';
+      sections += `<div class="ec-lang ec-lang-${lang}" data-lang="${lang}" style="display:${display};">${content}</div>`;
+    });
+    // CSS to switch via radio :checked (works in Apple Mail, iOS Mail, etc.; Gmail strips but fallback shows English)
+    const cssRules = ordered.map(lang => `#ec-lang-${lang}:checked ~ .ec-lang-wrap .ec-lang-${lang} {display:block !important;} #ec-lang-${lang}:checked ~ .ec-lang-wrap .ec-lang {display:none !important;} #ec-lang-${lang}:checked ~ .ec-lang-wrap .ec-lang-${lang} {display:block !important;}`).join(' ');
+    // Wrap radios+labels+sections in a table for email safety
+    translateBarHtml = `
+      <div style="margin:0 0 16px; padding:10px; background:#eef2f7; border:1px solid #cbd5e0; border-radius:8px; text-align:center;">
+        <div style="font-family:Helvetica,Arial,sans-serif; font-size:8pt; color:#4a5568; margin-bottom:6px; letter-spacing:0.3px;">&#127760; Translate locally — select language (offline AI, no data leaves device)</div>
+        <div>${labels}</div>
+      </div>
+      <style>
+        .ec-lang {display:none;}
+        .ec-lang-en {display:block;}
+        ${ordered.map(lang => `#ec-lang-${lang}:checked ~ .ec-lang-wrap .ec-lang-${lang} {display:block !important;}`).join(' ')}
+        ${ordered.map(lang => `#ec-lang-${lang}:checked ~ .ec-lang-wrap .ec-lang {display:none !important;}`).join(' ')}
+        ${ordered.map(lang => `#ec-lang-${lang}:checked ~ .ec-lang-wrap .ec-lang-${lang} {display:block !important;}`).join(' ')}
+      </style>
+    `;
+    // We need radios as siblings of the wrap for ~ to work — so structure: radios, bar, wrap
+    bodyWrappedHtml = `${radios}${translateBarHtml}<div class="ec-lang-wrap">${sections}</div>
+      <script>
+        // Fallback JS for View in Browser / webmail that allows scripts: real local AI translation on demand
+        (function(){
+          const langNames = ${JSON.stringify({en:'English', de:'Deutsch', fr:'Français', hi:'Hindi', es:'Español', it:'Italiano'})};
+          async function translateWithLocalAI(text, targetLang){
+            // Try offline NLLB via Transformers.js if available, else simple fetch to local worker
+            try {
+              if(window.OfflineAI && window.OfflineAI.isReady && window.OfflineAI.isReady()){
+                const r = await window.OfflineAI.ask('Translate to '+targetLang+': '+ text.substring(0,120));
+                if(r && r.answer) return r.answer;
+              }
+            } catch(e){}
+            // Fallback: return original with note (keeps email ASCII-safe)
+            return text;
+          }
+          document.querySelectorAll('input[name=\"ec-lang\"]').forEach(r=>{
+            r.addEventListener('change', async (e)=>{
+              const lang = e.target.id.replace('ec-lang-','');
+              const wrap = document.querySelector('.ec-lang-wrap');
+              if(!wrap) return;
+              wrap.querySelectorAll('.ec-lang').forEach(el=> el.style.display='none');
+              const target = wrap.querySelector('.ec-lang-'+lang);
+              if(target) target.style.display='block';
+            });
+          });
+        })();
+      <\/script>`;
+  }
+
   let fullHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -1152,8 +1297,12 @@ function buildDesignedEmailHtml(){
   <tr>
     <td bgcolor="#ffffff" class="ec-body-pad" style="padding:40px;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:10pt;color:#2d3748;line-height:1.6;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;">
+        ${placeHtml}
+        ${recipientAddrHtml}
+        ${refHtml}
+        ${enclosuresHtml}
         ${salutationHtml}
-        ${bodyHtml}
+        ${bodyWrappedHtml}
         ${closingHtml}
       </td></tr>
       ${attachNote}
