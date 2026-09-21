@@ -1205,8 +1205,16 @@ async function buildDesignedEmailHtml(){
  let bodyWrappedHtml = bodyHtml;
  const enableTranslate = (typeof enableTranslateEl !== 'undefined' && enableTranslateEl) ? enableTranslateEl.checked : false;
  let selectedTranslateLangs = [];
+  let sourceLang = 'en';
  if (enableTranslate) {
   selectedTranslateLangs = [...(translateOptionsEl ? translateOptionsEl.querySelectorAll('input[type=checkbox]:checked') : [])].map(cb => cb.value).filter(v=>v!=='en');
+    // Detect source language of original content
+    const sourceTextForDetect = (salutationHtml + bodyHtml + closingHtml).replace(/<[^>]*>/g,' ').trim().substring(0,800);
+    if (sourceTextForDetect) {
+      try{ sourceLang = await detectLanguage(sourceTextForDetect); }catch(e){}
+    }
+    // Disable duplicate: skip target that equals source (except quotes)
+    selectedTranslateLangs = selectedTranslateLangs.filter(lang => lang !== sourceLang);
   // If only one language (English only) is used, no translation block — per requirement
   if (selectedTranslateLangs.length===0) {
    // no extra language selected, no translation needed
@@ -1249,9 +1257,11 @@ async function buildDesignedEmailHtml(){
    translatedBelowHtml = htmlToAsciiSafe(translatedBelowHtml);
   }
   // Original header only when translation is used (more than one language)
-  if (selectedTranslateLangs.length) {
-   originalHeaderHtml = `<div style="text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:9pt; color:#1a365d; font-weight:700; letter-spacing:0.5px; margin:0 0 12px;">&#8212; Original Content &#8212;</div>`;
-  }
+  // Original header only when translation is used — show detected source language
+    if (selectedTranslateLangs.length) {
+      const srcName = (typeof GOOGLE_LANGS !== 'undefined' ? (GOOGLE_LANGS.find(l=>l.code===sourceLang)?.name || sourceLang) : sourceLang);
+      originalHeaderHtml = `<div style="text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:9pt; color:#1a365d; font-weight:700; letter-spacing:0.5px; margin:0 0 12px;">&#8212; Original Content — ${srcName} (${sourceLang}) &#8212;</div>`;
+    }
  }
 
  let fullHtml = `<!DOCTYPE html>
@@ -1443,7 +1453,7 @@ function localTranslateHtml(html, lang){
 async function googleTranslateText(text, targetLang){
  if (!text.trim()) return text;
  try{
-  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(text)}`;
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(text)}`;
   const res = await fetch(url);
   if(!res.ok) throw new Error('translate failed');
   const data = await res.json();
@@ -1468,6 +1478,17 @@ async function googleTranslateHtml(html, targetLang){
   }catch(e){}
  }
  return tmp.innerHTML;
+}
+async function detectLanguage(text){
+  if (!text || !text.trim()) return 'en';
+  try{
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text.substring(0,800))}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data && data[2]) return data[2];
+    if (data && Array.isArray(data) && data[2] && typeof data[2] === 'string') return data[2];
+  }catch(e){}
+  return 'en';
 }
 function encodeSubjectHeader(str){
  if (/^[\x00-\x7F]*$/.test(str)) return str;
