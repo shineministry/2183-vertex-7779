@@ -338,15 +338,15 @@
       <input type="checkbox" id="enableTranslate" checked style="width:16px; height:16px; accent-color:var(--brass);"> Enable local AI translation bar for recipient (let them select language to translate)
     </label>
     <div id="translateOptions" style="display:block; margin-top:8px; padding:10px 12px; background:#f7fafc; border:1px solid var(--line); border-radius:4px;">
-      <div style="font-size:0.78rem; color:var(--brass-dark); margin-bottom:6px;">Offer translations in (original is English):</div>
-      <div style="display:flex; flex-wrap:wrap; gap:10px; font-size:0.82rem;">
-        <label style="display:flex; gap:4px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0; margin:0;"><input type="checkbox" value="de" checked> Deutsch</label>
-        <label style="display:flex; gap:4px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0; margin:0;"><input type="checkbox" value="fr"> Français</label>
-        <label style="display:flex; gap:4px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0; margin:0;"><input type="checkbox" value="hi"> Hindi</label>
-        <label style="display:flex; gap:4px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0; margin:0;"><input type="checkbox" value="es"> Español</label>
-        <label style="display:flex; gap:4px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0; margin:0;"><input type="checkbox" value="it"> Italiano</label>
+      <div style="font-size:0.78rem; color:var(--brass-dark); margin-bottom:6px;">Translate via Google Translate — select all languages you want below (original is English):</div>
+      <div style="display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
+        <button type="button" id="selectAllLangs" style="font-size:0.72rem; padding:5px 10px; border:1px solid var(--line); background:#fffdf7; border-radius:3px; cursor:pointer;">Select All</button>
+        <button type="button" id="clearAllLangs" style="font-size:0.72rem; padding:5px 10px; border:1px solid var(--line); background:#fffdf7; border-radius:3px; cursor:pointer;">Clear</button>
+        <input type="text" id="langSearch" placeholder="Search language..." style="flex:1; min-width:140px; padding:5px 8px; font-size:0.72rem; border:1px solid var(--line); border-radius:3px; background:#fffdf7;">
+        <span id="translateStatus" style="font-size:0.72rem; color:var(--brass-dark); align-self:center;"></span>
       </div>
-      <div style="font-size:0.72rem; color:#6b5e3a; margin-top:6px; font-style:italic;">All selected languages are translated locally (offline AI, no server) and appended <b>below</b> the original with a thick line. “Above: Original — Below: Translated” is written in the email. Email cannot be sent until the selected translations are ready. If only English is selected, no extra block is added.</div>
+      <div id="langGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:6px; max-height:200px; overflow-y:auto; padding:8px; background:#fffdf7; border:1px solid var(--line); border-radius:3px; font-size:0.78rem;"></div>
+      <div style="font-size:0.72rem; color:#6b5e3a; margin-top:6px; font-style:italic;">All selected languages are translated via <b>Google Translate</b> and appended <b>below</b> the original with a thick line. “Above: Original — Below: Translated” is written in the email. Email cannot be sent until Google translations are ready. If only English, no extra block.</div>
     </div>
 
     <label for="bodyEditable">Message</label>
@@ -718,26 +718,69 @@ const refInput = document.getElementById('refInput');
 const placeInput = document.getElementById('placeInput');
 const recipientAddrEl = document.getElementById('recipientAddr');
 const enclosuresInput = document.getElementById('enclosuresInput');
+const GOOGLE_LANGS = [
+  {code:'af', name:'Afrikaans'}, {code:'sq', name:'Albanian'}, {code:'am', name:'Amharic'}, {code:'ar', name:'Arabic'}, {code:'hy', name:'Armenian'}, {code:'az', name:'Azerbaijani'}, {code:'eu', name:'Basque'}, {code:'be', name:'Belarusian'}, {code:'bn', name:'Bengali'}, {code:'bs', name:'Bosnian'}, {code:'bg', name:'Bulgarian'}, {code:'ca', name:'Catalan'}, {code:'ceb', name:'Cebuano'}, {code:'ny', name:'Chichewa'}, {code:'zh-CN', name:'Chinese (Simplified)'}, {code:'zh-TW', name:'Chinese (Traditional)'}, {code:'co', name:'Corsican'}, {code:'hr', name:'Croatian'}, {code:'cs', name:'Czech'}, {code:'da', name:'Danish'}, {code:'nl', name:'Dutch'}, {code:'en', name:'English'}, {code:'eo', name:'Esperanto'}, {code:'et', name:'Estonian'}, {code:'tl', name:'Filipino'}, {code:'fi', name:'Finnish'}, {code:'fr', name:'French'}, {code:'fy', name:'Frisian'}, {code:'gl', name:'Galician'}, {code:'ka', name:'Georgian'}, {code:'de', name:'German'}, {code:'el', name:'Greek'}, {code:'gu', name:'Gujarati'}, {code:'ht', name:'Haitian Creole'}, {code:'ha', name:'Hausa'}, {code:'haw', name:'Hawaiian'}, {code:'he', name:'Hebrew'}, {code:'hi', name:'Hindi'}, {code:'hmn', name:'Hmong'}, {code:'hu', name:'Hungarian'}, {code:'is', name:'Icelandic'}, {code:'ig', name:'Igbo'}, {code:'id', name:'Indonesian'}, {code:'ga', name:'Irish'}, {code:'it', name:'Italian'}, {code:'ja', name:'Japanese'}, {code:'jw', name:'Javanese'}, {code:'kn', name:'Kannada'}, {code:'kk', name:'Kazakh'}, {code:'km', name:'Khmer'}, {code:'ko', name:'Korean'}, {code:'ku', name:'Kurdish'}, {code:'ky', name:'Kyrgyz'}, {code:'lo', name:'Lao'}, {code:'la', name:'Latin'}, {code:'lv', name:'Latvian'}, {code:'lt', name:'Lithuanian'}, {code:'lb', name:'Luxembourgish'}, {code:'mk', name:'Macedonian'}, {code:'mg', name:'Malagasy'}, {code:'ms', name:'Malay'}, {code:'ml', name:'Malayalam'}, {code:'mt', name:'Maltese'}, {code:'mi', name:'Maori'}, {code:'mr', name:'Marathi'}, {code:'mn', name:'Mongolian'}, {code:'my', name:'Myanmar'}, {code:'ne', name:'Nepali'}, {code:'no', name:'Norwegian'}, {code:'or', name:'Odia'}, {code:'ps', name:'Pashto'}, {code:'fa', name:'Persian'}, {code:'pl', name:'Polish'}, {code:'pt', name:'Portuguese'}, {code:'pa', name:'Punjabi'}, {code:'ro', name:'Romanian'}, {code:'ru', name:'Russian'}, {code:'sm', name:'Samoan'}, {code:'gd', name:'Scots Gaelic'}, {code:'sr', name:'Serbian'}, {code:'st', name:'Sesotho'}, {code:'sn', name:'Shona'}, {code:'sd', name:'Sindhi'}, {code:'si', name:'Sinhala'}, {code:'sk', name:'Slovak'}, {code:'sl', name:'Slovenian'}, {code:'so', name:'Somali'}, {code:'es', name:'Spanish'}, {code:'su', name:'Sundanese'}, {code:'sw', name:'Swahili'}, {code:'sv', name:'Swedish'}, {code:'tg', name:'Tajik'}, {code:'ta', name:'Tamil'}, {code:'tt', name:'Tatar'}, {code:'te', name:'Telugu'}, {code:'th', name:'Thai'}, {code:'tr', name:'Turkish'}, {code:'tk', name:'Turkmen'}, {code:'uk', name:'Ukrainian'}, {code:'ur', name:'Urdu'}, {code:'ug', name:'Uyghur'}, {code:'uz', name:'Uzbek'}, {code:'vi', name:'Vietnamese'}, {code:'cy', name:'Welsh'}, {code:'xh', name:'Xhosa'}, {code:'yi', name:'Yiddish'}, {code:'yo', name:'Yoruba'}, {code:'zu', name:'Zulu'}
+];
 const enableTranslateEl = document.getElementById('enableTranslate');
 const translateOptionsEl = document.getElementById('translateOptions');
+const langGridEl = document.getElementById('langGrid');
+const langSearchEl = document.getElementById('langSearch');
+const translateStatusEl = document.getElementById('translateStatus');
+let isTranslating = false;
+function populateLangGrid(filter='') {
+  if (!langGridEl) return;
+  langGridEl.innerHTML = '';
+  const q = filter.toLowerCase();
+  GOOGLE_LANGS.forEach(l => {
+    if (l.code==='en') return;
+    if (q && !l.name.toLowerCase().includes(q) && !l.code.toLowerCase().includes(q)) return;
+    const label = document.createElement('label');
+    label.style.cssText = 'display:flex; gap:4px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0; margin:0; font-size:0.78rem;';
+    const cb = document.createElement('input');
+    cb.type='checkbox';
+    cb.value=l.code;
+    cb.checked = ['de','hi'].includes(l.code);
+    cb.addEventListener('change', () => {
+      const d=document.querySelector('.preview-toggle');
+      if(d&&d.open) refreshPreview();
+      updateTranslateStatus();
+    });
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(' '+l.name+' ('+l.code+')'));
+    langGridEl.appendChild(label);
+  });
+}
+function updateTranslateStatus(){
+  if (!translateStatusEl) return;
+  const count = document.querySelectorAll('#langGrid input[type=checkbox]:checked').length;
+  if (!enableTranslateEl.checked) translateStatusEl.textContent = '';
+  else if (isTranslating) translateStatusEl.textContent = 'Translating via Google...';
+  else if (count===0) translateStatusEl.textContent = 'No language selected — no translation';
+  else translateStatusEl.textContent = count + ' language'+(count>1?'s':'')+' selected — ready';
+}
 if (enableTranslateEl && translateOptionsEl) {
+  populateLangGrid();
+  updateTranslateStatus();
   enableTranslateEl.addEventListener('change', () => {
     translateOptionsEl.style.display = enableTranslateEl.checked ? 'block' : 'none';
+    updateTranslateStatus();
     const d = document.querySelector('.preview-toggle');
     if (d && d.open) refreshPreview();
   });
-  translateOptionsEl.querySelectorAll('input[type=checkbox]').forEach(cb => cb.addEventListener('change', () => {
-    const d = document.querySelector('.preview-toggle');
-    if (d && d.open) refreshPreview();
-  }));
+  if (langSearchEl) langSearchEl.addEventListener('input', () => populateLangGrid(langSearchEl.value));
+  document.getElementById('selectAllLangs')?.addEventListener('click', () => {
+    langGridEl.querySelectorAll('input[type=checkbox]').forEach(cb=> cb.checked=true);
+    updateTranslateStatus();
+    const d=document.querySelector('.preview-toggle');
+    if(d&&d.open) refreshPreview();
+  });
+  document.getElementById('clearAllLangs')?.addEventListener('click', () => {
+    langGridEl.querySelectorAll('input[type=checkbox]').forEach(cb=> cb.checked=false);
+    updateTranslateStatus();
+    const d=document.querySelector('.preview-toggle');
+    if(d&&d.open) refreshPreview();
+  });
 }
-[refInput, placeInput, recipientAddrEl, enclosuresInput].forEach(el => {
-  if (!el) return;
-  el.addEventListener('input', () => {
-    const d = document.querySelector('.preview-toggle');
-    if (d && d.open) refreshPreview();
-  });
-});
 
 /* ---------------- Templates ---------------- */
 const templates = {
@@ -1118,7 +1161,7 @@ function extractDominantFontSize(html){
   return '10pt';
 }
 
-function buildDesignedEmailHtml(){
+async function buildDesignedEmailHtml(){
   const subject = subjectEl.value.trim() || '(no subject)';
   const to = toEl.value.trim();
   const rawBodyHtml = getBodyHtml();
@@ -1167,31 +1210,46 @@ function buildDesignedEmailHtml(){
     if (selectedTranslateLangs.length===0) {
       // no extra language selected, no translation needed
     }
-    const langNames = {de:'Deutsch', fr:'Français', hi:'हिन्दी', es:'Español', it:'Italiano', en:'English'};
-    const langNative = {de:'Deutsch', fr:'Français', hi:'हिन्दी', es:'Español', it:'Italiano', en:'English'};
+    const getLangName = (code) => {
+      const f = (typeof GOOGLE_LANGS !== 'undefined') ? GOOGLE_LANGS.find(l=>l.code===code) : null;
+      return f ? f.name : code;
+    };
     let blocks = '';
-    selectedTranslateLangs.forEach(lang => {
-      const translatedSal = localTranslateHtml(salutationHtml, lang);
-      const translatedBody = localTranslateHtml(bodyHtml, lang);
-      const translatedClose = localTranslateHtml(closingHtml, lang);
+    if (selectedTranslateLangs.length) {
+      isTranslating = true;
+      if (typeof updateTranslateStatus === 'function') updateTranslateStatus();
+      // Disable send while translating
+      const sendBtnTmp = document.getElementById('sendBtn');
+      if (sendBtnTmp) { sendBtnTmp.disabled = true; sendBtnTmp.textContent = 'Translating…'; }
+    }
+    for (const lang of selectedTranslateLangs) {
+      const translatedSal = await googleTranslateHtml(salutationHtml, lang);
+      const translatedBody = await googleTranslateHtml(bodyHtml, lang);
+      const translatedClose = await googleTranslateHtml(closingHtml, lang);
       let combined = translatedSal + translatedBody + translatedClose;
-      // If dictionary had no match, combined equals original — still show with note (counts as ready)
       const isTranslated = combined !== (salutationHtml + bodyHtml + closingHtml);
+      const displayName = getLangName(lang);
       if (!isTranslated) {
-        combined = `<p style="margin:0 0 8px; font-size:8pt; color:#718096; font-style:italic;">&#127760; ${langNative[lang]||lang} — offline AI (no exact dictionary match, showing original — full NLLB model will translate custom text)</p>` + bodyHtml;
+        combined = `<p style="margin:0 0 8px; font-size:8pt; color:#718096; font-style:italic;">&#127760; ${displayName} (${lang}) — Google Translate</p>` + combined;
       } else {
-        combined = `<p style="margin:0 0 8px; font-size:8pt; color:#718096; font-style:italic;">&#127760; ${langNative[lang]||lang} — offline AI translation</p>` + combined;
+        combined = `<p style="margin:0 0 8px; font-size:8pt; color:#718096; font-style:italic;">&#127760; ${displayName} (${lang}) — via Google Translate</p>` + combined;
       }
       combined = htmlToAsciiSafe(combined);
       blocks += `
         <div style="border-top:4px solid #1a365d; margin:24px 0 16px; padding-top:16px;"></div>
-        <div style="text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:9pt; color:#1a365d; font-weight:700; letter-spacing:0.5px; margin:0 0 12px;">&#8212; Translated Content — ${langNames[lang]||lang} &#8212;</div>
+        <div style="text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:9pt; color:#1a365d; font-weight:700; letter-spacing:0.5px; margin:0 0 12px;">&#8212; Translated Content — ${displayName} (${lang}) &#8212;</div>
         ${combined}`;
-    });
+    }
+    if (selectedTranslateLangs.length) {
+      isTranslating = false;
+      if (typeof updateTranslateStatus === 'function') updateTranslateStatus();
+      const sendBtnTmp2 = document.getElementById('sendBtn');
+      if (sendBtnTmp2) { sendBtnTmp2.disabled = false; sendBtnTmp2.textContent = 'Send now'; }
+    }
     if (blocks) {
       translatedBelowHtml = `
         <div style="margin:24px 0 0; border-top:3px solid #d69e2e;"></div>
-        <div style="text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:8pt; color:#718096; letter-spacing:0.5px; margin:12px 0 0; font-style:italic;">Above: Original (English) — Below: Translated by local AI (offline, no data leaves device). Thick line separates.</div>
+        <div style="text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:8pt; color:#718096; letter-spacing:0.5px; margin:12px 0 0; font-style:italic;">Above: Original (English) — Below: Translated by Google Translate. Thick line separates.</div>
         ${blocks}
       `;
       translatedBelowHtml = htmlToAsciiSafe(translatedBelowHtml);
@@ -1383,6 +1441,37 @@ function localTranslateHtml(html, lang){
   });
   return out;
 }
+async function googleTranslateText(text, targetLang){
+  if (!text.trim()) return text;
+  try{
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(text)}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('translate failed');
+    const data = await res.json();
+    if(data && data[0]) return data[0].map(seg=>seg[0]).join('');
+  }catch(e){}
+  return text;
+}
+async function googleTranslateHtml(html, targetLang){
+  // Try dictionary first — instant
+  const dict = localTranslateHtml(html, targetLang);
+  if(dict !== html) return dict;
+  // Fallback to Google Translate per text node (preserves <b>/<i>/<u> etc.)
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const walker = document.createTreeWalker(tmp, NodeFilter.SHOW_TEXT, null);
+  const nodes = [];
+  let n;
+  while(n = walker.nextNode()){ if(n.nodeValue.trim()) nodes.push(n); }
+  for(const node of nodes){
+    const orig = node.nodeValue;
+    try{
+      const tr = await googleTranslateText(orig, targetLang);
+      node.nodeValue = tr;
+    }catch(e){}
+  }
+  return tmp.innerHTML;
+}
 function encodeSubjectHeader(str){
   if (/^[\x00-\x7F]*$/.test(str)) return str;
   try {
@@ -1396,17 +1485,24 @@ function encodeSubjectHeader(str){
 }
 
 /* Live preview */
-function refreshPreview(){
+async function refreshPreview(){
   const frame = document.getElementById('renderedPreviewFrame');
-  frame.srcdoc = buildDesignedEmailHtml();
+  frame.srcdoc = await buildDesignedEmailHtml();
 }
-document.querySelector('.preview-toggle').addEventListener('toggle', function(){
-  if (this.open) refreshPreview();
+document.querySelector('.preview-toggle').addEventListener('toggle', async function(){
+  if (this.open) await refreshPreview();
 });
-[subjectEl, toEl, bodyEl].forEach(el => el.addEventListener('input', () => {
+[subjectEl, toEl, bodyEl].forEach(el => el.addEventListener('input', async () => {
   const details = document.querySelector('.preview-toggle');
-  if (details.open) refreshPreview();
+  if (details.open) await refreshPreview();
 }));
+[refInput, placeInput, recipientAddrEl, enclosuresInput].forEach(el => {
+  if (!el) return;
+  el.addEventListener('input', async () => {
+    const d = document.querySelector('.preview-toggle');
+    if (d && d.open) await refreshPreview();
+  });
+});
 
 /* ---------------- Plain-text fallback (for copy / mailto) ---------------- */
 function plainTextBody(){
@@ -1453,10 +1549,14 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
     return;
   }
 
-  // Translation guard: if translation is enabled and at least one extra language is selected,
-  // block send if body is empty (translated content would be empty) — not used when only English (single language)
+  // Translation guard: Google translations must be ready — not used when only English (single language)
   const enableTranslateChecked = document.getElementById('enableTranslate')?.checked;
-  const selectedForSend = [...document.querySelectorAll('#translateOptions input[type=checkbox]:checked')].map(cb=>cb.value).filter(v=>v!=='en');
+  const selectedForSend = [...document.querySelectorAll('#langGrid input[type=checkbox]:checked')].map(cb=>cb.value).filter(v=>v!=='en');
+  if (isTranslating) {
+    statusMsg.style.color = '#8a3a2b';
+    statusMsg.textContent = 'Translations via Google are still loading — please wait...';
+    return;
+  }
   if (enableTranslateChecked && selectedForSend.length > 0) {
     const rawBodyCheck = getBodyHtml().replace(/<[^>]*>/g,'').trim();
     if (!rawBodyCheck) {
@@ -1464,11 +1564,9 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
       statusMsg.textContent = 'Translated content not ready — please write a message before sending. (Translation requires original content)';
       return;
     }
-    // For custom text with no dictionary entry, the local dictionary will fallback to original + note — still counts as ready.
-    // For full NLLB model, this is where we would check window.translationsReady and block if false.
   }
 
-  const html = buildDesignedEmailHtml();
+  const html = await buildDesignedEmailHtml();
   const text = assembleEmailPlain();
   const subjectHeader = encodeSubjectHeader(subject);
 
