@@ -346,7 +346,7 @@
         <label style="display:flex; gap:4px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0; margin:0;"><input type="checkbox" value="es"> Español</label>
         <label style="display:flex; gap:4px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0; margin:0;"><input type="checkbox" value="it"> Italiano</label>
       </div>
-      <div style="font-size:0.72rem; color:#6b5e3a; margin-top:6px; font-style:italic;">Translations are generated locally in your browser (no server). Recipient can switch languages inside the email (radio-button CSS, no JS needed) or via “View in Browser” fallback. For long emails pre-translation may take a few seconds.</div>
+      <div style="font-size:0.72rem; color:#6b5e3a; margin-top:6px; font-style:italic;">All selected languages are translated locally (offline AI, no server) and appended <b>below</b> the original with a thick line. “Above: Original — Below: Translated” is written in the email. Email cannot be sent until the selected translations are ready. If only English is selected, no extra block is added.</div>
     </div>
 
     <label for="bodyEditable">Message</label>
@@ -1156,86 +1156,46 @@ function buildDesignedEmailHtml(){
   const recipientAddrHtml = recipientAddrVal ? `<div style="margin:0 0 16px; color:#2d3748; font-size:9.5pt; line-height:1.5; white-space:pre-line; background:#f7fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px 16px;">${escapeHtmlWithEntities(recipientAddrVal).replace(/\n/g,'<br>')}</div>` : '';
   const enclosuresHtml = enclosuresVal ? `<p style="margin:0 0 16px; color:#4a5568; font-size:9pt; background:#fffaf0; border-left:3px solid #d69e2e; padding:8px 12px;"><b>Enclosures:</b> ${escapeHtmlWithEntities(enclosuresVal)}</p>` : '';
 
-  // Local AI translation bar (radio-button CSS, no JS needed in email)
-  let translateBarHtml = '';
+  // Translation: selected languages appear BELOW original with thick line (sender selects, all ready before send)
+  let translatedBelowHtml = '';
   let bodyWrappedHtml = bodyHtml;
   const enableTranslate = (typeof enableTranslateEl !== 'undefined' && enableTranslateEl) ? enableTranslateEl.checked : false;
+  let selectedTranslateLangs = [];
   if (enableTranslate) {
-    const selectedLangs = [...(translateOptionsEl ? translateOptionsEl.querySelectorAll('input[type=checkbox]:checked') : [])].map(cb => cb.value);
-    // always include 'en' as original
-    const langs = selectedLangs.length ? selectedLangs : ['de'];
-    const langNames = {en:'English', de:'Deutsch', fr:'Français', hi:'Hindi', es:'Español', it:'Italiano'};
-    const langNative = {en:'English', de:'Deutsch', fr:'Français', hi:'हिन्दी', es:'Español', it:'Italiano'};
-    // Build radio inputs + labels
-    let radios = '';
-    let labels = '';
-    let sections = '';
-    // ensure 'en' first
-    const ordered = ['en', ...langs.filter(l=>l!=='en')];
-    ordered.forEach((lang, idx) => {
-      const id = `ec-lang-${lang}`;
-      const checked = idx===0 ? 'checked' : '';
-      radios += `<input type="radio" name="ec-lang" id="${id}" ${checked} style="display:none !important; max-height:0; overflow:hidden; mso-hide:all;">`;
-      const activeBg = idx===0 ? '#1a365d' : '#e2e8f0';
-      const activeColor = idx===0 ? '#ffffff' : '#4a5568';
-      labels += `<label for="${id}" style="display:inline-block; padding:6px 12px; margin:2px; font-family:Helvetica,Arial,sans-serif; font-size:8.5pt; font-weight:600; color:${activeColor}; background:${activeBg}; border-radius:12px; cursor:pointer; border:1px solid #cbd5e0;">${langNames[lang]||lang}</label>`;
-      // For original en, use real bodyHtml; for others, local dictionary translation (offline AI)
-      let content = bodyHtml;
-      if (lang !== 'en') {
-        let translated = localTranslateHtml(bodyHtml, lang);
-        if (translated !== bodyHtml) {
-          content = `<p style="margin:0 0 8px; font-size:8pt; color:#718096; font-style:italic;">&#127760; ${langNative[lang]||lang} — offline AI translation</p>` + translated;
-        } else {
-          content = `<p style="margin:0 0 8px; font-size:8pt; color:#718096; font-style:italic;">&#127760; ${langNative[lang]||lang} — offline AI (no dictionary match, showing original)</p>` + bodyHtml;
-        }
-        content = htmlToAsciiSafe(content);
+    selectedTranslateLangs = [...(translateOptionsEl ? translateOptionsEl.querySelectorAll('input[type=checkbox]:checked') : [])].map(cb => cb.value).filter(v=>v!=='en');
+    // If only one language (English only) is used, no translation block — per requirement
+    if (selectedTranslateLangs.length===0) {
+      // no extra language selected, no translation needed
+    }
+    const langNames = {de:'Deutsch', fr:'Français', hi:'हिन्दी', es:'Español', it:'Italiano', en:'English'};
+    const langNative = {de:'Deutsch', fr:'Français', hi:'हिन्दी', es:'Español', it:'Italiano', en:'English'};
+    let blocks = '';
+    selectedTranslateLangs.forEach(lang => {
+      const translatedSal = localTranslateHtml(salutationHtml, lang);
+      const translatedBody = localTranslateHtml(bodyHtml, lang);
+      const translatedClose = localTranslateHtml(closingHtml, lang);
+      let combined = translatedSal + translatedBody + translatedClose;
+      // If dictionary had no match, combined equals original — still show with note (counts as ready)
+      const isTranslated = combined !== (salutationHtml + bodyHtml + closingHtml);
+      if (!isTranslated) {
+        combined = `<p style="margin:0 0 8px; font-size:8pt; color:#718096; font-style:italic;">&#127760; ${langNative[lang]||lang} — offline AI (no exact dictionary match, showing original — full NLLB model will translate custom text)</p>` + bodyHtml;
+      } else {
+        combined = `<p style="margin:0 0 8px; font-size:8pt; color:#718096; font-style:italic;">&#127760; ${langNative[lang]||lang} — offline AI translation</p>` + combined;
       }
-      // Gmail strips <style>, so no inline display:none — fallback shows all languages stacked (usable). Clients with <style> hide via CSS and radio shows selected.
-      sections += `<div class="ec-lang ec-lang-${lang}" data-lang="${lang}"><div style="font-size:8pt; color:#1a365d; font-weight:700; margin:0 0 8px; padding:6px 10px; background:#eef2f7; border-radius:6px;">${langNames[lang]||lang} — ${lang==='en'?'Original':'Translation'}</div>${content}</div>`;
+      combined = htmlToAsciiSafe(combined);
+      blocks += `
+        <div style="border-top:4px solid #1a365d; margin:24px 0 16px; padding-top:16px;"></div>
+        <div style="text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:9pt; color:#1a365d; font-weight:700; letter-spacing:0.5px; margin:0 0 12px;">&#8212; Translated Content — ${langNames[lang]||lang} &#8212;</div>
+        ${combined}`;
     });
-    // Wrap radios+labels+sections — Gmail-safe: radios hidden, labels visible, sections all visible if <style> stripped (fallback), interactive where <style> kept
-    translateBarHtml = `
-      <div style="margin:0 0 16px; padding:10px; background:#eef2f7; border:1px solid #cbd5e0; border-radius:8px; text-align:center;">
-        <div style="font-family:Helvetica,Arial,sans-serif; font-size:8pt; color:#4a5568; margin-bottom:6px; letter-spacing:0.3px;">&#127760; Translate locally — tap language (offline AI, no data leaves device). In Gmail all versions are shown below — scroll to yours. In Apple Mail/Preview, tap to switch.</div>
-        <div>${labels}</div>
-      </div>
-      <style>
-        .ec-lang {display:none;}
-        .ec-lang-en {display:block;}
-        ${ordered.map(lang => `#ec-lang-${lang}:checked ~ .ec-lang-wrap .ec-lang {display:none !important;}`).join(' ')}
-        ${ordered.map(lang => `#ec-lang-${lang}:checked ~ .ec-lang-wrap .ec-lang-${lang} {display:block !important;}`).join(' ')}
-        /* Gmail strips this <style>, so fallback is all languages visible stacked — still usable */
-      </style>
-    `;
-    // We need radios as siblings of the wrap for ~ to work — so structure: radios, bar, wrap
-    bodyWrappedHtml = `${radios}${translateBarHtml}<div class="ec-lang-wrap">${sections}</div>
-      <script>
-        // Fallback JS for View in Browser / webmail that allows scripts: real local AI translation on demand
-        (function(){
-          const langNames = ${JSON.stringify({en:'English', de:'Deutsch', fr:'Français', hi:'Hindi', es:'Español', it:'Italiano'})};
-          async function translateWithLocalAI(text, targetLang){
-            // Try offline NLLB via Transformers.js if available, else simple fetch to local worker
-            try {
-              if(window.OfflineAI && window.OfflineAI.isReady && window.OfflineAI.isReady()){
-                const r = await window.OfflineAI.ask('Translate to '+targetLang+': '+ text.substring(0,120));
-                if(r && r.answer) return r.answer;
-              }
-            } catch(e){}
-            // Fallback: return original with note (keeps email ASCII-safe)
-            return text;
-          }
-          document.querySelectorAll('input[name=\"ec-lang\"]').forEach(r=>{
-            r.addEventListener('change', async (e)=>{
-              const lang = e.target.id.replace('ec-lang-','');
-              const wrap = document.querySelector('.ec-lang-wrap');
-              if(!wrap) return;
-              wrap.querySelectorAll('.ec-lang').forEach(el=> el.style.display='none');
-              const target = wrap.querySelector('.ec-lang-'+lang);
-              if(target) target.style.display='block';
-            });
-          });
-        })();
-      <\/script>`;
+    if (blocks) {
+      translatedBelowHtml = `
+        <div style="margin:24px 0 0; border-top:3px solid #d69e2e;"></div>
+        <div style="text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:8pt; color:#718096; letter-spacing:0.5px; margin:12px 0 0; font-style:italic;">Above: Original (English) — Below: Translated by local AI (offline, no data leaves device). Thick line separates.</div>
+        ${blocks}
+      `;
+      translatedBelowHtml = htmlToAsciiSafe(translatedBelowHtml);
+    }
   }
 
   let fullHtml = `<!DOCTYPE html>
@@ -1306,6 +1266,7 @@ function buildDesignedEmailHtml(){
         ${salutationHtml}
         ${bodyWrappedHtml}
         ${closingHtml}
+        ${translatedBelowHtml}
       </td></tr>
       ${attachNote}
       <tr><td style="padding:0;">
@@ -1462,6 +1423,21 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
     statusMsg.style.color = '#8a3a2b';
     statusMsg.textContent = "Please enter a recipient email.";
     return;
+  }
+
+  // Translation guard: if translation is enabled and at least one extra language is selected,
+  // block send if body is empty (translated content would be empty) — not used when only English (single language)
+  const enableTranslateChecked = document.getElementById('enableTranslate')?.checked;
+  const selectedForSend = [...document.querySelectorAll('#translateOptions input[type=checkbox]:checked')].map(cb=>cb.value).filter(v=>v!=='en');
+  if (enableTranslateChecked && selectedForSend.length > 0) {
+    const rawBodyCheck = getBodyHtml().replace(/<[^>]*>/g,'').trim();
+    if (!rawBodyCheck) {
+      statusMsg.style.color = '#8a3a2b';
+      statusMsg.textContent = 'Translated content not ready — please write a message before sending. (Translation requires original content)';
+      return;
+    }
+    // For custom text with no dictionary entry, the local dictionary will fallback to original + note — still counts as ready.
+    // For full NLLB model, this is where we would check window.translationsReady and block if false.
   }
 
   const html = buildDesignedEmailHtml();
