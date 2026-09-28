@@ -243,6 +243,95 @@
  details.preview-toggle summary{cursor:pointer; font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; color:var(--brass-dark);}
  #renderedPreviewFrame{width:100%; height:520px; border:1px solid var(--line); margin-top:14px; background:#fff; border-radius:4px;}
 
+ /* ---- Confidential mode (Gmail-style) ---- */
+ #confModeBtn.active{background:var(--brass); color:#fff;}
+ .conf-notice{
+  display:none; align-items:center; gap:12px; flex-wrap:wrap;
+  margin-top:14px; padding:12px 14px; border:1px solid var(--gold);
+  background:linear-gradient(180deg,#fffaf0 0%, #fff5df 100%); border-radius:6px;
+ }
+ .conf-notice.on{display:flex;}
+ .conf-notice .cn-lock{font-size:1.15rem; line-height:1;}
+ .conf-notice .cn-body{flex:1; min-width:200px;}
+ .conf-notice .cn-title{display:block; font-size:0.86rem; font-weight:700; color:var(--navy); letter-spacing:0.2px;}
+ .conf-notice .cn-sub{display:block; font-size:0.78rem; color:#4a5568; margin-top:3px; line-height:1.5;}
+ .cn-btn{
+  font-family:inherit; font-size:0.78rem; letter-spacing:0.2px; padding:7px 13px;
+  border:1px solid var(--line); background:#fffdf7; color:var(--ink); border-radius:4px; cursor:pointer;
+ }
+ .cn-btn:hover{background:rgba(156,122,60,0.14);}
+ .cn-btn.cn-off{color:var(--red); border-color:#e2c3bb;}
+
+ .cm-overlay{
+  position:fixed; inset:0; z-index:9999; background:rgba(28,43,46,0.5);
+  display:none; align-items:center; justify-content:center; padding:20px;
+  backdrop-filter:blur(2px);
+ }
+ .cm-overlay.open{display:flex;}
+ .cm-dialog{
+  width:100%; max-width:560px; max-height:90vh; overflow-y:auto;
+  background:#fffdf7; border:1px solid var(--line); border-radius:6px;
+  box-shadow:0 26px 60px rgba(0,0,0,0.4); padding:26px 28px 20px;
+ }
+ .cm-dialog h2{margin:0 0 12px; font-size:1.4rem; font-weight:700; color:var(--ink); letter-spacing:0.2px;}
+ .cm-desc{margin:0; font-size:0.88rem; line-height:1.6; color:#4a5568;}
+ .cm-link{
+  background:none; border:none; padding:0; margin-left:2px; font-family:inherit; font-size:0.88rem;
+  color:#1a56db; text-decoration:underline; cursor:pointer;
+ }
+ .cm-learn{
+  display:none; margin-top:10px; padding:11px 13px; background:#f7fafc;
+  border:1px solid var(--line); border-radius:4px; font-size:0.8rem; line-height:1.6; color:#4a5568;
+ }
+ .cm-learn.open{display:block;}
+ .cm-section-label{
+  margin:24px 0 9px; font-size:0.72rem; font-weight:700; letter-spacing:1.4px;
+  text-transform:uppercase; color:var(--navy);
+ }
+ .cm-expiry-row{display:flex; gap:14px; align-items:center; flex-wrap:wrap;}
+ .cm-expiry-row select{
+  flex:1; min-width:210px; padding:11px 12px; font-family:inherit; font-size:0.92rem;
+  border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:4px;
+ }
+ .cm-exp-date{font-size:0.88rem; color:#4a5568; white-space:nowrap;}
+ .cm-pass-note{margin:0 0 13px; font-size:0.88rem; line-height:1.6; color:#4a5568; display:flex; gap:7px; align-items:center; flex-wrap:wrap;}
+ .cm-help{
+  width:18px; height:18px; border-radius:50%; border:1px solid #8a7c5c; color:#8a7c5c;
+  font-size:0.7rem; line-height:1; display:inline-flex; align-items:center; justify-content:center;
+  cursor:help; flex-shrink:0;
+ }
+ .cm-radio-row{display:flex; gap:34px; flex-wrap:wrap;}
+ .cm-radio{
+  display:flex; align-items:center; gap:9px; margin:0; cursor:pointer;
+  font-size:0.92rem; font-weight:400; letter-spacing:0; text-transform:none; color:var(--ink);
+ }
+ .cm-radio input{width:17px; height:17px; margin:0; accent-color:var(--navy); cursor:pointer;}
+ .cm-phone-wrap{display:none; margin-top:16px;}
+ .cm-phone-wrap .cm-field-label{
+  display:block; margin:0 0 6px; font-size:0.72rem; font-weight:700; letter-spacing:1.2px;
+  text-transform:uppercase; color:var(--brass-dark);
+ }
+ .cm-phone-wrap input[type=tel]{
+  width:100%; padding:10px 12px; font-family:inherit; font-size:0.92rem;
+  border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:4px;
+ }
+ .cm-hint{margin-top:7px; font-size:0.76rem; line-height:1.55; color:#8a7c5c;}
+ .cm-hint.cm-error{color:var(--red); font-weight:600;}
+ .cm-actions{
+  display:flex; justify-content:flex-end; gap:8px; margin-top:26px;
+  padding-top:16px; border-top:1px solid var(--line);
+ }
+ .cm-btn-cancel{
+  background:transparent; border:none; color:var(--navy); font-family:inherit;
+  font-size:0.9rem; font-weight:600; padding:11px 18px; border-radius:4px; cursor:pointer;
+ }
+ .cm-btn-cancel:hover{background:rgba(26,54,93,0.08);}
+ .cm-btn-save{
+  background:var(--navy); border:none; color:#fff; font-family:inherit;
+  font-size:0.9rem; font-weight:600; padding:11px 28px; border-radius:4px; cursor:pointer;
+ }
+ .cm-btn-save:hover{background:var(--navy-2);}
+
  @media (max-width:600px){
   :root{font-size:11.5px;}
   header.letterhead{flex-direction:column; align-items:flex-start; padding:28px 22px 24px;}
@@ -256,9 +345,13 @@
   .tab{padding:6px 10px; font-size:0.76rem;}
   #subject{font-size:1rem; padding:10px 12px;}
   .attach-chip .fname{max-width:110px;}
-  .seal{width:48px; height:48px; font-size:15px;}
-  .who h1{font-size:1.3rem;}
- }
+   .seal{width:48px; height:48px; font-size:15px;}
+   .who h1{font-size:1.3rem;}
+   .cm-dialog{padding:22px 18px 16px;}
+   .cm-radio-row{gap:20px;}
+   .cm-expiry-row select{min-width:100%;}
+   .conf-notice{gap:8px;}
+  }
 
  /* ---- Styles used only inside the generated email template (mirrors email.html) ---- */
  .tpl-email-card{max-width:750px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 25px rgba(26,54,93,0.08);border:1px solid #cbd5e0;}
@@ -375,6 +468,8 @@
    <div class="sep"></div>
    <button type="button" id="linkBtn" title="Insert link">🔗</button>
    <button type="button" data-cmd="removeFormat" title="Clear formatting">Tx</button>
+   <div class="sep"></div>
+   <button type="button" id="confModeBtn" title="Confidential mode">🔒</button>
    <div class="mode-toggle" id="modeToggle">
     <button type="button" class="active" data-mode="rich">Rich text</button>
     <button type="button" data-mode="code">HTML code</button>
@@ -391,6 +486,17 @@
   <div class="attach-zone" id="attachZone">Click to attach files, or drag &amp; drop here</div>
   <input type="file" id="attachInput" multiple style="display:none;">
   <div class="attach-list" id="attachList"></div>
+
+  <div class="conf-notice" id="confNotice">
+   <span class="cn-lock">🔒</span>
+   <div class="cn-body">
+    <span class="cn-title">Confidential mode is on</span>
+    <span class="cn-sub" id="confNoticeSub"></span>
+   </div>
+   <button type="button" class="cn-btn" id="confCodeBtn" style="display:none;">Copy passcode</button>
+   <button type="button" class="cn-btn" id="confEditBtn">Edit</button>
+   <button type="button" class="cn-btn cn-off" id="confOffBtn">Turn off</button>
+  </div>
  </div>
 
  <div class="actions">
@@ -406,6 +512,49 @@
  </details>
 
  <div class="footer-note">Shine Mail Composer · <a href="privacy.html" style="color:var(--brass-dark);">Privacy Policy</a> · <a href="terms.html" style="color:var(--brass-dark);">Terms</a> · shinumaths989@gmail.com · +91 86055 86173 · WhatsApp @shineil.mathias</div>
+</div>
+
+<div class="cm-overlay" id="confOverlay" role="dialog" aria-modal="true" aria-labelledby="confTitle">
+ <div class="cm-dialog">
+  <h2 id="confTitle">Confidential mode</h2>
+  <p class="cm-desc">Recipients won't have the option to forward, copy, print or download this email.
+   <button type="button" class="cm-link" id="confLearnMoreBtn">Learn more</button>
+  </p>
+  <div class="cm-learn" id="confLearnMoreText">
+   Confidential mode adds an expiry date and, optionally, a passcode to this message — the notice is built into the email you send and shown in the preview. Note that plain email cannot itself block forwarding, copying, printing or downloading: that restriction is enforced by the recipient's mail provider (as Gmail does between its own users). Nothing you write here is stored on our servers.
+  </div>
+
+  <div class="cm-section-label">Set expiry</div>
+  <div class="cm-expiry-row">
+   <select id="confExpiry">
+    <option value="1d">Expires in 1 day</option>
+    <option value="1w" selected>Expires in 1 week</option>
+    <option value="1m">Expires in 1 month</option>
+    <option value="3m">Expires in 3 months</option>
+    <option value="5y">Expires in 5 years</option>
+   </select>
+   <span class="cm-exp-date" id="confExpiryDate"></span>
+  </div>
+
+  <div class="cm-section-label">Require passcode</div>
+  <p class="cm-pass-note">All passcodes will be generated by Shine Mail.
+   <span class="cm-help" title="Shine Mail creates a 6-digit passcode for this message. Deliver it to your recipient yourself — automatic SMS delivery needs a gateway connected to the mail worker.">?</span>
+  </p>
+  <div class="cm-radio-row">
+   <label class="cm-radio"><input type="radio" name="confPass" value="none" checked> No SMS passcode</label>
+   <label class="cm-radio"><input type="radio" name="confPass" value="sms"> SMS passcode</label>
+  </div>
+  <div class="cm-phone-wrap" id="confPhoneWrap">
+   <label class="cm-field-label" for="confPhone">Recipient's phone number</label>
+   <input type="tel" id="confPhone" placeholder="+91 86055 86173" autocomplete="off">
+   <div class="cm-hint" id="confPhoneHint">SMS delivery is not connected in this composer, so after you save the 6-digit passcode appears in the composer for you to share with your recipient.</div>
+  </div>
+
+  <div class="cm-actions">
+   <button type="button" class="cm-btn-cancel" id="confCancelBtn">Cancel</button>
+   <button type="button" class="cm-btn-save" id="confSaveBtn">Save</button>
+  </div>
+ </div>
 </div>
 
 <script>
@@ -1056,6 +1205,151 @@ document.addEventListener('click', (e) => {
  if (!e.target.closest('.field-wrap')) historyPanel.style.display = 'none';
 });
 
+/* ---------------- Confidential mode (Gmail-style) ---------------- */
+const CONF_KEY = 'ecConfidentialModeV1';
+const CONF_EXPIRY_OPTS = [
+ { value:'1d', label:'Expires in 1 day',    ms: 24*60*60*1000 },
+ { value:'1w', label:'Expires in 1 week',   ms: 7*24*60*60*1000 },
+ { value:'1m', label:'Expires in 1 month',  ms: 30*24*60*60*1000 },
+ { value:'3m', label:'Expires in 3 months', ms: 90*24*60*60*1000 },
+ { value:'5y', label:'Expires in 5 years',  ms: 1825*24*60*60*1000 }
+];
+const CONF_DEFAULTS = { enabled:false, expiry:'1w', passcode:'none', phone:'', code:'' };
+
+function loadConfState(){
+ try {
+  const v = JSON.parse(localStorage.getItem(CONF_KEY));
+  return (v && typeof v === 'object') ? Object.assign({}, CONF_DEFAULTS, v) : Object.assign({}, CONF_DEFAULTS);
+ } catch { return Object.assign({}, CONF_DEFAULTS); }
+}
+let confState = loadConfState();
+function saveConfState(){ try { localStorage.setItem(CONF_KEY, JSON.stringify(confState)); } catch(e){} }
+function confExpiryMs(value){
+ const opt = CONF_EXPIRY_OPTS.find(o => o.value === value);
+ return opt ? opt.ms : CONF_EXPIRY_OPTS[1].ms;
+}
+function confExpiryDate(){ return new Date(Date.now() + confExpiryMs(confState.expiry)); }
+function fmtConfDate(d){
+ return d.toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+}
+function makePasscode(){
+ let out = '';
+ for (let i = 0; i < 6; i++) out += Math.floor(Math.random() * 10);
+ return out;
+}
+
+const confOverlayEl = document.getElementById('confOverlay');
+const confExpirySel = document.getElementById('confExpiry');
+const confExpiryDateEl = document.getElementById('confExpiryDate');
+const confPhoneWrap = document.getElementById('confPhoneWrap');
+const confPhoneEl = document.getElementById('confPhone');
+const confPhoneHint = document.getElementById('confPhoneHint');
+const confNoticeEl = document.getElementById('confNotice');
+const confNoticeSub = document.getElementById('confNoticeSub');
+const confCodeBtn = document.getElementById('confCodeBtn');
+const confModeBtn = document.getElementById('confModeBtn');
+
+function confSelectedPasscode(){
+ const checked = document.querySelector('input[name="confPass"]:checked');
+ return checked ? checked.value : 'none';
+}
+function updateConfExpiryDateLabel(){
+ const opt = CONF_EXPIRY_OPTS.find(o => o.value === confExpirySel.value) || CONF_EXPIRY_OPTS[1];
+ confExpiryDateEl.textContent = fmtConfDate(new Date(Date.now() + opt.ms));
+}
+function refreshPreviewIfOpen(){
+ const d = document.querySelector('.preview-toggle');
+ if (d && d.open) refreshPreview();
+}
+function openConfModal(){
+ confExpirySel.value = CONF_EXPIRY_OPTS.some(o => o.value === confState.expiry) ? confState.expiry : '1w';
+ confPhoneEl.value = confState.phone || '';
+ confPhoneEl.style.borderColor = '';
+ confPhoneHint.classList.remove('cm-error');
+ document.querySelectorAll('input[name="confPass"]').forEach(r => { r.checked = (r.value === confState.passcode); });
+ confPhoneWrap.style.display = (confState.passcode === 'sms') ? 'block' : 'none';
+ updateConfExpiryDateLabel();
+ confOverlayEl.classList.add('open');
+ confExpirySel.focus();
+}
+function closeConfModal(){ confOverlayEl.classList.remove('open'); }
+
+function renderConfNotice(){
+ const on = !!confState.enabled;
+ confNoticeEl.classList.toggle('on', on);
+ confModeBtn.classList.toggle('active', on);
+ if (!on) { confCodeBtn.style.display = 'none'; return; }
+ let sub = 'Expires ' + fmtConfDate(confExpiryDate()) + ' · ' +
+  (confState.passcode === 'sms' ? 'SMS passcode required' : 'No SMS passcode');
+ if (confState.passcode === 'sms' && confState.phone) sub += ' · ' + confState.phone;
+ confNoticeSub.textContent = sub;
+ if (confState.passcode === 'sms' && confState.code) {
+  confCodeBtn.style.display = '';
+  confCodeBtn.textContent = 'Copy passcode ' + confState.code;
+ } else {
+  confCodeBtn.style.display = 'none';
+ }
+}
+
+confModeBtn.addEventListener('click', openConfModal);
+document.getElementById('confEditBtn').addEventListener('click', openConfModal);
+document.getElementById('confOffBtn').addEventListener('click', () => {
+ confState.enabled = false;
+ confState.code = '';
+ saveConfState();
+ renderConfNotice();
+ refreshPreviewIfOpen();
+});
+confCodeBtn.addEventListener('click', () => {
+ if (!confState.code) return;
+ navigator.clipboard.writeText(confState.code).then(() => {
+  const prev = confCodeBtn.textContent;
+  confCodeBtn.textContent = 'Copied ✓';
+  setTimeout(() => { confCodeBtn.textContent = prev; }, 1800);
+ }).catch(() => {});
+});
+confExpirySel.addEventListener('change', updateConfExpiryDateLabel);
+document.querySelectorAll('input[name="confPass"]').forEach(r => {
+ r.addEventListener('change', () => {
+  const sms = confSelectedPasscode() === 'sms';
+  confPhoneWrap.style.display = sms ? 'block' : 'none';
+  if (sms) confPhoneEl.focus();
+ });
+});
+document.getElementById('confLearnMoreBtn').addEventListener('click', () => {
+ document.getElementById('confLearnMoreText').classList.toggle('open');
+});
+document.getElementById('confCancelBtn').addEventListener('click', closeConfModal);
+confOverlayEl.addEventListener('click', (e) => { if (e.target === confOverlayEl) closeConfModal(); });
+document.addEventListener('keydown', (e) => {
+ if (e.key === 'Escape' && confOverlayEl.classList.contains('open')) closeConfModal();
+});
+document.getElementById('confSaveBtn').addEventListener('click', () => {
+ const passcode = confSelectedPasscode();
+ const phone = confPhoneEl.value.trim();
+ if (passcode === 'sms' && !phone) {
+  confPhoneEl.style.borderColor = '#8a3a2b';
+  confPhoneHint.classList.add('cm-error');
+  confPhoneHint.textContent = 'Enter the recipient\u2019s phone number to use an SMS passcode.';
+  confPhoneEl.focus();
+  return;
+ }
+ confState.expiry = confExpirySel.value;
+ confState.passcode = passcode;
+ confState.phone = phone;
+ if (passcode === 'sms') {
+  if (!confState.code) confState.code = makePasscode();
+ } else {
+  confState.code = '';
+ }
+ confState.enabled = true;
+ saveConfState();
+ renderConfNotice();
+ closeConfModal();
+ refreshPreviewIfOpen();
+});
+renderConfNotice();
+
 /* ---------------- Assemble designed HTML email ---------------- */
 function inlineBodyContent(html){
  // Make every inline formatting survive Gmail delivery: Gmail strips
@@ -1200,6 +1494,23 @@ async function buildDesignedEmailHtml(){
  const enclosuresHtml = enclosuresVal ? `<p style="margin:0 0 16px; color:#4a5568; font-size:9pt; background:#fffaf0; border-left:3px solid #d69e2e; padding:8px 12px;"><b>Enclosures:</b> ${escapeHtmlWithEntities(enclosuresVal)}</p>` : '';
  let originalHeaderHtml = '';
 
+ // Confidential mode notice (Gmail-style) shown at the top of the message body
+ let confBannerHtml = '';
+ if (confState.enabled) {
+  const confExpDate = fmtConfDate(confExpiryDate());
+  const confPassLine = confState.passcode === 'sms'
+   ? `<div style="margin-top:7px;font-size:9.5pt;color:#2d3748;"><b>Passcode required.</b> The sender will give you a 6-digit passcode for this message.</div>`
+   : '';
+  confBannerHtml = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;background-color:#fffaf0;border:1px solid #e3c27a;border-left:4px solid #d69e2e;border-radius:8px;">
+    <tr><td style="padding:16px 20px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+     <div style="font-size:8.5pt;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;color:#975a16;">&#128274; Confidential mode</div>
+     <div style="margin-top:7px;font-size:10pt;color:#2d3748;">This email expires on <b>${escapeHtmlWithEntities(confExpDate)}</b>.</div>
+     <div style="margin-top:5px;font-size:9.5pt;color:#4a5568;">Recipients won't have the option to forward, copy, print or download this email.</div>
+     ${confPassLine}
+    </td></tr>
+   </table>`;
+ }
+
  // Translation: selected languages appear BELOW original with thick line (sender selects, all ready before send)
  let translatedBelowHtml = '';
  let bodyWrappedHtml = bodyHtml;
@@ -1325,6 +1636,7 @@ async function buildDesignedEmailHtml(){
  <tr>
   <td bgcolor="#ffffff" class="ec-body-pad" style="padding:40px;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:10pt;color:#2d3748;line-height:1.6;">
    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;">
+    ${confBannerHtml}
     ${placeHtml}
     ${recipientAddrHtml}
     ${refHtml}
@@ -1532,7 +1844,15 @@ function plainTextBody(){
 function assembleEmailPlain(){
  const sal = currentSalutation ? `${currentSalutation}\n\n` : '';
  const clo = currentClosing ? `\n\n${currentClosing}` : '';
- return `${sal}${plainTextBody()}${clo}\n\n${getSignature(currentSignatureKey).text}`;
+ let conf = '';
+ if (confState.enabled) {
+  conf = `[CONFIDENTIAL MODE]\n`
+   + `This email expires on ${fmtConfDate(confExpiryDate())}.\n`
+   + `Recipients won't have the option to forward, copy, print or download this email.\n`
+   + (confState.passcode === 'sms' ? 'Passcode required — the sender will give you a 6-digit passcode.\n' : '')
+   + '\n\n';
+ }
+ return `${conf}${sal}${plainTextBody()}${clo}\n\n${getSignature(currentSignatureKey).text}`;
 }
 
 /* ---------------- Actions ---------------- */
