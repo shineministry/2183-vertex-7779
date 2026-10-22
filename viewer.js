@@ -239,6 +239,180 @@ function openVaultDB() {
 }
 
 /* =========================
+   PDF SIGNATURE STAMP (ID Austria)
+   Every page of an opened PDF gets the signature block stamped on its
+   bottom-left corner: signer, a LIVE date/time (Europe/Vienna —
+   "DD.MM.YYYY, HH:MM (GMT+0X:00)"), the ID Austria visualisation and
+   the EIDAS note — exactly as in the official signature image.
+   An arrow tab sits on the right edge of the stamp and slides the whole
+   block out to the left (hide) and back again (show). The state is
+   shared by all pages so one click clears the whole document.
+========================= */
+const PDF_SIG_TIMEZONE = 'Europe/Vienna';
+const PDF_SIG_CARD_W = 460;      // design width of the stamp (px, before scale)
+const PDF_SIG_ARROW_W = 30;      // width of the arrow tab (px, before scale)
+const PDF_SIG_LEFT = 10;         // stamp distance from the page edge (px)
+const PDF_SIG_BOT = 10;
+// Shared state lives on window: the hide flag has to survive re-renders
+// (zoom / page rebuild) and closeModal() needs to reach the clock handle.
+window._sigStampHidden = false;
+window._sigClockTimer = null;
+
+function _sigEnsureStyles() {
+    if (document.getElementById('pdf-sig-style')) return;
+    const css = `
+.pdf-sig-group{position:absolute;display:flex;align-items:flex-end;gap:0;z-index:40;
+  transform-origin:left bottom;transition:transform .4s cubic-bezier(.4,0,.2,1);pointer-events:auto;}
+.pdf-sig-card{box-sizing:border-box;width:460px;background:#ffffff;color:#0f0f0f;
+  border:3px solid #111111;border-radius:3px 0 0 3px;padding:12px 16px 14px;
+  box-shadow:0 8px 20px rgba(0,0,0,.35);
+  font-family:Arial,Helvetica,"Segoe UI",sans-serif;line-height:1.34;}
+.pdf-sig-toggle{box-sizing:border-box;width:30px;height:58px;padding:0;margin:0;
+  background:#f4f4f5;color:#111111;border:3px solid #111111;border-left:0;border-radius:0 3px 3px 0;
+  font-size:22px;font-weight:700;line-height:1;cursor:pointer;touch-action:manipulation;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 20px rgba(0,0,0,.35);transition:background .2s ease;}
+.pdf-sig-toggle:hover,.pdf-sig-toggle:focus-visible{background:#e4e4e7;outline:none;}
+.pdf-sig-row{display:flex;align-items:baseline;gap:12px;}
+.pdf-sig-label{flex:0 0 124px;width:124px;font-size:12.5px;font-weight:400;color:#111111;}
+.pdf-sig-name{font-size:20px;font-weight:500;color:#0f0f0f;}
+.pdf-sig-time{font-size:17.5px;font-weight:400;color:#0f0f0f;white-space:nowrap;}
+.pdf-sig-id{display:flex;align-items:center;gap:14px;margin:14px 0 16px;}
+.pdf-sig-logo{height:30px;width:auto;display:block;flex:none;}
+.pdf-sig-idname{font-size:24px;font-weight:800;letter-spacing:.2px;color:#0f0f0f;}
+.pdf-sig-heading{font-size:14.5px;font-weight:700;margin-bottom:7px;color:#0f0f0f;}
+.pdf-sig-note{font-size:11px;line-height:1.5;margin-top:7px;color:#0f0f0f;}
+.pdf-sig-strong{font-weight:700;}
+`;
+    const style = document.createElement('style');
+    style.id = 'pdf-sig-style';
+    style.textContent = css;
+    document.head.appendChild(style);
+}
+
+function _sigTzOffsetLabel(d) {
+    try {
+        const parts = new Intl.DateTimeFormat('en-US', {
+            timeZone: PDF_SIG_TIMEZONE, hour12: false,
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        }).formatToParts(d);
+        const get = t => (parts.find(p => p.type === t) || {}).value || '0';
+        let hh = parseInt(get('hour'), 10); if (hh === 24) hh = 0;
+        const asUTC = Date.UTC(+get('year'), +get('month') - 1, +get('day'), hh, +get('minute'), +get('second'));
+        const dMs = d.getTime() - d.getMilliseconds();
+        const mins = Math.round((asUTC - dMs) / 60000);
+        const sign = mins < 0 ? '-' : '+';
+        const abs = Math.abs(mins);
+        return 'GMT' + sign + String(Math.floor(abs / 60)).padStart(2, '0') + ':' + String(abs % 60).padStart(2, '0');
+    } catch (e) {
+        return 'GMT+00:00';
+    }
+}
+
+function _sigTimeText() {
+    const d = new Date();
+    let dateStr, timeStr;
+    try {
+        dateStr = new Intl.DateTimeFormat('de-DE', {
+            timeZone: PDF_SIG_TIMEZONE, day: '2-digit', month: '2-digit', year: 'numeric'
+        }).format(d);
+        timeStr = new Intl.DateTimeFormat('de-DE', {
+            timeZone: PDF_SIG_TIMEZONE, hour: '2-digit', minute: '2-digit', hour12: false
+        }).format(d);
+    } catch (e) {
+        const p = n => String(n).padStart(2, '0');
+        dateStr = p(d.getDate()) + '.' + p(d.getMonth() + 1) + '.' + d.getFullYear();
+        timeStr = p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    return dateStr + ', ' + timeStr + ' (' + _sigTzOffsetLabel(d) + ')';
+}
+
+function _sigClockTick() {
+    const txt = _sigTimeText();
+    const nodes = document.querySelectorAll('[data-sig-time]');
+    for (let i = 0; i < nodes.length; i++) nodes[i].textContent = txt;
+}
+
+function _sigStartClock() {
+    if (window._sigClockTimer) return;
+    _sigClockTick();
+    window._sigClockTimer = setInterval(_sigClockTick, 1000);
+}
+
+function _sigCardHtml() {
+    return '' +
+        '<div class="pdf-sig-row"><span class="pdf-sig-label">Unterzeichner</span><span class="pdf-sig-name">Shineil Keith Mathias</span></div>' +
+        '<div class="pdf-sig-row"><span class="pdf-sig-label">Datum und Uhrzeit</span><span class="pdf-sig-time" data-sig-time></span></div>' +
+        '<div class="pdf-sig-id">' +
+            '<svg class="pdf-sig-logo" viewBox="0 0 74 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">' +
+                '<g fill="#e2001a">' +
+                    '<polygon points="1,4 30,4 25,9.6 1,9.6"/>' +
+                    '<polygon points="1,11.4 27,11.4 22,17 1,17"/>' +
+                    '<polygon points="1,18.8 24,18.8 19,24.4 1,24.4"/>' +
+                '</g>' +
+                '<circle cx="41" cy="16" r="9.5" fill="none" stroke="#7f97b3" stroke-width="4.5"/>' +
+                '<circle cx="41" cy="16" r="3" fill="#7f97b3"/>' +
+                '<path d="M50.5 16 H66" fill="none" stroke="#7f97b3" stroke-width="4.5" stroke-linecap="round"/>' +
+                '<path d="M60 16 V22.5" fill="none" stroke="#7f97b3" stroke-width="4.5" stroke-linecap="round"/>' +
+            '</svg>' +
+            '<span class="pdf-sig-idname">ID Austria</span>' +
+        '</div>' +
+        '<div class="pdf-sig-heading">Dieses Dokument ist digital signiert</div>' +
+        '<div class="pdf-sig-note">Dieses mit einer qualifizierten elektronischen Signatur versehene Dokument hat gemäß Art. 25 Abs. 2 der Verordnung (EU) Nr. 910/2014 vom 23. Juli 2014 (&quot;EIDAS-VO&quot;) die gleiche Rechtswirkung wie ein handschriftlich unterschriebenes Dokument.</div>' +
+        '<div class="pdf-sig-note pdf-sig-strong">Informationen zur Prüfung der elektronischen Signatur finden Sie unter: https://www.signaturpruefung.gv.at</div>';
+}
+
+function _sigApplyTransform(group) {
+    if (!group) return;
+    const k = parseFloat(group.dataset.sigScale) || 1;
+    // Slide far enough left that the card leaves the page, while the arrow
+    // tab stops exactly at the page's left edge so it can bring it back.
+    const tx = -(PDF_SIG_CARD_W + PDF_SIG_LEFT / k);
+    group.style.transform = 'scale(' + k + ')' + (window._sigStampHidden ? ' translateX(' + tx + 'px)' : '');
+    const arrow = group.querySelector('.pdf-sig-toggle');
+    if (arrow) {
+        arrow.textContent = window._sigStampHidden ? '›' : '‹';
+        arrow.title = window._sigStampHidden ? 'Signature anzeigen' : 'Signature ausblenden';
+        arrow.setAttribute('aria-label', arrow.title);
+    }
+}
+
+function _sigToggleStamp(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    window._sigStampHidden = !window._sigStampHidden;
+    const groups = document.querySelectorAll('.pdf-sig-group');
+    for (let i = 0; i < groups.length; i++) _sigApplyTransform(groups[i]);
+}
+
+function _sigBuildGroup(pageInnerWidth) {
+    _sigEnsureStyles();
+    const group = document.createElement('div');
+    group.className = 'pdf-sig-group';
+    group.style.left = PDF_SIG_LEFT + 'px';
+    group.style.bottom = PDF_SIG_BOT + 'px';
+    const avail = Math.max((pageInnerWidth || 0) - PDF_SIG_LEFT * 2, 160);
+    const k = Math.min(1, Math.max(0.32, avail / (PDF_SIG_CARD_W + PDF_SIG_ARROW_W)));
+    group.dataset.sigScale = k;
+
+    const card = document.createElement('div');
+    card.className = 'pdf-sig-card';
+    card.innerHTML = _sigCardHtml();
+
+    const arrow = document.createElement('button');
+    arrow.type = 'button';
+    arrow.className = 'pdf-sig-toggle';
+    arrow.addEventListener('click', _sigToggleStamp);
+
+    group.appendChild(card);
+    group.appendChild(arrow);
+    group.querySelector('[data-sig-time]').textContent = _sigTimeText();
+    _sigApplyTransform(group);
+    _sigStartClock();
+    return group;
+}
+
+/* =========================
    OPEN FILE
 ========================= */
 
@@ -821,6 +995,8 @@ sidebar.appendChild(thumbWrap);
         pageWrap.id = 'page-' + pageNum;
         pageWrap.style.cssText = `
             display:block;
+            position:relative;
+            overflow:hidden;
             margin:0 auto 24px auto;
             background:white;
             border-radius:14px;
@@ -857,6 +1033,10 @@ sidebar.appendChild(thumbWrap);
 
         pageWrap.appendChild(canvas);
         pageWrapContainer.appendChild(pageWrap);
+
+        // Signature stamp — bottom-left corner of every page, with the
+        // arrow tab on its right edge that slides it out to the left.
+        pageWrap.appendChild(_sigBuildGroup(Math.max(pageWrap.clientWidth - 20, 200)));
 
         // Render once — no duplicate render call
         await page.render({ canvasContext: context, viewport }).promise;
@@ -1079,7 +1259,17 @@ function _describeOpenFileError(e) {
    CLOSE MODAL
 ========================= */
 
+/* Stops the signature stamp's live clock when the PDF modal closes. */
+function stopPdfSignatureClock(){
+    if (window._sigClockTimer){
+        clearInterval(window._sigClockTimer);
+        window._sigClockTimer = null;
+    }
+}
+
 function closeModal(){
+
+    stopPdfSignatureClock();
 
     document.getElementById(
     'modal').style.display =
