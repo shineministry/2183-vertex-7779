@@ -1,4 +1,4 @@
-﻿/**
+/**
  * sw.js â€” Online Vault Service Worker
  *
  * Routing strategy:
@@ -19,7 +19,7 @@
  *  network fetch â€” no stale authenticated shell is served.
  */
 
-const CACHE = "online-vault-v34";   // bump this string to force a full cache refresh
+const CACHE = "online-vault-v35";   // bump this string to force a full cache refresh
 
 const BACKEND_HOST = "backend.shinumaths989.workers.dev";
 
@@ -35,6 +35,7 @@ const PRECACHE_URLS = [
   "/startup.js",
   "/vault-data.js",
   "/viewer.js",
+  "/id-austria-logo.svg",
   "/vault-ui.js"
 ];
 

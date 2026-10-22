@@ -278,8 +278,7 @@ function _sigEnsureStyles() {
 .pdf-sig-name{font-size:20px;font-weight:500;color:#0f0f0f;}
 .pdf-sig-time{font-size:17.5px;font-weight:400;color:#0f0f0f;white-space:nowrap;}
 .pdf-sig-id{display:flex;align-items:center;gap:14px;margin:14px 0 16px;}
-.pdf-sig-logo{height:30px;width:auto;display:block;flex:none;}
-.pdf-sig-idname{font-size:24px;font-weight:800;letter-spacing:.2px;color:#0f0f0f;}
+.pdf-sig-logo{width:200px;height:62px;display:block;flex:none;}
 .pdf-sig-heading{font-size:14.5px;font-weight:700;margin-bottom:7px;color:#0f0f0f;}
 .pdf-sig-note{font-size:11px;line-height:1.5;margin-top:7px;color:#0f0f0f;}
 .pdf-sig-strong{font-weight:700;}
@@ -345,18 +344,7 @@ function _sigCardHtml() {
         '<div class="pdf-sig-row"><span class="pdf-sig-label">Unterzeichner</span><span class="pdf-sig-name">Shineil Keith Mathias</span></div>' +
         '<div class="pdf-sig-row"><span class="pdf-sig-label">Datum und Uhrzeit</span><span class="pdf-sig-time" data-sig-time></span></div>' +
         '<div class="pdf-sig-id">' +
-            '<svg class="pdf-sig-logo" viewBox="0 0 74 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">' +
-                '<g fill="#e2001a">' +
-                    '<polygon points="1,4 30,4 25,9.6 1,9.6"/>' +
-                    '<polygon points="1,11.4 27,11.4 22,17 1,17"/>' +
-                    '<polygon points="1,18.8 24,18.8 19,24.4 1,24.4"/>' +
-                '</g>' +
-                '<circle cx="41" cy="16" r="9.5" fill="none" stroke="#7f97b3" stroke-width="4.5"/>' +
-                '<circle cx="41" cy="16" r="3" fill="#7f97b3"/>' +
-                '<path d="M50.5 16 H66" fill="none" stroke="#7f97b3" stroke-width="4.5" stroke-linecap="round"/>' +
-                '<path d="M60 16 V22.5" fill="none" stroke="#7f97b3" stroke-width="4.5" stroke-linecap="round"/>' +
-            '</svg>' +
-            '<span class="pdf-sig-idname">ID Austria</span>' +
+            '<img class="pdf-sig-logo" src="/id-austria-logo.svg" alt="ID Austria">' +
         '</div>' +
         '<div class="pdf-sig-heading">Dieses Dokument ist digital signiert</div>' +
         '<div class="pdf-sig-note">Dieses mit einer qualifizierten elektronischen Signatur versehene Dokument hat gemäß Art. 25 Abs. 2 der Verordnung (EU) Nr. 910/2014 vom 23. Juli 2014 (&quot;EIDAS-VO&quot;) die gleiche Rechtswirkung wie ein handschriftlich unterschriebenes Dokument.</div>' +
