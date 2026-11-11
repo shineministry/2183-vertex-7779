@@ -3922,3 +3922,151 @@ html body.dark-mode #page-files .drive-search-wrap {
 html body.dark-mode #page-files .drive-search-wrap input {
   color: #e8eaed !important;
 }
+
+/* =====================================================================
+   MOBILE VAULT STRUCTURE  (<= 767.98px)
+   ---------------------------------------------------------------------
+   KEEP THIS BLOCK LAST IN THE FILE. It must win the cascade over the
+   late desktop / drive-theme !important rules (notably the
+   `.sidebar { width:256px; height:100% }` "ONE NAV BAR" rule above),
+   which were what left phones with a 256px full-height sidebar column
+   and an empty/squeezed content panel.
+
+   Mobile structure (desktop >= 768px is untouched by everything here):
+     [ utility bar : date + security status + bell ]
+     [ brand row   : F.O.V + mobile icon buttons     ]
+     [ sidebar STRIP : member/dark/settings row + horizontally
+                       scrollable category chips      ]
+     [ content panel : scrollable pages, 2-col cards  ]
+     [ fixed bottom nav ]
+   ===================================================================== */
+@media screen and (max-width:767.98px){
+
+  /* ---------- shell: strip on top, content below ---------- */
+  .main-container{
+    flex-direction:column !important;
+    overflow:hidden !important;
+    min-height:0 !important;
+  }
+
+  /* ---------- sidebar becomes a full-width strip (auto height) ---------- */
+  .sidebar,
+  body.dark-mode .sidebar{
+    width:100% !important;
+    height:auto !important;
+    max-height:none !important;
+    flex:0 0 auto !important;
+    overflow:visible !important;
+    overflow-x:hidden !important;
+    box-sizing:border-box !important;
+    gap:0 !important;
+    padding:8px 10px 6px !important;
+    border-right:none !important;
+    border-bottom:1px solid var(--border-color,#e5e7eb) !important;
+    border-radius:0 !important;
+  }
+
+  #sidebar-controls-wrap{
+    margin-bottom:6px !important;
+    padding:8px !important;
+    border-radius:12px !important;
+  }
+  #sidebar-controls-wrap > div{ gap:8px !important; }
+  #member-select{ height:40px !important; padding:0 12px !important; font-size:14px !important; min-width:0 !important; }
+  #toggle-dark-mode,
+  #share-gear{ width:40px !important; height:40px !important; }
+
+  .drive-new-btn{ margin:0 0 6px 0 !important; padding:8px 14px !important; font-size:13px !important; }
+
+  /* desktop-only chrome inside the strip */
+  .sidebar-vault-label,
+  .sidebar-storage{ display:none !important; }
+
+  .sidebar > div{ margin-bottom:6px !important; }
+  #sidebar-files-section{
+    flex:0 0 auto !important;
+    min-height:0 !important;
+    overflow:visible !important;
+    overflow-x:hidden !important;
+  }
+
+  /* ---------- category chips: one horizontal, swipeable row ---------- */
+  #cat-list{
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    gap:8px !important;
+    margin:0 !important;
+    padding:2px 0 !important;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+  }
+  #cat-list::-webkit-scrollbar{ display:none !important; }
+  #cat-list li{
+    flex:0 0 auto !important;
+    white-space:nowrap !important;
+    margin-bottom:0 !important;
+    padding:9px 14px !important;
+    border-radius:16px !important;
+    font-size:13px !important;
+    min-height:38px;
+  }
+
+  /* ---------- navbar: one compact utility row ---------- */
+  .passport-top-utility{
+    flex-wrap:nowrap !important;
+    gap:8px !important;
+    padding:6px 14px !important;
+  }
+  .passport-top-utility > div{ gap:8px !important; }
+  .passport-top-utility #passport-datetime{
+    flex:1 1 auto !important;
+    min-width:0 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    font-size:12px !important;
+  }
+  .passport-top-utility .security-status-dot{
+    flex:0 0 auto !important;
+    white-space:nowrap !important;
+    font-size:11px !important;
+  }
+  /* long badge does not fit a phone - it stays visible on desktop */
+  .passport-top-utility .e2e-badge{ display:none !important; }
+  .passport-main-nav{ min-height:52px !important; }
+
+  /* ---------- content panel ---------- */
+  .content-view{
+    flex:1 1 auto !important;
+    min-height:0 !important;
+    padding:14px !important;
+    padding-bottom:78px !important;   /* clears the fixed bottom nav */
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+  }
+
+  /* ---------- cards / search / chips ---------- */
+  .file-grid{ grid-template-columns:repeat(2,1fr) !important; gap:10px !important; }
+  .drive-chip{ padding:9px 14px !important; font-size:13px !important; }
+  .drive-search-wrap{ height:44px !important; }
+  .drive-search-wrap input{ font-size:16px !important; }   /* stops iOS auto-zoom */
+
+  /* ---------- fixed bottom nav ---------- */
+  .vault-drive-bottom-nav{ height:60px !important; }
+  .vault-drive-bottom-nav button{ font-size:11px !important; min-height:44px; }
+
+  /* keep the reCAPTCHA badge clear of the bottom nav */
+  .grecaptcha-badge,
+  iframe[src*="recaptcha"]{ bottom:70px !important; }
+}
+
+/* Small phones (<= 430px): tighter padding, drop the status sentence */
+@media screen and (max-width:430px){
+  .content-view{ padding:12px !important; padding-bottom:78px !important; }
+  .file-grid{ gap:8px !important; }
+  #cat-list li{ padding:8px 12px !important; font-size:12.5px !important; }
+  .passport-top-utility .security-status-dot{ display:none !important; }
+}

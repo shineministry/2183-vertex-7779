@@ -1441,11 +1441,11 @@ Recommended:
           <div style="        display:flex;        align-items:center;        gap:8px;        width:100%;        box-sizing:border-box;                  "> <select id="member-select" style="                flex:1;                min-width:0;                padding:12px;                border-radius:12px;                border:1px solid rgba(255,255,255,.18);                font-weight:700;                font-size:13px;                cursor:pointer;                background:rgba(255,255,255,.08);                color:#e2e8f0;                box-sizing:border-box;            "></select> <button id="toggle-dark-mode" onclick="toggleDarkMode()" style="                width:46px;                height:46px;                border:1px solid rgba(255,255,255,.18);                border-radius:12px;                background:rgba(255,255,255,.08);                cursor:pointer;                font-size:18px;                display:flex;                align-items:center;                justify-content:center;                flex-shrink:0;                color:#94a3b8;            " title="Toggle dark mode"><i data-lucide="moon" style="width:18px;height:18px;"></i></button> <button id="share-gear" style="                width:46px;                height:46px;                border:1px solid rgba(255,255,255,.18);                border-radius:12px;                background:rgba(255,255,255,.08);                cursor:pointer;                font-size:18px;                display:flex;                align-items:center;                justify-content:center;                flex-shrink:0;                color:#94a3b8;            "> <i data-lucide="settings" style="width:18px;height:18px;"></i> </button> </div>
         </div><!-- end dark sidebar controls wrapper -->
         <button class="drive-new-btn" onclick="document.getElementById('unified-search')?.focus(); toastNotify('Tip: Search or pick a category - like Google Drive','info')"><i data-lucide="plus" style="width:18px;height:18px;"></i> New</button>
-        <div style="padding:0 8px 8px; font-size:11px; color:#94a3b8; font-weight:600; letter-spacing:.4px; text-transform:uppercase;">My Vault</div>
+        <div class="sidebar-vault-label" style="padding:0 8px 8px; font-size:11px; color:#94a3b8; font-weight:600; letter-spacing:.4px; text-transform:uppercase;">My Vault</div>
         <div id="sidebar-files-section">
           <ul id="cat-list"></ul>
         </div>
-        <div style="margin-top:auto; padding:14px 8px 6px; border-top:1px solid rgba(255,255,255,.1);">
+        <div class="sidebar-storage" style="margin-top:auto; padding:14px 8px 6px; border-top:1px solid rgba(255,255,255,.1);">
           <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:#94a3b8;"><i data-lucide="hard-drive" style="width:14px;height:14px;"></i> Storage - Encrypted</div>
           <div style="height:6px; background:rgba(255,255,255,.12); border-radius:4px; margin-top:8px; overflow:hidden;"><div id="drive-storage-bar" style="height:100%; width:42%; background:linear-gradient(90deg,#4285f4,#34a853); border-radius:4px;"></div></div>
           <div id="drive-storage-text" style="font-size:11px; color:#64748b; margin-top:4px;">--- files secured</div>
@@ -3673,9 +3673,16 @@ Recommended:
                      : (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');
         const allowed = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null)
                         || ['shineil', 'brother', 'father', 'mother'];
-        // Refresh PIN hashes from server in the background - don't block
-        // the UI on the network call; localStorage already has cached hashes.
-        loadPinHashesFromServer().catch(()=>{});
+        // Pull the shared PIN hashes from the server BEFORE the gate picks
+        // between "SET PIN" and "ENTER PIN". Without this wait the gate ran
+        // on the local cache alone, so a phone that had never seen the PIN
+        // asked the user to create one instead of entering the PIN that was
+        // already set on another device. Bounded by a timeout so a slow or
+        // unreachable backend can never block the UI.
+        await Promise.race([
+          loadPinHashesFromServer().catch(function () {}),
+          new Promise(function (resolve) { setTimeout(resolve, 2500); })
+        ]);
         if (allowed.length > 1) {
           openPMMemberPicker(allowed);
         } else {
@@ -3914,7 +3921,14 @@ Recommended:
             const pin = _pmRowValue('main');
             if (pin.length !== 4) { errEl.textContent = 'Enter all 4 digits.'; _pmShakeRow('main'); return; }
             const hash = await _pmHashPin(pin, ctx.member);
-            const stored = localStorage.getItem('pmPinHash_' + ctx.member);
+            let stored = localStorage.getItem('pmPinHash_' + ctx.member);
+            if (hash !== stored) {
+              // The local copy may be stale (PIN changed on another device)
+              // or missing entirely - re-sync from the shared server copy and
+              // check again before telling the user the PIN is wrong.
+              await loadPinHashesFromServer().catch(function () {});
+              stored = localStorage.getItem('pmPinHash_' + ctx.member);
+            }
             if (hash !== stored) { errEl.textContent = 'Incorrect PIN. Try again.'; _pmShakeRow('main'); return; }
             closePMPinModal();
             _openPMModalForMember(ctx.member);
@@ -3929,7 +3943,9 @@ Recommended:
             if (pin !== confirm) { errEl.textContent = 'PINs do not match - try again.'; _pmShakeRow('main'); _pmShakeRow('confirm'); return; }
             const hash = await _pmHashPin(pin, ctx.member);
             localStorage.setItem('pmPinHash_' + ctx.member, hash);
-            syncPinHashToServer(ctx.member, hash);
+            // Wait for the push so every other device really has it before we
+            // tell the user the PIN is set (sync failures are non-fatal).
+            await syncPinHashToServer(ctx.member, hash);
             closePMPinModal();
             _openPMModalForMember(ctx.member);
             return;
@@ -3941,14 +3957,18 @@ Recommended:
             const confirm = _pmRowValue('confirm');
             if (oldPin.length !== 4) { errEl.textContent = 'Enter your current PIN.'; _pmShakeRow('old'); return; }
             const oldHash = await _pmHashPin(oldPin, ctx.member);
-            const stored = localStorage.getItem('pmPinHash_' + ctx.member);
+            let stored = localStorage.getItem('pmPinHash_' + ctx.member);
+            if (oldHash !== stored) {
+              await loadPinHashesFromServer().catch(function () {});
+              stored = localStorage.getItem('pmPinHash_' + ctx.member);
+            }
             if (oldHash !== stored) { errEl.textContent = 'Current PIN is incorrect.'; _pmShakeRow('old'); return; }
             if (newPin.length !== 4) { errEl.textContent = 'Enter a new 4-digit PIN.'; _pmShakeRow('main'); return; }
             if (confirm.length !== 4) { errEl.textContent = 'Re-type the new PIN below to confirm it.'; _pmShakeRow('confirm'); return; }
             if (newPin !== confirm) { errEl.textContent = 'New PINs do not match - try again.'; _pmShakeRow('main'); _pmShakeRow('confirm'); return; }
             const newHash = await _pmHashPin(newPin, ctx.member);
             localStorage.setItem('pmPinHash_' + ctx.member, newHash);
-            syncPinHashToServer(ctx.member, newHash);
+            await syncPinHashToServer(ctx.member, newHash);
             closePMPinModal();
             errEl.textContent = '';
             return;
@@ -3960,7 +3980,69 @@ Recommended:
         }
       }
       document.getElementById('pmMemberPickerModal').addEventListener('click', function (e) { if (e.target === this) closePMMemberPicker(); });
-      document.getElementById('pmPinModal').addEventListener('click', function (e) { if (e.target === this) closePMPinModal(); }); /* Close on overlay click */ document.getElementById('passwordManagerModal').addEventListener('click', function(e){  if(e.target === this) closePasswordManager();});/* ======== Password Strength Bar ======== */function pmStrength(val) {  const bar = document.getElementById('pm-strength-bar');  if (!bar) return;  let score = 0;  if (val.length >= 8) score++;  if (/[A-Z]/.test(val)) score++;  if (/[0-9]/.test(val)) score++;  if (/[^A-Za-z0-9]/.test(val)) score++;  const colors = ['#ef4444','#f97316','#eab308','#16a34a'];  const widths = ['25%','50%','75%','100%'];  bar.style.width = val ? widths[score-1] || '10%' : '0';  bar.style.background = val ? colors[score-1] || '#e2e8f0' : '#e2e8f0';}/* ======== Inline reveal for saved entries ======== */function toggleEntryReveal(id) {  const dots = document.getElementById('pw-dots-'+id);  const actual = document.getElementById('pw-actual-'+id);  const btn = document.getElementById('pw-reveal-btn-'+id);  if (!dots || !actual) return;  const showing = actual.style.display !== 'none';  dots.style.display = showing ? 'block' : 'none';  actual.style.display = showing ? 'none' : 'block';  btn.innerHTML = showing ? '<i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i> Show' : '<i data-lucide="eye-off" style="width:14px;height:14px;vertical-align:middle;"></i> Hide';if(window.lucide)lucide.createIcons({node:btn});}/* ======== Override renderPMList for richer UI ======== */async function renderPMList() {  const container = document.getElementById('pm-entries-container');  const countNum = document.getElementById('pm-count-num');  if (!container) return;  container.innerHTML = '<div class="pm-empty"><i data-lucide="loader" style="width:16px;height:16px;vertical-align:middle;"></i> Loading credentials---</div>';if(window.lucide)lucide.createIcons({node:container});  try {    const allEntries = await loadPMEntries().catch(() => []);    const pmSearchEl = document.getElementById('pm-search'); const query = ((pmSearchEl ? pmSearchEl.value : '') || '').toLowerCase();    /* Filter by current mode's allowed members */const mode = (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');const modeAllowedMembers = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null) || ['shineil', 'brother', 'father', 'mother'];const allowedMembers = window._pmActiveMember ? [window._pmActiveMember] : modeAllowedMembers;
+      document.getElementById('pmPinModal').addEventListener('click', function (e) { if (e.target === this) closePMPinModal(); }); /* Close on overlay click */ document.getElementById('passwordManagerModal').addEventListener('click', function(e){  if(e.target === this) closePasswordManager();});/* ======== Password Strength Bar ======== */function pmStrength(val) {  const bar = document.getElementById('pm-strength-bar');  if (!bar) return;  let score = 0;  if (val.length >= 8) score++;  if (/[A-Z]/.test(val)) score++;  if (/[0-9]/.test(val)) score++;  if (/[^A-Za-z0-9]/.test(val)) score++;  const colors = ['#ef4444','#f97316','#eab308','#16a34a'];  const widths = ['25%','50%','75%','100%'];  bar.style.width = val ? widths[score-1] || '10%' : '0';  bar.style.background = val ? colors[score-1] || '#e2e8f0' : '#e2e8f0';}/* ======== Inline reveal for saved entries ======== */
+      const PM_PW_UNAVAILABLE = 'Password unavailable - tap Show to retry.';
+      // The /passwords list endpoint does not ship the password itself, so the
+      // value is pulled on demand when the user hits Show (same route the Copy
+      // button uses), with the IndexedDB cache as the offline fallback.
+      async function _pmFetchPassword(id) {
+        try {
+          const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
+          const res = await fetch('https://backend.shinumaths989.workers.dev/passwords/get-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ id: id })
+          });
+          if (res.ok) {
+            const data = await res.json().catch(function () { return {}; });
+            if (data && data.password) return data.password;
+          }
+        } catch (e) { console.warn('[PM] reveal fetch failed:', e); }
+        try {
+          if (typeof idbGetAllPMEntries === 'function') {
+            const entries = (await idbGetAllPMEntries()) || [];
+            const hit = entries.filter(function (e) { return String(e.id) === String(id); })[0];
+            if (hit && hit.password) return hit.password;
+          }
+        } catch (e) {}
+        return '';
+      }
+      async function toggleEntryReveal(id) {
+        const dots = document.getElementById('pw-dots-'+id);
+        const actual = document.getElementById('pw-actual-'+id);
+        const btn = document.getElementById('pw-reveal-btn-'+id);
+        if (!dots || !actual) return;
+        // Track the state ourselves: the element is hidden by the .pw-actual
+        // CSS class (inline style is empty), so reading style.display made the
+        // FIRST click look like "already showing" and it hid nothing instead
+        // of revealing - which is why Show used to do nothing at all.
+        const showing = actual.dataset.shown === '1';
+        if (!showing) {
+          let pw = actual.dataset.pw || '';
+          if (!pw) {
+            const rendered = (actual.textContent || '').trim();
+            if (rendered && rendered !== PM_PW_UNAVAILABLE) {
+              pw = rendered;                 // list already carried the value
+              actual.dataset.pw = pw;
+            } else {
+              if (btn) { btn.disabled = true; btn.textContent = '...'; }
+              pw = await _pmFetchPassword(id);
+              if (btn) { btn.disabled = false; }
+              if (pw) actual.dataset.pw = pw;
+            }
+          }
+          actual.textContent = pw || PM_PW_UNAVAILABLE;
+          actual.dataset.shown = '1';
+        } else {
+          actual.dataset.shown = '';
+        }
+        dots.style.display = showing ? 'block' : 'none';
+        actual.style.display = showing ? 'none' : 'block';
+        if (btn) {
+          btn.innerHTML = showing ? '<i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i> Show' : '<i data-lucide="eye-off" style="width:14px;height:14px;vertical-align:middle;"></i> Hide';
+          if (window.lucide) lucide.createIcons({node:btn});
+        }
+      }/* ======== Override renderPMList for richer UI ======== */async function renderPMList() {  const container = document.getElementById('pm-entries-container');  const countNum = document.getElementById('pm-count-num');  if (!container) return;  container.innerHTML = '<div class="pm-empty"><i data-lucide="loader" style="width:16px;height:16px;vertical-align:middle;"></i> Loading credentials---</div>';if(window.lucide)lucide.createIcons({node:container});  try {    const allEntries = await loadPMEntries().catch(() => []);    const pmSearchEl = document.getElementById('pm-search'); const query = ((pmSearchEl ? pmSearchEl.value : '') || '').toLowerCase();    /* Filter by current mode's allowed members */const mode = (window.VAULT_MODE || sessionStorage.getItem('vaultMode') || 'ADMIN');const modeAllowedMembers = (typeof VAULT_MODE_ALLOWED_MEMBERS !== 'undefined' ? VAULT_MODE_ALLOWED_MEMBERS[mode] : null) || ['shineil', 'brother', 'father', 'mother'];const allowedMembers = window._pmActiveMember ? [window._pmActiveMember] : modeAllowedMembers;
       const filtered = allEntries.filter(e => {
         if (!e.member) return true;
         return allowedMembers.includes(e.member);
@@ -4040,7 +4122,20 @@ Recommended:
               active.style.color      = '#e2e8f0';
             }
           }
+
+          // Mobile bottom nav highlight follows the active page
+          try {
+            const bottomMap = { home:'driveNavHome', files:'driveNavSearch', photos:'driveNavPhotos' };
+            document.querySelectorAll('.vault-drive-bottom-nav button').forEach(b => b.classList.remove('active'));
+            const bottomId = bottomMap[page] ? document.getElementById(bottomMap[page]) : null;
+            if (bottomId) bottomId.classList.add('active');
+          } catch (e) {}
         }, prevEl ? 200 : 0);
+      }
+
+      // Shared helper so any tab (incl. the Starred shortcut) can light up
+      function setBottomNavActive(id) {
+        document.querySelectorAll('.vault-drive-bottom-nav button').forEach(b => b.classList.toggle('active', b.id === id));
       }
 
       function refreshHomePage() {
@@ -5436,9 +5531,9 @@ Recommended:
   <!-- Drive App Bottom Nav (mobile) -->
   <nav class="vault-drive-bottom-nav" aria-label="Vault Drive navigation">
     <button id="driveNavHome" class="active" onclick="selectVaultCategory(`HOME`);switchPage(`home`)"><i data-lucide="home" style="width:22px;height:22px;"></i>Home</button>
-    <button onclick="driveFilter(`starred`)" id="driveNavStarred"><i data-lucide="star" style="width:22px;height:22px;"></i>Starred</button>
-    <button onclick="switchPage(`files`);document.getElementById(`unified-search`)?.focus()"><i data-lucide="search" style="width:22px;height:22px;"></i>Search</button>
-    <button onclick="selectVaultCategory(`PHOTOS`);if(typeof switchPage===`function`)switchPage(`photos`); else selectVaultCategory(`PHOTOS`)"><i data-lucide="image" style="width:22px;height:22px;"></i>Photos</button>
+    <button id="driveNavStarred" onclick="switchPage(`files`);setTimeout(function(){driveFilter(`pinned`);setBottomNavActive(`driveNavStarred`)},210)"><i data-lucide="star" style="width:22px;height:22px;"></i>Starred</button>
+    <button id="driveNavSearch" onclick="switchPage(`files`);document.getElementById(`unified-search`)?.focus()"><i data-lucide="search" style="width:22px;height:22px;"></i>Search</button>
+    <button id="driveNavPhotos" onclick="selectVaultCategory(`PHOTOS`);if(typeof switchPage===`function`)switchPage(`photos`); else selectVaultCategory(`PHOTOS`)"><i data-lucide="image" style="width:22px;height:22px;"></i>Photos</button>
   </nav>
 
   <!-- Files Manager Window Mode -->
