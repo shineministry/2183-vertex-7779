@@ -68,6 +68,7 @@ function startInactivityMonitor(){
 
 /* ========================= LOGOUT ========================= */
 async function logout(message="") {
+ if (typeof clearLocalAIChat === "function") clearLocalAIChat();
  clearTimeout(inactivityTimer);
  if (typeof _sessionTimerInterval !== 'undefined' && _sessionTimerInterval) {
      clearInterval(_sessionTimerInterval);
@@ -79,21 +80,6 @@ async function logout(message="") {
  showNotification('Session Ended', message, {type:'warning'});
  }
  notifyBackendLogout(message || "Logged out.");
- try {
- await fetch(
- "https://backend.shinumaths989.workers.dev/save-visitor-log",
- {
- method: "POST",
- headers: { "Content-Type": "application/json" },
- body: JSON.stringify({
- visitorName: document.getElementById( 'user-name' ).value,
- logoutTime: new Date() .toLocaleString(),
- status: "Logged Out"
- })
- }
- );
- } catch(e) { console.error( "Logout log error:", e ); }
-
  // Wipe session storage entirely
  sessionStorage.clear(); 
 
