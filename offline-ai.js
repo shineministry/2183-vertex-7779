@@ -20,7 +20,7 @@ window.OfflineAI = (() => {
 
   function visiblePDFs() {
     const visible = Object.values(window.allFilesData || {}).flatMap(files =>
-      Array.isArray(files) ? filterFilesForMember(files) : []
+      Array.isArray(files) ? window._filterFilesForMember(files) : []
     );
     const byPath = new Map();
     for (const file of visible) {
@@ -38,9 +38,12 @@ window.OfflineAI = (() => {
   }
 
   async function ask(question) {
+    if (/^(?:hi|hello|hey)[!.?\s]*$/i.test(question.trim())) {
+      return { answer: 'Hi! Ask me about a PDF saved for offline access. I’ll show matching passages and page numbers.' };
+    }
     if (!unlocked()) return { answer: 'Unlock the vault to search your documents.' };
     if (!window.pdfjsLib || typeof idbGetDoc !== 'function' ||
-        typeof filterFilesForMember !== 'function' || typeof isMemberAllowedForCurrentMode !== 'function') {
+        typeof window._filterFilesForMember !== 'function' || typeof isMemberAllowedForCurrentMode !== 'function') {
       return { answer: 'The offline document reader is unavailable on this device.' };
     }
 
