@@ -83,12 +83,13 @@ async function logout(message="") {
  // Wipe session storage entirely
  sessionStorage.clear(); 
 
-// On logout, call:
-await fetch('https://backend.shinumaths989.workers.dev/logout', {
+// Notify the server when reachable without blocking local logout.
+fetch('https://backend.shinumaths989.workers.dev/logout', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ sessionId: window.currentSessionId }) // must be stored at login
-});
+  keepalive: true,
+  body: JSON.stringify({ sessionId: window.currentSessionId })
+}).catch(() => {});
    
  // Clear memory password
  window.masterPassword = null;
