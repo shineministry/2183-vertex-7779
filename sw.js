@@ -19,7 +19,7 @@
  *  network fetch â€” no stale authenticated shell is served.
  */
 
-const CACHE = "online-vault-v39";   // bump this string to force a full cache refresh
+const CACHE = "online-vault-v41";   // bump this string to force a full cache refresh
 
 const BACKEND_HOST = "backend.shinumaths989.workers.dev";
 
@@ -29,14 +29,23 @@ const PRECACHE_URLS = [
   "/index.html",
   "/auth.js",
   "/offline-auth.js",
-  "/offline-ai.js",
+  "/offline-ai.js?v=20261112-localai",
+  "/auth.js?v=20261112-localai",
+  "/session.js?v=20261112-localai",
+  "/pdf.min.js",
+  "/pdf.worker.min.js",
+  "/pdfjs-init.js",
   "/features.js",
   "/session.js",
   "/startup.js",
   "/vault-data.js",
   "/viewer.js",
   "/id-austria-logo.svg",
-  "/vault-ui.js"
+  "/vault-ui.js",
+  "/offline-auth.js?v=20260610-offlinefix12",
+  "/vault-data.js?v=20260628-photosfix1",
+  "/viewer.js?v=20261022-sigstamp2",
+  "/features.js?v=20260628-photosfix1"
 ];
 
 // URL path fragments that must NEVER be cached (AI chat, streaming, live data)

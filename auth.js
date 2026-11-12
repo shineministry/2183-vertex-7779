@@ -207,6 +207,7 @@ function notifyBackendLogout(reason = "Logged out.") {
 }
 
 async function logoutVault( reason = "Logged out.", clearTrust = false ) {
+    clearLocalAIChat();
 
     clearTimeout( inactivityTimer );
     if (typeof _sessionTimerInterval !== 'undefined' && _sessionTimerInterval) {
@@ -340,68 +341,13 @@ function updateClock(){
 
 /* ========================= EXTRACT PDF TEXT ========================= */
 async function searchAI() {
-
-  try {
-
-    const query =
-      document
-      .getElementById(
-        "unified-search"
-      )
-      .value
-      .trim()
-      .toLowerCase();
-
-    if (!query) {
-      toastNotify('Please enter a search term.', 'warning');
-      return;
-    }
-
-    const token =
-      sessionStorage.getItem('vaultSessionToken') ||
-      sessionStorage.getItem('vaultSession') || '';
-
-    const res =
-      await fetch(
-        "https://backend.shinumaths989.workers.dev/ai-search",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-            "application/json",
-
-            "Authorization":
-            `Bearer ${token}`
-          },
-
-          body: JSON.stringify({
-  question: query
-})
-        }
-      );
-
-    const data =
-      await res.json();
-
-    console.log(data);
-
-    if (
-      !data.results ||
-      data.results.length === 0
-    ) {
-      toastNotify('No matching document found.', 'info');
-      return;
-    }
-
-    toastNotify('Found in: ' + data.results.map(x => x.fileName).join(', '), 'success');
-
-  } catch (err) {
-
-    console.error(err);
-
-    toastNotify('AI Search failed. Please try again.', 'error');
+  const query = document.getElementById('unified-search').value.trim();
+  if (!query) {
+    toastNotify('Please enter a search term.', 'warning');
+    return;
   }
+  openAIChat();
+  chipAsk(query);
 }
 
 async function extractPDFText(file) {
@@ -804,255 +750,6 @@ if (document.readyState === 'loading') {
 /* ==========================================================
    PRODUCTION MERGED ENGINE: AI BACKGROUND INDEXING PIPELINE
 ========================================================== */
-async function runAIIndexingOnLogin() {
-    console.log("runAIIndexingOnLogin() CALLED");
-
-    // Extract authorization payload tokens
-    const token = sessionStorage.getItem("vaultSessionToken") ||
-                  sessionStorage.getItem("vaultSession") || "";
-    if (!token) {
-        console.warn("AI Index: Halt. Operational authorization token is missing.");
-        return;
-    }
-
-    // ── 1. CHECK ENGINE GLOBAL STATUS ────────────────────────────────────
-    try {
-        const checkRes = await fetch('https://backend.shinumaths989.workers.dev/ai-index-status', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        const checkData = await checkRes.json();
-        
-        // Fast path check bypass parameter
-        if (false && checkData.indexed) {
-            console.log('✦ Vault AI: Already indexed. Fast answers ready.');
-            updateAIBtn('ready');
-            return;
-        }
-        console.log("FORCING RE-INDEX SCRIPT RUN");
-    } catch(e) {
-        console.log('✦ Index check failed, proceeding to index extraction layer.', e);
-    }
-
-    console.log('✦ Vault AI: Scanning and compiling repository documents...');
-    updateAIBtn('indexing', '<i data-lucide="loader-2" style="width:14px;height:14px;vertical-align:middle;"></i> Indexing...');
-
-    // ── 2. DYNAMIC MEMORY SYNCHRONIZATION LOOP ───────────────────────────
-    let waited = 0;
-    while ((!window.allFilesData || !Object.keys(window.allFilesData).length) && waited < 30000) {
-        console.log("Waiting for files storage layer to materialize...", waited, window.allFilesData);
-        await new Promise(r => setTimeout(r, 500));
-        waited += 500;
-    }
-
-    console.log("Files map ready status:", window.allFilesData);
-
-    // Parse files dictionary map into a sequential array schema
-    let allFiles = [];
-    try {
-        for (const items of Object.values(window.allFilesData || {})) {
-            if (Array.isArray(items)) {
-                allFiles.push(...items);
-            }
-        }
-    } catch(e) { 
-        console.warn('allFilesData matrix storage parse error', e); 
-    }
-
-    // Fallback: If local memory structure is completely blank, query server directly
-    if (!allFiles.length) {
-        console.log("AI Index: Local payload trace empty. Polling server backend manifest instead...");
-        try {
-            const res = await fetch("https://backend.shinumaths989.workers.dev/files.json", {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const data = await res.json();
-            for (const items of Object.values(data)) {
-                if (Array.isArray(items)) allFiles.push(...items);
-            }
-        } catch (e) {
-            console.error("AI Index: Critical exit. Unable to gather file lists registry.", e);
-            updateAIBtn('ready');
-            return;
-        }
-    }
-
-    // Filter pipeline tracking: Strict evaluation targeting document files (.pdf, .enc)
-    // Exclude photos (paths starting with photos/ or /photos/) — only documents should be OCR-indexed
-    const pdfFiles = allFiles.filter(f => {
-        const pathStr = (f.file || f.name || f.fileName || f.path || "").toLowerCase();
-        if (pathStr.startsWith("photos/") || pathStr.startsWith("/photos/")) return false;
-        return pathStr.endsWith(".pdf") || pathStr.endsWith(".enc");
-    });
-
-    if (!pdfFiles.length) {
-        console.log('✦ No compatible PDF documents found to index inside vault.');
-        updateAIBtn('ready');
-        return;
-    }
-
-    console.log(`AI Index: ${pdfFiles.length} candidate documents discovered. Validating chunk status logs...`);
-
-    // ── 3. QUERY PERSISTENCE STATUS FOR SKIPPING COMPLETED DOCS ─────────
-    let alreadyIndexed = new Set();
-    try {
-        const progressRes = await fetch('https://backend.shinumaths989.workers.dev/ai-chunk-status-all', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({})
-        });
-        const progressData = await progressRes.json();
-        
-        // Map target names from both potential status attributes (indexed / files)
-        const completedList = progressData.indexed || progressData.files || [];
-        completedList.forEach(name => alreadyIndexed.add(name));
-        
-        console.log(`AI Index: ${alreadyIndexed.size} document structures verified in Firestore.`);
-    } catch(e) {
-        console.warn('AI Index: Progress checkpoint trace failed — Processing full array index scope.', e);
-    }
-
-    let doneCount = alreadyIndexed.size;
-
-    // ── 4. RESUME CORE INDEX EXTRACTION & CHUNKING LOOP ──────────────────
-    for (const fileEntry of pdfFiles) {
-        const filePath = fileEntry.file || fileEntry.path || fileEntry.fileName || "";
-        const fileName = fileEntry.name || fileEntry.filename || filePath.split("/").pop() || "Unnamed Document";
-
-        // Skip processed items immediately
-        if (alreadyIndexed.has(fileName)) {
-            console.log(`✦ Skipping processed index file: ${fileName}`);
-            continue;
-        }
-
-        console.log(`✦ Resuming Index pipeline processing: ${fileName}`);
-        updateAIBtn('indexing', `✦ ${doneCount}/${pdfFiles.length}`);
-
-        try {
-            // Step A: Download stream buffer from storage vault
-            const dlRes = await fetch(
-                `https://backend.shinumaths989.workers.dev/docs/${encodeURIComponent(filePath)}`,
-                { headers: { "Authorization": `Bearer ${token}` } }
-            );
-            if (!dlRes.ok) {
-                console.warn(`AI Index: Extraction dispatch failed for "${fileName}" (HTTP ${dlRes.status})`);
-                continue;
-            }
-
-            const encryptedBuffer = await dlRes.arrayBuffer();
-
-            // Step B: Cryptographic layer decryption
-            let decryptedBuffer;
-            try {
-                // Tries localized decryption utility first, switches to global window reference fallback
-                if (typeof decryptVaultFile === 'function') {
-                    decryptedBuffer = await decryptVaultFile(encryptedBuffer);
-                } else if (typeof indexAI === 'function') {
-                    // Fallback redirect hook if alternate helper wrapper indexAI architecture operates execution
-                    await indexAI(fileEntry.url || filePath, fileName);
-                    doneCount++;
-                    continue; 
-                } else {
-                    throw new Error("Missing decryption library mapping runtime components.");
-                }
-            } catch (decruptErr) {
-                console.warn(`AI Index: Decryption failed for target "${fileName}" — Skipping node loop.`, decruptErr);
-                continue;
-            }
-
-            // Step C: Content string conversion extraction (with OCR mechanics)
-            const fullText = await extractFullPDFText(decryptedBuffer);
-            if (!fullText || fullText.length < 50) {
-                console.warn(`AI Index: Document element "${fileName}" evaluated as zero length raw string content. Skipping...`);
-                continue;
-            }
-
-            console.log(`AI Index: Document string parse complete "${fileName}" — (${fullText.length} characters parsed)`);
-
-            // Step D: Calculate mathematical content overlaps mapping (800 window size / 100 char overlap)
-            const CHUNK_SIZE = 800;
-            const OVERLAP    = 100;
-            const chunks = [];
-            for (let i = 0; i < fullText.length; i += (CHUNK_SIZE - OVERLAP)) {
-                chunks.push(fullText.slice(i, i + CHUNK_SIZE));
-                if (i + CHUNK_SIZE >= fullText.length) break;
-            }
-
-            console.log(`AI Index: Array split processing completed. Transferring ${chunks.length} blocks to matrix database...`);
-
-            // Step E: Stream individual index segments to Cloudflare vector worker
-            let uploadedChunksCount = 0;
-            for (let i = 0; i < chunks.length; i++) {
-                try {
-                    const chunkRes = await fetch("https://backend.shinumaths989.workers.dev/ai-index", {
-                        method: "POST",
-                        headers: { 
-                            "Content-Type": "application/json", 
-                            "Authorization": `Bearer ${token}` 
-                        },
-                        body: JSON.stringify({
-                            fileName:     `${fileName} [chunk ${i + 1}/${chunks.length}]`,
-                            baseFileName: fileName,
-                            chunkText:    chunks[i],
-                            chunkIndex:   i,
-                            totalChunks:  chunks.length
-                        })
-                    });
-                    if (chunkRes.ok) uploadedChunksCount++;
-                } catch (chunkErr) {
-                    console.warn(`AI Index: Serialization delivery failure on segment chunk index block: ${i + 1}`, chunkErr);
-                }
-
-                // Internal Throttling Layer: Every 10 iterations pause loop for 300ms to preserve thread execution capacity
-                if (i % 10 === 9) {
-                    await new Promise(r => setTimeout(r, 300));
-                }
-            }
-
-            console.log(`AI Index: Storage save loop verified "${fileName}" — ${uploadedChunksCount}/${chunks.length} matrix slices updated.`);
-
-            // Step F: Fire sync event payload tracking completion milestone status to persistence records
-            await fetch('https://backend.shinumaths989.workers.dev/ai-file-indexed', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ fileName: fileName })
-            });
-
-            doneCount++;
-            updateAIBtn('indexing', `✦ ${doneCount}/${pdfFiles.length}`);
-
-        } catch (innerLoopErr) {
-            console.error(`AI Index: Operational failure encountered handling item payload reference context: "${fileName}"`, innerLoopErr);
-        }
-    }
-
-    // ── 5. FINALIZATION STATE WRITEOUT AND REGISTRATION ──────────────────
-    try {
-        await fetch('https://backend.shinumaths989.workers.dev/ai-index-status', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ indexed: true })
-        });
-    } catch(statusUpdateErr) {
-        console.warn("AI Index: Global status bit update error.", statusUpdateErr);
-    }
-
-    updateAIBtn('ready');
-    console.log('✦ Vault AI: All repository structures completely mapped. System execution thread finished!');
-}
-
 async function decryptVaultFile(arrayBuffer) {
   // If masterPassword isn't set yet, wait for the trusted session restore
   if (!window.masterPassword && window._trustSessionReady) {
@@ -1102,138 +799,6 @@ async function decryptVaultFile(arrayBuffer) {
   );
 }
 
-// After successfully deleting the file from storage, also remove its chunks:
-async function deleteFileChunks(fileName) {
-  const token = sessionStorage.getItem('vaultSessionToken') ||
-                sessionStorage.getItem('vaultSession') || '';
-  try {
-    await fetch('https://backend.shinumaths989.workers.dev/ai-chunk-delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ fileName })
-    });
-    console.log(`✦ Chunks deleted for: ${fileName}`);
-  } catch (e) {
-    console.warn('Failed to delete chunks:', e);
-  }
-       }
-
-async function indexAI(fileUrl, fileName) {
-  const token = sessionStorage.getItem('vaultSessionToken') ||
-                sessionStorage.getItem('vaultSession') || '';
-
-  // ── Check if this file's chunks already exist ──
-  try {
-    const checkRes = await fetch(
-      'https://backend.shinumaths989.workers.dev/ai-chunk-status',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ fileName })  // checks by baseFileName
-      }
-    );
-    const checkData = await checkRes.json();
-    if (checkData.exists) {
-      console.log(`✦ "${fileName}" already in Firestore — skipping.`);
-      return;
-    }
-  } catch (e) {
-    console.warn('Chunk status check failed, will re-index:', e);
-  }
-
-  // ── Fetch and decrypt the file ─────────────────
-  const response = await fetch(fileUrl, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  const encryptedBuffer = await response.arrayBuffer();
-
-  let decryptedBuffer;
-  try {
-    decryptedBuffer = await decryptVaultFile(encryptedBuffer);
-  } catch (e) {
-    console.warn(`✦ Could not decrypt "${fileName}" — skipping.`, e);
-    return;
-  }
-
-  // ── Extract text ───────────────────────────────
-  const file = new File([decryptedBuffer], fileName, { type: 'application/pdf' });
-  const fullText = await extractPDFText(file);
-
-  if (!fullText || fullText.trim().length < 20) {
-    console.warn(`✦ No text extracted from "${fileName}" — may be a scanned image.`);
-    // Still save a placeholder so AI knows the file exists
-    await fetch('https://backend.shinumaths989.workers.dev/ai-index', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        fileName:     `${fileName} (chunk 1/1)`,
-        baseFileName: fileName,               // ← key field
-        chunkText:    `Document: ${fileName}\nNote: This document appears to be a scanned image. Text could not be extracted automatically. Please check this document manually.`,
-        chunkIndex:   0,
-        totalChunks:  1
-      })
-    });
-    return;
-  }
-
-  // ── Split into chunks WITH overlap ────────────
-  const CHUNK_SIZE    = 600;   // smaller = more precise
-  const CHUNK_OVERLAP = 150;   // overlap keeps dates/names from being cut
-  const chunks        = [];
-  let start           = 0;
-
-  while (start < fullText.length) {
-    const end   = Math.min(start + CHUNK_SIZE, fullText.length);
-    const chunk = fullText.slice(start, end).trim();
-
-    if (chunk.length > 30) {        // skip near-empty chunks
-      chunks.push(chunk);
-    }
-
-    if (end === fullText.length) break;
-    start += CHUNK_SIZE - CHUNK_OVERLAP;
-  }
-
-  console.log(`✦ "${fileName}" → ${chunks.length} chunks to index`);
-
-  // ── Send each chunk to backend ─────────────────
-  for (let i = 0; i < chunks.length; i++) {
-    try {
-      const res = await fetch(
-        'https://backend.shinumaths989.workers.dev/ai-index',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            fileName:     `${fileName} (chunk ${i + 1}/${chunks.length})`,
-            baseFileName: fileName,       // ← used for chunk-status checks
-            chunkText:    chunks[i],
-            chunkIndex:   i,              // ← used for ordering
-            totalChunks:  chunks.length   // ← used for progress
-          })
-        }
-      );
-
-      const data = await res.json();
-      if (data.success) { console.log(`✦ chunk ${i + 1}/${chunks.length} indexed`); }
-
-    } catch (e) {
-      console.warn(`✦ chunk ${i + 1} failed:`, e);
-    }
-  }
-
-  console.log(`✦ "${fileName}" fully indexed (${chunks.length} chunks).`);
-}
-
 function updateAIBtn(state, label) {
   const btn = document.getElementById('ai-fab');
   if (!btn) return;
@@ -1250,11 +815,8 @@ function updateAIBtn(state, label) {
   if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [btn] });
 }
 
-let aiChatHistory = [];
-
 function openAIChat() {
   document.getElementById('ai-chat-overlay').classList.add('open');
-  aiChatHistory = []; // fresh session each open
   setTimeout(() => document.getElementById('ai-input').focus(), 450);
 }
 
@@ -1267,198 +829,47 @@ function chipAsk(q) {
   sendAIMessage();
 }
 
-function addSpeakButton(messageElement) {
-    const btn = document.createElement("button");
-    btn.innerHTML = '<i data-lucide="volume-2" style="width:14px;height:14px;vertical-align:middle;"></i> Listen';
-    btn.style.cssText = `
-        margin-top: 8px;
-        background: none;
-        border: 1px solid var(--accent, #6ee7f7);
-        color: var(--accent, #6ee7f7);
-        border-radius: 20px;
-        padding: 4px 12px;
-        font-size: 11px;
-        cursor: pointer;
-        display: block;
-    `;
-    btn.onclick = () => {
-        const text = messageElement.innerText.replace(/\*\*/g, "");
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "en-IN";
-        utterance.rate = 0.95;
-        utterance.pitch = 1;
-        if (speechSynthesis.speaking) {
-            speechSynthesis.cancel();
-btn.innerHTML = '<i data-lucide="volume-2" style="width:14px;height:14px;vertical-align:middle;"></i> Listen';
-            if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [btn] });
-            return;
-        }
-        utterance.onstart = () => btn.textContent = "⏹ Stop";
-        utterance.onend = () => { btn.innerHTML = '<i data-lucide="volume-2" style="width:14px;height:14px;vertical-align:middle;"></i> Listen'; if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [btn] }); };
-        speechSynthesis.speak(utterance);
-    };
-    messageElement.parentElement.appendChild(btn);
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+let _aiMessageInFlight = false;
+let _aiChatGeneration = 0;
+
+function clearLocalAIChat() {
+  _aiChatGeneration++;
+  const input = document.getElementById('ai-input');
+  if (input) input.value = '';
+  const messages = document.getElementById('ai-messages');
+  if (!messages) return;
+  for (const child of [...messages.children]) {
+    if (child.id !== 'ai-welcome') child.remove();
+  }
+  const welcome = document.getElementById('ai-welcome');
+  if (welcome) welcome.hidden = false;
+  closeAIChat();
 }
 
-let _aiMessageInFlight = false;
-
 async function sendAIMessage() {
-  // Guard against duplicate fires (Enter + click, or rapid repeat Enter)
-  // stacking multiple error bubbles for a single question.
   if (_aiMessageInFlight) return;
-
   const input = document.getElementById('ai-input');
   const question = input.value.trim();
   if (!question) return;
   input.value = '';
-
-  // Hide welcome screen on first message
   const welcome = document.getElementById('ai-welcome');
-  if (welcome) welcome.remove();
+  if (welcome) welcome.hidden = true;
 
   appendUserBubble(question);
-  aiChatHistory.push({ role: 'user', parts: [{ text: question }] });
-
-  showAITyping(true);
   _aiMessageInFlight = true;
-  const sendBtn = document.getElementById('ai-send-btn');
-  if (sendBtn) sendBtn.disabled = true;
-
-  // ── Helper: show answer with word-by-word animation ──
-  function _showAIReply(replyText, source) {
-    const msgs = document.getElementById('ai-messages');
-    const wrap = document.createElement('div');
-    wrap.className = 'ai-msg-ai-wrap';
-    const sourceTag = source === 'offline'
-      ? '<div style="font-size:10px;color:#94a3b8;margin-bottom:4px;font-weight:600;"><i data-lucide="wifi-off" style="width:10px;height:10px;vertical-align:middle;"></i> Offline AI</div>'
-      : '';
-    wrap.innerHTML = `<div class="ai-gem-avatar"><i data-lucide="sparkles" style="width:18px;height:18px;"></i></div><div class="ai-msg-ai">${sourceTag}<div id="ai-reply-target-${Date.now()}"></div></div>`;
-    msgs.appendChild(wrap);
-    if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [wrap] });
-    msgs.scrollTop = msgs.scrollHeight;
-
-    const replyTarget = wrap.querySelector('[id^="ai-reply-target-"]');
-    const rawReply = escHtml(replyText)
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\n\n/g, '<br><br>')
-      .replace(/\n/g, '<br>');
-
-    const words = rawReply.split(/(\s+)/);
-    let wordIndex = 0;
-    function printWordByWord() {
-      if (wordIndex < words.length) {
-        const span = document.createElement("span");
-        span.innerHTML = words[wordIndex];
-        span.style.opacity = "0";
-        span.style.filter = "blur(3px)";
-        span.style.transition = "opacity 0.2s ease-out, filter 0.2s ease-out";
-        span.style.display = "inline-block";
-        span.style.whiteSpace = "pre-wrap";
-        replyTarget.appendChild(span);
-        requestAnimationFrame(() => {
-          span.style.opacity = "1";
-          span.style.filter = "blur(0px)";
-        });
-        wordIndex++;
-        msgs.scrollTop = msgs.scrollHeight;
-        setTimeout(printWordByWord, 25);
-      } else {
-        addSpeakButton(replyTarget);
-      }
-    }
-    printWordByWord();
-  }
-
+  const generation = _aiChatGeneration;
+  showAITyping(true);
   try {
-    // ── Step 1: Try online AI via backend ─────────────────────────────────
-    let onlineSucceeded = false;
-    let token = sessionStorage.getItem('vaultSessionToken') ||
-                  sessionStorage.getItem('vaultSession') || '';
-
-    // If token is an offline placeholder, try silent re-auth for a real one
-    if (token.startsWith('offline-') && typeof _silentReAuth === 'function') {
-      const fresh = await _silentReAuth();
-      if (fresh && !fresh.startsWith('offline-')) {
-        token = fresh;
-        sessionStorage.setItem('vaultSessionToken', fresh);
-        sessionStorage.setItem('vaultSession', fresh);
-      }
-    }
-
-    // Only attempt online if we have a real token
-    if (!token.startsWith('offline-')) {
-      try {
-        let res = await fetch('https://backend.shinumaths989.workers.dev/ai-search', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ question })
-        });
-
-        // If server says unauthorized, try silent re-auth and retry once
-        if (res.status === 401 && typeof _silentReAuth === 'function') {
-          const fresh = await _silentReAuth();
-          if (fresh && !fresh.startsWith('offline-')) {
-            token = fresh;
-            sessionStorage.setItem('vaultSessionToken', fresh);
-            sessionStorage.setItem('vaultSession', fresh);
-            res = await fetch('https://backend.shinumaths989.workers.dev/ai-search', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({ question })
-            });
-          }
-        }
-
-        const data = await res.json();
-        if (data.success && data.reply) {
-          showAITyping(false);
-          _showAIReply(data.reply, 'online');
-          onlineSucceeded = true;
-        }
-      } catch (onlineErr) {
-        console.warn('[AI Chat] Online request failed:', onlineErr.message);
-      }
-    }
-
-    // ── Step 2: If online failed, fall back to offline AI ──────────────────
-    if (!onlineSucceeded) {
-      if (window.OfflineAI) {
-        try {
-          const offlineResult = await window.OfflineAI.ask(question, { offline: true });
-          showAITyping(false);
-          if (offlineResult && offlineResult.success && offlineResult.answer) {
-            _showAIReply(offlineResult.answer, 'offline');
-          } else {
-            appendAIBubble('No answer could be generated from cached documents. Try rephrasing your question.');
-          }
-        } catch (offlineErr) {
-          console.error('[AI Chat] Offline AI error:', offlineErr);
-          showAITyping(false);
-          appendAIBubble('AI Chat is currently unavailable. The online service is unreachable and the offline AI model has not been loaded yet. Please connect to the internet and log in to download the AI model.');
-        }
-      } else {
-        showAITyping(false);
-        appendAIBubble('AI Chat is currently unavailable. The online service is unreachable and the offline AI module is not loaded. Please check your connection and try again.');
-      }
-    }
-
-  } catch (e) {
-    console.error(e);
-    showAITyping(false);
-    appendAIBubble('An unexpected error occurred. Please try again.');
-
+    const result = window.OfflineAI
+      ? await window.OfflineAI.ask(question)
+      : { answer: 'The offline document reader is unavailable on this device.' };
+    if (generation === _aiChatGeneration) appendAIBubble(result.answer);
+  } catch {
+    if (generation === _aiChatGeneration) appendAIBubble('The document search could not finish. Please try again.');
   } finally {
     _aiMessageInFlight = false;
-    if (sendBtn) sendBtn.disabled = false;
+    showAITyping(false);
   }
-
 }
 
 function appendUserBubble(text) {
@@ -1476,7 +887,7 @@ function appendAIBubble(text) {
   wrap.className = 'ai-msg-ai-wrap';
   wrap.innerHTML = `
     <div class="ai-gem-avatar"><i data-lucide="sparkles" style="width:18px;height:18px;"></i></div>
-    <div class="ai-msg-ai">${escHtml(text).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</div>
+    <div class="ai-msg-ai">${escHtml(text).replace(/\n/g, '<br>')}</div>
   `;
   msgs.appendChild(wrap);
   if (typeof lucide !== 'undefined') lucide.createIcons({ nodes: [wrap] });
@@ -1716,12 +1127,6 @@ if (!sessionStorage.getItem('vaultUser')) {
                         startSessionTimer();
                         startInactivityMonitor();
                         if (typeof listenForForceLogout === 'function') listenForForceLogout();
-                        // Init offline AI (auto-download model for offline path)
-                        if (window.OfflineAI) {
-                            window.OfflineAI.init({ downloadModel: true }).catch(function(e) {
-                                console.warn('[OfflineAI] Init failed:', e);
-                            });
-                        }
                         console.log('[OfflineAuth] Dashboard ready — offline mode active.');
                     };
 
@@ -1978,21 +1383,9 @@ function onCaptchaSuccess(){
     // Start loading immediately — parallel with the exit animation
     const vaultLoad = initVault().then(() => {
         vaultPostInit();
-        runAIIndexingOnLogin();
-        if (window.OfflineAI) {
-            window.OfflineAI.init({ downloadModel: true }).catch(function(e) {
-                console.warn('[OfflineAI] Init failed:', e);
-            });
-        }
     }).catch(e => {
         console.error('initVault failed:', e);
         vaultPostInit();
-        runAIIndexingOnLogin();
-        if (window.OfflineAI) {
-            window.OfflineAI.init({ downloadModel: true }).catch(function(e2) {
-                console.warn('[OfflineAI] Init failed:', e2);
-            });
-        }
     });
 
     setTimeout(() => {

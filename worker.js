@@ -2837,6 +2837,12 @@ if (method === "POST" || method === "PUT") {
       if (url.pathname === "/security-alert"  && method === "POST") return Controllers.handleSecurityAlert(request, env, corsOrigin);
       if (url.pathname === "/revoke-session"  && method === "POST") return Controllers.handleRevokeSession(request, env, corsOrigin);
 
+      // Reject legacy cloud AI clients before reading their request bodies.
+      if ((url.pathname === "/ai" || url.pathname.startsWith("/ai-")) &&
+          url.pathname !== "/ai-clear-index") {
+        return createJsonResponse({ error: "Vault AI runs on the device." }, 410, corsOrigin);
+      }
+
       // ── File routes ───────────────────────────────────────────────────
       if (url.pathname === "/files.json"      && method === "GET")  return Controllers.handleGetFiles(request, env, corsOrigin);
       if (url.pathname === "/create-share"    && method === "POST") return Controllers.handleCreateShare(request, env, corsOrigin);
@@ -2845,13 +2851,13 @@ if (method === "POST" || method === "PUT") {
       if (url.pathname === "/vault-auth-hashes" && method === "GET") return Controllers.handleVaultAuthHashes(request, env, corsOrigin);
 
       // ── AI routes ─────────────────────────────────────────────────────
-      if (url.pathname === "/ai-index"        && method === "POST") return Controllers.handleAIIndex(request, env, corsOrigin);
-      if (url.pathname === "/ai-index-status" && (method === "POST" || method === "PUT")) return Controllers.handleAIIndexStatus(request, env, corsOrigin);
+
+
       if (url.pathname === "/ai-clear-index"  && method === "POST") return Controllers.handleAIClearIndex(request, env, corsOrigin);
-      if (url.pathname === "/ai-file-indexed"   && method === "POST") return Controllers.handleAIFileIndexed(request, env, corsOrigin);
-      if (url.pathname === "/ai-index-progress" && method === "POST") return Controllers.handleAIIndexProgress(request, env, corsOrigin);
-      if (url.pathname === "/ai-search"       && method === "POST") return Controllers.handleAISearch(request, env, corsOrigin);
-      if (url.pathname === "/ai"              && method === "POST") return Controllers.handleAI(request, env, corsOrigin);
+
+
+
+
 
       // ── Session / log routes ──────────────────────────────────────────
       if (url.pathname === "/save-visitor-log"  && method === "POST") return Controllers.handleSaveVisitorLog(request, env, corsOrigin);
@@ -2860,17 +2866,17 @@ if (method === "POST" || method === "PUT") {
       if (url.pathname === "/get-logs"          && method === "POST") return Controllers.handleGetLogs(request, env, corsOrigin);
       if (url.pathname === "/expiry-reminder"   && method === "POST") return Controllers.handleExpiryReminder(request, env, corsOrigin);
       if (url.pathname === "/request-passkey"   && method === "POST") return Controllers.handleRequestPasskey(request, env, corsOrigin);
-      if (url.pathname === "/ai-chunk-status"   && method === "POST") return Controllers.handleAIChunkStatus(request, env, corsOrigin);
+
       if (url.pathname === "/totp-setup"        && method === "GET")  return Controllers.handleTOTPSetup(request, env, corsOrigin);
       if (url.pathname === "/verify-totp"       && method === "POST") return Controllers.handleVerifyTOTP(request, env, corsOrigin);
       if (url.pathname === "/check-passkey"     && method === "POST") return Controllers.handleCheckPasskey(request, env, corsOrigin);
-      if (url.pathname === "/ai-chunk-status-all" && method === "POST") return Controllers.handleAIChunkStatusAll(request, env, corsOrigin);
+
       if (url.pathname === "/passwords"              && method === "GET")  return Controllers.handleGetPasswords(request, env, corsOrigin);
       if (url.pathname === "/passwords"              && method === "POST") return Controllers.handleSavePassword(request, env, corsOrigin);
       if (url.pathname === "/passwords/get-password" && method === "POST") return Controllers.handleGetPassword(request, env, corsOrigin);
       if (url.pathname === "/passwords/delete"       && method === "POST") return Controllers.handleDeletePassword(request, env, corsOrigin);
       if (url.pathname === "/sync-offline-members" && method === "POST") return Controllers.handleSyncOfflineMembers(request, env, corsOrigin);
-      if (url.pathname === "/ai-chunk-delete"        && method === "POST") return Controllers.handleAIChunkDelete(request, env, corsOrigin);
+
       if (url.pathname === "/verify-identity"        && method === "POST") return Controllers.handleVerifyIdentity(request, env, corsOrigin);
       if (url.pathname === "/send-email"              && method === "POST") return Controllers.handleSendEmail(request, env, corsOrigin);
       if (url.pathname === "/verify-portal"           && method === "POST") return Controllers.handleVerifyPortal(request, env, corsOrigin);

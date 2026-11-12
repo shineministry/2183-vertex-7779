@@ -68,6 +68,7 @@ function startInactivityMonitor(){
 
 /* ========================= LOGOUT ========================= */
 async function logout(message="") {
+ if (typeof clearLocalAIChat === "function") clearLocalAIChat();
  clearTimeout(inactivityTimer);
  if (typeof _sessionTimerInterval !== 'undefined' && _sessionTimerInterval) {
      clearInterval(_sessionTimerInterval);
