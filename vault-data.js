@@ -736,7 +736,7 @@ const _driveViewMode = (localStorage.getItem('drive_view_mode') || 'grid');
 
         card.innerHTML = `
         <label class="bulk-check-label" onclick="event.stopPropagation();" style="position:absolute;top:8px;left:8px;z-index:2;display:none;align-items:center;gap:4px;background:rgba(255,255,255,.92);padding:2px 6px 2px 4px;border-radius:6px;font-size:11px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.18);">
-          <input type="checkbox" class="bulk-check" data-file='${JSON.stringify({name:file.name,file:file.file,category:file.category||category}).replace(/'/g,"&#39;")}' onchange="updateBulkToolbar()" style="cursor:pointer;">
+          <input type="checkbox" name="bulk-document" aria-label="Select document" class="bulk-check" data-file='${JSON.stringify({name:file.name,file:file.file,category:file.category||category}).replace(/'/g,"&#39;")}' onchange="updateBulkToolbar()" style="cursor:pointer;">
         </label>
         ${expiryBadge}
         <div class="drive-card-thumb" style="background:#f1f3f4; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:8px;">

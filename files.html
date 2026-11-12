@@ -168,7 +168,7 @@ body.dark .fm-sec-file:hover{background:#334155;}
 .fm-modal-head button{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:18px;line-height:1;}
 .fm-modal-head button:hover{color:#dc2626;}
 .fm-modal-body{padding:16px 18px;display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;}
-.fm-modal-body label{font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.3px;}
+.fm-modal-body label,.fm-group-label{font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.3px;}
 .fm-modal-body input,.fm-modal-body select{padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font:inherit;font-size:13px;color:#1e293b;background:#fff;}
 .fm-modal-body input:focus,.fm-modal-body select:focus{outline:2px solid #1a73e8;outline-offset:-1px;border-color:#1a73e8;}
 .fm-modal-body .fm-field-row{display:flex;gap:8px;}
@@ -390,14 +390,14 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
     </div>
     <div class="fm-modal-body">
       <div>
-        <label>Display Name</label>
+        <label for="fmName">Display Name</label>
         <input type="text" id="fmName" placeholder="e.g. Birth Certificate">
       </div>
       <div>
-        <label>File Path</label>
+        <label for="fmFile">File Path</label>
         <div class="fm-field-row">
           <div style="flex:0 0 110px;">
-            <select id="fmPrefix" title="Automatic: set by the file's category (PHOTOS category = photos/, everything else = docs/)">
+            <select id="fmPrefix" aria-label="File path prefix" title="Automatic: set by the file's category (PHOTOS category = photos/, everything else = docs/)">
               <option value="docs/">docs/</option>
               <option value="photos/">photos/</option>
             </select>
@@ -408,7 +408,7 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
         </div>
       </div>
       <div>
-        <label>Upload & Encrypt (Any File -> .enc)</label>
+        <label for="fmFileInput">Upload & Encrypt (Any File -> .enc)</label>
         <div id="fmUploadArea" class="fm-upload-area" onclick="document.getElementById('fmFileInput').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleFileDrop(event)">
           <i data-lucide="upload-cloud" style="width:28px;height:28px;color:#94a3b8;"></i>
           <span>Drop PDF here or click to browse</span>
@@ -421,22 +421,22 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
         </div>
       </div>
       <div>
-        <label>Section</label>
+        <label for="fmSection">Section</label>
         <select id="fmSection">
           <option value="">- No section -</option>
         </select>
       </div>
       <div>
-        <label>Date</label>
+        <label for="fmDate">Date</label>
         <input type="date" id="fmDate">
       </div>
       <div>
-        <label>Visible To Members</label>
-        <div class="fm-modal-members" id="fmMembers">
-          <label class="fm-member-chip on" data-m="shineil"><input type="checkbox" checked style="display:none;"> shineil</label>
-          <label class="fm-member-chip on" data-m="brother"><input type="checkbox" checked style="display:none;"> brother</label>
-          <label class="fm-member-chip on" data-m="father"><input type="checkbox" checked style="display:none;"> father</label>
-          <label class="fm-member-chip on" data-m="mother"><input type="checkbox" checked style="display:none;"> mother</label>
+        <span class="fm-group-label" id="fmMembersLabel">Visible To Members</span>
+        <div class="fm-modal-members" id="fmMembers" role="group" aria-labelledby="fmMembersLabel">
+          <label class="fm-member-chip on" data-m="shineil"><input type="checkbox" id="fm-member-shineil" checked style="display:none;"> shineil</label>
+          <label class="fm-member-chip on" data-m="brother"><input type="checkbox" id="fm-member-brother" checked style="display:none;"> brother</label>
+          <label class="fm-member-chip on" data-m="father"><input type="checkbox" id="fm-member-father" checked style="display:none;"> father</label>
+          <label class="fm-member-chip on" data-m="mother"><input type="checkbox" id="fm-member-mother" checked style="display:none;"> mother</label>
         </div>
       </div>
     </div>
@@ -456,19 +456,19 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
     </div>
     <div class="fm-modal-body">
       <div>
-        <label>Section Name</label>
+        <label for="secName">Section Name</label>
         <input type="text" id="secName" placeholder="e.g. Google, Apple, Samsung...">
       </div>
       <div>
-        <label>Color</label>
+        <label for="secColor">Color</label>
         <div style="display:flex;align-items:center;gap:8px;">
           <input type="color" id="secColor" value="#1a73e8" style="width:40px;height:34px;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;padding:2px;">
           <div id="secColorPresets" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
         </div>
       </div>
       <div>
-        <label>Select Files in This Category</label>
-        <div id="secFileList" style="max-height:200px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;padding:6px;"></div>
+        <span class="fm-group-label" id="secFileListLabel">Select Files in This Category</span>
+        <div id="secFileList" role="group" aria-labelledby="secFileListLabel" style="max-height:200px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;padding:6px;"></div>
         <div style="display:flex;gap:6px;margin-top:6px;">
           <button class="fm-tb-btn" onclick="secSelectAll()" style="font-size:11px;">Select All</button>
           <button class="fm-tb-btn" onclick="secSelectNone()" style="font-size:11px;">Clear All</button>
@@ -496,11 +496,11 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
         <p id="pinSubtitle" style="font-size:12px;color:#64748b;">Enter your 6-digit PIN to access the file manager</p>
       </div>
       <div id="pinMainBlock">
-        <label id="pinMainLabel">6-Digit PIN</label>
+        <label id="pinMainLabel" for="pinRow-digit-1">6-Digit PIN</label>
         <div id="pinRow" style="display:flex;gap:8px;justify-content:center;margin:10px 0 8px;"></div>
       </div>
       <div id="pinConfirmBlock" style="display:none;">
-        <label>Confirm PIN</label>
+        <label for="pinConfirmRow-digit-1">Confirm PIN</label>
         <div id="pinConfirmRow" style="display:flex;gap:8px;justify-content:center;margin:10px 0 8px;"></div>
       </div>
       <input type="password" id="loginPass" style="display:none;">
@@ -713,6 +713,8 @@ function _fmBuildPinRow(containerId, count){
   row.innerHTML='';
   for(let i=0;i<count;i++){
     const inp=document.createElement('input');
+    inp.id = containerId + '-digit-' + (i + 1);
+    inp.setAttribute('aria-label', (containerId === 'pinConfirmRow' ? 'Confirm PIN' : 'PIN') + ' digit ' + (i + 1));
     inp.type='password'; inp.inputMode='numeric'; inp.maxLength=1; inp.autocomplete='off';
     inp.style.cssText='width:42px;height:48px;border:1.5px solid #cbd5e1;border-radius:10px;text-align:center;font-size:18px;font-weight:700;background:#f8fafc;outline:none;';
     inp.addEventListener('input',function(){ this.value=this.value.replace(/[^0-9]/g,''); if(this.value && this.nextElementSibling) this.nextElementSibling.focus(); if([...row.children].every(c=>c.value) && containerId==='pinRow' && _fmPinMode==='enter'){ /* auto submit */ } });
@@ -1047,7 +1049,7 @@ function _renderSecFileList(){
   var items = Array.isArray(_data[_activeCat]) ? _data[_activeCat] : [];
   el.innerHTML = items.map(function(it, i){
     return '<label class="fm-sec-file">'
-      + '<input type="checkbox" data-idx="'+i+'" checked>'
+      + '<input type="checkbox" name="section-file" data-idx="'+i+'" checked>'
       + '<span class="fm-sec-file-name">'+_esc(it.name || 'Untitled')+'</span>'
       + '<span class="fm-sec-file-path">'+_esc(it.file || '')+'</span>'
       + '</label>';

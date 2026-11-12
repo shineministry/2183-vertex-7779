@@ -1111,7 +1111,7 @@ Recommended:
 <div id="landing">
   <div class="land-orbs"><div class="land-orb"></div><div class="land-orb"></div><div class="land-orb"></div></div>
   <div class="land-header" id="landHeader">
-    <div class="land-title"><i data-lucide="lock" style="width:24px;height:24px;vertical-align:middle;"></i> <span>ONLINE VAULT</span> <div class="ver-badge" title="Online Vault build version">v20261112.08</div></div>
+    <div class="land-title"><i data-lucide="lock" style="width:24px;height:24px;vertical-align:middle;"></i> <span>ONLINE VAULT</span> <div class="ver-badge" title="Online Vault build version">v20261112.09</div></div>
     <div style="position:relative;">
       <button class="land-user-btn" id="landUserBtn" onclick="toggleLandDropdown()"><i data-lucide="user" style="width:20px;height:20px;"></i></button>
       <div class="land-dropdown" id="landDropdown">
@@ -1394,7 +1394,7 @@ Recommended:
       <div class="main-logo"><i data-lucide="key" style="width:48px;height:48px;"></i></div>
       <h2>Authenticator Verification</h2>
       <div class="subtitle"> Enter the 8-digit code from your<br> Authenticator App (Google / Authy) </div> <!-- 8 individual digit boxes split 4+4 -->
-      <div id="totp-boxes" style="display:flex;align-items:center;gap:6px;justify-content:center;margin:24px 0 8px;"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <span style="font-size:20px;color:#64748b;line-height:1;margin:0 2px;">-</span> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> </div> <!-- countdown ring -->
+      <div id="totp-boxes" style="display:flex;align-items:center;gap:6px;justify-content:center;margin:24px 0 8px;"> <input id="totp-digit-1" aria-label="Verification code digit 1" class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input id="totp-digit-2" aria-label="Verification code digit 2" class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input id="totp-digit-3" aria-label="Verification code digit 3" class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input id="totp-digit-4" aria-label="Verification code digit 4" class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <span style="font-size:20px;color:#64748b;line-height:1;margin:0 2px;">-</span> <input id="totp-digit-5" aria-label="Verification code digit 5" class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input id="totp-digit-6" aria-label="Verification code digit 6" class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input id="totp-digit-7" aria-label="Verification code digit 7" class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> <input id="totp-digit-8" aria-label="Verification code digit 8" class="totp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]"> </div> <!-- countdown ring -->
       <div style="text-align:center;margin-bottom:18px;"> <svg width="48" height="48" viewBox="0 0 48 48">
           <circle cx="24" cy="24" r="20" fill="none" stroke="#1e293b" stroke-width="4" />
           <circle id="totp-ring" cx="24" cy="24" r="20" fill="none" stroke="var(--accent,#6ee7f7)" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 24 24)" style="transition:stroke-dashoffset 1s linear;" />
@@ -1408,7 +1408,7 @@ Recommended:
     <div class="passport-navbar"> <!-- TOP DATE BAR -->
       <div class="passport-top-utility">
         <div id="passport-datetime"> Thursday 14 May 2026 at 11:48 PM </div>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;"> <span class="ver-badge" title="Online Vault build version">v20261112.08</span> <span class="security-status-dot">Security Status: Protected</span> <span class="e2e-badge"><i data-lucide="lock" style="width:12px;height:12px;vertical-align:middle;"></i> AES-256 End-to-End Encrypted</span>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;"> <span class="ver-badge" title="Online Vault build version">v20261112.09</span> <span class="security-status-dot">Security Status: Protected</span> <span class="e2e-badge"><i data-lucide="lock" style="width:12px;height:12px;vertical-align:middle;"></i> AES-256 End-to-End Encrypted</span>
                      <div style="position:relative;"> <button class="icon-btn" data-tip="Notifications" onclick="toggleNotifications()" id="notifBellBtn" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border-color);background:rgba(37,99,235,.06);cursor:pointer;font-size:15px;"><i data-lucide="bell" style="width:18px;height:18px;"></i><span id="notifDot" style="display:none;position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:var(--danger);border:2px solid #fff;"></span> <span id="notifCount" style="display:none;position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;line-height:18px;text-align:center;padding:0 4px;border:2px solid #fff;"></span> </button> <!-- Notification Panel -->
             <div id="notifPanel" style="display:none;position:absolute;top:calc(100% + 10px);right:0;width:320px;max-height:380px;overflow-y:auto;background:#fff;border:1px solid var(--border-color);border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.12);z-index:200;padding:12px;">
               <div style="font-weight:800;font-size:13px;margin-bottom:8px;padding:0 4px;display:flex;align-items:center;justify-content:space-between;"> <span><i data-lucide="bell" style="width:14px;height:14px;vertical-align:middle;"></i> Notifications</span> <button onclick="markAllNotifsRead()" style="font-size:11px;color:#3b82f6;background:none;border:none;cursor:pointer;font-weight:600;">Mark all read</button> </div>
@@ -1691,7 +1691,7 @@ Recommended:
   <script src="device-integrity.js"></script>
   <script src="auth.js?v=20261112-localai"></script>
   <script src="session.js?v=20261112.06"></script>
-  <script src="vault-data.js?v=20260628-photosfix1"></script>
+  <script src="vault-data.js?v=20261112.09"></script>
   <script src="viewer.js?v=20261022-sigstamp2"></script>
   <script src="features.js?v=20260628-photosfix1"></script>
   <script nonce="opencode-2026-fix">
@@ -1994,11 +1994,11 @@ Recommended:
       <div class="share-modal-inner" style="overflow-y:auto;max-height:85vh;">
         <div class="modal-header"> <strong><i data-lucide="link" style="width:16px;height:16px;vertical-align:middle;"></i> SECURE SHARE LINK</strong> <button onclick="closeShareModal()" class="btn-close-modal">CLOSE</button> </div>
         <div class="share-form">
-          <div> <label>Sharing: <span id="share-doc-name" style="color:var(--accent);"></span></label> </div>
-          <div> <label>Link Expiry (hours)</label> <input type="number" id="share-expiry" value="24" min="1" max="720" style="margin-bottom:0;"> </div>
-          <div> <label>Link Password (optional)</label> <form onsubmit="return false;"><input type="password" id="share-password" autocomplete="new-password" placeholder="Leave blank for no password" style="margin-bottom:0;"></form> </div> <button class="btn-primary" onclick="generateShareLink()" style="margin-top:4px;">Generate Secure Link</button>
+          <div> <span>Sharing: <span id="share-doc-name" style="color:var(--accent);"></span></span> </div>
+          <div> <label for="share-expiry">Link Expiry (hours)</label> <input type="number" id="share-expiry" value="24" min="1" max="720" style="margin-bottom:0;"> </div>
+          <div> <label for="share-password">Link Password (optional)</label> <form onsubmit="return false;"><input type="password" id="share-password" autocomplete="new-password" placeholder="Leave blank for no password" style="margin-bottom:0;"></form> </div> <button class="btn-primary" onclick="generateShareLink()" style="margin-top:4px;">Generate Secure Link</button>
           <div id="share-link-result" style="display:none;">
-            <label>Your Secure Link (read-only, expires automatically)</label>
+            <span>Your Secure Link (read-only, expires automatically)</span>
             <div class="share-link-box" id="share-link-text"></div>
             <div id="qr-sharing-container" style="margin-top:4px;text-align:center;">
               <button id="generateQRBtn" class="card-btn card-btn-share" onclick="activateShareQR()" style="width:100%;padding:12px;font-weight:700;"><i data-lucide="qr-code" style="width:16px;height:16px;vertical-align:middle;"></i> QR CODE SHARING</button>
@@ -2184,9 +2184,9 @@ Recommended:
               </div>
               <div class="setting-row">
                 <div class="setting-row-left">
-                  <div class="setting-row-label">Quick Access Category</div>
+                  <label class="setting-row-label" for="setting-quick-access-category">Quick Access Category</label>
                   <div class="setting-row-hint">Highlighted in the sidebar with a <i data-lucide="zap" style="width:14px;height:14px;vertical-align:middle;"></i> badge</div>
-                </div> <select class="adv-select">
+                </div> <select id="setting-quick-access-category" class="adv-select">
                   <option>Passport</option>
                   <option>Academic</option>
                   <option>Medical</option>
@@ -2227,9 +2227,9 @@ Recommended:
               </div>
               <div class="setting-row">
                 <div class="setting-row-left">
-                  <div class="setting-row-label">Max Recent Files Shown</div>
+                  <label class="setting-row-label" for="setting-max-recent-files-shown">Max Recent Files Shown</label>
                   <div class="setting-row-hint">Number of recent documents to display</div>
-                </div> <select class="adv-select">
+                </div> <select id="setting-max-recent-files-shown" class="adv-select">
                   <option>3</option>
                   <option selected>5</option>
                   <option>10</option>
@@ -2247,9 +2247,9 @@ Recommended:
               </div>
               <div class="setting-row">
                 <div class="setting-row-left">
-                  <div class="setting-row-label">Max Pinned Documents</div>
+                  <label class="setting-row-label" for="setting-max-pinned-documents">Max Pinned Documents</label>
                   <div class="setting-row-hint">Limit the number of documents you can pin</div>
-                </div> <select class="adv-select">
+                </div> <select id="setting-max-pinned-documents" class="adv-select">
                   <option>5</option>
                   <option selected>10</option>
                   <option>20</option>
@@ -2268,9 +2268,9 @@ Recommended:
               </div>
               <div class="setting-row">
                 <div class="setting-row-left">
-                  <div class="setting-row-label">Preview Quality</div>
+                  <label class="setting-row-label" for="setting-preview-quality">Preview Quality</label>
                   <div class="setting-row-hint">Resolution of hover preview thumbnails</div>
-                </div> <select class="adv-select">
+                </div> <select id="setting-preview-quality" class="adv-select">
                   <option>Low (Fast)</option>
                   <option selected>Medium</option>
                   <option>High (Slow)</option>
@@ -2410,9 +2410,9 @@ Recommended:
               <div class="adv-panel-desc">Manage how the vault caches decrypted content and thumbnails.</div>
               <div class="setting-row">
                 <div class="setting-row-left">
-                  <div class="setting-row-label">Cache Mode</div>
+                  <label class="setting-row-label" for="setting-cache-mode">Cache Mode</label>
                   <div class="setting-row-hint">Controls how aggressively content is cached in memory</div>
-                </div> <select class="adv-select">
+                </div> <select id="setting-cache-mode" class="adv-select">
                   <option>No Cache</option>
                   <option selected>Session Cache</option>
                   <option>Persistent Cache</option>
@@ -2436,9 +2436,9 @@ Recommended:
               </div>
               <div class="setting-row">
                 <div class="setting-row-left">
-                  <div class="setting-row-label">Sync Interval</div>
+                  <label class="setting-row-label" for="setting-sync-interval">Sync Interval</label>
                   <div class="setting-row-hint">How often the vault checks for file updates</div>
-                </div> <select class="adv-select">
+                </div> <select id="setting-sync-interval" class="adv-select">
                   <option>30 seconds</option>
                   <option selected>1 minute</option>
                   <option>5 minutes</option>
@@ -2517,9 +2517,9 @@ Recommended:
               <div class="adv-panel-desc">Choose between AES-128 (fast) or AES-256 (maximum security).</div>
               <div class="setting-row">
                 <div class="setting-row-left">
-                  <div class="setting-row-label">Encryption Algorithm</div>
+                  <label class="setting-row-label" for="setting-encryption-algorithm">Encryption Algorithm</label>
                   <div class="setting-row-hint">Applied to all file decryption operations</div>
-                </div> <select class="adv-select">
+                </div> <select id="setting-encryption-algorithm" class="adv-select">
                   <option>AES-128-GCM</option>
                   <option selected>AES-256-GCM</option>
                 </select>
@@ -2684,9 +2684,9 @@ Recommended:
               </div>
               <div class="setting-row">
                 <div class="setting-row-left">
-                  <div class="setting-row-label">Recovery PIN</div>
+                  <label class="setting-row-label" for="setting-recovery-pin">Recovery PIN</label>
                   <div class="setting-row-hint">4-digit emergency access PIN (separate from vault password)</div>
-                </div> <input class="adv-input-sm" type="password" placeholder="Set PIN" maxlength="4" style="min-width:90px;">
+                </div> <input id="setting-recovery-pin" class="adv-input-sm" type="password" placeholder="Set PIN" maxlength="4" style="min-width:90px;">
               </div>
             </div> <!-- 36. EXPORT VAULT CONFIG -->
             <div class="adv-panel" id="panel-export-config">
@@ -3741,6 +3741,9 @@ Recommended:
           inp.inputMode = 'numeric';
           inp.maxLength = 1;
           inp.className = 'pm-pin-digit';
+          inp.id = 'pm-pin-' + rowKey + '-' + (i + 1);
+          const pinLabel = { old: 'Current PIN', main: 'PIN', confirm: 'Confirm PIN' }[rowKey];
+          inp.setAttribute('aria-label', pinLabel + ' digit ' + (i + 1));
           inp.dataset.row = rowKey;
           inp.dataset.idx = i;
           inp.autocomplete = 'off';
@@ -4531,7 +4534,7 @@ Recommended:
               break;
             case 'Status':
               h = '<td class="vc-cell vc-cell-status" style="text-align:center;">';
-              h += '<select class="vc-st-select" onchange="vcSetStatus('+ri+',this.value)">';
+              h += '<select name="checklist-status" aria-label="Checklist item status" class="vc-st-select" onchange="vcSetStatus('+ri+',this.value)">';
               h += '<option value=""' + (!r.status ? ' selected' : '') + '>\u2014</option>';
               h += '<option value="done"' + (r.status === 'done' ? ' selected' : '') + '>YES</option>';
               h += '<option value="not-done"' + (r.status === 'not-done' ? ' selected' : '') + '>NO</option>';
