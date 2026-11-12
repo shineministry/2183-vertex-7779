@@ -19,7 +19,7 @@
  *  network fetch â€” no stale authenticated shell is served.
  */
 
-const CACHE = "online-vault-v39";   // bump this string to force a full cache refresh
+const CACHE = "online-vault-v40";   // bump this string to force a full cache refresh
 
 const BACKEND_HOST = "backend.shinumaths989.workers.dev";
 
@@ -101,6 +101,7 @@ self.addEventListener("fetch", function(event) {
 
   // Only handle GET (POST/PUT/DELETE go straight to network)
   if (request.method !== "GET") return;
+  if (request.headers.has("Authorization") || request.cache === "no-store") return;
 
   // 1. Backend API â€” always network-only (auth tokens, never cache)
   if (url.hostname === BACKEND_HOST) {
@@ -212,6 +213,8 @@ async function networkFirst(request) {
 
 function isCacheable(response) {
   if (!response || !response.ok) return false;
+  const cacheControl = response.headers.get("Cache-Control") || "";
+  if (/(?:^|,)\s*(?:private|no-store)(?:\s*=|\s*(?:,|$))/i.test(cacheControl)) return false;
   var type = response.type;
   return type === "basic" || type === "default";
 }

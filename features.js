@@ -444,6 +444,7 @@ async function getPreviewBitmap(file) {
         const pdf =
             await window.pdfjsLib
                 .getDocument({
+                    isEvalSupported: false,
                     data: dec
                 }).promise;
 
@@ -1137,7 +1138,7 @@ async function renderComparePane(side, file){
         // ==========================================
         // Render implementation for individual panes
         // ==========================================
-        const pdf = await window.pdfjsLib.getDocument({ data: decrypted }).promise;
+        const pdf = await window.pdfjsLib.getDocument({ data: decrypted, isEvalSupported: false }).promise;
         contentEl.innerHTML = ""; // Clear loader
 
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
