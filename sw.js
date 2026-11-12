@@ -1,10 +1,10 @@
 // Cache only the public vault application. Private documents use the encrypted IndexedDB cache.
-const CACHE = "online-vault-v44";
+const CACHE = "online-vault-v45";
 const SHELL = "/index.html";
 const ASSETS = new Set([
   "/pdf.min.js",
   "/pdfjs-init.js",
-  "/manifest.json",
+  "/manifest.json?v=20261112.08",
   "/style.css",
   "/sha256.js",
   "/offline-auth.js?v=20261112.07",

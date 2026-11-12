@@ -134,7 +134,7 @@
       "text": "text",
       "url": "url"
     },
-    "enctype": "multipart/form-data"
+    "enctype": "application/x-www-form-urlencoded"
   },
   "edge_side_panel": {
     "preferred_width": 400
