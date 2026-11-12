@@ -1111,7 +1111,7 @@ Recommended:
 <div id="landing">
   <div class="land-orbs"><div class="land-orb"></div><div class="land-orb"></div><div class="land-orb"></div></div>
   <div class="land-header" id="landHeader">
-    <div class="land-title"><i data-lucide="lock" style="width:24px;height:24px;vertical-align:middle;"></i> <span>ONLINE VAULT</span> <div class="ver-badge" title="Online Vault build version">v20261112.09</div></div>
+    <div class="land-title"><i data-lucide="lock" style="width:24px;height:24px;vertical-align:middle;"></i> <span>ONLINE VAULT</span> <div class="ver-badge" title="Online Vault build version">v20261112.10</div></div>
     <div style="position:relative;">
       <button class="land-user-btn" id="landUserBtn" onclick="toggleLandDropdown()"><i data-lucide="user" style="width:20px;height:20px;"></i></button>
       <div class="land-dropdown" id="landDropdown">
@@ -1408,7 +1408,7 @@ Recommended:
     <div class="passport-navbar"> <!-- TOP DATE BAR -->
       <div class="passport-top-utility">
         <div id="passport-datetime"> Thursday 14 May 2026 at 11:48 PM </div>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;"> <span class="ver-badge" title="Online Vault build version">v20261112.09</span> <span class="security-status-dot">Security Status: Protected</span> <span class="e2e-badge"><i data-lucide="lock" style="width:12px;height:12px;vertical-align:middle;"></i> AES-256 End-to-End Encrypted</span>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;"> <span class="ver-badge" title="Online Vault build version">v20261112.10</span> <span class="security-status-dot">Security Status: Protected</span> <span class="e2e-badge"><i data-lucide="lock" style="width:12px;height:12px;vertical-align:middle;"></i> AES-256 End-to-End Encrypted</span>
                      <div style="position:relative;"> <button class="icon-btn" data-tip="Notifications" onclick="toggleNotifications()" id="notifBellBtn" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border-color);background:rgba(37,99,235,.06);cursor:pointer;font-size:15px;"><i data-lucide="bell" style="width:18px;height:18px;"></i><span id="notifDot" style="display:none;position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:var(--danger);border:2px solid #fff;"></span> <span id="notifCount" style="display:none;position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;line-height:18px;text-align:center;padding:0 4px;border:2px solid #fff;"></span> </button> <!-- Notification Panel -->
             <div id="notifPanel" style="display:none;position:absolute;top:calc(100% + 10px);right:0;width:320px;max-height:380px;overflow-y:auto;background:#fff;border:1px solid var(--border-color);border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.12);z-index:200;padding:12px;">
               <div style="font-weight:800;font-size:13px;margin-bottom:8px;padding:0 4px;display:flex;align-items:center;justify-content:space-between;"> <span><i data-lucide="bell" style="width:14px;height:14px;vertical-align:middle;"></i> Notifications</span> <button onclick="markAllNotifsRead()" style="font-size:11px;color:#3b82f6;background:none;border:none;cursor:pointer;font-weight:600;">Mark all read</button> </div>
@@ -1695,30 +1695,12 @@ Recommended:
   <script src="viewer.js?v=20261022-sigstamp2"></script>
   <script src="features.js?v=20260628-photosfix1"></script>
   <script nonce="opencode-2026-fix">
-    // ---- Stale shell-script guard ----------------------------------------------------------------------------------------------------------------------------
-    // If the service worker (or browser HTTP cache) ever serves an old
-    // cached copy of vault-data.js / viewer.js / features.js that predates
-    // a function these pages depend on, those functions silently don't
-    // exist and pages render blank with no visible error (e.g. PHOTOS page
-    // showing "1 Photo" in the count but an empty grid). Detect that here,
-    // once, right after these scripts would have run, and force a hard
-    // reload that bypasses every cache layer instead of leaving the user
-    // stuck on a broken page.
+    // Report missing scripts without interrupting the current page.
     (function () {
-      const requiredFns = ['getAllPhotos', 'isImageFile', 'renderPhotos', 'initVault', 'openSecureFile'];
-      const missing = requiredFns.filter(fn => typeof window[fn] !== 'function');
+      const required = ['getAllPhotos', 'isImageFile', 'renderPhotos', 'initVault', 'openSecureFile'];
+      const missing = required.filter(name => typeof window[name] !== 'function');
       if (missing.length) {
-        console.error('[Integrity] Missing critical functions (likely a stale cached script):', missing);
-        if (!sessionStorage.getItem('_staleShellReloaded')) {
-          sessionStorage.setItem('_staleShellReloaded', '1');
-          if (navigator.onLine) location.reload();
-        } else {
-          console.error('[Integrity] Already attempted one reload this session - not looping further. Please hard-refresh manually (Ctrl+Shift+R).');
-        }
-      } else {
-        // Healthy load - clear the guard flag so a future genuine staleness
-        // can trigger a fresh auto-recovery again later.
-        sessionStorage.removeItem('_staleShellReloaded');
+        console.error('[Vault] Missing scripts. Reload manually when convenient:', missing);
       }
     })();
   </script>
@@ -1739,10 +1721,6 @@ Recommended:
   <script nonce="opencode-2026-fix">
   // ---- Vault Drive PWA - app feel like Google Drive ----
   (function(){
-    // Register/update handling - Drive shows -Update--- toast; we do minimal
-    if('serviceWorker' in navigator){
-      navigator.serviceWorker.addEventListener('controllerchange', function(){ if(!window._driveReloaded){ window._driveReloaded=true; location.reload(); }});
-    }
     // Shortcuts: ?shortcut=myvault|recent|starred|search - behave like Drive app shortcuts
     var sp = new URLSearchParams(location.search);
     var sc = sp.get('shortcut');
