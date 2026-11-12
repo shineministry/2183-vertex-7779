@@ -99,7 +99,8 @@ async function openLogs(){
 
     try{
 
-const token = sessionStorage.getItem('vaultSession') || '';
+const token = accessLogToken();
+if (!token) throw new Error("Sign in online to view access logs.");
 const res = await fetch(
     "https://backend.shinumaths989.workers.dev/get-logs",
     {
@@ -109,11 +110,13 @@ const res = await fetch(
     }
 );
 
-if(!res.ok) throw new Error("Failed to load logs");
+if (res.status === 401) throw new Error("Sign in again to view access logs.");
+if (!res.ok) throw new Error("The log service is unavailable. Try again later.");
 
 const logs = await res.json();
 
-if (!Array.isArray(logs) || logs.length === 0) {
+if (!Array.isArray(logs)) throw new Error("The log service returned an unexpected response.");
+if (logs.length === 0) {
     body.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:#94a3b8;">No access logs found.</td></tr>';
     return;
 }
@@ -122,7 +125,7 @@ if (!Array.isArray(logs) || logs.length === 0) {
             return '<tr>' +
                 '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.visitorName || '-') + '</td>' +
                 '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.purpose || '-') + '</td>' +
-                '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.loginTime || '-') + '</td>' +
+                '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.loginTime && /^\d{4}-\d{2}-\d{2}T/.test(log.loginTime) ? new Date(log.loginTime).toLocaleString() : log.loginTime || '-') + '</td>' +
                 '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.device || '-') + '</td>' +
                 '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.platform || '-') + '</td>' +
                 '<td style="padding:10px;border:1px solid #ddd;">' + escHtml(log.screen || '-') + '</td>' +

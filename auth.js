@@ -162,7 +162,14 @@ function toggleLiteMode(){
 
 detectLiteMode();
 
+function accessLogToken() {
+    const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
+    return token.startsWith('offline-') ? '' : token;
+}
+
 function notifyBackendLogout(reason = "Logged out.") {
+    const token = accessLogToken();
+    if (!token) return;
 
     const visitorInput = document.getElementById("user-name");
     const visitorName = visitorInput ? visitorInput.value : "";
@@ -186,7 +193,7 @@ function notifyBackendLogout(reason = "Logged out.") {
             "https://backend.shinumaths989.workers.dev/save-visitor-log",
             {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
                 body: logPayload,
                 keepalive: true
             }
@@ -198,7 +205,7 @@ function notifyBackendLogout(reason = "Logged out.") {
             "https://backend.shinumaths989.workers.dev/register-session",
             {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
                 body: sessionPayload,
                 keepalive: true
             }
@@ -1459,72 +1466,28 @@ function onCaptchaSuccess(){
     } catch(e) { console.warn('sendLoginEmail error:', e); }
 }
 
-   async function saveVisitorLog(data){
+async function saveVisitorLog({ visitorName, purpose }) {
+    const token = accessLogToken();
+    if (!token) return;
+    const device = /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop";
 
-    let ip = "Unknown";
-
-    let location = "Unknown";
-
-    try{
-
-        const res =
-        await fetch(
-        "https://ipapi.co/json/"
-        );
-
-        const info =
-        await res.json();
-
-        ip =
-        info.ip || "Unknown";
-
-        location =
-        `${info.city}, ${info.region}, ${info.country_name}`;
-
-    }catch(e){
-
-        console.log(
-        "IP fetch failed",
-        e
-        );
-
-    }
-
-    try{
-
-        await fetch(
-            "https://backend.shinumaths989.workers.dev/save-visitor-log",
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    visitorName: data.visitorName,
-                    purpose: data.purpose,
-                    loginTime: new Date().toLocaleString(),
-                    device: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
-                    browser: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
-                    platform: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
-                    screen: `${screen.width}x${screen.height}`,
-                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                    ipAddress: ip,
-                    location: location,
-                    deviceIntegrity: window.__deviceIntegrity
-                        ? JSON.stringify({
-                            flags: window.__deviceIntegrity.getFlags().map(f => f.rule),
-                            behaviors: window.__deviceIntegrity.getBehaviorLog()
-                          })
-                        : undefined
-                })
-            }
-        );
-
-    }catch(err){
-
-        console.error(
-        "Visitor log error:",
-        err
-        );
-
+    try {
+        const res = await fetch("https://backend.shinumaths989.workers.dev/save-visitor-log", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+                visitorName,
+                purpose,
+                loginTime: new Date().toISOString(),
+                device,
+                platform: navigator.userAgentData?.platform || navigator.platform,
+                screen: `${screen.width}x${screen.height}`,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (error) {
+        console.warn("Could not save access log:", error.message);
     }
 
 }

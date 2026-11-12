@@ -1761,7 +1761,7 @@ Recommended:
     .grecaptcha-badge { visibility: visible !important; z-index: 99999; bottom: 14px !important; box-shadow: 0 2px 12px rgba(0,0,0,.15) !important; border-radius: 8px !important; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
-  <script src="vault-ui.js"></script>
+  <script src="vault-ui.js?v=20261112-accesslog"></script>
   <script nonce="opencode-2026-fix">
   // ---- Vault Drive PWA - app feel like Google Drive ----
   (function(){
@@ -5319,6 +5319,9 @@ Recommended:
             if (typeof startInactivityMonitor === 'function') startInactivityMonitor();
             if (typeof listenForForceLogout === 'function') listenForForceLogout();
             if (typeof vaultPostInit === 'function') vaultPostInit();
+            if (typeof saveVisitorLog === 'function') {
+              saveVisitorLog({ visitorName: trust.member, purpose: 'Trusted-device sign-in' });
+            }
             setProgress(100, 'Ready!');
             var _dashEl = document.getElementById('vault-dashboard');
             if (_dashEl && typeof lucide !== 'undefined') lucide.createIcons({ node: _dashEl });

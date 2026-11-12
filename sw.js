@@ -41,7 +41,7 @@ const PRECACHE_URLS = [
   "/vault-data.js",
   "/viewer.js",
   "/id-austria-logo.svg",
-  "/vault-ui.js",
+  "/vault-ui.js?v=20261112-accesslog",
   "/offline-auth.js?v=20260610-offlinefix12",
   "/vault-data.js?v=20260628-photosfix1",
   "/viewer.js?v=20261022-sigstamp2",
