@@ -1111,7 +1111,7 @@ Recommended:
 <div id="landing">
   <div class="land-orbs"><div class="land-orb"></div><div class="land-orb"></div><div class="land-orb"></div></div>
   <div class="land-header" id="landHeader">
-    <div class="land-title"><i data-lucide="lock" style="width:24px;height:24px;vertical-align:middle;"></i> <span>ONLINE VAULT</span> <div class="ver-badge" title="Online Vault build version">v20261112.06</div></div>
+    <div class="land-title"><i data-lucide="lock" style="width:24px;height:24px;vertical-align:middle;"></i> <span>ONLINE VAULT</span> <div class="ver-badge" title="Online Vault build version">v20261112.07</div></div>
     <div style="position:relative;">
       <button class="land-user-btn" id="landUserBtn" onclick="toggleLandDropdown()"><i data-lucide="user" style="width:20px;height:20px;"></i></button>
       <div class="land-dropdown" id="landDropdown">
@@ -1408,7 +1408,7 @@ Recommended:
     <div class="passport-navbar"> <!-- TOP DATE BAR -->
       <div class="passport-top-utility">
         <div id="passport-datetime"> Thursday 14 May 2026 at 11:48 PM </div>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;"> <span class="ver-badge" title="Online Vault build version">v20261112.06</span> <span class="security-status-dot">Security Status: Protected</span> <span class="e2e-badge"><i data-lucide="lock" style="width:12px;height:12px;vertical-align:middle;"></i> AES-256 End-to-End Encrypted</span>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;"> <span class="ver-badge" title="Online Vault build version">v20261112.07</span> <span class="security-status-dot">Security Status: Protected</span> <span class="e2e-badge"><i data-lucide="lock" style="width:12px;height:12px;vertical-align:middle;"></i> AES-256 End-to-End Encrypted</span>
                      <div style="position:relative;"> <button class="icon-btn" data-tip="Notifications" onclick="toggleNotifications()" id="notifBellBtn" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border-color);background:rgba(37,99,235,.06);cursor:pointer;font-size:15px;"><i data-lucide="bell" style="width:18px;height:18px;"></i><span id="notifDot" style="display:none;position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:var(--danger);border:2px solid #fff;"></span> <span id="notifCount" style="display:none;position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;line-height:18px;text-align:center;padding:0 4px;border:2px solid #fff;"></span> </button> <!-- Notification Panel -->
             <div id="notifPanel" style="display:none;position:absolute;top:calc(100% + 10px);right:0;width:320px;max-height:380px;overflow-y:auto;background:#fff;border:1px solid var(--border-color);border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.12);z-index:200;padding:12px;">
               <div style="font-weight:800;font-size:13px;margin-bottom:8px;padding:0 4px;display:flex;align-items:center;justify-content:space-between;"> <span><i data-lucide="bell" style="width:14px;height:14px;vertical-align:middle;"></i> Notifications</span> <button onclick="markAllNotifsRead()" style="font-size:11px;color:#3b82f6;background:none;border:none;cursor:pointer;font-weight:600;">Mark all read</button> </div>
@@ -1687,7 +1687,7 @@ Recommended:
     })();
   </script>
   <script src="sha256.js"></script>
-  <script src="offline-auth.js?v=20260610-offlinefix12"></script>
+  <script src="offline-auth.js?v=20261112.07"></script>
   <script src="device-integrity.js"></script>
   <script src="auth.js?v=20261112-localai"></script>
   <script src="session.js?v=20261112.06"></script>
@@ -5233,21 +5233,7 @@ Recommended:
           };
           setProgress(5, 'Restoring secure session...');
 
-          if (trust.token) {
-            sessionStorage.setItem('vaultSessionToken', trust.token);
-            sessionStorage.setItem('vaultSession', trust.token);
-          }
-
           window._trustSessionReady = new Promise(resolve => { window._resolveTrustSession = resolve; });
-
-          // NOTE: this mapping must match offline-auth.js's modeToId table.
-          // 'shineil' -> 'SHINEIL' here (not 'ADMIN') so that restoreTrustSession()
-          // looks up the IndexedDB record actually saved under that mode.
-          const memberToMode = { shineil:'SHINEIL', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
-          window.VAULT_MODE = sessionStorage.getItem('vaultMode') || memberToMode[trust.member] || 'ADMIN';
-          sessionStorage.setItem('vaultMode', window.VAULT_MODE);
-          const modeUserMap = { SHINEIL:'shineil', KEVIN:'brother', OFFICIAL:'official', PARENTS:'father', SHINEIL_PARENTS:'shineil', KEVIN_PARENTS:'brother', ADMIN:'shineil' };
-          sessionStorage.setItem('vaultUser', modeUserMap[window.VAULT_MODE] || trust.member || 'all');
 
           let _trustRestored = false;
           try {
@@ -5264,17 +5250,22 @@ Recommended:
             // delete vaultTrustInfo here - the failure may be transient
             // (e.g. masterPassword not populated yet on a prior pass), and
             // logging in fresh will re-save a corrected trust record anyway.
-            if (!_trustRestored && !window.masterPassword) {
+            if (!_trustRestored) {
               console.warn('[goToDashboard] Trust restore did not yield a usable session. Falling back to login.');
+              _cancelled = true;
+              clearInterval(_stuckTimer);
               loadingEl.style.display = 'none';
               showLogin();
+              if (navigator.onLine) toastNotify('Sign in again to start a new vault session.', 'info');
               return;
             }
 
             setProgress(40, 'Loading file catalogue...');
 
-            const existingSession = sessionStorage.getItem('vaultSession') || sessionStorage.getItem('vaultSessionToken');
-            if (existingSession && typeof initVault === 'function') {
+            const modeUserMap = { SHINEIL:'shineil', KEVIN:'brother', OFFICIAL:'official', PARENTS:'father', SHINEIL_PARENTS:'shineil', KEVIN_PARENTS:'brother', ADMIN:'shineil' };
+            sessionStorage.setItem('vaultUser', modeUserMap[window.VAULT_MODE] || trust.member);
+            const existingSession = sessionStorage.getItem('vaultSessionToken') || '';
+            if (navigator.onLine && existingSession && !existingSession.startsWith('offline-') && typeof initVault === 'function') {
               try {
                 await initVault();
               } catch (e) {

@@ -919,57 +919,12 @@ async function _unwrapTrustSecret(wrapped) {
     }
 }
 
-// ── Refresh a (likely expired) trust-restored session token ────────────────
-// Session tokens minted by the worker expire after 1 hour (see
-// createSessionToken in worker.js), but trust-device info is kept for up to
-// 14 days. That mismatch meant every "remembered" login after the first hour
-// silently restored an EXPIRED token into sessionStorage — every subsequent
-// authenticated call (access log, PIN sync, AI chat, offline caching,
-// status/notifications) then failed its server-side auth check, which is
-// what produced "Failed to load logs", the AI chat "offline mode" message,
-// and the "No server access — offline data not available" banner even while
-// fully online. This mints a fresh token from the still-known secret before
-// the dashboard starts making authenticated calls.
-async function _refreshTrustToken(secret) {
-    if (!secret || typeof navigator === 'undefined' || navigator.onLine === false) return null;
+// Used for expiry routing only. The Worker still verifies the signed token.
+function trustedSessionPayload(token) {
     try {
-        const enc = new TextEncoder();
-        const normalized = String(secret).trim().replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '').normalize('NFKC');
-
-        // PBKDF2 + SHA-256 (matches auth.js hashPassword(password, true))
-        const salt = enc.encode('vault-pbkdf2-v1');
-        const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(normalized), 'PBKDF2', false, ['deriveBits']);
-        const keyBits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 200000 }, keyMaterial, 256);
-        const slowHash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new Uint8Array(keyBits))))
-            .map(b => b.toString(16).padStart(2, '0')).join('');
-
-        // Legacy SHA-256 fallback (matches auth.js hashPassword(password, false))
-        const legacyHash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(normalized))))
-            .map(b => b.toString(16).padStart(2, '0')).join('');
-
-        const tryHash = async (hash) => {
-            const controller = new AbortController();
-            const tid = setTimeout(() => controller.abort(), 8000);
-            try {
-                const res = await fetch(`${_WORKER_URL}/get-secret`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ hash }),
-                    signal: controller.signal
-                });
-                if (!res.ok) return null;
-                const data = await res.json().catch(() => null);
-                return (data && data.success && data.authorized && data.sessionToken) ? data : null;
-            } catch {
-                return null;
-            } finally {
-                clearTimeout(tid);
-            }
-        };
-
-        return (await tryHash(slowHash)) || (await tryHash(legacyHash));
-    } catch (e) {
-        console.warn('[OfflineAuth] _refreshTrustToken failed:', e.message);
+        const payload = JSON.parse(atob(token)).payload;
+        return Number.isFinite(payload?.exp) && typeof payload.mode === 'string' ? payload : null;
+    } catch {
         return null;
     }
 }
@@ -977,9 +932,14 @@ async function _refreshTrustToken(secret) {
 async function restoreTrustSession() {
     try {
         const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
-        if (!trust || !trust.member) return false;
+        if (!trust || !trust.member || !(trust.expiry > Date.now())) return false;
+        const payload = trustedSessionPayload(trust.token);
+        const validUntil = payload?.exp || 0;
+        const isOffline = navigator.onLine === false;
+        if (validUntil <= Date.now() && !isOffline) return false;
         const modeToId = { shineil:'SHINEIL', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
-        const mode = sessionStorage.getItem('vaultMode') || modeToId[trust.member] || 'ADMIN';
+        const mode = payload?.mode || modeToId[trust.member];
+        if (!mode) return false;
         // trust.secret is encrypted (see features.js _wrapTrustSecret) — never
         // stored or used raw. Unwrap it here before assigning to masterPassword.
         if (trust.secret) {
@@ -988,29 +948,9 @@ async function restoreTrustSession() {
                 window.masterPassword = secret;
                 window.VAULT_MODE = mode;
                 sessionStorage.setItem('vaultMode', window.VAULT_MODE);
-                if (trust.token) {
-                    sessionStorage.setItem('vaultSessionToken', trust.token);
-                    sessionStorage.setItem('vaultSession', trust.token);
-                }
-
-                // Mint a fresh, guaranteed-valid token before returning, so
-                // every call the dashboard makes right after boot succeeds.
-                const fresh = await _refreshTrustToken(secret);
-                if (fresh && fresh.sessionToken) {
-                    sessionStorage.setItem('vaultSessionToken', fresh.sessionToken);
-                    sessionStorage.setItem('vaultSession', fresh.sessionToken);
-                    if (fresh.mode) {
-                        window.VAULT_MODE = fresh.mode;
-                        sessionStorage.setItem('vaultMode', fresh.mode);
-                    }
-                    try {
-                        trust.token = fresh.sessionToken;
-                        localStorage.setItem('vaultTrustInfo', JSON.stringify(trust));
-                    } catch (e) { /* non-fatal */ }
-                    console.log('[OfflineAuth] Trust session token refreshed from server.');
-                } else {
-                    console.warn('[OfflineAuth] Trust token could not be refreshed (offline or server unreachable) — using cached token, which may be expired.');
-                }
+                const token = validUntil > Date.now() ? trust.token : 'offline-' + crypto.randomUUID();
+                sessionStorage.setItem('vaultSessionToken', token);
+                sessionStorage.setItem('vaultSession', token);
 
                 console.log('[OfflineAuth] Trust session restored from vaultTrustInfo.secret');
                 return true;
