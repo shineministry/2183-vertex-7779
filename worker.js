@@ -1030,6 +1030,9 @@ const Controllers = {
     await bucketFile.arrayBuffer(),
     {
       headers: {
+        ...SECURITY_HEADERS,
+        "Cache-Control": "private, no-store",
+        "Vary": "Origin, Authorization",
         "Content-Type": contentType,
         "Access-Control-Allow-Origin":
           corsOrigin

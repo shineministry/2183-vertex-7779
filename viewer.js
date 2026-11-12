@@ -628,6 +628,7 @@ if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
 
 const loadingTask =
 pdfjsLib.getDocument({
+    isEvalSupported: false,
     data: decrypted
 });
 
