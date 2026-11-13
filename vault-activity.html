@@ -60,7 +60,7 @@ async function loadActivity() {
   log.hidden = true;
   events.replaceChildren();
   const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
-  if (!token) {
+  if (!token || token.startsWith('offline-')) {
     statusMessage.textContent = 'Sign in as an administrator in this tab to see vault activity.';
     return;
   }
@@ -70,8 +70,16 @@ async function loadActivity() {
     const response = await fetch('https://backend.shinumaths989.workers.dev/vault-activity', {
       headers: { Authorization: 'Bearer ' + token }, cache: 'no-store'
     });
-    if (response.status === 401 || response.status === 403) {
-      statusMessage.textContent = 'An active administrator session is required.';
+    if (response.status === 401) {
+      statusMessage.textContent = 'The server could not validate this session. Sign in online again.';
+      return;
+    }
+    if (response.status === 403) {
+      statusMessage.textContent = 'This vault session lacks administrator access. Switch to ADMIN mode.';
+      return;
+    }
+    if (response.status === 404) {
+      statusMessage.textContent = 'The activity endpoint is missing from the live vault backend.';
       return;
     }
     if (!response.ok) throw new Error();
