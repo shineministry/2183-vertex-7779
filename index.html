@@ -252,7 +252,7 @@ Recommended:
       <meta name="mobile-web-app-capable" content="yes">
       <meta name="theme-color" content="#1a73e8">
       <meta name="msapplication-TileColor" content="#1a73e8">
-      <link rel="stylesheet" href="style.css">
+      <link rel="stylesheet" href="style.css?v=20261113-vault-upload">
       <style>
         .step-card {
           width: 100%;
@@ -1445,7 +1445,7 @@ Recommended:
         <div id="sidebar-controls-wrap" style="        background:linear-gradient(135deg,#0f172a,#1e293b);        border-radius:14px;        padding:12px;        margin-bottom:14px;        border:1px solid rgba(255,255,255,.1);        box-sizing:border-box;        overflow:hidden;        ">
           <div style="        display:flex;        align-items:center;        gap:8px;        width:100%;        box-sizing:border-box;                  "> <select id="member-select" style="                flex:1;                min-width:0;                padding:12px;                border-radius:12px;                border:1px solid rgba(255,255,255,.18);                font-weight:700;                font-size:13px;                cursor:pointer;                background:rgba(255,255,255,.08);                color:#e2e8f0;                box-sizing:border-box;            "></select> <button id="toggle-dark-mode" onclick="toggleDarkMode()" style="                width:46px;                height:46px;                border:1px solid rgba(255,255,255,.18);                border-radius:12px;                background:rgba(255,255,255,.08);                cursor:pointer;                font-size:18px;                display:flex;                align-items:center;                justify-content:center;                flex-shrink:0;                color:#94a3b8;            " title="Toggle dark mode"><i data-lucide="moon" style="width:18px;height:18px;"></i></button> <button id="share-gear" style="                width:46px;                height:46px;                border:1px solid rgba(255,255,255,.18);                border-radius:12px;                background:rgba(255,255,255,.08);                cursor:pointer;                font-size:18px;                display:flex;                align-items:center;                justify-content:center;                flex-shrink:0;                color:#94a3b8;            "> <i data-lucide="settings" style="width:18px;height:18px;"></i> </button> </div>
         </div><!-- end dark sidebar controls wrapper -->
-        <button class="drive-new-btn" onclick="document.getElementById('unified-search')?.focus(); toastNotify('Tip: Search or pick a category - like Google Drive','info')"><i data-lucide="plus" style="width:18px;height:18px;"></i> New</button>
+        <button type="button" class="drive-new-btn" onclick="openFilesManagerWindow('upload')"><i data-lucide="plus" style="width:18px;height:18px;"></i> File upload</button>
         <div class="sidebar-vault-label" style="padding:0 8px 8px; font-size:11px; color:#94a3b8; font-weight:600; letter-spacing:.4px; text-transform:uppercase;">My Vault</div>
         <div id="sidebar-files-section">
           <ul id="cat-list"></ul>
@@ -1560,8 +1560,8 @@ Recommended:
           <h2 id="cat-title" style="margin-bottom:4px;">Vault Ready To Use</h2>
           <!-- Drive topbar: search + view toggle -->
           <div class="drive-topbar">
-            <div class="drive-search-wrap"><span class="ds-icon"><i data-lucide="search" style="width:18px;height:18px;"></i></span><input type="text" id="unified-search" placeholder="Search in Vault  -  names, categories, types" oninput="unifiedSearch()" autocomplete="off"><button onclick="document.getElementById('unified-search').value='';unifiedSearch();" style="border:none;background:transparent;cursor:pointer;color:#5f6368;padding:6px;border-radius:50%;" title="Clear"><i data-lucide="x" style="width:16px;height:16px;"></i></button></div>
-            <div class="drive-view-toggle" title="Switch view"><button data-mode="grid" class="active" onclick="toggleDriveView('grid')"><i data-lucide="layout-grid" style="width:16px;height:16px;"></i></button><button data-mode="list" onclick="toggleDriveView('list')"><i data-lucide="list" style="width:16px;height:16px;"></i></button></div>
+            <div class="drive-search-wrap"><span class="ds-icon"><i data-lucide="search" style="width:18px;height:18px;"></i></span><input type="search" id="unified-search" aria-label="Search in Vault" placeholder="Search in Vault" oninput="unifiedSearch()" autocomplete="off"><button onclick="document.getElementById('unified-search').value='';unifiedSearch();" style="border:none;background:transparent;cursor:pointer;color:#5f6368;padding:6px;border-radius:50%;" title="Clear"><i data-lucide="x" style="width:16px;height:16px;"></i></button></div>
+            <div class="drive-view-toggle" title="Switch view"><button type="button" data-mode="grid" aria-label="Grid view" title="Grid view" class="active" onclick="toggleDriveView('grid')"><i data-lucide="layout-grid" style="width:16px;height:16px;"></i></button><button type="button" data-mode="list" aria-label="List view" title="List view" onclick="toggleDriveView('list')"><i data-lucide="list" style="width:16px;height:16px;"></i></button></div>
             <button onclick="toggleBulkExport()" style="padding:7px 14px;border-radius:20px;border:1px solid #dadce0;background:#fff;font-size:12.5px;font-weight:500;cursor:pointer;color:#3c4043;white-space:nowrap;display:flex;align-items:center;gap:6px;"><i data-lucide="package" style="width:14px;height:14px;"></i> Bulk export</button>
           </div>
           <div class="drive-chip-row" id="driveChips">
@@ -5487,14 +5487,21 @@ Recommended:
     <button id="driveNavHome" class="active" onclick="selectVaultCategory(`HOME`);switchPage(`home`)"><i data-lucide="home" style="width:22px;height:22px;"></i>Home</button>
     <button id="driveNavStarred" onclick="switchPage(`files`);setTimeout(function(){driveFilter(`pinned`);setBottomNavActive(`driveNavStarred`)},210)"><i data-lucide="star" style="width:22px;height:22px;"></i>Starred</button>
     <button id="driveNavSearch" onclick="switchPage(`files`);document.getElementById(`unified-search`)?.focus()"><i data-lucide="search" style="width:22px;height:22px;"></i>Search</button>
+    <button type="button" onclick="openFilesManagerWindow('upload')"><i data-lucide="upload" style="width:22px;height:22px;"></i>Upload</button>
     <button id="driveNavPhotos" onclick="selectVaultCategory(`PHOTOS`);if(typeof switchPage===`function`)switchPage(`photos`); else selectVaultCategory(`PHOTOS`)"><i data-lucide="image" style="width:22px;height:22px;"></i>Photos</button>
   </nav>
 
   <!-- Files Manager Window Mode -->
   <script nonce="opencode-2026-fix">
-  function openFilesManagerWindow(){
+  function openFilesManagerWindow(action){
+    const params = new URLSearchParams({ embed: '1' });
+    if (action === 'upload') {
+      params.set('action', 'upload');
+      if (typeof currentCategory === 'string') params.set('category', currentCategory);
+    }
     const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
-    const url = 'files.html?embed=1' + (token ? '&token='+encodeURIComponent(token) : '');
+    if (token) params.set('token', token);
+    const url = 'files.html?' + params.toString();
     // HTML window view like access log modal - always modal, never new tab
     openFilesModal(url);
   }

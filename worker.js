@@ -332,6 +332,7 @@ async function firestoreWrite(env, collection, data, docId = null) {
 
   function toFirestoreValue(val) {
     if (val === null || val === undefined) return { nullValue: null };
+    if (val instanceof Date) return { timestampValue: val.toISOString() };
     if (typeof val === "boolean") return { booleanValue: val };
     if (typeof val === "number") return Number.isInteger(val)
       ? { integerValue: String(val) }
@@ -532,7 +533,7 @@ async function verifySessionToken(token, env) {
     );
 
     if (!valid) return { valid: false };
-    return { valid: true, mode: payload.mode };
+    return { valid: true, mode: payload.mode, nonce: payload.nonce };
   } catch {
     return { valid: false };
   }
@@ -830,7 +831,73 @@ A: "The health insurance policy number is HX-4821-99."`;
 // ═══════════════════════════════════════════════════════════════════════════
 //  5. CONTROLLERS
 // ═══════════════════════════════════════════════════════════════════════════
+async function vaultActivityFileRef(key, path) {
+  const normalized = path.replace(/\\/g, "/").replace(/^\/?(?:docs\/|file\/|photos\/)?/, "");
+  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode("vault-audit:" + normalized));
+  return Array.from(new Uint8Array(digest).slice(0, 12), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function vaultActivityKey(env) {
+  return crypto.subtle.importKey("raw", new TextEncoder().encode(env.MASTER_PASSWORD), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+}
+
+async function recordVaultActivity(env, session, action, fileKey) {
+  const now = new Date();
+  try {
+    const fileRef = fileKey ? await vaultActivityFileRef(await vaultActivityKey(env), fileKey) : "";
+    await firestoreWrite(env, "vaultActivity", {
+      fileRef,
+      action,
+      role: session.mode,
+      session: session.nonce?.slice(0, 8) || "",
+      recordedAt: now.toISOString(),
+      expiresAt: new Date(now.getTime() + 30 * 86400000)
+    });
+  } catch {
+    console.error("Could not record vault activity");
+  }
+}
+
 const Controllers = {
+  async handleVaultActivity(request, env, corsOrigin) {
+    const session = await this.requireAuth(request, env);
+    const headers = { "Cache-Control": "no-store" };
+    if (!session || session.mode !== "ADMIN") {
+      return createJsonResponse({ error: "Administrator sign-in required" }, session ? 403 : 401, corsOrigin, headers);
+    }
+    try {
+      const cutoff = new Date(Date.now() - 30 * 86400000).toISOString();
+      const rows = await firestoreQuery(env, "vaultActivity", [
+        { field: "recordedAt", op: "GREATER_THAN_OR_EQUAL", value: cutoff }
+      ], 100, [{ field: { fieldPath: "recordedAt" }, direction: "DESCENDING" }]);
+      const names = new Map();
+      try {
+        const index = await env.MY_BUCKET.get("files.json");
+        if (index && rows.some(row => row.fileRef)) {
+          const key = await vaultActivityKey(env);
+          const entries = Object.entries(JSON.parse(await index.text()));
+          for (const [category, files] of entries) {
+            if (!Array.isArray(files)) continue;
+            for (const file of files) {
+              const path = file?.path || file?.url || file?.file;
+              if (typeof path !== "string" || !path) continue;
+              const ref = await vaultActivityFileRef(key, path);
+              if (names.has(ref)) names.set(ref, null);
+              else names.set(ref, { category, fileName: typeof file.name === "string" ? file.name : "" });
+            }
+          }
+        }
+      } catch {
+        console.error("Could not resolve vault activity file names");
+      }
+      return createJsonResponse(rows.map(({ action, role, session, recordedAt, fileRef }) => ({
+        action, role, session, recordedAt, fileRef, ...names.get(fileRef)
+      })), 200, corsOrigin, headers);
+    } catch {
+      return createJsonResponse({ error: "Could not load vault activity" }, 503, corsOrigin, headers);
+    }
+  },
+
 
   // ── Auth helpers ────────────────────────────────────────────────
   async requireAuth(request, env) {
@@ -992,6 +1059,7 @@ const Controllers = {
   }
 
   if (!allowed && session.mode !== "ADMIN") {
+    await recordVaultActivity(env, session, "File access denied", docPath);
     return createJsonResponse(
       { error: "Forbidden" },
       403,
@@ -1027,8 +1095,10 @@ const Controllers = {
   const ext = '.' + (docPath.split('.').pop() || '').toLowerCase();
   const contentType = mimeMap[ext] || 'application/octet-stream';
 
+  const contents = await bucketFile.arrayBuffer();
+  await recordVaultActivity(env, session, "File served", docPath);
   return new Response(
-    await bucketFile.arrayBuffer(),
+    contents,
     {
       headers: {
         "Content-Type": contentType,
@@ -2131,6 +2201,7 @@ async handleDeletePassword(request, env, corsOrigin) {
         forceLogout: false
       }, sessionId);
 
+      if (active !== false) await recordVaultActivity(env, session, "Session registered");
       return createJsonResponse({ success: true }, 200, corsOrigin);
     } catch (err) {
       console.error("register-session error:", err.message);
@@ -2286,6 +2357,7 @@ async handleDeletePassword(request, env, corsOrigin) {
       const { nonce } = body;
       if (!nonce) return createJsonResponse({ error: "Missing nonce" }, 400, corsOrigin);
       await firestoreWrite(env, "revokedSessions", { nonce, revokedAt: Date.now(), revokedBy: session.mode }, nonce);
+      await recordVaultActivity(env, session, "Session revoked");
       return createJsonResponse({ success: true, message: "Session revoked" }, 200, corsOrigin);
     } catch (err) {
       return createJsonResponse({ success: false, error: err.message }, 500, corsOrigin);
@@ -2298,6 +2370,7 @@ async handleDeletePassword(request, env, corsOrigin) {
       if (!session) return createJsonResponse({ error: "Unauthorized" }, 401, corsOrigin);
       const data = await request.arrayBuffer();
       await env.MY_BUCKET.put(fileName, data);
+      await recordVaultActivity(env, session, fileName === "files.json" ? "File index saved" : "File uploaded", fileName);
       return createJsonResponse({ success: true }, 200, corsOrigin);
     } catch (err) {
       return createJsonResponse({ success: false, error: err.message }, 500, corsOrigin);
@@ -2319,7 +2392,9 @@ async handleDeletePassword(request, env, corsOrigin) {
       };
       const ext = '.' + (fileName.split('.').pop() || '').toLowerCase();
       const contentType = mimeMap[ext] || 'application/octet-stream';
-      return new Response(await object.arrayBuffer(), {
+      const contents = await object.arrayBuffer();
+      await recordVaultActivity(env, session, "File downloaded", fileName);
+      return new Response(contents, {
         headers: { "Content-Type": contentType, "Access-Control-Allow-Origin": corsOrigin }
       });
     } catch (err) {
@@ -2866,6 +2941,7 @@ if (method === "POST" || method === "PUT") {
       if (url.pathname === "/save-visitor-log"  && method === "POST") return Controllers.handleSaveVisitorLog(request, env, corsOrigin);
       if (url.pathname === "/register-session"  && method === "POST") return Controllers.handleRegisterSession(request, env, corsOrigin);
       if (url.pathname === "/check-session"     && method === "POST") return Controllers.handleCheckSession(request, env, corsOrigin);
+      if (url.pathname === "/vault-activity" && method === "GET") return Controllers.handleVaultActivity(request, env, corsOrigin);
       if (url.pathname === "/get-logs"          && method === "POST") return Controllers.handleGetLogs(request, env, corsOrigin);
       if (url.pathname === "/expiry-reminder"   && method === "POST") return Controllers.handleExpiryReminder(request, env, corsOrigin);
       if (url.pathname === "/request-passkey"   && method === "POST") return Controllers.handleRequestPasskey(request, env, corsOrigin);

@@ -408,10 +408,10 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
         </div>
       </div>
       <div>
-        <label for="fmFileInput">Upload & Encrypt (Any File -> .enc)</label>
+        <label for="fmFileInput">Choose a file to encrypt</label>
         <div id="fmUploadArea" class="fm-upload-area" onclick="document.getElementById('fmFileInput').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleFileDrop(event)">
           <i data-lucide="upload-cloud" style="width:28px;height:28px;color:#94a3b8;"></i>
-          <span>Drop PDF here or click to browse</span>
+          <span>Drop a file here or click to browse</span>
         </div>
         <input type="file" id="fmFileInput" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.bmp,.heic,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.mp3,.mp4,.mov,.m4a,.json" style="display:none" onchange="handleFileSelect(event)">
         <div id="fmFileInfo" style="display:none;" class="fm-upload-info">
@@ -421,6 +421,10 @@ body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
         </div>
       </div>
       <div>
+        <div id="fmUploadCategoryField" hidden>
+          <label for="fmUploadCategory">Category</label>
+          <select id="fmUploadCategory" onchange="selectUploadCategory(this.value)"></select>
+        </div>
         <label for="fmSection">Section</label>
         <select id="fmSection">
           <option value="">- No section -</option>
@@ -844,6 +848,7 @@ async function doPinLogin(){
     btn.textContent='Unlock'; btn.disabled=false;
     window._fmChangeStep=null;
     if(_pendingUploads.length){ toast('PIN set - '+_pendingUploads.length+' file(s) queued, click Deploy'); _updateDeployBadge(); _renderCards(); } else { toast('PIN set - loading files...'); await _autoLoad(); }
+    openRequestedUpload();
     return;
   }
   if(_fmPinMode==='change' && window._fmChangeStep==='new'){
@@ -879,6 +884,7 @@ async function doPinLogin(){
   document.getElementById('loginOverlay').classList.remove('show');
   btn.textContent='Unlock'; btn.disabled=false;
   if(_pendingUploads.length){ toast('Unlocked - '+_pendingUploads.length+' file(s) queued, click Deploy'); _updateDeployBadge(); _renderCards(); } else { toast('Unlocked - loading files...'); await _autoLoad(); }
+  openRequestedUpload();
 }
 // Keep old doLogin for offline fallback (hidden input)
 async function doLogin(){ return doPinLogin(); }
@@ -1339,7 +1345,34 @@ function deleteSingleCategory(cat){
 }
 
 /* ---- ADD FILE ---- */
+function openRequestedUpload(){
+  const params = new URLSearchParams(location.search);
+  if (params.get('action') !== 'upload') return;
+  const categories = Object.keys(_data).filter(category => Array.isArray(_data[category]));
+  if (!categories.length) {
+    toast('Create a category to upload a file');
+    return;
+  }
+  const requestedCategory = params.get('category');
+  _selectCat(categories.includes(requestedCategory) ? requestedCategory : categories[0]);
+  addFileEntry();
+  const picker = document.getElementById('fmUploadCategory');
+  picker.replaceChildren(...categories.map(category => new Option(category, category)));
+  picker.value = _activeCat;
+  document.getElementById('fmUploadCategoryField').hidden = false;
+  document.getElementById('fileModalTitle').textContent = 'File upload';
+}
+
+function selectUploadCategory(category){
+  if (!Object.hasOwn(_data, category) || !Array.isArray(_data[category])) return;
+  _selectCat(category);
+  document.getElementById('fmPrefix').value = _prefixForActiveCat();
+  _populateSectionDropdown();
+  document.getElementById('fmSection').value = '';
+}
+
 function addFileEntry(){
+  document.getElementById('fmUploadCategoryField').hidden = true;
   _editIdx = -1;
   document.getElementById('fileModalTitle').textContent = 'Add File Entry';
   document.getElementById('fmName').value = '';
@@ -1355,6 +1388,7 @@ function addFileEntry(){
 
 /* ---- EDIT FILE ---- */
 function editFileEntry(idx){
+  document.getElementById('fmUploadCategoryField').hidden = true;
   var items = _data[_activeCat];
   if (!items || !items[idx]) return;
   var it = items[idx];
@@ -1430,7 +1464,7 @@ function saveFileEntry(){
     _pendingUploads.push({ uid: entry._uid, path: uploadPath, blob: _pendingEncBlob, origName: _pendingOrigName || fileName, cat: _activeCat, size: _pendingEncBlob.size, attempts: 0 });
     _uploadStatus[entry._uid] = { state:'pending' };
     _updateDeployBadge();
-    toast('Encrypted file queued for upload');
+    toast('File queued. Click Deploy to finish uploading.');
   }
 
   if (!_data[_activeCat]) _data[_activeCat] = [];

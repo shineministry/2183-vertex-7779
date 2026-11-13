@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Vault activity</title>
+<style>
+body{background:#f4f7fb;color:#172336;font:16px system-ui;margin:0;padding:24px}
+main{max-width:960px;margin:auto}h1{margin:.5em 0}
+button{background:#174ea6;color:white;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer}
+button:disabled{opacity:.65}a{color:#174ea6}
+.log{overflow:auto;background:white;border:1px solid #d9e1ed;border-radius:12px}
+table{border-collapse:collapse;width:100%;text-align:left;font-size:.9rem}
+th,td{padding:12px;border-bottom:1px solid #d9e1ed;white-space:nowrap}
+</style>
+</head>
+<body>
+<main>
+<a href="./">Back to vault</a>
+<h1>Vault activity</h1>
+<p>Latest 100 online vault events from the past 30 days. File names and categories come from the current vault index.</p>
+<button id="reload" type="button">Refresh</button>
+<label for="filter">Filter events</label>
+<input id="filter" type="search" placeholder="File, category, action, role, or session">
+<p id="status" role="status"></p>
+<div class="log" id="log" hidden>
+<table aria-label="Vault activity"><thead><tr><th>Time</th><th>Action</th><th>Role</th><th>Session</th><th>File</th><th>Category</th><th>File reference</th></tr></thead><tbody id="events"></tbody></table>
+</div>
+</main>
+<script>
+const button = document.getElementById('reload');
+const statusMessage = document.getElementById('status');
+const log = document.getElementById('log');
+const events = document.getElementById('events');
+const filter = document.getElementById('filter');
+let activity = [];
+
+function renderActivity() {
+  const query = filter.value.trim().toLowerCase();
+  events.replaceChildren();
+  for (const row of activity) {
+    const details = [row.action, row.role, row.session, row.fileName, row.category, row.fileRef];
+    if (query && !details.some(value => String(value ?? '').toLowerCase().includes(query))) continue;
+    const tr = events.insertRow();
+    for (const value of [new Date(row.recordedAt).toLocaleString(), ...details]) {
+      tr.insertCell().textContent = value || '—';
+    }
+  }
+  log.hidden = !events.rows.length;
+  statusMessage.textContent = log.hidden
+    ? (activity.length ? 'No events match this filter.' : 'No vault activity recorded.')
+    : events.rows.length + ' events shown';
+}
+
+async function loadActivity() {
+  activity = [];
+  filter.disabled = true;
+  log.hidden = true;
+  events.replaceChildren();
+  const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
+  if (!token) {
+    statusMessage.textContent = 'Sign in as an administrator in this tab to see vault activity.';
+    return;
+  }
+  button.disabled = true;
+  statusMessage.textContent = 'Loading activity…';
+  try {
+    const response = await fetch('https://backend.shinumaths989.workers.dev/vault-activity', {
+      headers: { Authorization: 'Bearer ' + token }, cache: 'no-store'
+    });
+    if (response.status === 401 || response.status === 403) {
+      statusMessage.textContent = 'An active administrator session is required.';
+      return;
+    }
+    if (!response.ok) throw new Error();
+    const rows = await response.json();
+    if (!Array.isArray(rows)) throw new Error();
+    activity = rows;
+    filter.disabled = false;
+    renderActivity();
+  } catch {
+    statusMessage.textContent = 'Vault activity could not be loaded.';
+  } finally {
+    button.disabled = false;
+  }
+}
+filter.addEventListener('input', renderActivity);
+button.addEventListener('click', loadActivity);
+loadActivity();
+</script>
+</body>
+</html>

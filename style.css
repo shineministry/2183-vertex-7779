@@ -3346,7 +3346,7 @@ body.dark-mode .passport-navbar { background: #1e293b !important; border-color: 
 .vault-drive-bottom-nav{
   display:none; position:fixed; bottom:0; left:0; right:0; height:56px;
   background:#fff; border-top:1px solid #dadce0; z-index:90;
-  grid-template-columns:1fr 1fr 1fr 1fr; align-items:center;
+  grid-template-columns:repeat(5,minmax(0,1fr)); align-items:center;
   padding:0 8px calc(0px + env(safe-area-inset-bottom));
 }
 .vault-drive-bottom-nav button{
@@ -4069,4 +4069,9 @@ html body.dark-mode #page-files .drive-search-wrap input {
   .file-grid{ gap:8px !important; }
   #cat-list li{ padding:8px 12px !important; font-size:12.5px !important; }
   .passport-top-utility .security-status-dot{ display:none !important; }
+}
+
+/* Keep the PDF signature overlay compact on phones. */
+@media (max-width: 767.98px) {
+  .pdf-sig-group { scale: 0.72; }
 }
