@@ -4070,3 +4070,8 @@ html body.dark-mode #page-files .drive-search-wrap input {
   #cat-list li{ padding:8px 12px !important; font-size:12.5px !important; }
   .passport-top-utility .security-status-dot{ display:none !important; }
 }
+
+/* Keep the PDF signature overlay compact on phones. */
+@media (max-width: 767.98px) {
+  .pdf-sig-group { scale: 0.72; }
+}
