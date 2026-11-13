@@ -20,11 +20,13 @@ th,td{padding:12px;border-bottom:1px solid #d9e1ed;white-space:nowrap}
 <main>
 <a href="./">Back to vault</a>
 <h1>Vault activity</h1>
-<p>Latest 100 online file events from the past 30 days. File references identify the same stored file without exposing its name.</p>
+<p>Latest 100 online vault events from the past 30 days. File names and categories come from the current vault index.</p>
 <button id="reload" type="button">Refresh</button>
+<label for="filter">Filter events</label>
+<input id="filter" type="search" placeholder="File, category, action, role, or session">
 <p id="status" role="status"></p>
 <div class="log" id="log" hidden>
-<table aria-label="Vault activity"><thead><tr><th>Time</th><th>Action</th><th>Role</th><th>Session</th><th>File reference</th></tr></thead><tbody id="events"></tbody></table>
+<table aria-label="Vault activity"><thead><tr><th>Time</th><th>Action</th><th>Role</th><th>Session</th><th>File</th><th>Category</th><th>File reference</th></tr></thead><tbody id="events"></tbody></table>
 </div>
 </main>
 <script>
@@ -32,7 +34,29 @@ const button = document.getElementById('reload');
 const statusMessage = document.getElementById('status');
 const log = document.getElementById('log');
 const events = document.getElementById('events');
+const filter = document.getElementById('filter');
+let activity = [];
+
+function renderActivity() {
+  const query = filter.value.trim().toLowerCase();
+  events.replaceChildren();
+  for (const row of activity) {
+    const details = [row.action, row.role, row.session, row.fileName, row.category, row.fileRef];
+    if (query && !details.some(value => String(value ?? '').toLowerCase().includes(query))) continue;
+    const tr = events.insertRow();
+    for (const value of [new Date(row.recordedAt).toLocaleString(), ...details]) {
+      tr.insertCell().textContent = value || '—';
+    }
+  }
+  log.hidden = !events.rows.length;
+  statusMessage.textContent = log.hidden
+    ? (activity.length ? 'No events match this filter.' : 'No vault activity recorded.')
+    : events.rows.length + ' events shown';
+}
+
 async function loadActivity() {
+  activity = [];
+  filter.disabled = true;
   log.hidden = true;
   events.replaceChildren();
   const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession');
@@ -52,20 +76,17 @@ async function loadActivity() {
     }
     if (!response.ok) throw new Error();
     const rows = await response.json();
-    for (const row of rows) {
-      const tr = events.insertRow();
-      for (const value of [new Date(row.recordedAt).toLocaleString(), row.action, row.role, row.session, row.fileRef]) {
-        tr.insertCell().textContent = value || '—';
-      }
-    }
-    statusMessage.textContent = rows.length ? '' : 'No file activity recorded.';
-    log.hidden = !rows.length;
+    if (!Array.isArray(rows)) throw new Error();
+    activity = rows;
+    filter.disabled = false;
+    renderActivity();
   } catch {
     statusMessage.textContent = 'Vault activity could not be loaded.';
   } finally {
     button.disabled = false;
   }
 }
+filter.addEventListener('input', renderActivity);
 button.addEventListener('click', loadActivity);
 loadActivity();
 </script>
