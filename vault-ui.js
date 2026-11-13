@@ -82,7 +82,39 @@ document.addEventListener('visibilitychange', () => {
 
 }
 
+function addAdminActivityLink() {
+    if ((window.VAULT_MODE || sessionStorage.getItem('vaultMode')) !== 'ADMIN' || !accessLogToken()) return;
+    const header = document.querySelector('#logModal .modal-header');
+    if (!header || header.querySelector('#openVaultActivity')) return;
+    const button = document.createElement('button');
+    button.id = 'openVaultActivity';
+    button.type = 'button';
+    button.className = 'btn-outline';
+    button.textContent = 'Detailed activity';
+    button.addEventListener('click', () => {
+        const dialog = document.createElement('dialog');
+        dialog.setAttribute('aria-label', 'Detailed vault activity');
+        dialog.style.cssText = 'width:min(960px,92vw);max-width:92vw;padding:12px;border:0;border-radius:12px;';
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.textContent = 'Close';
+        close.addEventListener('click', () => dialog.close());
+        const frame = document.createElement('iframe');
+        frame.title = 'Detailed vault activity';
+        frame.src = 'vault-activity.html';
+        frame.style.cssText = 'display:block;width:100%;height:72vh;border:0;';
+        dialog.append(close, frame);
+        dialog.addEventListener('close', () => dialog.remove(), { once: true });
+        document.body.append(dialog);
+        dialog.showModal();
+    });
+    header.querySelector('strong').after(button);
+}
+
 async function openLogs(){
+    const activityButton = document.getElementById('openVaultActivity');
+    if (activityButton) activityButton.remove();
+    addAdminActivityLink();
 
     document.getElementById(
     'logModal'
