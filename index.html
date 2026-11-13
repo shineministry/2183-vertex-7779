@@ -1111,7 +1111,7 @@ Recommended:
 <div id="landing">
   <div class="land-orbs"><div class="land-orb"></div><div class="land-orb"></div><div class="land-orb"></div></div>
   <div class="land-header" id="landHeader">
-    <div class="land-title"><i data-lucide="lock" style="width:24px;height:24px;vertical-align:middle;"></i> <span>ONLINE VAULT</span> <div class="ver-badge" title="Online Vault build version">v20261113.02</div></div>
+    <div class="land-title"><i data-lucide="lock" style="width:24px;height:24px;vertical-align:middle;"></i> <span>ONLINE VAULT</span> <div class="ver-badge" title="Online Vault build version">v20261113.03</div></div>
     <div style="position:relative;">
       <button class="land-user-btn" id="landUserBtn" onclick="toggleLandDropdown()"><i data-lucide="user" style="width:20px;height:20px;"></i></button>
       <div class="land-dropdown" id="landDropdown">
@@ -1408,7 +1408,7 @@ Recommended:
     <div class="passport-navbar"> <!-- TOP DATE BAR -->
       <div class="passport-top-utility">
         <div id="passport-datetime"> Thursday 14 May 2026 at 11:48 PM </div>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;"> <span class="ver-badge" title="Online Vault build version">v20261113.02</span> <span class="security-status-dot">Security Status: Protected</span> <span class="e2e-badge"><i data-lucide="lock" style="width:12px;height:12px;vertical-align:middle;"></i> AES-256 End-to-End Encrypted</span>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;"> <span class="ver-badge" title="Online Vault build version">v20261113.03</span> <span class="security-status-dot">Security Status: Protected</span> <span class="e2e-badge"><i data-lucide="lock" style="width:12px;height:12px;vertical-align:middle;"></i> AES-256 End-to-End Encrypted</span>
                      <div style="position:relative;"> <button class="icon-btn" data-tip="Notifications" onclick="toggleNotifications()" id="notifBellBtn" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border-color);background:rgba(37,99,235,.06);cursor:pointer;font-size:15px;"><i data-lucide="bell" style="width:18px;height:18px;"></i><span id="notifDot" style="display:none;position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:var(--danger);border:2px solid #fff;"></span> <span id="notifCount" style="display:none;position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;line-height:18px;text-align:center;padding:0 4px;border:2px solid #fff;"></span> </button> <!-- Notification Panel -->
             <div id="notifPanel" style="display:none;position:absolute;top:calc(100% + 10px);right:0;width:320px;max-height:380px;overflow-y:auto;background:#fff;border:1px solid var(--border-color);border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.12);z-index:200;padding:12px;">
               <div style="font-weight:800;font-size:13px;margin-bottom:8px;padding:0 4px;display:flex;align-items:center;justify-content:space-between;"> <span><i data-lucide="bell" style="width:14px;height:14px;vertical-align:middle;"></i> Notifications</span> <button onclick="markAllNotifsRead()" style="font-size:11px;color:#3b82f6;background:none;border:none;cursor:pointer;font-weight:600;">Mark all read</button> </div>
@@ -3088,6 +3088,8 @@ Recommended:
         justify-content: center;
       }
       .pm-pin-digit {
+        box-sizing: border-box;
+        min-width: 0;
         width: 56px;
         height: 64px;
         border: 2px solid #e2e8f0;
@@ -3110,7 +3112,8 @@ Recommended:
         animation: pmShake .3s ease;
       }
       @media (max-width:400px) {
-        .pm-pin-digit { width: 48px; height: 56px; font-size: 24px; }
+        .pm-pin-digit-row { gap: 6px; }
+        .pm-pin-digit { width: 40px; height: 50px; font-size: 22px; }
       }
       @keyframes pmShake {
         0%,100% { transform: translateX(0); }
@@ -3360,7 +3363,7 @@ Recommended:
       <div class="pm-modal-box" style="max-width:380px;">
         <div class="pm-modal-head"> <span style="font-size:20px;"><i data-lucide="lock" style="width:20px;height:20px;vertical-align:middle;"></i></span> <strong id="pm-pin-modal-title">ENTER PIN</strong> <button onclick="closePMPinModal()" class="pm-modal-close"><i data-lucide="x" style="width:14px;height:14px;vertical-align:middle;"></i> CLOSE</button> </div>
         <div class="pm-body" style="padding:24px 20px;text-align:center;">
-          <p id="pm-pin-subtitle" style="font-size:13px;color:#64748b;margin:0 0 18px;">Enter your 4-digit PIN to continue.</p>
+          <p id="pm-pin-subtitle" style="font-size:13px;color:#64748b;margin:0 0 18px;">Enter your 6-digit PIN to continue.</p>
 
           <div id="pm-pin-old-row" style="display:none;margin-bottom:18px;">
             <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.5px;margin-bottom:8px;">CURRENT PIN</div>
@@ -3377,6 +3380,7 @@ Recommended:
             <div class="pm-pin-digit-row" data-row="confirm"></div>
           </div>
 
+          <button type="button" id="pm-pin-upgrade" hidden onclick="openPMChangePin(4)">Upgrade an existing 4-digit PIN</button>
           <div id="pm-pin-error" style="color:#ef4444;font-size:12px;font-weight:600;margin-top:14px;min-height:16px;"></div>
 
           <button class="pm-save-btn" style="margin-top:14px;width:100%;" onclick="submitPMPin()"><i data-lucide="check" style="width:14px;height:14px;vertical-align:middle;"></i> CONFIRM</button>
@@ -3670,14 +3674,16 @@ Recommended:
       async function syncPinHashToServer(memberKey, pinHash) {
         try {
           const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
-          if (!token) return;
-          await fetch('https://backend.shinumaths989.workers.dev/save-pin-hash', {
+          if (!token) return false;
+          const response = await fetch('https://backend.shinumaths989.workers.dev/save-pin-hash', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
             body: JSON.stringify({ memberKey, pinHash })
           });
+          return response.ok;
         } catch (e) {
           console.warn('[PM-PIN] sync to server failed (non-critical):', e);
+          return false;
         }
       }
 
@@ -3797,6 +3803,7 @@ Recommended:
       }
 
       async function pmGateForMember(memberKey) {
+        await loadPinHashesFromServer();
         var existing = localStorage.getItem('pmPinHash_' + memberKey);
         if (existing) {
           openPMPinEntry(memberKey);
@@ -3805,54 +3812,60 @@ Recommended:
         }
       }
 
+      const PM_PIN_LENGTH = 6;
+
       function openPMPinSetup(memberKey) {
+        document.getElementById('pm-pin-upgrade').hidden = true;
         window._pmPinContext = { mode: 'set', member: memberKey };
         document.getElementById('pm-pin-modal-title').textContent = 'SET YOUR PIN';
         document.getElementById('pm-pin-subtitle').textContent =
-          'First time here - set a 4-digit PIN to protect ' + (PM_MEMBER_LABELS[memberKey] || memberKey) + "'s saved passwords.";
+          'First time here - set a 6-digit PIN to protect ' + (PM_MEMBER_LABELS[memberKey] || memberKey) + "'s saved passwords.";
         document.getElementById('pm-pin-old-row').style.display = 'none';
         document.getElementById('pm-pin-main-label').style.display = 'block';
         document.getElementById('pm-pin-main-label').textContent = 'NEW PIN';
         document.getElementById('pm-pin-confirm-row').style.display = 'block';
         document.getElementById('pm-pin-error').textContent = '';
-        _pmBuildDigitRow('main', 4);
-        _pmBuildDigitRow('confirm', 4);
+        _pmBuildDigitRow('main', PM_PIN_LENGTH);
+        _pmBuildDigitRow('confirm', PM_PIN_LENGTH);
         var modal = document.getElementById('pmPinModal');
         if (modal) modal.classList.add('open');
         setTimeout(function() { var f = document.querySelector('.pm-pin-digit-row[data-row="main"] .pm-pin-digit'); if (f) f.focus(); }, 50);
       }
 
       function openPMPinEntry(memberKey) {
+        document.getElementById('pm-pin-upgrade').hidden = false;
         window._pmPinContext = { mode: 'enter', member: memberKey };
         document.getElementById('pm-pin-modal-title').textContent = 'ENTER PIN';
         document.getElementById('pm-pin-subtitle').textContent =
-          'Enter the 4-digit PIN for ' + (PM_MEMBER_LABELS[memberKey] || memberKey) + '.';
+          'Enter the 6-digit PIN for ' + (PM_MEMBER_LABELS[memberKey] || memberKey) + '.';
         document.getElementById('pm-pin-old-row').style.display = 'none';
         document.getElementById('pm-pin-main-label').style.display = 'block';
         document.getElementById('pm-pin-main-label').textContent = 'PIN';
         document.getElementById('pm-pin-confirm-row').style.display = 'none';
         document.getElementById('pm-pin-error').textContent = '';
-        _pmBuildDigitRow('main', 4);
+        _pmBuildDigitRow('main', PM_PIN_LENGTH);
         var modal = document.getElementById('pmPinModal');
         if (modal) modal.classList.add('open');
         setTimeout(function() { var f = document.querySelector('.pm-pin-digit-row[data-row="main"] .pm-pin-digit'); if (f) f.focus(); }, 50);
       }
 
-      function openPMChangePin() {
-        if (!window._pmActiveMember) return;
-        var memberKey = window._pmActiveMember;
-        window._pmPinContext = { mode: 'change', member: memberKey };
+      function openPMChangePin(oldLength = PM_PIN_LENGTH) {
+        const upgrading = oldLength === 4;
+        const memberKey = upgrading ? window._pmPinContext?.member : window._pmActiveMember;
+        if (!memberKey) return;
+        document.getElementById('pm-pin-upgrade').hidden = true;
+        window._pmPinContext = { mode: 'change', member: memberKey, oldLength, upgrading };
         document.getElementById('pm-pin-modal-title').textContent = 'CHANGE PIN';
         document.getElementById('pm-pin-subtitle').textContent =
-          'Enter your current PIN, then choose a new one for ' + (PM_MEMBER_LABELS[memberKey] || memberKey) + '.';
+          'Enter your current PIN, then choose a new 6-digit PIN for ' + (PM_MEMBER_LABELS[memberKey] || memberKey) + '.';
         document.getElementById('pm-pin-old-row').style.display = 'block';
         document.getElementById('pm-pin-main-label').style.display = 'block';
         document.getElementById('pm-pin-main-label').textContent = 'NEW PIN';
         document.getElementById('pm-pin-confirm-row').style.display = 'block';
         document.getElementById('pm-pin-error').textContent = '';
-        _pmBuildDigitRow('old', 4);
-        _pmBuildDigitRow('main', 4);
-        _pmBuildDigitRow('confirm', 4);
+        _pmBuildDigitRow('old', oldLength);
+        _pmBuildDigitRow('main', PM_PIN_LENGTH);
+        _pmBuildDigitRow('confirm', PM_PIN_LENGTH);
         var modal = document.getElementById('pmPinModal');
         if (modal) modal.classList.add('open');
         setTimeout(function() { var f = document.querySelector('.pm-pin-digit-row[data-row="old"] .pm-pin-digit'); if (f) f.focus(); }, 50);
@@ -3879,7 +3892,7 @@ Recommended:
 
           if (ctx.mode === 'enter') {
             const pin = _pmRowValue('main');
-            if (pin.length !== 4) { errEl.textContent = 'Enter all 4 digits.'; _pmShakeRow('main'); return; }
+            if (pin.length !== PM_PIN_LENGTH) { errEl.textContent = 'Enter all 6 digits.'; _pmShakeRow('main'); return; }
             const hash = await _pmHashPin(pin, ctx.member);
             let stored = localStorage.getItem('pmPinHash_' + ctx.member);
             if (hash !== stored) {
@@ -3898,14 +3911,15 @@ Recommended:
           if (ctx.mode === 'set') {
             const pin = _pmRowValue('main');
             const confirm = _pmRowValue('confirm');
-            if (pin.length !== 4) { errEl.textContent = 'Enter all 4 digits of your new PIN.'; _pmShakeRow('main'); return; }
-            if (confirm.length !== 4) { errEl.textContent = 'Now re-type the same PIN below to confirm it.'; _pmShakeRow('confirm'); return; }
+            if (pin.length !== PM_PIN_LENGTH) { errEl.textContent = 'Enter all 6 digits of your new PIN.'; _pmShakeRow('main'); return; }
+            if (confirm.length !== PM_PIN_LENGTH) { errEl.textContent = 'Now re-type the same PIN below to confirm it.'; _pmShakeRow('confirm'); return; }
             if (pin !== confirm) { errEl.textContent = 'PINs do not match - try again.'; _pmShakeRow('main'); _pmShakeRow('confirm'); return; }
             const hash = await _pmHashPin(pin, ctx.member);
+            if (!await syncPinHashToServer(ctx.member, hash)) {
+              errEl.textContent = 'Could not save your PIN. Sign in online and try again.';
+              return;
+            }
             localStorage.setItem('pmPinHash_' + ctx.member, hash);
-            // Wait for the push so every other device really has it before we
-            // tell the user the PIN is set (sync failures are non-fatal).
-            await syncPinHashToServer(ctx.member, hash);
             closePMPinModal();
             _openPMModalForMember(ctx.member);
             return;
@@ -3915,7 +3929,7 @@ Recommended:
             const oldPin = _pmRowValue('old');
             const newPin = _pmRowValue('main');
             const confirm = _pmRowValue('confirm');
-            if (oldPin.length !== 4) { errEl.textContent = 'Enter your current PIN.'; _pmShakeRow('old'); return; }
+            if (oldPin.length !== ctx.oldLength) { errEl.textContent = 'Enter your current PIN.'; _pmShakeRow('old'); return; }
             const oldHash = await _pmHashPin(oldPin, ctx.member);
             let stored = localStorage.getItem('pmPinHash_' + ctx.member);
             if (oldHash !== stored) {
@@ -3923,13 +3937,17 @@ Recommended:
               stored = localStorage.getItem('pmPinHash_' + ctx.member);
             }
             if (oldHash !== stored) { errEl.textContent = 'Current PIN is incorrect.'; _pmShakeRow('old'); return; }
-            if (newPin.length !== 4) { errEl.textContent = 'Enter a new 4-digit PIN.'; _pmShakeRow('main'); return; }
-            if (confirm.length !== 4) { errEl.textContent = 'Re-type the new PIN below to confirm it.'; _pmShakeRow('confirm'); return; }
+            if (newPin.length !== PM_PIN_LENGTH) { errEl.textContent = 'Enter a new 6-digit PIN.'; _pmShakeRow('main'); return; }
+            if (confirm.length !== PM_PIN_LENGTH) { errEl.textContent = 'Re-type the new PIN below to confirm it.'; _pmShakeRow('confirm'); return; }
             if (newPin !== confirm) { errEl.textContent = 'New PINs do not match - try again.'; _pmShakeRow('main'); _pmShakeRow('confirm'); return; }
             const newHash = await _pmHashPin(newPin, ctx.member);
+            if (!await syncPinHashToServer(ctx.member, newHash)) {
+              errEl.textContent = 'Could not save your new PIN. Sign in online and try again.';
+              return;
+            }
             localStorage.setItem('pmPinHash_' + ctx.member, newHash);
-            await syncPinHashToServer(ctx.member, newHash);
             closePMPinModal();
+            if (ctx.upgrading) _openPMModalForMember(ctx.member);
             errEl.textContent = '';
             return;
           }
