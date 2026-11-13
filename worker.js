@@ -831,12 +831,20 @@ A: "The health insurance policy number is HX-4821-99."`;
 // ═══════════════════════════════════════════════════════════════════════════
 //  5. CONTROLLERS
 // ═══════════════════════════════════════════════════════════════════════════
+async function vaultActivityFileRef(key, path) {
+  const normalized = path.replace(/\\/g, "/").replace(/^\/?(?:docs\/|file\/|photos\/)?/, "");
+  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode("vault-audit:" + normalized));
+  return Array.from(new Uint8Array(digest).slice(0, 12), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function vaultActivityKey(env) {
+  return crypto.subtle.importKey("raw", new TextEncoder().encode(env.MASTER_PASSWORD), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+}
+
 async function recordVaultActivity(env, session, action, fileKey) {
   const now = new Date();
   try {
-    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(env.MASTER_PASSWORD), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-    const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode("vault-audit:" + fileKey.replace(/^(docs|file|photos)\//, "")));
-    const fileRef = Array.from(new Uint8Array(digest).slice(0, 12), byte => byte.toString(16).padStart(2, "0")).join("");
+    const fileRef = fileKey ? await vaultActivityFileRef(await vaultActivityKey(env), fileKey) : "";
     await firestoreWrite(env, "vaultActivity", {
       fileRef,
       action,
@@ -862,8 +870,28 @@ const Controllers = {
       const rows = await firestoreQuery(env, "vaultActivity", [
         { field: "recordedAt", op: "GREATER_THAN_OR_EQUAL", value: cutoff }
       ], 100, [{ field: { fieldPath: "recordedAt" }, direction: "DESCENDING" }]);
+      const names = new Map();
+      try {
+        const index = await env.MY_BUCKET.get("files.json");
+        if (index && rows.some(row => row.fileRef)) {
+          const key = await vaultActivityKey(env);
+          const entries = Object.entries(JSON.parse(await index.text()));
+          for (const [category, files] of entries) {
+            if (!Array.isArray(files)) continue;
+            for (const file of files) {
+              const path = file?.path || file?.url || file?.file;
+              if (typeof path !== "string" || !path) continue;
+              const ref = await vaultActivityFileRef(key, path);
+              if (names.has(ref)) names.set(ref, null);
+              else names.set(ref, { category, fileName: typeof file.name === "string" ? file.name : "" });
+            }
+          }
+        }
+      } catch {
+        console.error("Could not resolve vault activity file names");
+      }
       return createJsonResponse(rows.map(({ action, role, session, recordedAt, fileRef }) => ({
-        action, role, session, recordedAt, fileRef
+        action, role, session, recordedAt, fileRef, ...names.get(fileRef)
       })), 200, corsOrigin, headers);
     } catch {
       return createJsonResponse({ error: "Could not load vault activity" }, 503, corsOrigin, headers);
@@ -1031,6 +1059,7 @@ const Controllers = {
   }
 
   if (!allowed && session.mode !== "ADMIN") {
+    await recordVaultActivity(env, session, "File access denied", docPath);
     return createJsonResponse(
       { error: "Forbidden" },
       403,
@@ -2172,6 +2201,7 @@ async handleDeletePassword(request, env, corsOrigin) {
         forceLogout: false
       }, sessionId);
 
+      if (active !== false) await recordVaultActivity(env, session, "Session registered");
       return createJsonResponse({ success: true }, 200, corsOrigin);
     } catch (err) {
       console.error("register-session error:", err.message);
@@ -2327,6 +2357,7 @@ async handleDeletePassword(request, env, corsOrigin) {
       const { nonce } = body;
       if (!nonce) return createJsonResponse({ error: "Missing nonce" }, 400, corsOrigin);
       await firestoreWrite(env, "revokedSessions", { nonce, revokedAt: Date.now(), revokedBy: session.mode }, nonce);
+      await recordVaultActivity(env, session, "Session revoked");
       return createJsonResponse({ success: true, message: "Session revoked" }, 200, corsOrigin);
     } catch (err) {
       return createJsonResponse({ success: false, error: err.message }, 500, corsOrigin);
