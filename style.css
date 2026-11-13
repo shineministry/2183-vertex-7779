@@ -4073,5 +4073,5 @@ html body.dark-mode #page-files .drive-search-wrap input {
 
 /* Keep the PDF signature overlay compact on phones. */
 @media (max-width: 767.98px) {
-  .pdf-sig-group { scale: 0.72; }
+  .pdf-sig-group { scale: 0.55; }
 }
