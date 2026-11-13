@@ -70,6 +70,11 @@ async function loadActivity() {
     const response = await fetch('https://backend.shinumaths989.workers.dev/vault-activity', {
       headers: { Authorization: 'Bearer ' + token }, cache: 'no-store'
     });
+    const isJson = (response.headers.get('content-type') || '').includes('application/json');
+    if (response.status === 403 && !isJson) {
+      statusMessage.textContent = 'The live backend blocked the activity request before it could verify your administrator role. Check that the activity endpoint is deployed on the vault Worker.';
+      return;
+    }
     if (response.status === 401) {
       statusMessage.textContent = 'The server could not validate this session. Sign in online again.';
       return;
