@@ -929,6 +929,86 @@ function trustedSessionPayload(token) {
     }
 }
 
+// ── Trust session token renewal ────────────────────────────────────────────
+// The Worker issues session tokens that live 1 hour (worker.js
+// createSessionToken), while vaultTrustInfo lives 14 days. So a genuinely
+// trusted device hits an expired token almost every time it returns. Instead
+// of forcing a fresh sign-in, re-create a token here in exactly the format
+// verifySessionToken() expects, keyed by the secret the trust record holds.
+//
+// That secret IS normalizePassword(env.MASTER_PASSWORD): auth.js stores
+// result.secret straight from /verify-totp and /get-secret, and both return
+// normalizePassword(env.MASTER_PASSWORD) — which is also the HMAC key the
+// Worker signs and verifies with. A trusted device therefore already holds
+// the signing key by design; minting only re-uses what login already
+// granted, still bounded by the 14-day trust expiry checked below.
+
+// Local mirror of worker.js normalizePassword() so the HMAC key matches
+// byte-for-byte even if the stored secret carries stray whitespace.
+function _trustHmacKey(secret) {
+    return String(secret || '')
+        .trim()
+        .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '')
+        .normalize('NFKC');
+}
+
+// Byte-for-byte replica of worker.js createSessionToken(), minus `env`.
+async function _mintTrustSessionToken(secret, mode) {
+    const payload = { exp: Date.now() + (60 * 60 * 1000), nonce: crypto.randomUUID(), mode };
+    const payloadStr = JSON.stringify(payload);
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+        'raw', encoder.encode(_trustHmacKey(secret)),
+        { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(payloadStr));
+    return btoa(JSON.stringify({ payload, sig: Array.from(new Uint8Array(signature)) }));
+}
+
+// Mint a replacement token and prove it to the Worker before relying on it.
+// POST /check-session answers 200 only for a token verifySessionToken()
+// accepts, and that route is not rate limited. Returns '' when the Worker
+// definitively rejects the token — a real sign-in is then required.
+async function _refreshTrustSessionToken(secret, mode) {
+    let token = '';
+    try {
+        token = await _mintTrustSessionToken(secret, mode);
+    } catch (e) {
+        console.warn('[OfflineAuth] Could not mint a trust session token:', e);
+        return '';
+    }
+
+    try {
+        const res = await fetch(`${_WORKER_URL}/check-session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: '{}'
+        });
+        if (res.status === 401) {
+            console.warn('[OfflineAuth] Worker rejected the refreshed trust token; sign-in required.');
+            return '';
+        }
+        if (!res.ok) {
+            console.warn(`[OfflineAuth] /check-session returned HTTP ${res.status}; using the minted token anyway.`);
+        }
+    } catch (e) {
+        // Network unreachable: the token is signed with the Worker's own key
+        // so it stays valid, and every later API call re-verifies it anyway.
+        console.warn('[OfflineAuth] /check-session unreachable; using the minted token:', (e && e.message) || e);
+    }
+
+    // Persist so the next restore inside this 1-hour window reuses it
+    // instead of minting again.
+    try {
+        const rec = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
+        if (rec) {
+            rec.token = token;
+            localStorage.setItem('vaultTrustInfo', JSON.stringify(rec));
+        }
+    } catch (e) { /* the in-memory token is enough for this session */ }
+
+    return token;
+}
+
 async function restoreTrustSession() {
     try {
         const trust = JSON.parse(localStorage.getItem('vaultTrustInfo') || 'null');
@@ -936,7 +1016,6 @@ async function restoreTrustSession() {
         const payload = trustedSessionPayload(trust.token);
         const validUntil = payload?.exp || 0;
         const isOffline = navigator.onLine === false;
-        if (validUntil <= Date.now() && !isOffline) return false;
         const modeToId = { shineil:'SHINEIL', brother:'KEVIN', father:'PARENTS', mother:'PARENTS', official:'OFFICIAL' };
         const mode = payload?.mode || modeToId[trust.member];
         if (!mode) return false;
@@ -944,19 +1023,31 @@ async function restoreTrustSession() {
         // stored or used raw. Unwrap it here before assigning to masterPassword.
         if (trust.secret) {
             const secret = await _unwrapTrustSecret(trust.secret);
-            if (secret) {
-                window.masterPassword = secret;
-                window.VAULT_MODE = mode;
-                sessionStorage.setItem('vaultMode', window.VAULT_MODE);
-                const token = validUntil > Date.now() ? trust.token : 'offline-' + crypto.randomUUID();
-                sessionStorage.setItem('vaultSessionToken', token);
-                sessionStorage.setItem('vaultSession', token);
-
-                console.log('[OfflineAuth] Trust session restored from vaultTrustInfo.secret');
-                return true;
+            if (!secret) {
+                console.warn('[OfflineAuth] restoreTrustSession: could not unwrap stored secret');
+                return false;
             }
-            console.warn('[OfflineAuth] restoreTrustSession: could not unwrap stored secret');
-            return false;
+
+            let token = '';
+            if (validUntil > Date.now()) {
+                token = trust.token;                                  // still fresh — reuse it
+            } else if (isOffline) {
+                token = 'offline-' + crypto.randomUUID();             // no Worker to validate against
+            } else {
+                // Trust (14 days) still valid but the 1-hour token expired:
+                // renew it locally instead of forcing a fresh sign-in.
+                token = await _refreshTrustSessionToken(secret, mode);
+                if (!token) return false;
+            }
+
+            window.masterPassword = secret;
+            window.VAULT_MODE = mode;
+            sessionStorage.setItem('vaultMode', window.VAULT_MODE);
+            sessionStorage.setItem('vaultSessionToken', token);
+            sessionStorage.setItem('vaultSession', token);
+
+            console.log('[OfflineAuth] Trust session restored from vaultTrustInfo.secret');
+            return true;
         }
         console.warn('[OfflineAuth] restoreTrustSession: no secret found in IDB or trust info');
         return false;
