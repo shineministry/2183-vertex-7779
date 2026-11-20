@@ -493,12 +493,14 @@ function showStepTOTP() {
   document.getElementById("step2").style.display       = "none";
   document.getElementById("step3").style.display       = "none";
   document.getElementById("step-totp").style.display   = "flex";
+  const atStep = document.getElementById("step-austria-id"); if (atStep) atStep.style.display = "none";
   clearTOTPBoxes();
   hideTOTPError();
 }
 
 function showStep1() {
   document.getElementById("step-totp").style.display = "none";
+  const atStep = document.getElementById("step-austria-id"); if (atStep) atStep.style.display = "none";
   document.getElementById("step1").style.display     = "flex";
   stopTOTPCountdown();
   window._otpRequested = false;
@@ -706,6 +708,122 @@ async function loginWithTOTP() {
   showStepTOTP();
   startTOTPCountdown();
   focusFirstDigit();
+}
+
+// ── ID Austria login entry point (validates ID card details server-side) ──
+function loginWithAustriaId() {
+  const visitorName = document.getElementById("user-name").value.trim();
+  const purpose = document.getElementById("user-purpose").value.trim();
+
+  if (!visitorName || !purpose) {
+    toastNotify('Username and Access Context are required.', 'error');
+    return;
+  }
+  showStepAustriaId();
+}
+
+function showStepAustriaId() {
+  document.getElementById("step1").style.display         = "none";
+  document.getElementById("step2").style.display         = "none";
+  document.getElementById("step3").style.display         = "none";
+  document.getElementById("step-totp").style.display     = "none";
+  const step = document.getElementById("step-austria-id");
+  if (step) step.style.display = "flex";
+  hideAustriaIdError();
+  const firstField = document.getElementById("at-lastname");
+  if (firstField) setTimeout(() => firstField.focus(), 100);
+}
+
+function showAustriaIdError(message) {
+  const el = document.getElementById("austria-id-error");
+  if (!el) return;
+  el.textContent = message;
+  el.style.display = "block";
+}
+
+function hideAustriaIdError() {
+  const el = document.getElementById("austria-id-error");
+  if (el) el.style.display = "none";
+}
+
+// ── Submit ID Austria card details to the backend ───────────────────────
+async function submitAustriaId() {
+  const lastName       = (document.getElementById("at-lastname").value  || "").trim();
+  const firstName      = (document.getElementById("at-firstname").value || "").trim();
+  const documentNumber = (document.getElementById("at-document").value  || "").trim();
+  const dob            = (document.getElementById("at-dob").value       || "").trim();
+
+  if (!lastName || !firstName || !documentNumber || !dob) {
+    showAustriaIdError("Please fill in all four ID card fields.");
+    return;
+  }
+
+  hideAustriaIdError();
+  const btn = document.querySelector("#step-austria-id .btn-primary");
+  if (btn) { btn.textContent = "Verifying..."; btn.disabled = true; }
+
+  try {
+    const BACKEND = window.BACKEND_URL || "https://backend.shinumaths989.workers.dev";
+
+    const res = await fetch(`${BACKEND}/verify-austria-id`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lastName, firstName, documentNumber, dob })
+    });
+
+    const data = await res.json();
+
+    if (data.success && data.sessionToken) {
+      // ── Apply session data exactly like a verified TOTP login ──────
+      sessionStorage.setItem("vaultSessionToken", data.sessionToken);
+      sessionStorage.setItem("vaultSession",       data.sessionToken);
+
+      window.masterPassword = data.secret ? String(data.secret) : "";
+
+      window.VAULT_MODE = data.mode;
+      sessionStorage.setItem("vaultMode", data.mode);
+
+      // Successful ADMIN auth is a real, backend-verified credential check —
+      // safe to auto-trust this device on it (no separate secret needed).
+      if (data.mode === "ADMIN" && window.__deviceIntegrity) {
+        window.__deviceIntegrity.markTrusted();
+      }
+
+      resetInactivityTimer();
+
+      // Derive vaultUser from mode for notification targeting
+      const _modeUserMap = {
+        SHINEIL: 'shineil', KEVIN: 'brother', OFFICIAL: 'official',
+        PARENTS: 'father', SHINEIL_PARENTS: 'shineil',
+        KEVIN_PARENTS: 'brother', ADMIN: 'shineil'
+      };
+      sessionStorage.setItem('vaultUser', _modeUserMap[data.mode] || 'all');
+
+      if (window.VAULT_MODE !== "ADMIN") {
+        const shareGear = document.getElementById("share-gear");
+        if (shareGear) shareGear.style.display = "none";
+      }
+
+      masterPassword = window.masterPassword;
+      sessionStartTime = new Date();
+
+      // Sync all member password hashes for offline login
+      if (typeof syncOfflineAuth === 'function') await syncOfflineAuth();
+
+      // ── Hide ID Austria step, show step2 (Legal Declaration) ───────
+      document.getElementById("step-austria-id").style.display = "none";
+      const step2 = document.getElementById("step2");
+      if (step2) { step2.style.display = "flex"; step2.style.opacity = "1"; }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      showAustriaIdError(data.error || "ID details do not match. Please try again.");
+      if (btn) { btn.textContent = "VERIFY & SIGN IN"; btn.disabled = false; }
+    }
+  } catch (err) {
+    console.error("ID Austria verify error:", err);
+    showAustriaIdError("Verification failed. Please try again.");
+    if (btn) { btn.textContent = "VERIFY & SIGN IN"; btn.disabled = false; }
+  }
 }
 
 // ── Cancel passkey wait and return to login ───────

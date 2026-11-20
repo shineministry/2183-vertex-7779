@@ -1379,6 +1379,82 @@ async handleVerifyTOTP(request, env, corsOrigin) {
   }
 },
 
+  // ─── POST /verify-austria-id — verify Austrian ID card details ──────────
+  // First-party "ID Austria" login: the four fields printed on an Austrian
+  // ID card are checked (timing-safe) against Cloudflare Worker env vars.
+  // On success a real session token is issued, exactly like /verify-totp.
+  async handleVerifyAustriaId(request, env, corsOrigin) {
+    try {
+      const clientIp = request.headers.get("CF-Connecting-IP") || "unknown";
+      if (!checkRateLimit(`verify-austria-id:${clientIp}`, 5, 60000)) {
+        return createJsonResponse({ success: false, error: "Rate limit exceeded" }, 429, corsOrigin);
+      }
+
+      const body = await request.json();
+
+      // Input sanitization: trim, cap lengths, normalize before comparing.
+      const sanitize = (val, maxLen = 100) => typeof val === "string" ? val.trim().slice(0, maxLen) : "";
+      const normalizeName = (val) => sanitize(val, 100).toLowerCase().replace(/\s+/g, " ");
+      const normalizeDoc  = (val) => sanitize(val, 40).toUpperCase().replace(/\s+/g, "");
+      const normalizeDob  = (val) => {
+        const v = sanitize(val, 20);
+        let m = v.match(/^(\d{4})[-/.](\d{2})[-/.](\d{2})$/);   // YYYY-MM-DD
+        if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+        m = v.match(/^(\d{2})[-/.](\d{2})[-/.](\d{4})$/);       // DD.MM.YYYY
+        if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+        return v;
+      };
+
+      const lastName       = normalizeName(body.lastName || body.surname);
+      const firstName      = normalizeName(body.firstName || body.givenName);
+      const documentNumber = normalizeDoc(body.documentNumber || body.document);
+      const dob            = normalizeDob(body.dob);
+
+      if (!lastName || !firstName || !documentNumber || !dob) {
+        return createJsonResponse({ success: false, error: "All ID card fields are required" }, 400, corsOrigin);
+      }
+
+      // Expected values come from Worker environment variables:
+      // AUSTRIA_ID_LAST_NAME, AUSTRIA_ID_FIRST_NAME, AUSTRIA_ID_DOCUMENT, AUSTRIA_ID_DOB
+      const expectedLast   = normalizeName(env.AUSTRIA_ID_LAST_NAME);
+      const expectedFirst  = normalizeName(env.AUSTRIA_ID_FIRST_NAME);
+      const expectedDoc    = normalizeDoc(env.AUSTRIA_ID_DOCUMENT);
+      const expectedDob    = normalizeDob(env.AUSTRIA_ID_DOB);
+
+      if (!expectedLast || !expectedFirst || !expectedDoc || !expectedDob) {
+        return createJsonResponse({ success: false, error: "ID Austria login is not configured" }, 503, corsOrigin);
+      }
+
+      const matches =
+        timingSafeEqual(lastName, expectedLast) &&
+        timingSafeEqual(firstName, expectedFirst) &&
+        timingSafeEqual(documentNumber, expectedDoc) &&
+        timingSafeEqual(dob, expectedDob);
+
+      if (!matches) {
+        console.warn(`ATRIA_ID_DENIED: mismatched ID card details from ${clientIp}`);
+        return createJsonResponse({ success: false, error: "ID details do not match our records." }, 401, corsOrigin);
+      }
+
+      // Unlock mode is configurable (AUSTRIA_ID_MODE); defaults to ADMIN.
+      const ALLOWED_MODES = ["ADMIN", "OFFICIAL", "SHINEIL", "KEVIN", "PARENTS", "SHINEIL_PARENTS", "KEVIN_PARENTS"];
+      const requestedMode = String(env.AUSTRIA_ID_MODE || "ADMIN").toUpperCase();
+      const mode = ALLOWED_MODES.includes(requestedMode) ? requestedMode : "ADMIN";
+
+      const sessionToken = await createSessionToken(env, mode);
+      return createJsonResponse({
+        success: true,
+        authorized: true,
+        mode,
+        sessionToken,
+        secret: normalizePassword(env.MASTER_PASSWORD)
+      }, 200, corsOrigin);
+
+    } catch (err) {
+      return createJsonResponse({ success: false, error: err.message }, 500, corsOrigin);
+    }
+  },
+
   async handleLogout(request, env, corsOrigin) {
     try {
       const body = await request.json().catch(() => ({}));
@@ -2948,6 +3024,7 @@ if (method === "POST" || method === "PUT") {
 
       if (url.pathname === "/totp-setup"        && method === "GET")  return Controllers.handleTOTPSetup(request, env, corsOrigin);
       if (url.pathname === "/verify-totp"       && method === "POST") return Controllers.handleVerifyTOTP(request, env, corsOrigin);
+      if (url.pathname === "/verify-austria-id" && method === "POST") return Controllers.handleVerifyAustriaId(request, env, corsOrigin);
       if (url.pathname === "/check-passkey"     && method === "POST") return Controllers.handleCheckPasskey(request, env, corsOrigin);
 
       if (url.pathname === "/passwords"              && method === "GET")  return Controllers.handleGetPasswords(request, env, corsOrigin);
